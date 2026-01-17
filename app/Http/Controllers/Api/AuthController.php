@@ -27,6 +27,15 @@ class AuthController extends Controller
         operationId: "registerCustomer",
         description: "Registers a new customer and sends an OTP to their email.",
         tags: ["Authentication"],
+        parameters: [
+            new OA\Parameter(
+                name: "Accept-Language",
+                in: "header",
+                description: "The language of the response (ar, en)",
+                required: false,
+                schema: new OA\Schema(type: "string", default: "en", enum: ["en", "ar"])
+            )
+        ],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
@@ -87,7 +96,7 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return $this->apiResponse(true, __(__('Validation failed.')), $validator->errors(), null, 422);
+            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
         }
 
         $otp = rand(100000, 999999);
@@ -121,6 +130,15 @@ class AuthController extends Controller
         operationId: "verifyOtp",
         description: "Verifies the customer account using the OTP code sent to their email.",
         tags: ["Authentication"],
+        parameters: [
+            new OA\Parameter(
+                name: "Accept-Language",
+                in: "header",
+                description: "The language of the response (ar, en)",
+                required: false,
+                schema: new OA\Schema(type: "string", default: "en", enum: ["en", "ar"])
+            )
+        ],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
@@ -157,7 +175,6 @@ class AuthController extends Controller
                     ]
                 )
             ),
-            new OA\Response(response: 422, description: "Validation error")
         ]
     )]
     public function verifyOtp(Request $request)
@@ -168,7 +185,7 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return $this->apiResponse(true, __(__('Validation failed.')), $validator->errors(), null, 422);
+            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
         }
 
         $user = User::where('email', $request->email)
@@ -203,6 +220,15 @@ class AuthController extends Controller
         operationId: "resendOtp",
         description: "Resends a new OTP code to the customer's email if the account is not verified.",
         tags: ["Authentication"],
+        parameters: [
+            new OA\Parameter(
+                name: "Accept-Language",
+                in: "header",
+                description: "The language of the response (ar, en)",
+                required: false,
+                schema: new OA\Schema(type: "string", default: "en", enum: ["en", "ar"])
+            )
+        ],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
@@ -233,7 +259,6 @@ class AuthController extends Controller
                     ]
                 )
             ),
-            new OA\Response(response: 422, description: "Validation error")
         ]
     )]
     public function resendOtp(Request $request)
@@ -268,6 +293,15 @@ class AuthController extends Controller
         operationId: "loginCustomer",
         description: "Registers a session for the customer and returns an access token.",
         tags: ["Authentication"],
+        parameters: [
+            new OA\Parameter(
+                name: "Accept-Language",
+                in: "header",
+                description: "The language of the response (ar, en)",
+                required: false,
+                schema: new OA\Schema(type: "string", default: "en", enum: ["en", "ar"])
+            )
+        ],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
@@ -317,7 +351,6 @@ class AuthController extends Controller
                     ]
                 )
             ),
-            new OA\Response(response: 422, description: "Validation error")
         ]
     )]
     public function login(Request $request)
@@ -356,6 +389,15 @@ class AuthController extends Controller
         operationId: "checkToken",
         description: "Checks if the current authentication token is valid and returns user info.",
         tags: ["Authentication"],
+        parameters: [
+            new OA\Parameter(
+                name: "Accept-Language",
+                in: "header",
+                description: "The language of the response (ar, en)",
+                required: false,
+                schema: new OA\Schema(type: "string", default: "en", enum: ["en", "ar"])
+            )
+        ],
         security: [["bearerAuth" => []]],
         responses: [
             new OA\Response(
@@ -387,6 +429,15 @@ class AuthController extends Controller
         operationId: "getCustomerProfile",
         description: "Returns the authenticated customer's profile information.",
         tags: ["Profile"],
+        parameters: [
+            new OA\Parameter(
+                name: "Accept-Language",
+                in: "header",
+                description: "The language of the response (ar, en)",
+                required: false,
+                schema: new OA\Schema(type: "string", default: "en", enum: ["en", "ar"])
+            )
+        ],
         security: [["bearerAuth" => []]],
         responses: [
             new OA\Response(
@@ -418,6 +469,15 @@ class AuthController extends Controller
         operationId: "updateCustomerProfile",
         description: "Updates the authenticated customer's profile details.",
         tags: ["Profile"],
+        parameters: [
+            new OA\Parameter(
+                name: "Accept-Language",
+                in: "header",
+                description: "The language of the response (ar, en)",
+                required: false,
+                schema: new OA\Schema(type: "string", default: "en", enum: ["en", "ar"])
+            )
+        ],
         security: [["bearerAuth" => []]],
         requestBody: new OA\RequestBody(
             content: new OA\MediaType(
@@ -452,7 +512,6 @@ class AuthController extends Controller
                 )
             ),
             new OA\Response(response: 401, description: "Unauthenticated"),
-            new OA\Response(response: 422, description: "Validation error")
         ]
     )]
     public function updateProfile(Request $request)
@@ -500,6 +559,15 @@ class AuthController extends Controller
         operationId: "logoutCustomer",
         description: "Revokes the current access token and ends the session.",
         tags: ["Authentication"],
+        parameters: [
+            new OA\Parameter(
+                name: "Accept-Language",
+                in: "header",
+                description: "The language of the response (ar, en)",
+                required: false,
+                schema: new OA\Schema(type: "string", default: "en", enum: ["en", "ar"])
+            )
+        ],
         security: [["bearerAuth" => []]],
         responses: [
             new OA\Response(
@@ -528,6 +596,15 @@ class AuthController extends Controller
         operationId: "forgotPassword",
         description: "Sends a password reset OTP to the user's email.",
         tags: ["Authentication"],
+        parameters: [
+            new OA\Parameter(
+                name: "Accept-Language",
+                in: "header",
+                description: "The language of the response (ar, en)",
+                required: false,
+                schema: new OA\Schema(type: "string", default: "en", enum: ["en", "ar"])
+            )
+        ],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
@@ -548,7 +625,6 @@ class AuthController extends Controller
                     ]
                 )
             ),
-            new OA\Response(response: 422, description: "Validation error")
         ]
     )]
     public function forgotPassword(Request $request)
@@ -579,6 +655,15 @@ class AuthController extends Controller
         operationId: "resetPassword",
         description: "Resets the user's password using the OTP code sent to their email.",
         tags: ["Authentication"],
+        parameters: [
+            new OA\Parameter(
+                name: "Accept-Language",
+                in: "header",
+                description: "The language of the response (ar, en)",
+                required: false,
+                schema: new OA\Schema(type: "string", default: "en", enum: ["en", "ar"])
+            )
+        ],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
@@ -612,7 +697,6 @@ class AuthController extends Controller
                     ]
                 )
             ),
-            new OA\Response(response: 422, description: "Validation error")
         ]
     )]
     public function resetPassword(Request $request)

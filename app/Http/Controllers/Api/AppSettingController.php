@@ -15,6 +15,15 @@ class AppSettingController extends Controller
         operationId: "getAppSettings",
         description: "Returns the current app settings including maintenance mode, minimum required version, and app store links.",
         tags: ["System"],
+        parameters: [
+            new OA\Parameter(
+                name: "Accept-Language",
+                in: "header",
+                description: "The language of the response (ar, en)",
+                required: false,
+                schema: new OA\Schema(type: "string", default: "en", enum: ["en", "ar"])
+            )
+        ],
         responses: [
             new OA\Response(
                 response: 200,
