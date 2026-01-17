@@ -11,7 +11,11 @@
     "servers": [
         {
             "url": "http://localhost/my-trip/public",
-            "description": "API Server"
+            "description": "Development Server"
+        },
+        {
+            "url": "https://blueviolet-hummingbird-437500.hostingersite.com/public",
+            "description": "Production Server"
         }
     ],
     "paths": {
@@ -73,16 +77,21 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "name",
+                                    "first_name",
+                                    "last_name",
                                     "email",
                                     "phone",
                                     "password",
                                     "password_confirmation"
                                 ],
                                 "properties": {
-                                    "name": {
+                                    "first_name": {
                                         "type": "string",
-                                        "example": "John Doe"
+                                        "example": "John"
+                                    },
+                                    "last_name": {
+                                        "type": "string",
+                                        "example": "Doe"
                                     },
                                     "email": {
                                         "type": "string",
@@ -92,6 +101,23 @@
                                     "phone": {
                                         "type": "string",
                                         "example": "+1234567890"
+                                    },
+                                    "country_code": {
+                                        "type": "string",
+                                        "example": "+1"
+                                    },
+                                    "city": {
+                                        "type": "string",
+                                        "example": "New York"
+                                    },
+                                    "gender": {
+                                        "type": "string",
+                                        "example": "male"
+                                    },
+                                    "date_of_birth": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "1990-01-01"
                                     },
                                     "password": {
                                         "type": "string",
@@ -378,13 +404,34 @@
                         "multipart/form-data": {
                             "schema": {
                                 "properties": {
-                                    "name": {
+                                    "first_name": {
                                         "type": "string",
-                                        "example": "John Doe"
+                                        "example": "John"
+                                    },
+                                    "last_name": {
+                                        "type": "string",
+                                        "example": "Doe"
                                     },
                                     "phone": {
                                         "type": "string",
                                         "example": "+1234567890"
+                                    },
+                                    "country_code": {
+                                        "type": "string",
+                                        "example": "+1"
+                                    },
+                                    "city": {
+                                        "type": "string",
+                                        "example": "New York"
+                                    },
+                                    "gender": {
+                                        "type": "string",
+                                        "example": "male"
+                                    },
+                                    "date_of_birth": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "1990-01-01"
                                     },
                                     "address": {
                                         "type": "string",
@@ -468,6 +515,128 @@
                         "bearerAuth": []
                     }
                 ]
+            }
+        },
+        "/api/forgot-password": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Request password reset OTP",
+                "description": "Sends a password reset OTP to the user's email.",
+                "operationId": "forgotPassword",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "user@example.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OTP sent successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Password reset code sent to your email."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/reset-password": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Reset password using OTP",
+                "description": "Resets the user's password using the OTP code sent to their email.",
+                "operationId": "resetPassword",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "otp_code",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "user@example.com"
+                                    },
+                                    "otp_code": {
+                                        "type": "string",
+                                        "example": "123456"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "NewSecret123"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "NewSecret123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password reset successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Password has been reset successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid or expired OTP"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
             }
         }
     },

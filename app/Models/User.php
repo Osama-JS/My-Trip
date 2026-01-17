@@ -25,20 +25,48 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'name',
+        'first_name',
+        'last_name',
         'email',
         'password',
         'user_type',
         'profile_photo',
         'phone',
+        'country_code',
         'country',
+        'city',
         'date_of_birth',
         'gender',
         'address',
+        'status',
         'otp_code',
         'otp_expires_at',
         'phone_verified_at',
     ];
+
+    /**
+     * Get full name
+     */
+    public function getFullNameAttribute(): string
+    {
+        return trim($this->first_name . ' ' . $this->last_name);
+    }
+
+    /**
+     * Check if user is active
+     */
+    public function isActive(): bool
+    {
+        return $this->status === 'active';
+    }
+
+    /**
+     * Check if user is inactive
+     */
+    public function isInactive(): bool
+    {
+        return $this->status === 'inactive';
+    }
 
     /**
      * Get profile photo URL

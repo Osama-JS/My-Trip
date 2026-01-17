@@ -12,7 +12,11 @@ use OpenApi\Attributes as OA;
 )]
 #[OA\Server(
     url: L5_SWAGGER_CONST_HOST,
-    description: "API Server"
+    description: "Development Server"
+)]
+#[OA\Server(
+    url: "https://blueviolet-hummingbird-437500.hostingersite.com/public",
+    description: "Production Server"
 )]
 #[OA\SecurityScheme(
     securityScheme: "bearerAuth",

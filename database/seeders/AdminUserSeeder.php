@@ -18,7 +18,8 @@ class AdminUserSeeder extends Seeder
         $superAdmin = User::updateOrCreate(
             ['email' => 'admin@system.com'],
             [
-                'name' => 'Super Admin',
+                'first_name' => 'Super',
+                'last_name' => 'Admin',
                 'password' => Hash::make('password'),
                 'user_type' => User::TYPE_ADMIN,
                 'email_verified_at' => now(),
@@ -32,7 +33,8 @@ class AdminUserSeeder extends Seeder
         $admin = User::updateOrCreate(
             ['email' => 'admin@example.com'],
             [
-                'name' => 'Admin User',
+                'first_name' => 'Admin',
+                'last_name' => 'User',
                 'password' => Hash::make('password'),
                 'user_type' => User::TYPE_ADMIN,
                 'email_verified_at' => now(),
@@ -46,7 +48,8 @@ class AdminUserSeeder extends Seeder
         $manager = User::updateOrCreate(
             ['email' => 'manager@example.com'],
             [
-                'name' => 'Manager User',
+                'first_name' => 'Manager',
+                'last_name' => 'User',
                 'password' => Hash::make('password'),
                 'user_type' => User::TYPE_ADMIN,
                 'email_verified_at' => now(),

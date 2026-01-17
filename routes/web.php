@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\UserManagementController;
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\BookingController;
@@ -47,8 +47,9 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // User Management
-    Route::get('users/data', [UserManagementController::class, 'getData'])->name('users.data');
-    Route::resource('users', UserManagementController::class);
+    Route::get('users/data', [UserController::class, 'getData'])->name('users.data');
+    Route::post('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
+    Route::resource('users', UserController::class);
 
     // Role Management
     Route::get('roles/data', [RoleController::class, 'getData'])->name('roles.data');
