@@ -15,6 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \App\Http\Middleware\SetLocale::class,
         ]);
+        $middleware->api(append: [
+            \App\Http\Middleware\SetLocale::class,
+        ]);
         $middleware->alias([
             'isAdmin' => \App\Http\Middleware\IsAdmin::class,
         ]);
@@ -27,7 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
                 if ($e instanceof \Illuminate\Validation\ValidationException) {
                     $status = 422;
-                    $message = 'Validation failed.';
+                    $message = __('Validation failed.');
                     return response()->json([
                         'error' => true,
                         'message' => $message,
@@ -39,15 +42,15 @@ return Application::configure(basePath: dirname(__DIR__))
                     $status = $e->getStatusCode();
                 } elseif ($e instanceof \Illuminate\Auth\AuthenticationException) {
                     $status = 401;
-                    $message = 'Unauthenticated.';
+                    $message = __('Unauthenticated.');
                 } elseif ($e instanceof \Illuminate\Auth\Access\AuthorizationException) {
                     $status = 403;
-                    $message = 'Forbidden.';
+                    $message = __('Forbidden.');
                 }
 
                 // Map 408 Timeout if caught
                 if ($status == 408) {
-                    $message = 'Request timeout.';
+                    $message = __('Request timeout.');
                 }
 
                 return response()->json([

@@ -15,12 +15,22 @@ class SetLocale
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (session()->has('locale')) {
-            app()->setLocale(session('locale'));
-        } else {
-            // Default to 'en' or detect from browser
-            app()->setLocale(config('app.locale', 'en'));
+        $locale = config('app.locale');
+
+        if ($request->hasHeader('Accept-Language')) {
+            $locale = $request->header('Accept-Language');
+        } elseif ($request->is('api/*') && $request->has('lang')) {
+            $locale = $request->get('lang');
+        } elseif (session()->has('locale')) {
+            $locale = session('locale');
         }
+
+        // Validate locale (allow only 'ar' or 'en')
+        if (!in_array($locale, ['ar', 'en'])) {
+            $locale = config('app.locale');
+        }
+
+        app()->setLocale($locale);
 
         return $next($request);
     }

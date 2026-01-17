@@ -87,7 +87,7 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return $this->apiResponse(true, 'Validation failed.', $validator->errors(), null, 422);
+            return $this->apiResponse(true, __(__('Validation failed.')), $validator->errors(), null, 422);
         }
 
         $otp = rand(100000, 999999);
@@ -110,7 +110,7 @@ class AuthController extends Controller
         // Send OTP via Email
         $this->mailService->sendVerificationOtp($user, $otp);
 
-        return $this->apiResponse(false, 'Registration successful. Please verify your email with the OTP sent.', [
+        return $this->apiResponse(false, __('Registration successful. Please verify your email with the OTP sent.'), [
             'email' => $user->email
         ], null, 200);
     }
@@ -168,7 +168,7 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return $this->apiResponse(true, 'Validation failed.', $validator->errors(), null, 422);
+            return $this->apiResponse(true, __(__('Validation failed.')), $validator->errors(), null, 422);
         }
 
         $user = User::where('email', $request->email)
@@ -177,7 +177,7 @@ class AuthController extends Controller
                     ->first();
 
         if (!$user) {
-            return $this->apiResponse(true, 'Invalid or expired OTP code.', null, null, 422);
+            return $this->apiResponse(true, __('Invalid or expired OTP code.'), null, null, 422);
         }
 
         $user->email_verified_at = Carbon::now();
@@ -190,7 +190,7 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        return $this->apiResponse(false, 'Account verified successfully.', [
+        return $this->apiResponse(false, __('Account verified successfully.'), [
             'access_token' => $token,
             'token_type' => 'Bearer',
             'user' => $user
@@ -243,13 +243,13 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return $this->apiResponse(true, 'Validation failed.', $validator->errors(), null, 422);
+            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
         }
 
         $user = User::where('email', $request->email)->first();
 
         if ($user->email_verified_at) {
-            return $this->apiResponse(true, 'Account is already verified.', null, null, 403);
+            return $this->apiResponse(true, __('Account is already verified.'), null, null, 403);
         }
 
         $otp = rand(100000, 999999);
@@ -259,7 +259,7 @@ class AuthController extends Controller
 
         $this->mailService->sendVerificationOtp($user, $otp);
 
-        return $this->apiResponse(false, 'OTP has been resent to your email.');
+        return $this->apiResponse(false, __('OTP has been resent to your email.'));
     }
 
     #[OA\Post(
@@ -328,22 +328,22 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return $this->apiResponse(true, 'Validation failed.', $validator->errors(), null, 422);
+            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
         }
 
         $user = User::where('email', $request->email)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
-            return $this->apiResponse(true, 'Invalid login credentials.', null, null, 401);
+            return $this->apiResponse(true, __('Invalid login credentials.'), null, null, 401);
         }
 
         if (!$user->email_verified_at) {
-            return $this->apiResponse(true, 'Please verify your account first.', ['verified' => false], null, 403);
+            return $this->apiResponse(true, __('Please verify your account first.'), ['verified' => false], null, 403);
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        return $this->apiResponse(false, 'Login successful.', [
+        return $this->apiResponse(false, __('Login successful.'), [
             'access_token' => $token,
             'token_type' => 'Bearer',
             'user' => $user
@@ -376,7 +376,7 @@ class AuthController extends Controller
     )]
     public function checkToken(Request $request)
     {
-        return $this->apiResponse(false, 'Token is valid.', [
+        return $this->apiResponse(false, __('Token is valid.'), [
             'user' => $request->user()
         ]);
     }
@@ -407,7 +407,7 @@ class AuthController extends Controller
     )]
     public function profile(Request $request)
     {
-        return $this->apiResponse(false, 'Profile retrieved successfully.', [
+        return $this->apiResponse(false, __('Profile retrieved successfully.'), [
             'user' => $request->user()
         ]);
     }
@@ -472,7 +472,7 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return $this->apiResponse(true, 'Validation failed.', $validator->errors(), null, 422);
+            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
         }
 
         $data = $request->only(['first_name', 'last_name', 'phone', 'country_code', 'city', 'gender', 'date_of_birth', 'address']);
@@ -489,7 +489,7 @@ class AuthController extends Controller
 
         $user->update($data);
 
-        return $this->apiResponse(false, 'Profile updated successfully.', [
+        return $this->apiResponse(false, __('Profile updated successfully.'), [
             'user' => $user->fresh()
         ]);
     }
@@ -519,7 +519,7 @@ class AuthController extends Controller
     {
         $request->user()->currentAccessToken()->delete();
 
-        return $this->apiResponse(false, 'Logged out successfully.');
+        return $this->apiResponse(false, __('Logged out successfully.'));
     }
 
     #[OA\Post(
@@ -558,7 +558,7 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return $this->apiResponse(true, 'Validation failed.', $validator->errors(), null, 422);
+            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
         }
 
         $user = User::where('email', $request->email)->first();
@@ -570,7 +570,7 @@ class AuthController extends Controller
 
         $this->mailService->sendPasswordResetOtp($user, $otp);
 
-        return $this->apiResponse(false, 'Password reset code sent to your email.');
+        return $this->apiResponse(false, __('Password reset code sent to your email.'));
     }
 
     #[OA\Post(
@@ -624,7 +624,7 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return $this->apiResponse(true, 'Validation failed.', $validator->errors(), null, 422);
+            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
         }
 
         $user = User::where('email', $request->email)
@@ -633,7 +633,7 @@ class AuthController extends Controller
                     ->first();
 
         if (!$user) {
-            return $this->apiResponse(true, 'Invalid or expired OTP code.', null, null, 422);
+            return $this->apiResponse(true, __('Invalid or expired OTP code.'), null, null, 422);
         }
 
         $user->password = Hash::make($request->password);
@@ -641,6 +641,6 @@ class AuthController extends Controller
         $user->otp_expires_at = null;
         $user->save();
 
-        return $this->apiResponse(false, 'Password has been reset successfully.');
+        return $this->apiResponse(false, __('Password has been reset successfully.'));
     }
 }

@@ -45,6 +45,6 @@ class AppSettingController extends Controller
             'site_name' => app()->getLocale() == 'ar' ? Setting::get('site_name_ar') : Setting::get('site_name_en'),
         ];
 
-        return $this->apiResponse(false, 'App settings retrieved successfully.', $settings);
+        return $this->apiResponse(false, __('App settings retrieved successfully.'), $settings);
     }
 }
