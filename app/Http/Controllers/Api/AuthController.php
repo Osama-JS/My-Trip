@@ -47,16 +47,29 @@ class AuthController extends Controller
         ),
         responses: [
             new OA\Response(
-                response: 201,
+                response: 200,
                 description: "Successful registration",
                 content: new OA\JsonContent(
                     properties: [
+                        new OA\Property(property: "error", type: "boolean", example: false),
                         new OA\Property(property: "message", type: "string", example: "Registration successful. Please verify your email with the OTP sent."),
-                        new OA\Property(property: "email", type: "string", example: "user@example.com")
+                        new OA\Property(property: "data", type: "object", properties: [
+                            new OA\Property(property: "email", type: "string", example: "user@example.com")
+                        ])
                     ]
                 )
             ),
-            new OA\Response(response: 422, description: "Validation error")
+            new OA\Response(
+                response: 422,
+                description: "Validation error",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "error", type: "boolean", example: true),
+                        new OA\Property(property: "message", type: "string", example: "Validation failed."),
+                        new OA\Property(property: "data", type: "object")
+                    ]
+                )
+            )
         ]
     )]
     public function register(Request $request)
@@ -74,7 +87,7 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return $this->apiResponse(true, 'Validation failed.', $validator->errors(), null, 422);
         }
 
         $otp = rand(100000, 999999);
@@ -97,10 +110,9 @@ class AuthController extends Controller
         // Send OTP via Email
         $this->mailService->sendVerificationOtp($user, $otp);
 
-        return response()->json([
-            'message' => 'Registration successful. Please verify your email with the OTP sent.',
+        return $this->apiResponse(false, 'Registration successful. Please verify your email with the OTP sent.', [
             'email' => $user->email
-        ], 201);
+        ], null, 200);
     }
 
     #[OA\Post(
@@ -125,14 +137,26 @@ class AuthController extends Controller
                 description: "Account verified successfully",
                 content: new OA\JsonContent(
                     properties: [
+                        new OA\Property(property: "error", type: "boolean", example: false),
                         new OA\Property(property: "message", type: "string", example: "Account verified successfully."),
-                        new OA\Property(property: "access_token", type: "string", example: "1|abc..."),
-                        new OA\Property(property: "token_type", type: "string", example: "Bearer"),
-                        new OA\Property(property: "user", type: "object")
+                        new OA\Property(property: "data", type: "object", properties: [
+                            new OA\Property(property: "access_token", type: "string", example: "1|abc..."),
+                            new OA\Property(property: "token_type", type: "string", example: "Bearer"),
+                            new OA\Property(property: "user", type: "object")
+                        ])
                     ]
                 )
             ),
-            new OA\Response(response: 400, description: "Invalid or expired OTP"),
+            new OA\Response(
+                response: 422,
+                description: "Invalid or expired OTP",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "error", type: "boolean", example: true),
+                        new OA\Property(property: "message", type: "string", example: "Invalid or expired OTP code.")
+                    ]
+                )
+            ),
             new OA\Response(response: 422, description: "Validation error")
         ]
     )]
@@ -144,7 +168,7 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return $this->apiResponse(true, 'Validation failed.', $validator->errors(), null, 422);
         }
 
         $user = User::where('email', $request->email)
@@ -153,7 +177,7 @@ class AuthController extends Controller
                     ->first();
 
         if (!$user) {
-            return response()->json(['message' => 'Invalid or expired OTP code.'], 400);
+            return $this->apiResponse(true, 'Invalid or expired OTP code.', null, null, 422);
         }
 
         $user->email_verified_at = Carbon::now();
@@ -166,8 +190,7 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        return response()->json([
-            'message' => 'Account verified successfully.',
+        return $this->apiResponse(false, 'Account verified successfully.', [
             'access_token' => $token,
             'token_type' => 'Bearer',
             'user' => $user
@@ -195,11 +218,21 @@ class AuthController extends Controller
                 description: "OTP resent successful",
                 content: new OA\JsonContent(
                     properties: [
+                        new OA\Property(property: "error", type: "boolean", example: false),
                         new OA\Property(property: "message", type: "string", example: "OTP has been resent to your email.")
                     ]
                 )
             ),
-            new OA\Response(response: 400, description: "Account already verified"),
+            new OA\Response(
+                response: 403,
+                description: "Account already verified",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "error", type: "boolean", example: true),
+                        new OA\Property(property: "message", type: "string", example: "Account is already verified.")
+                    ]
+                )
+            ),
             new OA\Response(response: 422, description: "Validation error")
         ]
     )]
@@ -210,13 +243,13 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return $this->apiResponse(true, 'Validation failed.', $validator->errors(), null, 422);
         }
 
         $user = User::where('email', $request->email)->first();
 
         if ($user->email_verified_at) {
-            return response()->json(['message' => 'Account is already verified.'], 400);
+            return $this->apiResponse(true, 'Account is already verified.', null, null, 403);
         }
 
         $otp = rand(100000, 999999);
@@ -226,7 +259,7 @@ class AuthController extends Controller
 
         $this->mailService->sendVerificationOtp($user, $otp);
 
-        return response()->json(['message' => 'OTP has been resent to your email.']);
+        return $this->apiResponse(false, 'OTP has been resent to your email.');
     }
 
     #[OA\Post(
@@ -251,14 +284,39 @@ class AuthController extends Controller
                 description: "Successful login",
                 content: new OA\JsonContent(
                     properties: [
-                        new OA\Property(property: "access_token", type: "string", example: "1|abc..."),
-                        new OA\Property(property: "token_type", type: "string", example: "Bearer"),
-                        new OA\Property(property: "user", type: "object")
+                        new OA\Property(property: "error", type: "boolean", example: false),
+                        new OA\Property(property: "message", type: "string", example: "Login successful."),
+                        new OA\Property(property: "data", type: "object", properties: [
+                            new OA\Property(property: "access_token", type: "string", example: "1|abc..."),
+                            new OA\Property(property: "token_type", type: "string", example: "Bearer"),
+                            new OA\Property(property: "user", type: "object")
+                        ])
                     ]
                 )
             ),
-            new OA\Response(response: 401, description: "Invalid credentials"),
-            new OA\Response(response: 403, description: "Account not verified"),
+            new OA\Response(
+                response: 401,
+                description: "Invalid credentials",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "error", type: "boolean", example: true),
+                        new OA\Property(property: "message", type: "string", example: "Invalid login credentials.")
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 403,
+                description: "Account not verified",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "error", type: "boolean", example: true),
+                        new OA\Property(property: "message", type: "string", example: "Please verify your account first."),
+                        new OA\Property(property: "data", type: "object", properties: [
+                            new OA\Property(property: "verified", type: "boolean", example: false)
+                        ])
+                    ]
+                )
+            ),
             new OA\Response(response: 422, description: "Validation error")
         ]
     )]
@@ -270,22 +328,22 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return $this->apiResponse(true, 'Validation failed.', $validator->errors(), null, 422);
         }
 
         $user = User::where('email', $request->email)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json(['message' => 'Invalid login credentials.'], 401);
+            return $this->apiResponse(true, 'Invalid login credentials.', null, null, 401);
         }
 
         if (!$user->email_verified_at) {
-            return response()->json(['message' => 'Please verify your account first.', 'verified' => false], 403);
+            return $this->apiResponse(true, 'Please verify your account first.', ['verified' => false], null, 403);
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        return response()->json([
+        return $this->apiResponse(false, 'Login successful.', [
             'access_token' => $token,
             'token_type' => 'Bearer',
             'user' => $user
@@ -305,9 +363,11 @@ class AuthController extends Controller
                 description: "Token is valid",
                 content: new OA\JsonContent(
                     properties: [
-                        new OA\Property(property: "success", type: "boolean", example: true),
+                        new OA\Property(property: "error", type: "boolean", example: false),
                         new OA\Property(property: "message", type: "string", example: "Token is valid."),
-                        new OA\Property(property: "user", type: "object")
+                        new OA\Property(property: "data", type: "object", properties: [
+                            new OA\Property(property: "user", type: "object")
+                        ])
                     ]
                 )
             ),
@@ -316,9 +376,7 @@ class AuthController extends Controller
     )]
     public function checkToken(Request $request)
     {
-        return response()->json([
-            'success' => true,
-            'message' => 'Token is valid.',
+        return $this->apiResponse(false, 'Token is valid.', [
             'user' => $request->user()
         ]);
     }
@@ -336,7 +394,11 @@ class AuthController extends Controller
                 description: "Profile retrieved successfully",
                 content: new OA\JsonContent(
                     properties: [
-                        new OA\Property(property: "user", type: "object")
+                        new OA\Property(property: "error", type: "boolean", example: false),
+                        new OA\Property(property: "message", type: "string", example: "Profile retrieved successfully."),
+                        new OA\Property(property: "data", type: "object", properties: [
+                            new OA\Property(property: "user", type: "object")
+                        ])
                     ]
                 )
             ),
@@ -345,7 +407,9 @@ class AuthController extends Controller
     )]
     public function profile(Request $request)
     {
-        return response()->json(['user' => $request->user()]);
+        return $this->apiResponse(false, 'Profile retrieved successfully.', [
+            'user' => $request->user()
+        ]);
     }
 
     #[OA\Post(
@@ -379,8 +443,11 @@ class AuthController extends Controller
                 description: "Profile updated successfully",
                 content: new OA\JsonContent(
                     properties: [
+                        new OA\Property(property: "error", type: "boolean", example: false),
                         new OA\Property(property: "message", type: "string", example: "Profile updated successfully."),
-                        new OA\Property(property: "user", type: "object")
+                        new OA\Property(property: "data", type: "object", properties: [
+                            new OA\Property(property: "user", type: "object")
+                        ])
                     ]
                 )
             ),
@@ -405,7 +472,7 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return $this->apiResponse(true, 'Validation failed.', $validator->errors(), null, 422);
         }
 
         $data = $request->only(['first_name', 'last_name', 'phone', 'country_code', 'city', 'gender', 'date_of_birth', 'address']);
@@ -422,8 +489,7 @@ class AuthController extends Controller
 
         $user->update($data);
 
-        return response()->json([
-            'message' => 'Profile updated successfully.',
+        return $this->apiResponse(false, 'Profile updated successfully.', [
             'user' => $user->fresh()
         ]);
     }
@@ -441,6 +507,7 @@ class AuthController extends Controller
                 description: "Logged out successfully",
                 content: new OA\JsonContent(
                     properties: [
+                        new OA\Property(property: "error", type: "boolean", example: false),
                         new OA\Property(property: "message", type: "string", example: "Logged out successfully.")
                     ]
                 )
@@ -452,7 +519,7 @@ class AuthController extends Controller
     {
         $request->user()->currentAccessToken()->delete();
 
-        return response()->json(['message' => 'Logged out successfully.']);
+        return $this->apiResponse(false, 'Logged out successfully.');
     }
 
     #[OA\Post(
@@ -476,6 +543,7 @@ class AuthController extends Controller
                 description: "OTP sent successfully",
                 content: new OA\JsonContent(
                     properties: [
+                        new OA\Property(property: "error", type: "boolean", example: false),
                         new OA\Property(property: "message", type: "string", example: "Password reset code sent to your email.")
                     ]
                 )
@@ -490,7 +558,7 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return $this->apiResponse(true, 'Validation failed.', $validator->errors(), null, 422);
         }
 
         $user = User::where('email', $request->email)->first();
@@ -502,7 +570,7 @@ class AuthController extends Controller
 
         $this->mailService->sendPasswordResetOtp($user, $otp);
 
-        return response()->json(['message' => 'Password reset code sent to your email.']);
+        return $this->apiResponse(false, 'Password reset code sent to your email.');
     }
 
     #[OA\Post(
@@ -529,11 +597,21 @@ class AuthController extends Controller
                 description: "Password reset successfully",
                 content: new OA\JsonContent(
                     properties: [
+                        new OA\Property(property: "error", type: "boolean", example: false),
                         new OA\Property(property: "message", type: "string", example: "Password has been reset successfully.")
                     ]
                 )
             ),
-            new OA\Response(response: 400, description: "Invalid or expired OTP"),
+            new OA\Response(
+                response: 422,
+                description: "Invalid or expired OTP",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "error", type: "boolean", example: true),
+                        new OA\Property(property: "message", type: "string", example: "Invalid or expired OTP code.")
+                    ]
+                )
+            ),
             new OA\Response(response: 422, description: "Validation error")
         ]
     )]
@@ -546,7 +624,7 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return $this->apiResponse(true, 'Validation failed.', $validator->errors(), null, 422);
         }
 
         $user = User::where('email', $request->email)
@@ -555,7 +633,7 @@ class AuthController extends Controller
                     ->first();
 
         if (!$user) {
-            return response()->json(['message' => 'Invalid or expired OTP code.'], 400);
+            return $this->apiResponse(true, 'Invalid or expired OTP code.', null, null, 422);
         }
 
         $user->password = Hash::make($request->password);
@@ -563,6 +641,6 @@ class AuthController extends Controller
         $user->otp_expires_at = null;
         $user->save();
 
-        return response()->json(['message' => 'Password has been reset successfully.']);
+        return $this->apiResponse(false, 'Password has been reset successfully.');
     }
 }

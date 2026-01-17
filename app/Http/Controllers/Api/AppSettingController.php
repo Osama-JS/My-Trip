@@ -21,11 +21,15 @@ class AppSettingController extends Controller
                 description: "App settings retrieved successfully",
                 content: new OA\JsonContent(
                     properties: [
-                        new OA\Property(property: "maintenance_mode", type: "boolean", example: false),
-                        new OA\Property(property: "app_min_version", type: "string", example: "1.0.0"),
-                        new OA\Property(property: "android_url", type: "string", example: "https://play.google.com/..."),
-                        new OA\Property(property: "ios_url", type: "string", example: "https://apps.apple.com/..."),
-                        new OA\Property(property: "site_name", type: "string", example: "My Trip")
+                        new OA\Property(property: "error", type: "boolean", example: false),
+                        new OA\Property(property: "message", type: "string", example: "App settings retrieved successfully."),
+                        new OA\Property(property: "data", type: "object", properties: [
+                            new OA\Property(property: "maintenance_mode", type: "boolean", example: false),
+                            new OA\Property(property: "app_min_version", type: "string", example: "1.0.0"),
+                            new OA\Property(property: "android_url", type: "string", example: "https://play.google.com/..."),
+                            new OA\Property(property: "ios_url", type: "string", example: "https://apps.apple.com/..."),
+                            new OA\Property(property: "site_name", type: "string", example: "My Trip")
+                        ])
                     ]
                 )
             )
@@ -41,6 +45,6 @@ class AppSettingController extends Controller
             'site_name' => app()->getLocale() == 'ar' ? Setting::get('site_name_ar') : Setting::get('site_name_en'),
         ];
 
-        return response()->json($settings);
+        return $this->apiResponse(false, 'App settings retrieved successfully.', $settings);
     }
 }

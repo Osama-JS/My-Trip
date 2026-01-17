@@ -20,5 +20,41 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (\Throwable $e, \Illuminate\Http\Request $request) {
+            if ($request->is('api/*')) {
+                $status = 500;
+                $message = $e->getMessage() ?: 'Server Error';
+
+                if ($e instanceof \Illuminate\Validation\ValidationException) {
+                    $status = 422;
+                    $message = 'Validation failed.';
+                    return response()->json([
+                        'error' => true,
+                        'message' => $message,
+                        'data' => $e->errors(),
+                    ], $status);
+                }
+
+                if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpException) {
+                    $status = $e->getStatusCode();
+                } elseif ($e instanceof \Illuminate\Auth\AuthenticationException) {
+                    $status = 401;
+                    $message = 'Unauthenticated.';
+                } elseif ($e instanceof \Illuminate\Auth\Access\AuthorizationException) {
+                    $status = 403;
+                    $message = 'Forbidden.';
+                }
+
+                // Map 408 Timeout if caught
+                if ($status == 408) {
+                    $message = 'Request timeout.';
+                }
+
+                return response()->json([
+                    'error' => true,
+                    'message' => $message,
+                    'data' => null,
+                ], $status);
+            }
+        });
     })->create();
