@@ -200,19 +200,6 @@
                                                 "access_token": {
                                                     "type": "string",
                                                     "example": "1|abc..."
-                                                },
-                                                "token_type": {
-                                                    "type": "string",
-                                                    "example": "Bearer"
-                                                },
-                                                "user": {
-                                                    "properties": {
-                                                        "email": {
-                                                            "type": "string",
-                                                            "example": "user@example.com"
-                                                        }
-                                                    },
-                                                    "type": "object"
                                                 }
                                             },
                                             "type": "object"
@@ -279,15 +266,9 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "email",
                                     "otp_code"
                                 ],
                                 "properties": {
-                                    "email": {
-                                        "type": "string",
-                                        "format": "email",
-                                        "example": "user@example.com"
-                                    },
                                     "otp_code": {
                                         "type": "string",
                                         "example": "123456"
@@ -355,7 +336,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/resend-otp": {

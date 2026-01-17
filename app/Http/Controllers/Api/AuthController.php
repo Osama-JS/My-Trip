@@ -63,11 +63,7 @@ class AuthController extends Controller
                         new OA\Property(property: "error", type: "boolean", example: false),
                         new OA\Property(property: "message", type: "string", example: "Registration successful. Please verify your email with the OTP sent."),
                         new OA\Property(property: "data", type: "object", properties: [
-                            new OA\Property(property: "access_token", type: "string", example: "1|abc..."),
-                            new OA\Property(property: "token_type", type: "string", example: "Bearer"),
-                            new OA\Property(property: "user", type: "object", properties: [
-                                new OA\Property(property: "email", type: "string", example: "user@example.com")
-                            ])
+                            new OA\Property(property: "access_token", type: "string", example: "1|abc...")
                         ])
                     ]
                 )
@@ -126,9 +122,7 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return $this->apiResponse(false, __('Registration successful. Please verify your email with the OTP sent.'), [
-            'access_token' => $token,
-            'token_type' => 'Bearer',
-            'user' => $user
+            'access_token' => $token
         ], null, 200);
     }
 
@@ -138,6 +132,7 @@ class AuthController extends Controller
         operationId: "verifyOtp",
         description: "Verifies the customer account using the OTP code sent to their email.",
         tags: ["Authentication"],
+        security: [["bearerAuth" => []]],
         parameters: [
             new OA\Parameter(
                 name: "Accept-Language",
@@ -150,9 +145,8 @@ class AuthController extends Controller
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ["email", "otp_code"],
+                required: ["otp_code"],
                 properties: [
-                    new OA\Property(property: "email", type: "string", format: "email", example: "user@example.com"),
                     new OA\Property(property: "otp_code", type: "string", example: "123456"),
                 ]
             )
@@ -188,7 +182,6 @@ class AuthController extends Controller
     public function verifyOtp(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email|exists:users,email',
             'otp_code' => 'required|string|size:6',
         ]);
 
@@ -196,12 +189,9 @@ class AuthController extends Controller
             return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
         }
 
-        $user = User::where('email', $request->email)
-                    ->where('otp_code', $request->otp_code)
-                    ->where('otp_expires_at', '>', Carbon::now())
-                    ->first();
+        $user = $request->user();
 
-        if (!$user) {
+        if ($user->otp_code !== $request->otp_code || $user->otp_expires_at->isPast()) {
             return $this->apiResponse(true, __('Invalid or expired OTP code.'), null, null, 422);
         }
 
