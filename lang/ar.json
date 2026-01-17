@@ -120,5 +120,6 @@
     "Unauthenticated.": "غير مصرح لك بالدخول (غير مسجل).",
     "Forbidden.": "ليس لديك صلاحية للقيام بهذا الإجراء.",
     "Request timeout.": "انتهى وقت الطلب.",
-    "App settings retrieved successfully.": "تم جلب إعدادات التطبيق بنجاح."
+    "App settings retrieved successfully.": "تم جلب إعدادات التطبيق بنجاح.",
+    "FCM token updated successfully.": "تم تحديث رمز الإشعارات بنجاح."
 }

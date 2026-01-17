@@ -63,7 +63,11 @@ class AuthController extends Controller
                         new OA\Property(property: "error", type: "boolean", example: false),
                         new OA\Property(property: "message", type: "string", example: "Registration successful. Please verify your email with the OTP sent."),
                         new OA\Property(property: "data", type: "object", properties: [
-                            new OA\Property(property: "email", type: "string", example: "user@example.com")
+                            new OA\Property(property: "access_token", type: "string", example: "1|abc..."),
+                            new OA\Property(property: "token_type", type: "string", example: "Bearer"),
+                            new OA\Property(property: "user", type: "object", properties: [
+                                new OA\Property(property: "email", type: "string", example: "user@example.com")
+                            ])
                         ])
                     ]
                 )
@@ -119,8 +123,12 @@ class AuthController extends Controller
         // Send OTP via Email
         $this->mailService->sendVerificationOtp($user, $otp);
 
+        $token = $user->createToken('auth_token')->plainTextToken;
+
         return $this->apiResponse(false, __('Registration successful. Please verify your email with the OTP sent.'), [
-            'email' => $user->email
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+            'user' => $user
         ], null, 200);
     }
 
@@ -726,5 +734,68 @@ class AuthController extends Controller
         $user->save();
 
         return $this->apiResponse(false, __('Password has been reset successfully.'));
+    }
+
+    /**
+     * Update FCM Token for push notifications
+     */
+    #[OA\Post(
+        path: "/api/update-fcm-token",
+        summary: "Update user FCM token",
+        operationId: "updateFcmToken",
+        description: "Updates the authenticated user's Firebase Cloud Messaging token for push notifications.",
+        tags: ["Authentication"],
+        security: [["bearerAuth" => []]],
+        parameters: [
+            new OA\Parameter(
+                name: "Accept-Language",
+                in: "header",
+                description: "The language of the response (ar, en)",
+                required: false,
+                schema: new OA\Schema(type: "string", default: "en", enum: ["en", "ar"])
+            )
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ["fcm_token"],
+                properties: [
+                    new OA\Property(property: "fcm_token", type: "string", example: "fcm_token_here..."),
+                    new OA\Property(property: "device_type", type: "string", enum: ["android", "ios"], example: "android"),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "FCM token updated successfully",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "error", type: "boolean", example: false),
+                        new OA\Property(property: "message", type: "string", example: "FCM token updated successfully.")
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: "Unauthenticated")
+        ]
+    )]
+    public function updateFcmToken(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'fcm_token' => 'required|string',
+            'device_type' => 'nullable|string|in:android,ios',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+        }
+
+        $user = $request->user();
+        $user->update([
+            'fcm_token' => $request->fcm_token,
+            'device_type' => $request->device_type,
+        ]);
+
+        return $this->apiResponse(false, __('FCM token updated successfully.'));
     }
 }
