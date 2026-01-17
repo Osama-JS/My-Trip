@@ -293,6 +293,37 @@ class AuthController extends Controller
     }
 
     #[OA\Get(
+        path: "/api/check-token",
+        summary: "Check token validity",
+        operationId: "checkToken",
+        description: "Checks if the current authentication token is valid and returns user info.",
+        tags: ["Authentication"],
+        security: [["bearerAuth" => []]],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "Token is valid",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "success", type: "boolean", example: true),
+                        new OA\Property(property: "message", type: "string", example: "Token is valid."),
+                        new OA\Property(property: "user", type: "object")
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: "Unauthenticated")
+        ]
+    )]
+    public function checkToken(Request $request)
+    {
+        return response()->json([
+            'success' => true,
+            'message' => 'Token is valid.',
+            'user' => $request->user()
+        ]);
+    }
+
+    #[OA\Get(
         path: "/api/profile",
         summary: "Get customer profile",
         operationId: "getCustomerProfile",
