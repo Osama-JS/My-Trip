@@ -608,7 +608,8 @@ class AuthController extends Controller
                         new OA\Property(property: "error", type: "boolean", example: false),
                         new OA\Property(property: "message", type: "string", example: "Password reset code sent to your email."),
                         new OA\Property(property: "data", type: "object", properties: [
-                            new OA\Property(property: "access_token", type: "string", example: "1|abc...")
+                            new OA\Property(property: "access_token", type: "string", example: "1|abc..."),
+                            new OA\Property(property: "otp_code", type: "string", example: "123456")
                         ])
                     ]
                 )
