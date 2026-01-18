@@ -110,5 +110,10 @@
     "Forbidden.": "Forbidden.",
     "Request timeout.": "Request timeout.",
     "App settings retrieved successfully.": "App settings retrieved successfully.",
-    "FCM token updated successfully.": "FCM token updated successfully."
+    "FCM token updated successfully.": "FCM token updated successfully.",
+    "Checkout initialized successfully.": "Checkout initialized successfully.",
+    "Failed to initialize payment.": "Failed to initialize payment.",
+    "Payment successful.": "Payment successful.",
+    "Payment failed.": "Payment failed.",
+    "Failed to verify payment.": "Failed to verify payment."
 }

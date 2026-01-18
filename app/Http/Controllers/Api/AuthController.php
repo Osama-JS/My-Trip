@@ -218,6 +218,7 @@ class AuthController extends Controller
         operationId: "resendOtp",
         description: "Resends a new OTP code to the customer's email if the account is not verified.",
         tags: ["Authentication"],
+        security: [["bearerAuth" => []]],
         parameters: [
             new OA\Parameter(
                 name: "Accept-Language",
@@ -227,15 +228,6 @@ class AuthController extends Controller
                 schema: new OA\Schema(type: "string", default: "en", enum: ["en", "ar"])
             )
         ],
-        requestBody: new OA\RequestBody(
-            required: true,
-            content: new OA\JsonContent(
-                required: ["email"],
-                properties: [
-                    new OA\Property(property: "email", type: "string", format: "email", example: "user@example.com"),
-                ]
-            )
-        ),
         responses: [
             new OA\Response(
                 response: 200,
@@ -261,15 +253,7 @@ class AuthController extends Controller
     )]
     public function resendOtp(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|email|exists:users,email',
-        ]);
-
-        if ($validator->fails()) {
-            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
-        }
-
-        $user = User::where('email', $request->email)->first();
+        $user = $request->user();
 
         if ($user->email_verified_at) {
             return $this->apiResponse(true, __('Account is already verified.'), null, null, 403);
@@ -280,6 +264,7 @@ class AuthController extends Controller
         $user->otp_expires_at = Carbon::now()->addMinutes(10);
         $user->save();
 
+        // Send OTP via Email
         $this->mailService->sendVerificationOtp($user, $otp);
 
         return $this->apiResponse(false, __('OTP has been resent to your email.'));

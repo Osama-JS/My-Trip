@@ -121,5 +121,10 @@
     "Forbidden.": "ليس لديك صلاحية للقيام بهذا الإجراء.",
     "Request timeout.": "انتهى وقت الطلب.",
     "App settings retrieved successfully.": "تم جلب إعدادات التطبيق بنجاح.",
-    "FCM token updated successfully.": "تم تحديث رمز الإشعارات بنجاح."
+    "FCM token updated successfully.": "تم تحديث رمز الإشعارات بنجاح.",
+    "Checkout initialized successfully.": "تم تهيئة عملية الدفع بنجاح.",
+    "Failed to initialize payment.": "فشل في تهيئة عملية الدفع.",
+    "Payment successful.": "تمت عملية الدفع بنجاح.",
+    "Payment failed.": "فشلت عملية الدفع.",
+    "Failed to verify payment.": "فشل في التحقق من عملية الدفع."
 }

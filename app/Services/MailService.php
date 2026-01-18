@@ -18,7 +18,7 @@ class MailService
     public function sendVerificationOtp(User $user, int $otp): void
     {
         try {
-            Mail::to($user->email)->queue(new otpMail($otp));
+            Mail::to($user->email)->send(new otpMail($otp));
         } catch (\Exception $e) {
             Log::error("Failed to send verification OTP to {$user->email}: " . $e->getMessage());
         }
@@ -30,7 +30,7 @@ class MailService
     public function sendPasswordResetOtp(User $user, int $otp): void
     {
         try {
-            Mail::to($user->email)->queue(new PasswordResetMail($otp));
+            Mail::to($user->email)->send(new PasswordResetMail($otp));
         } catch (\Exception $e) {
             Log::error("Failed to send password reset OTP to {$user->email}: " . $e->getMessage());
         }
@@ -42,7 +42,7 @@ class MailService
     public function sendWelcomeEmail(User $user): void
     {
         try {
-            Mail::to($user->email)->queue(new WelcomeMail($user->name));
+            Mail::to($user->email)->send(new WelcomeMail($user->name));
         } catch (\Exception $e) {
             Log::error("Failed to send welcome email to {$user->email}: " . $e->getMessage());
         }
@@ -54,7 +54,7 @@ class MailService
     public function sendAnnouncement(User $user, string $title, string $content, string $buttonUrl = null, string $buttonText = null): void
     {
         try {
-            Mail::to($user->email)->queue(new AnnouncementMail($title, $content, $buttonUrl, $buttonText));
+            Mail::to($user->email)->send(new AnnouncementMail($title, $content, $buttonUrl, $buttonText));
         } catch (\Exception $e) {
             Log::error("Failed to send announcement to {$user->email}: " . $e->getMessage());
         }
