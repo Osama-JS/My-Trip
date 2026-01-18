@@ -17,7 +17,6 @@ Route::get('/app-settings', [AppSettingController::class, 'index']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
-Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
 // Protected Routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -26,6 +25,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/check-token', [AuthController::class, 'checkToken']);
     Route::get('/profile', [AuthController::class, 'profile']);
     Route::post('/profile/update', [AuthController::class, 'updateProfile']);
+    Route::post('/reset-password', [AuthController::class, 'resetPassword']);
     Route::post('/update-fcm-token', [AuthController::class, 'updateFcmToken']);
 
     // Payment Routes

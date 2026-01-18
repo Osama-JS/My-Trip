@@ -606,7 +606,10 @@ class AuthController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: "error", type: "boolean", example: false),
-                        new OA\Property(property: "message", type: "string", example: "Password reset code sent to your email.")
+                        new OA\Property(property: "message", type: "string", example: "Password reset code sent to your email."),
+                        new OA\Property(property: "data", type: "object", properties: [
+                            new OA\Property(property: "access_token", type: "string", example: "1|abc...")
+                        ])
                     ]
                 )
             ),
@@ -631,7 +634,11 @@ class AuthController extends Controller
 
         $this->mailService->sendPasswordResetOtp($user, $otp);
 
-        return $this->apiResponse(false, __('Password reset code sent to your email.'));
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return $this->apiResponse(false, __('Password reset code sent to your email.'), [
+            'access_token' => $token
+        ]);
     }
 
     #[OA\Post(
@@ -649,12 +656,12 @@ class AuthController extends Controller
                 schema: new OA\Schema(type: "string", default: "en", enum: ["en", "ar"])
             )
         ],
+        security: [["bearerAuth" => []]],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ["email", "otp_code", "password", "password_confirmation"],
+                required: ["otp_code", "password", "password_confirmation"],
                 properties: [
-                    new OA\Property(property: "email", type: "string", format: "email", example: "user@example.com"),
                     new OA\Property(property: "otp_code", type: "string", example: "123456"),
                     new OA\Property(property: "password", type: "string", format: "password", example: "NewSecret123"),
                     new OA\Property(property: "password_confirmation", type: "string", format: "password", example: "NewSecret123"),
@@ -687,7 +694,6 @@ class AuthController extends Controller
     public function resetPassword(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email|exists:users,email',
             'otp_code' => 'required|string|size:6',
             'password' => 'required|string|min:8|confirmed',
         ]);
@@ -696,12 +702,9 @@ class AuthController extends Controller
             return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
         }
 
-        $user = User::where('email', $request->email)
-                    ->where('otp_code', $request->otp_code)
-                    ->where('otp_expires_at', '>', Carbon::now())
-                    ->first();
+        $user = $request->user();
 
-        if (!$user) {
+        if ($user->otp_code !== $request->otp_code || Carbon::now()->gt($user->otp_expires_at)) {
             return $this->apiResponse(true, __('Invalid or expired OTP code.'), null, null, 422);
         }
 
@@ -709,6 +712,9 @@ class AuthController extends Controller
         $user->otp_code = null;
         $user->otp_expires_at = null;
         $user->save();
+
+        // Revoke the temporary token
+        $user->currentAccessToken()->delete();
 
         return $this->apiResponse(false, __('Password has been reset successfully.'));
     }
