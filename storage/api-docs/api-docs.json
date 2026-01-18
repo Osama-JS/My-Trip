@@ -200,6 +200,10 @@
                                                 "access_token": {
                                                     "type": "string",
                                                     "example": "1|abc..."
+                                                },
+                                                "otp_code": {
+                                                    "type": "string",
+                                                    "example": "123456"
                                                 }
                                             },
                                             "type": "object"

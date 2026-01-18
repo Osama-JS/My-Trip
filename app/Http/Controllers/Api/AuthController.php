@@ -63,7 +63,8 @@ class AuthController extends Controller
                         new OA\Property(property: "error", type: "boolean", example: false),
                         new OA\Property(property: "message", type: "string", example: "Registration successful. Please verify your email with the OTP sent."),
                         new OA\Property(property: "data", type: "object", properties: [
-                            new OA\Property(property: "access_token", type: "string", example: "1|abc...")
+                            new OA\Property(property: "access_token", type: "string", example: "1|abc..."),
+                            new OA\Property(property: "otp_code", type: "string", example: "123456")
                         ])
                     ]
                 )
@@ -122,7 +123,8 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return $this->apiResponse(false, __('Registration successful. Please verify your email with the OTP sent.'), [
-            'access_token' => $token
+            'access_token' => $token,
+            'otp_code' => $otp
         ], null, 200);
     }
 
