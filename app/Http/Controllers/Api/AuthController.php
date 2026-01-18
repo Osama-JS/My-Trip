@@ -637,7 +637,9 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return $this->apiResponse(false, __('Password reset code sent to your email.'), [
-            'access_token' => $token
+            'access_token' => $token,
+            'otp_code' => $otp
+
         ]);
     }
 
