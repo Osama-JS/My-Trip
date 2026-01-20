@@ -270,12 +270,26 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "otp_code"
+                                    "otp_code",
+                                    "fcm_token",
+                                    "device_type"
                                 ],
                                 "properties": {
                                     "otp_code": {
                                         "type": "string",
                                         "example": "123456"
+                                    },
+                                    "fcm_token": {
+                                        "type": "string",
+                                        "example": "fcm_token_here..."
+                                    },
+                                    "device_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "android",
+                                            "ios"
+                                        ],
+                                        "example": "android"
                                     }
                                 },
                                 "type": "object"
@@ -309,6 +323,40 @@
                                                     "example": "Bearer"
                                                 },
                                                 "user": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "first_name": {
+                                                            "type": "string",
+                                                            "example": "John"
+                                                        },
+                                                        "last_name": {
+                                                            "type": "string",
+                                                            "example": "Doe"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "user@example.com"
+                                                        },
+                                                        "phone": {
+                                                            "type": "string",
+                                                            "example": "123456789"
+                                                        },
+                                                        "country_code": {
+                                                            "type": "string",
+                                                            "example": "+1"
+                                                        },
+                                                        "profile_photo_url": {
+                                                            "type": "string",
+                                                            "example": "http://example.com/storage/profile_photos/photo.jpg"
+                                                        },
+                                                        "is_active": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        }
+                                                    },
                                                     "type": "object"
                                                 }
                                             },
@@ -452,7 +500,9 @@
                             "schema": {
                                 "required": [
                                     "email",
-                                    "password"
+                                    "password",
+                                    "fcm_token",
+                                    "device_type"
                                 ],
                                 "properties": {
                                     "email": {
@@ -464,6 +514,18 @@
                                         "type": "string",
                                         "format": "password",
                                         "example": "Secret123"
+                                    },
+                                    "fcm_token": {
+                                        "type": "string",
+                                        "example": "fcm_token_here..."
+                                    },
+                                    "device_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "android",
+                                            "ios"
+                                        ],
+                                        "example": "android"
                                     }
                                 },
                                 "type": "object"
@@ -497,6 +559,40 @@
                                                     "example": "Bearer"
                                                 },
                                                 "user": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "first_name": {
+                                                            "type": "string",
+                                                            "example": "John"
+                                                        },
+                                                        "last_name": {
+                                                            "type": "string",
+                                                            "example": "Doe"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "user@example.com"
+                                                        },
+                                                        "phone": {
+                                                            "type": "string",
+                                                            "example": "123456789"
+                                                        },
+                                                        "country_code": {
+                                                            "type": "string",
+                                                            "example": "+1"
+                                                        },
+                                                        "profile_photo_url": {
+                                                            "type": "string",
+                                                            "example": "http://example.com/storage/profile_photos/photo.jpg"
+                                                        },
+                                                        "is_active": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        }
+                                                    },
                                                     "type": "object"
                                                 }
                                             },
@@ -602,6 +698,40 @@
                                         "data": {
                                             "properties": {
                                                 "user": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "first_name": {
+                                                            "type": "string",
+                                                            "example": "John"
+                                                        },
+                                                        "last_name": {
+                                                            "type": "string",
+                                                            "example": "Doe"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "user@example.com"
+                                                        },
+                                                        "phone": {
+                                                            "type": "string",
+                                                            "example": "123456789"
+                                                        },
+                                                        "country_code": {
+                                                            "type": "string",
+                                                            "example": "+1"
+                                                        },
+                                                        "profile_photo_url": {
+                                                            "type": "string",
+                                                            "example": "http://example.com/storage/profile_photos/photo.jpg"
+                                                        },
+                                                        "is_active": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        }
+                                                    },
                                                     "type": "object"
                                                 }
                                             },
@@ -666,6 +796,40 @@
                                         "data": {
                                             "properties": {
                                                 "user": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "first_name": {
+                                                            "type": "string",
+                                                            "example": "John"
+                                                        },
+                                                        "last_name": {
+                                                            "type": "string",
+                                                            "example": "Doe"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "user@example.com"
+                                                        },
+                                                        "phone": {
+                                                            "type": "string",
+                                                            "example": "123456789"
+                                                        },
+                                                        "country_code": {
+                                                            "type": "string",
+                                                            "example": "+1"
+                                                        },
+                                                        "profile_photo_url": {
+                                                            "type": "string",
+                                                            "example": "http://example.com/storage/profile_photos/photo.jpg"
+                                                        },
+                                                        "is_active": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        }
+                                                    },
                                                     "type": "object"
                                                 }
                                             },
@@ -725,14 +889,6 @@
                                         "type": "string",
                                         "example": "Doe"
                                     },
-                                    "phone": {
-                                        "type": "string",
-                                        "example": "+1234567890"
-                                    },
-                                    "country_code": {
-                                        "type": "string",
-                                        "example": "+1"
-                                    },
                                     "city": {
                                         "type": "string",
                                         "example": "New York"
@@ -778,6 +934,40 @@
                                         "data": {
                                             "properties": {
                                                 "user": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "first_name": {
+                                                            "type": "string",
+                                                            "example": "John"
+                                                        },
+                                                        "last_name": {
+                                                            "type": "string",
+                                                            "example": "Doe"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "user@example.com"
+                                                        },
+                                                        "phone": {
+                                                            "type": "string",
+                                                            "example": "123456789"
+                                                        },
+                                                        "country_code": {
+                                                            "type": "string",
+                                                            "example": "+1"
+                                                        },
+                                                        "profile_photo_url": {
+                                                            "type": "string",
+                                                            "example": "http://example.com/storage/profile_photos/photo.jpg"
+                                                        },
+                                                        "is_active": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        }
+                                                    },
                                                     "type": "object"
                                                 }
                                             },
@@ -914,6 +1104,19 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Password reset code sent to your email."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "access_token": {
+                                                    "type": "string",
+                                                    "example": "1|abc..."
+                                                },
+                                                "otp_code": {
+                                                    "type": "string",
+                                                    "example": "123456"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -954,17 +1157,11 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "email",
                                     "otp_code",
                                     "password",
                                     "password_confirmation"
                                 ],
                                 "properties": {
-                                    "email": {
-                                        "type": "string",
-                                        "format": "email",
-                                        "example": "user@example.com"
-                                    },
                                     "otp_code": {
                                         "type": "string",
                                         "example": "123456"
@@ -1026,7 +1223,117 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/profile/change-password": {
+            "post": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Change user password",
+                "description": "Changes the authenticated user's password after verifying the old password.",
+                "operationId": "changePassword",
+                "parameters": [
+                    {
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "description": "The language of the response (ar, en)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "en",
+                            "enum": [
+                                "en",
+                                "ar"
+                            ]
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "old_password",
+                                    "new_password",
+                                    "new_password_confirmation"
+                                ],
+                                "properties": {
+                                    "old_password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "OldSecret123"
+                                    },
+                                    "new_password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "NewSecret123"
+                                    },
+                                    "new_password_confirmation": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "NewSecret123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password changed successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Password changed successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error or invalid old password",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Invalid old password."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/update-fcm-token": {

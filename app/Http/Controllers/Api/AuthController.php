@@ -166,7 +166,16 @@ class AuthController extends Controller
                         new OA\Property(property: "data", type: "object", properties: [
                             new OA\Property(property: "access_token", type: "string", example: "1|abc..."),
                             new OA\Property(property: "token_type", type: "string", example: "Bearer"),
-                            new OA\Property(property: "user", type: "object")
+                            new OA\Property(property: "user", type: "object", properties: [
+                                new OA\Property(property: "id", type: "integer", example: 1),
+                                new OA\Property(property: "first_name", type: "string", example: "John"),
+                                new OA\Property(property: "last_name", type: "string", example: "Doe"),
+                                new OA\Property(property: "email", type: "string", example: "user@example.com"),
+                                new OA\Property(property: "phone", type: "string", example: "123456789"),
+                                new OA\Property(property: "country_code", type: "string", example: "+1"),
+                                new OA\Property(property: "profile_photo_url", type: "string", example: "http://example.com/storage/profile_photos/photo.jpg"),
+                                new OA\Property(property: "is_active", type: "boolean", example: true),
+                            ])
                         ])
                     ]
                 )
@@ -316,7 +325,16 @@ class AuthController extends Controller
                         new OA\Property(property: "data", type: "object", properties: [
                             new OA\Property(property: "access_token", type: "string", example: "1|abc..."),
                             new OA\Property(property: "token_type", type: "string", example: "Bearer"),
-                            new OA\Property(property: "user", type: "object")
+                            new OA\Property(property: "user", type: "object", properties: [
+                                new OA\Property(property: "id", type: "integer", example: 1),
+                                new OA\Property(property: "first_name", type: "string", example: "John"),
+                                new OA\Property(property: "last_name", type: "string", example: "Doe"),
+                                new OA\Property(property: "email", type: "string", example: "user@example.com"),
+                                new OA\Property(property: "phone", type: "string", example: "123456789"),
+                                new OA\Property(property: "country_code", type: "string", example: "+1"),
+                                new OA\Property(property: "profile_photo_url", type: "string", example: "http://example.com/storage/profile_photos/photo.jpg"),
+                                new OA\Property(property: "is_active", type: "boolean", example: true),
+                            ])
                         ])
                     ]
                 )
@@ -408,7 +426,16 @@ class AuthController extends Controller
                         new OA\Property(property: "error", type: "boolean", example: false),
                         new OA\Property(property: "message", type: "string", example: "Token is valid."),
                         new OA\Property(property: "data", type: "object", properties: [
-                            new OA\Property(property: "user", type: "object")
+                            new OA\Property(property: "user", type: "object", properties: [
+                                new OA\Property(property: "id", type: "integer", example: 1),
+                                new OA\Property(property: "first_name", type: "string", example: "John"),
+                                new OA\Property(property: "last_name", type: "string", example: "Doe"),
+                                new OA\Property(property: "email", type: "string", example: "user@example.com"),
+                                new OA\Property(property: "phone", type: "string", example: "123456789"),
+                                new OA\Property(property: "country_code", type: "string", example: "+1"),
+                                new OA\Property(property: "profile_photo_url", type: "string", example: "http://example.com/storage/profile_photos/photo.jpg"),
+                                new OA\Property(property: "is_active", type: "boolean", example: true),
+                            ])
                         ])
                     ]
                 )
@@ -448,7 +475,16 @@ class AuthController extends Controller
                         new OA\Property(property: "error", type: "boolean", example: false),
                         new OA\Property(property: "message", type: "string", example: "Profile retrieved successfully."),
                         new OA\Property(property: "data", type: "object", properties: [
-                            new OA\Property(property: "user", type: "object")
+                            new OA\Property(property: "user", type: "object", properties: [
+                                new OA\Property(property: "id", type: "integer", example: 1),
+                                new OA\Property(property: "first_name", type: "string", example: "John"),
+                                new OA\Property(property: "last_name", type: "string", example: "Doe"),
+                                new OA\Property(property: "email", type: "string", example: "user@example.com"),
+                                new OA\Property(property: "phone", type: "string", example: "123456789"),
+                                new OA\Property(property: "country_code", type: "string", example: "+1"),
+                                new OA\Property(property: "profile_photo_url", type: "string", example: "http://example.com/storage/profile_photos/photo.jpg"),
+                                new OA\Property(property: "is_active", type: "boolean", example: true),
+                            ])
                         ])
                     ]
                 )
@@ -504,7 +540,16 @@ class AuthController extends Controller
                         new OA\Property(property: "error", type: "boolean", example: false),
                         new OA\Property(property: "message", type: "string", example: "Profile updated successfully."),
                         new OA\Property(property: "data", type: "object", properties: [
-                            new OA\Property(property: "user", type: "object")
+                            new OA\Property(property: "user", type: "object", properties: [
+                                new OA\Property(property: "id", type: "integer", example: 1),
+                                new OA\Property(property: "first_name", type: "string", example: "John"),
+                                new OA\Property(property: "last_name", type: "string", example: "Doe"),
+                                new OA\Property(property: "email", type: "string", example: "user@example.com"),
+                                new OA\Property(property: "phone", type: "string", example: "123456789"),
+                                new OA\Property(property: "country_code", type: "string", example: "+1"),
+                                new OA\Property(property: "profile_photo_url", type: "string", example: "http://example.com/storage/profile_photos/photo.jpg"),
+                                new OA\Property(property: "is_active", type: "boolean", example: true),
+                            ])
                         ])
                     ]
                 )
