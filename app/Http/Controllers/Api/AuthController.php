@@ -147,9 +147,11 @@ class AuthController extends Controller
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ["otp_code"],
+                required: ["otp_code", "fcm_token", "device_type"],
                 properties: [
                     new OA\Property(property: "otp_code", type: "string", example: "123456"),
+                    new OA\Property(property: "fcm_token", type: "string", example: "fcm_token_here..."),
+                    new OA\Property(property: "device_type", type: "string", enum: ["android", "ios"], example: "android"),
                 ]
             )
         ),
@@ -185,6 +187,8 @@ class AuthController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'otp_code' => 'required|string|size:6',
+            'fcm_token' => 'required|string',
+            'device_type' => 'required|string|in:android,ios',
         ]);
 
         if ($validator->fails()) {
@@ -200,6 +204,8 @@ class AuthController extends Controller
         $user->email_verified_at = Carbon::now();
         $user->otp_code = null;
         $user->otp_expires_at = null;
+        $user->fcm_token = $request->fcm_token;
+        $user->device_type = $request->device_type;
         $user->save();
 
         // Send Welcome Email
@@ -290,10 +296,12 @@ class AuthController extends Controller
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ["email", "password"],
+                required: ["email", "password", "fcm_token", "device_type"],
                 properties: [
                     new OA\Property(property: "email", type: "string", format: "email", example: "user@example.com"),
                     new OA\Property(property: "password", type: "string", format: "password", example: "Secret123"),
+                    new OA\Property(property: "fcm_token", type: "string", example: "fcm_token_here..."),
+                    new OA\Property(property: "device_type", type: "string", enum: ["android", "ios"], example: "android"),
                 ]
             )
         ),
@@ -343,6 +351,8 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'email' => 'required|email',
             'password' => 'required',
+            'fcm_token' => 'required|string',
+            'device_type' => 'required|string|in:android,ios',
         ]);
 
         if ($validator->fails()) {
@@ -358,6 +368,11 @@ class AuthController extends Controller
         if (!$user->email_verified_at) {
             return $this->apiResponse(true, __('Please verify your account first.'), ['verified' => false], null, 403);
         }
+
+        $user->update([
+            'fcm_token' => $request->fcm_token,
+            'device_type' => $request->device_type,
+        ]);
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -471,8 +486,6 @@ class AuthController extends Controller
                     properties: [
                         new OA\Property(property: "first_name", type: "string", example: "John"),
                         new OA\Property(property: "last_name", type: "string", example: "Doe"),
-                        new OA\Property(property: "phone", type: "string", example: "+1234567890"),
-                        new OA\Property(property: "country_code", type: "string", example: "+1"),
                         new OA\Property(property: "city", type: "string", example: "New York"),
                         new OA\Property(property: "gender", type: "string", example: "male"),
                         new OA\Property(property: "date_of_birth", type: "string", format: "date", example: "1990-01-01"),
@@ -506,8 +519,6 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'first_name' => 'sometimes|string|max:100',
             'last_name' => 'sometimes|string|max:100',
-            'phone' => 'sometimes|string|max:20|unique:users,phone,' . $user->id,
-            'country_code' => 'sometimes|string|max:10',
             'city' => 'sometimes|string|max:100',
             'gender' => 'sometimes|string|in:male,female,other',
             'date_of_birth' => 'sometimes|date',
@@ -519,7 +530,7 @@ class AuthController extends Controller
             return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
         }
 
-        $data = $request->only(['first_name', 'last_name', 'phone', 'country_code', 'city', 'gender', 'date_of_birth', 'address']);
+        $data = $request->only(['first_name', 'last_name', 'city', 'gender', 'date_of_birth', 'address']);
 
         if ($request->hasFile('profile_photo')) {
             // Delete old photo
@@ -720,6 +731,79 @@ class AuthController extends Controller
         $user->currentAccessToken()->delete();
 
         return $this->apiResponse(false, __('Password has been reset successfully.'));
+    }
+
+    #[OA\Post(
+        path: "/api/profile/change-password",
+        summary: "Change user password",
+        operationId: "changePassword",
+        description: "Changes the authenticated user's password after verifying the old password.",
+        tags: ["Profile"],
+        security: [["bearerAuth" => []]],
+        parameters: [
+            new OA\Parameter(
+                name: "Accept-Language",
+                in: "header",
+                description: "The language of the response (ar, en)",
+                required: false,
+                schema: new OA\Schema(type: "string", default: "en", enum: ["en", "ar"])
+            )
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ["old_password", "new_password", "new_password_confirmation"],
+                properties: [
+                    new OA\Property(property: "old_password", type: "string", format: "password", example: "OldSecret123"),
+                    new OA\Property(property: "new_password", type: "string", format: "password", example: "NewSecret123"),
+                    new OA\Property(property: "new_password_confirmation", type: "string", format: "password", example: "NewSecret123"),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "Password changed successfully",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "error", type: "boolean", example: false),
+                        new OA\Property(property: "message", type: "string", example: "Password changed successfully.")
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 422,
+                description: "Validation error or invalid old password",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "error", type: "boolean", example: true),
+                        new OA\Property(property: "message", type: "string", example: "Invalid old password.")
+                    ]
+                )
+            ),
+        ]
+    )]
+    public function changePassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'old_password' => 'required|string',
+            'new_password' => 'required|string|min:8|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+        }
+
+        $user = $request->user();
+
+        if (!Hash::check($request->old_password, $user->password)) {
+            return $this->apiResponse(true, __('Invalid old password.'), null, null, 422);
+        }
+
+        $user->password = Hash::make($request->new_password);
+        $user->save();
+
+        return $this->apiResponse(false, __('Password changed successfully.'));
     }
 
     /**

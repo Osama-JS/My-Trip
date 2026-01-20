@@ -153,6 +153,14 @@
                             <span class="param-name">password</span>
                             <span class="param-type">string</span>
                         </div>
+                        <div class="param-item">
+                            <span class="param-name">fcm_token</span>
+                            <span class="param-type">string</span>
+                        </div>
+                        <div class="param-item">
+                            <span class="param-name">device_type</span>
+                            <span class="param-type">enum (ios, android)</span>
+                        </div>
                     </div>
 
                     <div class="api-params">
@@ -193,6 +201,14 @@
                         <div class="param-item">
                             <span class="param-name">otp_code</span>
                             <span class="param-type">string (6 digits)</span>
+                        </div>
+                        <div class="param-item">
+                            <span class="param-name">fcm_token</span>
+                            <span class="param-type">string</span>
+                        </div>
+                        <div class="param-item">
+                            <span class="param-name">device_type</span>
+                            <span class="param-type">enum (ios, android)</span>
                         </div>
                     </div>
                 </div>
@@ -318,16 +334,51 @@
                             <span class="param-type">string</span>
                         </div>
                         <div class="param-item">
-                            <span class="param-name">phone</span>
+                            <span class="param-name">city</span>
                             <span class="param-type">string</span>
                         </div>
                         <div class="param-item">
-                            <span class="param-name">city</span>
+                            <span class="param-name">gender</span>
+                            <span class="param-type">string</span>
+                        </div>
+                        <div class="param-item">
+                            <span class="param-name">date_of_birth</span>
+                            <span class="param-type">date</span>
+                        </div>
+                        <div class="param-item">
+                            <span class="param-name">address</span>
                             <span class="param-type">string</span>
                         </div>
                         <div class="param-item">
                             <span class="param-name">profile_photo</span>
                             <span class="param-type">file (image)</span>
+                            <span class="badge badge-info">اختياري</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Change Password -->
+                <div class="api-endpoint">
+                    <div class="api-endpoint-header">
+                        <span class="api-method method-post">POST</span>
+                        <span class="api-path">/api/profile/change-password</span>
+                        <span class="badge badge-warning">Protected</span>
+                    </div>
+                    <p class="api-description">تغيير كلمة المرور من داخل الملف الشخصي</p>
+
+                    <div class="api-params">
+                        <h4>المعاملات:</h4>
+                        <div class="param-item">
+                            <span class="param-name">old_password</span>
+                            <span class="param-type">string</span>
+                        </div>
+                        <div class="param-item">
+                            <span class="param-name">new_password</span>
+                            <span class="param-type">string</span>
+                        </div>
+                        <div class="param-item">
+                            <span class="param-name">new_password_confirmation</span>
+                            <span class="param-type">string</span>
                         </div>
                     </div>
                 </div>
