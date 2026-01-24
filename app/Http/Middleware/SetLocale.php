@@ -17,12 +17,12 @@ class SetLocale
     {
         $locale = config('app.locale');
 
-        if ($request->hasHeader('Accept-Language')) {
-            $locale = $request->header('Accept-Language');
+        if (session()->has('locale')) {
+            $locale = session('locale');
         } elseif ($request->is('api/*') && $request->has('lang')) {
             $locale = $request->get('lang');
-        } elseif (session()->has('locale')) {
-            $locale = session('locale');
+        } elseif ($request->hasHeader('Accept-Language')) {
+            $locale = substr($request->header('Accept-Language'), 0, 2);
         }
 
         // Validate locale (allow only 'ar' or 'en')

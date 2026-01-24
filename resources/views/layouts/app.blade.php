@@ -9,7 +9,7 @@
     <title>@yield('title', config('app.name', 'My Trip')) - Admin Dashboard</title>
 
     <!-- Favicon -->
-    <link rel="shortcut icon" type="image/png" href="{{ asset('images/favicon.png') }}">
+    <link rel="shortcut icon" type="image/png" href="{{ asset(\App\Models\Setting::get('site_favicon', 'images/favicon.png')) }}">
 
     <!-- Global Scripts -->
     <script src="{{ asset('vendor/jquery/jquery.min.js') }}"></script>
@@ -68,7 +68,30 @@
 
     @stack('styles')
 </head>
-<body data-typography="poppins" data-theme-version="light" data-layout="horizontal" data-nav-headerbg="color_1" data-headerbg="color_1" data-sidebar-style="full" data-sidebar-position="fixed" data-header-position="fixed" data-container-layout="full">
+@php
+    $theme_version = $_COOKIE['version'] ?? 'light';
+    $typography = $_COOKIE['typography'] ?? 'poppins';
+    $layout = $_COOKIE['layout'] ?? 'vertical';
+    $nav_headerbg = $_COOKIE['navheaderBg'] ?? 'color_1';
+    $headerbg = $_COOKIE['headerBg'] ?? 'color_1';
+    $sidebarStyle = $_COOKIE['sidebarStyle'] ?? 'full';
+    $sidebarPosition = $_COOKIE['sidebarPosition'] ?? 'fixed';
+    $headerPosition = $_COOKIE['headerPosition'] ?? 'fixed';
+    $containerLayout = $_COOKIE['containerLayout'] ?? 'full';
+    $primary = $_COOKIE['primary'] ?? 'color_1';
+@endphp
+<body
+    data-typography="{{ $typography }}"
+    data-theme-version="{{ $theme_version }}"
+    data-layout="{{ $layout }}"
+    data-nav-headerbg="{{ $nav_headerbg }}"
+    data-headerbg="{{ $headerbg }}"
+    data-sidebar-style="{{ $sidebarStyle }}"
+    data-sidebar-position="{{ $sidebarPosition }}"
+    data-header-position="{{ $headerPosition }}"
+    data-container-layout="{{ $containerLayout }}"
+    data-primary="{{ $primary }}"
+>
 
     <!-- Preloader -->
     @include('partials.preloader')

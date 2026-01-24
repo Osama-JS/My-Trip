@@ -10,10 +10,10 @@
                 <div class="auth-form">
                     <div class="text-center mb-3">
                         <a href="{{ url('/') }}">
-                            <img src="{{ asset('images/logo-full.png') }}" alt="" style="max-width: 150px;">
+                            <img src="{{ asset(\App\Models\Setting::get('site_logo', 'images/logo-full.png')) }}" alt="" style="max-width: 150px;">
                         </a>
                     </div>
-                    <h4 class="text-center mb-4">Sign in your account</h4>
+                    <h4 class="text-center mb-4">{{ __('auth.login_title') }}</h4>
 
                     @if (session('status'))
                         <div class="alert alert-success mb-4">
@@ -25,7 +25,7 @@
                         @csrf
 
                         <div class="mb-3">
-                            <label class="mb-1"><strong>Email</strong></label>
+                            <label class="mb-1"><strong>{{ __('auth.email') }}</strong></label>
                             <input type="email" name="email" class="form-control" value="{{ old('email') }}" required autofocus placeholder="hello@example.com">
                             @error('email')
                                 <span class="text-danger fs-12">{{ $message }}</span>
@@ -33,34 +33,30 @@
                         </div>
 
                         <div class="mb-3">
-                            <label class="mb-1"><strong>Password</strong></label>
-                            <input type="password" name="password" class="form-control" required placeholder="Password">
+                            <label class="mb-1"><strong>{{ __('auth.password_label') }}</strong></label>
+                            <input type="password" name="password" class="form-control" required placeholder="{{ __('auth.password_label') }}">
                             @error('password')
                                 <span class="text-danger fs-12">{{ $message }}</span>
                             @enderror
                         </div>
 
-                        <div class="row d-flex justify-content-between mt-4 mb-2">
-                            <div class="mb-3">
-                                <div class="form-check custom-checkbox ms-1">
-                                    <input type="checkbox" class="form-check-input" id="remember_me" name="remember">
-                                    <label class="form-check-label" for="remember_me">Remember my preference</label>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                @if (Route::has('password.request'))
-                                    <a href="{{ route('password.request') }}">Forgot Password?</a>
-                                @endif
-                            </div>
-                        </div>
+
 
                         <div class="text-center">
-                            <button type="submit" class="btn btn-primary btn-block">Sign Me In</button>
+                            <button type="submit" class="btn btn-primary btn-block">{{ __('auth.sign_in') }}</button>
                         </div>
+
+                        <div class="text-center mt-3">
+                            @if(app()->getLocale() == 'ar')
+                                <a href="{{ route('lang.switch', 'en') }}" class="btn btn-outline-primary btn-block text-center">{{ __('auth.english') }}</a>
+                            @else
+                                <a href="{{ route('lang.switch', 'ar') }}" class="btn btn-outline-primary btn-block text-center">{{ __('auth.arabic') }}</a>
+                            @endif
+                        </div>
+
                     </form>
 
-                    <div class="new-account mt-3">
-                        <p>Don't have an account? <a class="text-primary" href="{{ route('register') }}">Sign up</a></p>
+                    <div class="new-account mt-3">.
                     </div>
                 </div>
             </div>

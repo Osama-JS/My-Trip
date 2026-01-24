@@ -4,6 +4,7 @@
 @section('page-title', __('Dashboard'))
 
 @section('content')
+
 <div class="row">
     <div class="col-xl-12">
         <div class="row">
