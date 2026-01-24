@@ -1419,6 +1419,198 @@
                 ]
             }
         },
+        "/api/flights/search": {
+            "post": {
+                "tags": [
+                    "Flights"
+                ],
+                "summary": "Search for flights",
+                "description": "Search for flight availability using Travelopro API.",
+                "operationId": "searchFlights",
+                "parameters": [
+                    {
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "description": "The language of the response (ar, en)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "en",
+                            "enum": [
+                                "en",
+                                "ar"
+                            ]
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "journeyType",
+                                    "OriginDestinationInfo",
+                                    "class",
+                                    "adults"
+                                ],
+                                "properties": {
+                                    "journeyType": {
+                                        "type": "string",
+                                        "enum": [
+                                            "OneWay",
+                                            "Return",
+                                            "Circle",
+                                            "MultiCity"
+                                        ],
+                                        "example": "OneWay"
+                                    },
+                                    "OriginDestinationInfo": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "departureDate",
+                                                "airportOriginCode",
+                                                "airportDestinationCode"
+                                            ],
+                                            "properties": {
+                                                "departureDate": {
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": "2024-12-01"
+                                                },
+                                                "returnDate": {
+                                                    "description": "Required if journeyType is Return",
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": "2024-12-10"
+                                                },
+                                                "airportOriginCode": {
+                                                    "type": "string",
+                                                    "example": "DXB"
+                                                },
+                                                "airportDestinationCode": {
+                                                    "type": "string",
+                                                    "example": "LHR"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "class": {
+                                        "type": "string",
+                                        "enum": [
+                                            "Economy",
+                                            "Business",
+                                            "First",
+                                            "PremiumEconomy"
+                                        ],
+                                        "example": "Economy"
+                                    },
+                                    "adults": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "childs": {
+                                        "type": "integer",
+                                        "example": 0
+                                    },
+                                    "infants": {
+                                        "type": "integer",
+                                        "example": 0
+                                    },
+                                    "airlineCode": {
+                                        "description": "Preferred airline code",
+                                        "type": "string",
+                                        "example": ""
+                                    },
+                                    "directFlight": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "requiredCurrency": {
+                                        "type": "string",
+                                        "example": "SAR"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful search",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Flights retrieved successfully."
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Validation failed."
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Service unavailable"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/payment/initiate": {
             "post": {
                 "tags": [
@@ -1641,6 +1833,10 @@
         {
             "name": "Profile",
             "description": "Profile"
+        },
+        {
+            "name": "Flights",
+            "description": "Flights"
         },
         {
             "name": "Payment",

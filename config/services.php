@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    'travelopro' => [
+        'user_id' => env('TRAVELOPRO_USER_ID'),
+        'password' => env('TRAVELOPRO_PASSWORD'),
+        'access' => env('TRAVELOPRO_ACCESS', 'Test'),
+        'url' => 'https://travelnext.works/api/aeroVE5/availability',
+    ],
+
+
 ];

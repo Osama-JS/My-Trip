@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }}">
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -9,7 +9,7 @@
     <title>@yield('title', 'Login') - {{ config('app.name', 'My Trip') }}</title>
 
     <!-- Favicon -->
-    <link rel="shortcut icon" type="image/png" href="{{ asset('images/favicon.png') }}">
+    <link rel="shortcut icon" type="image/png" href="{{ asset(\App\Models\Setting::get('site_favicon', 'images/favicon.png')) }}">
 
     <!-- Global Scripts -->
     <script src="{{ asset('vendor/jquery/jquery.min.js') }}"></script>
@@ -36,6 +36,31 @@
 
     <!-- Vite CSS -->
     @vite(['resources/css/app.css'])
+
+    @if(app()->getLocale() == 'ar')
+        <style>
+            body {
+                direction: rtl;
+                text-align: right;
+            }
+            .form-control {
+                text-align: right;
+            }
+            .form-check {
+                padding-right: 1.5em;
+                padding-left: 0;
+            }
+            .form-check-input {
+                float: right;
+                margin-right: -1.5em;
+                margin-left: 0;
+            }
+            /* Fix for icons if needed, though they might be fine */
+            .input-group-text {
+
+            }
+        </style>
+    @endif
 </head>
 <body class="vh-100">
     <div class="authincation h-100">

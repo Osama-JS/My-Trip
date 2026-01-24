@@ -9,3 +9,23 @@
 @import "./template/pages.css";
 
 /* Custom Styles */
+@font-face {
+    font-family: "Tajawal";
+    src: url("../fonts/tajawal.ttf") format("truetype");
+}
+
+body,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.h1,
+.h2,
+.h3,
+.h4,
+.h5,
+.h6 {
+    font-family: "Tajawal", sans-serif !important;
+}

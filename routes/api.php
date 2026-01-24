@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AppSettingController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\FlightController;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,6 +29,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/profile/change-password', [AuthController::class, 'changePassword']);
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
     Route::post('/update-fcm-token', [AuthController::class, 'updateFcmToken']);
+
+    // Flight Routes
+    Route::post('/flights/search', [FlightController::class, 'search']);
 
     // Payment Routes
     Route::prefix('payment')->group(function () {
