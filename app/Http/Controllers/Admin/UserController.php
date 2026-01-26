@@ -73,6 +73,32 @@ class UserController extends Controller
         ]);
     }
 
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'first_name'   => 'required|string|max:100',
+            'last_name'    => 'required|string|max:100',
+            'email'        => 'required|email|unique:users,email',
+            'phone'        => 'nullable|string|unique:users,phone',
+            'country_code' => 'nullable|string|max:10',
+            'password'     => 'required|min:8',
+            'status'       => 'required|in:active,inactive',
+        ]);
+
+        $validated['password'] = Hash::make($request->password);
+
+        User::create($validated);
+
+        // dd($request->all());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'User created successfully'
+        ]);
+    }
+
+
     /**
      * Update the specified resource in storage.
      */

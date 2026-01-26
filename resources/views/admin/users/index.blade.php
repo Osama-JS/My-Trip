@@ -15,6 +15,9 @@
             <div class="card">
                 <div class="card-header">
                     <h4 class="card-title">{{ __('User Management') }}</h4>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal" onclick="resetForm()">
+                         <i class="fa fa-plus me-2"></i> Add User
+                     </button>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -49,6 +52,74 @@
                 <!-- Data loaded via AJAX -->
               
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- <form action="{{ route('admin.users.store') }}" method="POST">
+    @csrf
+
+    <button type="submit" class="btn btn-primary">
+        Add User
+    </button>
+</form> -->
+
+<!-- Add User Modal -->
+<div class="modal fade" id="addUserModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ __('Add User') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addUserForm">
+                @csrf
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ __('First Name') }}</label>
+                            <input type="text" name="first_name"  class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ __('Last Name') }}</label>
+                            <input type="text" name="last_name"  class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ __('Email') }}</label>
+                        <input type="email" name="email"  class="form-control" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">{{ __('Code') }}</label>
+                            <input type="text" name="country_code"  class="form-control" placeholder="+1">
+                        </div>
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label">{{ __('Phone') }}</label>
+                            <input type="text" name="phone"  class="form-control">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ __('City') }}</label>
+                        <input type="text" name="city"  class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ __('Status') }}</label>
+                        <select name="status"  class="form-control" required>
+                            <option value="active">{{ __('Active') }}</option>
+                            <option value="inactive">{{ __('Inactive') }}</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ __('Password') }}</label>
+                        <input type="password" name="password" class="form-control">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger light" data-bs-dismiss="modal">{{ __('Close') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ __('Add User') }}</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -156,7 +227,33 @@ $(document).ready(function() {
         }
     });
 
-
+        $('#addUserForm').on('submit', function (e) {
+            e.preventDefault();
+            $.ajax({
+                url: "{{ route('admin.users.store') }}",
+                type: "POST",
+                data: $(this).serialize(),
+                success: function (response) {
+                    if (response.success) {
+                        console.log(response);
+                        $('#addUserModal').modal('hide');
+                        $('#addUserForm')[0].reset();
+                        usersTable.ajax.reload(null, false);
+                        toastr.success(response.message);
+                    }
+                },
+                error: function (xhr) {
+                    if (xhr.status === 422) {
+                        let errors = xhr.responseJSON.errors;
+                        Object.values(errors).forEach(err => {
+                            toastr.error(err[0]);
+                        });
+                    } else {
+                        toastr.error('Something went wrong');
+                    }
+                }
+            });
+        });
      // Handle Edit Form Submit
         $('#editUserForm').on('submit', function(e) {
             e.preventDefault();
