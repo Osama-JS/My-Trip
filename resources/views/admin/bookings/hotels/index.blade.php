@@ -76,10 +76,9 @@
         </div>
     </div>
 </div>
-@endsection
-
 @push('styles')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJbhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<!-- <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"  crossorigin=""/> -->
 @endpush
 
 @push('scripts')
@@ -115,3 +114,6 @@
     }
 </script>
 @endpush
+
+@endsection
+

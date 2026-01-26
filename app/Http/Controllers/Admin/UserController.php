@@ -56,8 +56,10 @@ class UserController extends Controller
                 ];
             })
         ]);
+        
     }
 
+   
     /**
      * Display the specified resource.
      */
@@ -106,7 +108,13 @@ class UserController extends Controller
     public function toggleStatus(User $user)
     {
         $newStatus = $user->status === 'active' ? 'inactive' : 'active';
-        $user->update(['status' => $newStatus]);
+        $updated = $user->update(['status' => $newStatus]);
+
+        // dd([
+        //     'user_id' => $user->id,
+        //     'new_status' => $newStatus,
+        //     'updated' => $updated
+        // ]);
 
         return response()->json([
             'success' => true,

@@ -59,16 +59,18 @@
         </div>
     </div>
 </div>
-@endsection
-
 @push('scripts')
 <script>
     $(document).ready(function() {
         $('#hotelRequestsTable').DataTable({
             language: {
                 url: '{{ app()->getLocale() == 'ar' ? "//cdn.datatables.net/plug-ins/1.13.4/i18n/ar.json" : "" }}'
+                // url: "{{ app()->getLocale() == 'ar' ? asset('build/ar.json') : '' }}" 
             }
         });
     });
 </script>
 @endpush
+@endsection
+
+

@@ -71,9 +71,12 @@
         </div>
     </div>
 </div>
-@endsection
-
 @push('scripts')
+<script>
+    var addRoleUrl = "{{ route('admin.roles.store') }}";
+    var updateRoleUrl  = "{{ route('admin.roles.update', ':id') }}";
+    var editRoleUrl = "{{ route('admin.roles.edit', ':id') }}";
+</script>
 <script>
     let roleTable = $('#roleTable').DataTable({
         ajax: '{{ route('admin.roles.data') }}',
@@ -100,7 +103,8 @@
     }
 
     function editRole(id) {
-        $.get(`/admin/roles/${id}/edit`, function(data) {
+        url = editRoleUrl.replace(':id', id);
+        $.get(url, function(data) {
             if (data.success) {
                 $('#role_id').val(data.role.id);
                 $('#name').val(data.role.name);
@@ -118,7 +122,8 @@
     $('#roleForm').on('submit', function(e) {
         e.preventDefault();
         const id = $('#role_id').val();
-        const url = id ? `/admin/roles/${id}` : '/admin/roles';
+        const updateId = updateRoleUrl.replace(':id', id);
+        const url = id ? updateId : addRoleUrl;
         const method = id ? 'PUT' : 'POST';
 
         $.ajax({
@@ -144,6 +149,8 @@
     });
 
     function deleteRole(id) {
+        let url = "{{ route('admin.roles.destroy', ':id') }}";
+        url = url.replace(':id', id);
         Swal.fire({
             title: '{{ __('Are you sure?') }}',
             text: "{{ __('All users with this role will lose its permissions!') }}",
@@ -154,9 +161,9 @@
             confirmButtonText: '{{ __('Yes, delete it!') }}',
             cancelButtonText: '{{ __('Cancel') }}'
         }).then((result) => {
-            if (result.isConfirmed) {
+            if (result.value) {
                 $.ajax({
-                    url: `/admin/roles/${id}`,
+                    url: url,
                     method: 'DELETE',
                     data: { _token: '{{ csrf_token() }}' },
                     success: function(response) {
@@ -171,6 +178,8 @@
     }
 </script>
 @endpush
+@endsection
+
 
 @push('styles')
 <link href="{{ asset('vendor/sweetalert2/dist/sweetalert2.min.css') }}" rel="stylesheet">

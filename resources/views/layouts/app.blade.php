@@ -13,15 +13,18 @@
 
     <!-- Global Scripts -->
     <script src="{{ asset('vendor/jquery/jquery.min.js') }}"></script>
+    <link href="{{ asset('vendor/sweetalert2/dist/sweetalert2.min.css') }}" rel="stylesheet">
+     <script src="{{ asset('vendor/sweetalert2/dist/sweetalert2.min.js') }}"></script>
+
+     <link href="{{ asset('vendor/datatables/css/jquery.dataTables.min.css') }}" rel="stylesheet">
     <script src="{{ asset('vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ asset('vendor/jquery-nice-select/js/jquery.nice-select.min.js') }}"></script>
     <script src="{{ asset('vendor/metismenu/js/metisMenu.min.js') }}"></script>
     <script src="{{ asset('vendor/perfect-scrollbar/js/perfect-scrollbar.min.js') }}"></script>
     <script src="{{ asset('vendor/datatables/js/jquery.dataTables.min.js') }}"></script>
     <script src="{{ asset('vendor/toastr/js/toastr.min.js') }}"></script>
-    <link href="{{ asset('vendor/sweetalert2/dist/sweetalert2.min.css') }}" rel="stylesheet">
-    <script src="{{ asset('vendor/sweetalert2/dist/sweetalert2.min.js') }}"></script>
-
+    
+   
     <!-- Global Variables for Template -->
     <script>
         window.bootstrap = bootstrap;
@@ -42,7 +45,7 @@
 
     <!-- Custom Stylesheet -->
     <link href="{{ asset('vendor/jquery-nice-select/css/nice-select.css') }}" rel="stylesheet">
-    <link href="{{ asset('vendor/datatables/css/jquery.dataTables.min.css') }}" rel="stylesheet">
+   
     <link href="{{ asset('vendor/owl-carousel/owl.carousel.css') }}" rel="stylesheet">
     <link href="{{ asset('vendor/bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css') }}" rel="stylesheet">
     <link href="{{ asset('vendor/animate/animate.min.css') }}" rel="stylesheet">
@@ -135,7 +138,7 @@
         <!-- Footer -->
         @include('partials.footer')
     </div>
-
+    
     <!-- Vite JS -->
     @vite(['resources/js/app.js'])
 

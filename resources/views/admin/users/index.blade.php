@@ -9,6 +9,7 @@
         </ol>
     </div>
 
+
     <div class="row">
         <div class="col-12">
             <div class="card">
@@ -46,6 +47,7 @@
             </div>
             <div class="modal-body" id="viewUserBody">
                 <!-- Data loaded via AJAX -->
+              
             </div>
         </div>
     </div>
@@ -112,18 +114,18 @@
         </div>
     </div>
 </div>
-
-@endsection
-
-@section('scripts')
+<script>
+    var usersDataUrl = "{{ route('admin.users.data') }}";
+    let updateUserUrl  = "{{ route('admin.users.update', ':id') }}";
+    let toggleStatusUrlTemplate = "{{ route('admin.users.toggle-status', ':id') }}";
+</script>
 <script>
     let usersTable;
-
-    $(document).ready(function() {
-        usersTable = $('#users-table').DataTable({
+$(document).ready(function() {
+    usersTable = $('#users-table').DataTable({
             processing: true,
             serverSide: false, // Set to true if huge data
-            ajax: "{{ route('admin.users.data') }}",
+            ajax: usersDataUrl,
             columns: [
                 { data: 'photo' },
                 { data: 'info' },
@@ -137,14 +139,33 @@
             }
         });
 
-        // Handle Edit Form Submit
+        $.get("{{ route('admin.users.data') }}", function(response) {
+        console.log('Full Response from Controller:', response);
+
+        // تحقق من أن response.data موجودة
+        if(response.data && Array.isArray(response.data)) {
+            response.data.forEach(user => {
+                console.log('User ID:', user.id);
+                console.log('Name:', user.name);
+                console.log('Email:', user.email);
+                console.log('Phone:', user.phone);
+                console.log('---'); // للفصل بين المستخدمين
+            });
+        } else {
+            console.log('No data found or wrong JSON format');
+        }
+    });
+
+
+     // Handle Edit Form Submit
         $('#editUserForm').on('submit', function(e) {
             e.preventDefault();
             const id = $('#edit_user_id').val();
-            const formData = $(this).serialize();
+            const url = updateUserUrl.replace(':id', id);
+            const formData = $(this).serialize() + '&_method=PUT';
 
             $.ajax({
-                url: `/admin/users/${id}`,
+                url: url,
                 method: 'POST',
                 data: formData,
                 success: function(response) {
@@ -166,10 +187,14 @@
                 }
             });
         });
-    });
+    
+});
 
-    function viewUser(id) {
-        $.get(`/admin/users/${id}`, function(response) {
+
+function viewUser(id) {
+        let url = "{{ route('admin.users.show', ':id') }}";
+        url = url.replace(':id', id);
+        $.get(url, function(response) {
             if (response.success) {
                 const user = response.user;
                 const html = `
@@ -199,8 +224,15 @@
         });
     }
 
+    
+
     function editUser(id) {
-        $.get(`/admin/users/${id}`, function(response) {
+        let url = "{{ route('admin.users.show', ':id') }}";
+        url = url.replace(':id', id);
+
+        $.get(url, function(response) {
+            console.log(response);
+
             if (response.success) {
                 const user = response.user;
                 $('#edit_user_id').val(user.id);
@@ -217,6 +249,7 @@
     }
 
     function toggleUserStatus(id) {
+        const url = "{{ route('admin.users.toggle-status', ':id') }}".replace(':id', id);
         Swal.fire({
             title: '{{ __("Are you sure?") }}',
             text: '{{ __("Do you want to toggle this user status?") }}',
@@ -226,12 +259,12 @@
             cancelButtonColor: '#d33',
             confirmButtonText: '{{ __("Yes, Change it!") }}'
         }).then((result) => {
-            if (result.isConfirmed) {
+            if (result.value) {
                 $.ajax({
-                    url: `/admin/users/${id}/toggle-status`,
+                    url: url,
                     method: 'POST',
                     data: {
-                        _token: '{{ csrf_token() }}'
+                        _token: $('meta[name="csrf-token"]').attr('content')
                     },
                     success: function(response) {
                         if (response.success) {
@@ -245,6 +278,8 @@
     }
 
     function deleteUser(id) {
+        let url = "{{ route('admin.users.show', ':id') }}";
+        url = url.replace(':id', id);
         Swal.fire({
             title: '{{ __("Delete Account?") }}',
             text: '{{ __("This action cannot be undone!") }}',
@@ -254,9 +289,9 @@
             cancelButtonColor: '#3085d6',
             confirmButtonText: '{{ __("Yes, delete it!") }}'
         }).then((result) => {
-            if (result.isConfirmed) {
+            if (result.value) {
                 $.ajax({
-                    url: `/admin/users/${id}`,
+                    url: url,
                     method: 'POST',
                     data: {
                         _token: '{{ csrf_token() }}',
@@ -272,5 +307,16 @@
             }
         });
     }
+</script>
+
+@endsection
+
+@section('scripts')
+    
+ 
+<script>
+   
+    
+    
 </script>
 @endsection

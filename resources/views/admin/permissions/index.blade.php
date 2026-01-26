@@ -57,9 +57,15 @@
         </div>
     </div>
 </div>
-@endsection
-
+@push('styles')
+<link href="{{ asset('vendor/sweetalert2/dist/sweetalert2.min.css') }}" rel="stylesheet">
+@endpush
 @push('scripts')
+<script>
+    var addPermissionsUrl = "{{ route('admin.permissions.store') }}";
+    var updatePermissionsUrl  = "{{ route('admin.permissions.update', ':id') }}";
+    var editPermissionsUrl = "{{ route('admin.permissions.edit', ':id') }}";
+</script>
 <script>
     let permissionTable = $('#permissionTable').DataTable({
         ajax: '{{ route('admin.permissions.data') }}',
@@ -84,7 +90,8 @@
     }
 
     function editPermission(id) {
-        $.get(`/admin/permissions/${id}/edit`, function(data) {
+        url = editPermissionsUrl.replace(':id', id);
+        $.get(url, function(data) {
             if (data.success) {
                 $('#permission_id').val(data.permission.id);
                 $('#name').val(data.permission.name);
@@ -98,7 +105,8 @@
     $('#permissionForm').on('submit', function(e) {
         e.preventDefault();
         const id = $('#permission_id').val();
-        const url = id ? `/admin/permissions/${id}` : '/admin/permissions';
+        const updatePermissionsUrlId = updatePermissionsUrl.replace(':id', id);
+        const url = id ? updatePermissionsUrlId : addPermissionsUrl;
         const method = id ? 'PUT' : 'POST';
 
         $.ajax({
@@ -124,6 +132,8 @@
     });
 
     function deletePermission(id) {
+        let url = "{{ route('admin.permissions.destroy', ':id') }}";
+        url = url.replace(':id', id);
         Swal.fire({
             title: '{{ __('Are you sure?') }}',
             text: "{{ __('You won\'t be able to revert this!') }}",
@@ -134,9 +144,9 @@
             confirmButtonText: '{{ __('Yes, delete it!') }}',
             cancelButtonText: '{{ __('Cancel') }}'
         }).then((result) => {
-            if (result.isConfirmed) {
+            if (result.value) {
                 $.ajax({
-                    url: `/admin/permissions/${id}`,
+                    url: url,
                     method: 'DELETE',
                     data: { _token: '{{ csrf_token() }}' },
                     success: function(response) {
@@ -152,6 +162,10 @@
 </script>
 @endpush
 
-@push('styles')
-<link href="{{ asset('vendor/sweetalert2/dist/sweetalert2.min.css') }}" rel="stylesheet">
-@endpush
+
+
+@endsection
+
+
+
+
