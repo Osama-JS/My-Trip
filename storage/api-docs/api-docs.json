@@ -1611,6 +1611,454 @@
                 }
             }
         },
+        "/api/flights/airports": {
+            "get": {
+                "tags": [
+                    "Flights"
+                ],
+                "summary": "Get list of airports",
+                "description": "Retrieve a list of supported airports from Travelopro.",
+                "operationId": "getAirports",
+                "parameters": [
+                    {
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "description": "The language of the response (ar, en)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "en",
+                            "enum": [
+                                "en",
+                                "ar"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful retrieval",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Airports retrieved successfully."
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "AirportCode": {
+                                                        "type": "string",
+                                                        "example": "DXB"
+                                                    },
+                                                    "AirportName": {
+                                                        "type": "string",
+                                                        "example": "Dubai International Airport"
+                                                    },
+                                                    "City": {
+                                                        "type": "string",
+                                                        "example": "Dubai"
+                                                    },
+                                                    "Country": {
+                                                        "type": "string",
+                                                        "example": "United Arab Emirates"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/flights/airlines": {
+            "get": {
+                "tags": [
+                    "Flights"
+                ],
+                "summary": "Get list of airlines",
+                "description": "Retrieve a list of supported airlines from Travelopro.",
+                "operationId": "getAirlines",
+                "parameters": [
+                    {
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "description": "The language of the response (ar, en)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "en",
+                            "enum": [
+                                "en",
+                                "ar"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful retrieval",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Airlines retrieved successfully."
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "AirLineCode": {
+                                                        "type": "string",
+                                                        "example": "EK"
+                                                    },
+                                                    "AirLineName": {
+                                                        "type": "string",
+                                                        "example": "Emirates"
+                                                    },
+                                                    "AirLineLogo": {
+                                                        "type": "string",
+                                                        "example": "https://travelnext.works/api/airlines/EK.gif"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/flights/validate-fare": {
+            "post": {
+                "tags": [
+                    "Flights"
+                ],
+                "summary": "Validate flight fare",
+                "description": "Verify if the selected flight fare is still available.",
+                "operationId": "validateFare",
+                "parameters": [
+                    {
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "description": "The language of the response (ar, en)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "en",
+                            "enum": [
+                                "en",
+                                "ar"
+                            ]
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "session_id",
+                                    "fare_source_code"
+                                ],
+                                "properties": {
+                                    "session_id": {
+                                        "type": "string",
+                                        "example": "7906efba-09db-4481-8c60-0d7f5b5e6c44"
+                                    },
+                                    "fare_source_code": {
+                                        "type": "string",
+                                        "example": "MTY2ODE2Njg2Ml8yNjA5Mzk"
+                                    },
+                                    "fare_source_code_inbound": {
+                                        "type": "string",
+                                        "example": ""
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Fare validated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Fare is valid."
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/flights/book": {
+            "post": {
+                "tags": [
+                    "Flights"
+                ],
+                "summary": "Create flight booking (PNR)",
+                "description": "Create a PNR using passenger details.",
+                "operationId": "bookFlight",
+                "parameters": [
+                    {
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "description": "The language of the response (ar, en)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "en",
+                            "enum": [
+                                "en",
+                                "ar"
+                            ]
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "flight_session_id",
+                                    "fare_source_code",
+                                    "customerEmail",
+                                    "customerPhone",
+                                    "passengers"
+                                ],
+                                "properties": {
+                                    "flight_session_id": {
+                                        "type": "string"
+                                    },
+                                    "fare_source_code": {
+                                        "type": "string"
+                                    },
+                                    "customerEmail": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "customerPhone": {
+                                        "type": "string"
+                                    },
+                                    "passengers": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Booking created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Booking created successfully."
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/flights/order-ticket": {
+            "post": {
+                "tags": [
+                    "Flights"
+                ],
+                "summary": "Order ticket",
+                "description": "Issue ticket for a confirmed booking.",
+                "operationId": "orderTicket",
+                "parameters": [
+                    {
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "description": "The language of the response (ar, en)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "en",
+                            "enum": [
+                                "en",
+                                "ar"
+                            ]
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "uniqueId"
+                                ],
+                                "properties": {
+                                    "uniqueId": {
+                                        "type": "string",
+                                        "example": "TR123456"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Ticket ordered",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ticket ordered successfully."
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/flights/trip-details": {
+            "post": {
+                "tags": [
+                    "Flights"
+                ],
+                "summary": "Get trip details",
+                "description": "Get full details of a trip including ticket numbers.",
+                "operationId": "getTripDetails",
+                "parameters": [
+                    {
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "description": "The language of the response (ar, en)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "en",
+                            "enum": [
+                                "en",
+                                "ar"
+                            ]
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "uniqueId"
+                                ],
+                                "properties": {
+                                    "uniqueId": {
+                                        "type": "string",
+                                        "example": "TR123456"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Trip details retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Trip details retrieved successfully."
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/payment/initiate": {
             "post": {
                 "tags": [
