@@ -59,6 +59,11 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     Route::group(['prefix' => 'bookings', 'as' => 'bookings.'], function() {
         // Flights
         Route::get('flights/available', [BookingController::class, 'availableFlights'])->name('flights.available');
+        Route::post('flights/search', [BookingController::class, 'searchFlights'])->name('flights.search');
+        Route::post('flights/validate', [BookingController::class, 'validateFare'])->name('flights.validate');
+        Route::post('flights/book', [BookingController::class, 'createBooking'])->name('flights.book');
+        Route::get('flights/airports', [BookingController::class, 'getAirports'])->name('flights.airports');
+        Route::get('flights/airlines', [BookingController::class, 'getAirlines'])->name('flights.airlines');
         Route::get('flights/requests', [BookingController::class, 'flightRequests'])->name('flights.requests');
         Route::get('flights/ongoing', [BookingController::class, 'ongoingFlights'])->name('flights.ongoing');
 
