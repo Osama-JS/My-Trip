@@ -28,22 +28,21 @@ class TraveloproService
      */
     public function searchFlights(array $data)
     {
-        // Construct the payload with all available fields
+        // Construct the payload with ALL 13 fields mentioned in travelopro.txt
         $payload = [
             'user_id' => $this->userId,
             'user_password' => $this->password,
             'access' => $this->access,
-            'ip_address' => request()->ip(), // Get user's IP
-            'requiredCurrency' => $data['requiredCurrency'] ?? 'SAR',
-            'journeyType' => $data['journeyType'],
+            'ip_address' => request()->ip() ?? '127.0.0.1',
+            'requiredCurrency' => $data['requiredCurrency'] ?? 'USD',
+            'journeyType' => $data['journeyType'] ?? 'OneWay', // OneWay, Return, Circle
             'OriginDestinationInfo' => $this->formatItinerary($data['OriginDestinationInfo']),
-            'class' => $data['class'] ?? 'Economy',
-            'adults' => $data['adults'] ?? 1,
-            'childs' => $data['childs'] ?? 0,
-            'infants' => $data['infants'] ?? 0,
-            // Optional fields included even if null/default
+            'class' => $data['class'] ?? 'Economy', // First, Business, Economy, PremiumEconomy
+            'adults' => (int) ($data['adults'] ?? 1),
+            'childs' => (int) ($data['childs'] ?? 0),
+            'infants' => (int) ($data['infants'] ?? 0),
             'airlineCode' => $data['airlineCode'] ?? '',
-            'directFlight' => $data['directFlight'] ?? 'false',
+            'directFlight' => (int) ($data['directFlight'] ?? 0), // 0 or 1
         ];
 
         // Log request for debugging (remove sensitive data in production)
@@ -86,22 +85,20 @@ class TraveloproService
      */
     private function formatItinerary(array $itineraries)
     {
-        // Ensure structure matches Travelopro expectation
-        // Example:
-        // [
-        //    [
-        //        "departureDate" => "2023-02-19",
-        //        "airportOriginCode" => "DEL",
-        //        "airportDestinationCode" => "BOM"
-        //    ]
-        // ]
+        // Ensure structure matches Travelopro expectation (travelopro.txt)
         return array_map(function ($segment) {
-            return [
-                'departureDate' => $segment['departureDate'],
-                'returnDate' => $segment['returnDate'] ?? '', // Required for Return journeyType
-                'airportOriginCode' => $segment['airportOriginCode'],
-                'airportDestinationCode' => $segment['airportDestinationCode'],
+            $formatted = [
+                'departureDate' => $segment['departureDate'], // YYYY-MM-DD
+                'airportOriginCode' => $segment['airportOriginCode'], // Three letter code
+                'airportDestinationCode' => $segment['airportDestinationCode'], // Three letter code
             ];
+
+            // returnDate is mandatory for Return journeyType
+            if (isset($segment['returnDate']) && !empty($segment['returnDate'])) {
+                $formatted['returnDate'] = $segment['returnDate'];
+            }
+
+            return $formatted;
         }, $itineraries);
     }
 

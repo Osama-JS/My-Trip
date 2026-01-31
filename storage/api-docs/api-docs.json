@@ -1424,14 +1424,14 @@
                 "tags": [
                     "Flights"
                 ],
-                "summary": "Search for flights",
-                "description": "Search for flight availability using Travelopro API.",
+                "summary": "البحث عن الرحلات (Search for flights)",
+                "description": "البحث عن رحلات الطيران المتاحة عبر Travelopro API مع عرض كافة التفاصيل والأسعار. (Search for flight availability using Travelopro API).",
                 "operationId": "searchFlights",
                 "parameters": [
                     {
                         "name": "Accept-Language",
                         "in": "header",
-                        "description": "The language of the response (ar, en)",
+                        "description": "لغة الاستجابة (ar, en)",
                         "required": false,
                         "schema": {
                             "type": "string",
@@ -1460,8 +1460,7 @@
                                         "enum": [
                                             "OneWay",
                                             "Return",
-                                            "Circle",
-                                            "MultiCity"
+                                            "Circle"
                                         ],
                                         "example": "OneWay"
                                     },
@@ -1500,9 +1499,9 @@
                                     "class": {
                                         "type": "string",
                                         "enum": [
-                                            "Economy",
-                                            "Business",
                                             "First",
+                                            "Business",
+                                            "Economy",
                                             "PremiumEconomy"
                                         ],
                                         "example": "Economy"
@@ -1519,18 +1518,19 @@
                                         "type": "integer",
                                         "example": 0
                                     },
+                                    "requiredCurrency": {
+                                        "type": "string",
+                                        "example": "SAR"
+                                    },
                                     "airlineCode": {
-                                        "description": "Preferred airline code",
+                                        "description": "Two letter code of the preferred airline",
                                         "type": "string",
                                         "example": ""
                                     },
                                     "directFlight": {
+                                        "description": "True for only direct flights, false for all (or 1/0)",
                                         "type": "boolean",
                                         "example": false
-                                    },
-                                    "requiredCurrency": {
-                                        "type": "string",
-                                        "example": "SAR"
                                     }
                                 },
                                 "type": "object"
@@ -1540,7 +1540,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Successful search",
+                        "description": "تم استرجاع الرحلات بنجاح",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1563,7 +1563,7 @@
                         }
                     },
                     "422": {
-                        "description": "Validation error",
+                        "description": "خطأ في التحقق من البيانات",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1575,29 +1575,6 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Validation failed."
-                                        },
-                                        "data": {
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Server error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Service unavailable"
                                         },
                                         "data": {
                                             "type": "object"
@@ -1756,14 +1733,14 @@
                 "tags": [
                     "Flights"
                 ],
-                "summary": "Validate flight fare",
-                "description": "Verify if the selected flight fare is still available.",
+                "summary": "التحقق من صحة السعر (Validate flight fare)",
+                "description": "التحقق مما إذا كان سعر الرحلة المحدد لا يزال متاحاً وصحيحاً قبل البدء بعملية الحجز. (Verify if the selected flight fare is still available).",
                 "operationId": "validateFare",
                 "parameters": [
                     {
                         "name": "Accept-Language",
                         "in": "header",
-                        "description": "The language of the response (ar, en)",
+                        "description": "لغة الاستجابة (ar, en)",
                         "required": false,
                         "schema": {
                             "type": "string",
@@ -1794,6 +1771,7 @@
                                         "example": "MTY2ODE2Njg2Ml8yNjA5Mzk"
                                     },
                                     "fare_source_code_inbound": {
+                                        "description": "Required for Indian Domestic RoundTrip",
                                         "type": "string",
                                         "example": ""
                                     }
@@ -1805,7 +1783,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Fare validated",
+                        "description": "تم التحقق من السعر بنجاح",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1826,6 +1804,29 @@
                                 }
                             }
                         }
+                    },
+                    "422": {
+                        "description": "السعر غير متاح أو خطأ في البيانات",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Fare is no longer valid or available."
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -1835,14 +1836,14 @@
                 "tags": [
                     "Flights"
                 ],
-                "summary": "Create flight booking (PNR)",
-                "description": "Create a PNR using passenger details.",
+                "summary": "إنشاء سجل حجز PNR (Create flight booking)",
+                "description": "إنشاء سجل حجز (PNR) مبدئي وحفظ بيانات المسافرين قبل عملية الدفع وإصدار التذكرة. (Create a PNR using passenger details).",
                 "operationId": "bookFlight",
                 "parameters": [
                     {
                         "name": "Accept-Language",
                         "in": "header",
-                        "description": "The language of the response (ar, en)",
+                        "description": "لغة الاستجابة (ar, en)",
                         "required": false,
                         "schema": {
                             "type": "string",
@@ -1868,21 +1869,104 @@
                                 ],
                                 "properties": {
                                     "flight_session_id": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "example": "7906efba-09db-4481-8c60-0d7f5b5e6c44"
                                     },
                                     "fare_source_code": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "example": "MTY2ODE2Njg2Ml8yNjA5Mzk"
+                                    },
+                                    "fare_source_code_inbound": {
+                                        "type": "string",
+                                        "example": ""
                                     },
                                     "customerEmail": {
                                         "type": "string",
-                                        "format": "email"
+                                        "format": "email",
+                                        "example": "test@example.com"
                                     },
                                     "customerPhone": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "example": "966500000000"
+                                    },
+                                    "areaCode": {
+                                        "type": "string",
+                                        "example": "080"
+                                    },
+                                    "countryCode": {
+                                        "type": "string",
+                                        "example": "966"
+                                    },
+                                    "fareType": {
+                                        "type": "string",
+                                        "example": "Private"
+                                    },
+                                    "bookingNote": {
+                                        "type": "string",
+                                        "example": ""
                                     },
                                     "passengers": {
                                         "type": "array",
                                         "items": {
+                                            "required": [
+                                                "type",
+                                                "title",
+                                                "first_name",
+                                                "last_name",
+                                                "dob",
+                                                "nationality"
+                                            ],
+                                            "properties": {
+                                                "type": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "adult",
+                                                        "child",
+                                                        "infant"
+                                                    ],
+                                                    "example": "adult"
+                                                },
+                                                "title": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "Mr",
+                                                        "Mrs",
+                                                        "Miss",
+                                                        "Master"
+                                                    ],
+                                                    "example": "Mr"
+                                                },
+                                                "first_name": {
+                                                    "type": "string",
+                                                    "example": "John"
+                                                },
+                                                "last_name": {
+                                                    "type": "string",
+                                                    "example": "Doe"
+                                                },
+                                                "dob": {
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": "1990-01-01"
+                                                },
+                                                "nationality": {
+                                                    "type": "string",
+                                                    "example": "SA"
+                                                },
+                                                "passport_no": {
+                                                    "type": "string",
+                                                    "example": "A1234567"
+                                                },
+                                                "passport_issue_country": {
+                                                    "type": "string",
+                                                    "example": "SA"
+                                                },
+                                                "passport_expiry_date": {
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": "2030-01-01"
+                                                }
+                                            },
                                             "type": "object"
                                         }
                                     }
@@ -1894,7 +1978,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Booking created",
+                        "description": "تم إنشاء سجل الحجز بنجاح",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1915,6 +1999,29 @@
                                 }
                             }
                         }
+                    },
+                    "422": {
+                        "description": "خطأ في بيانات المسافرين أو الطلب",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Validation failed."
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -1924,14 +2031,14 @@
                 "tags": [
                     "Flights"
                 ],
-                "summary": "Order ticket",
-                "description": "Issue ticket for a confirmed booking.",
+                "summary": "إصدار التذكرة (Order ticket / Issuance)",
+                "description": "إصدار التذكرة النهائية وحجزها بشكل قطعي بعد عملية الحجز المبدئي (PNR) والتأكد من الدفع. (Issue ticket for a confirmed booking).",
                 "operationId": "orderTicket",
                 "parameters": [
                     {
                         "name": "Accept-Language",
                         "in": "header",
-                        "description": "The language of the response (ar, en)",
+                        "description": "لغة الاستجابة (ar, en)",
                         "required": false,
                         "schema": {
                             "type": "string",
@@ -1953,6 +2060,7 @@
                                 ],
                                 "properties": {
                                     "uniqueId": {
+                                        "description": "The UniqueID returned from the booking response",
                                         "type": "string",
                                         "example": "TR123456"
                                     }
@@ -1964,7 +2072,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Ticket ordered",
+                        "description": "تم إصدار التذكرة بنجاح",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1985,6 +2093,29 @@
                                 }
                             }
                         }
+                    },
+                    "422": {
+                        "description": "خطأ في البيانات المرسلة",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Validation failed."
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -1994,14 +2125,14 @@
                 "tags": [
                     "Flights"
                 ],
-                "summary": "Get trip details",
-                "description": "Get full details of a trip including ticket numbers.",
+                "summary": "تفاصيل الرحلة المحجوزة (Get trip details)",
+                "description": "استرجاع كافة تفاصيل الرحلة، بما في ذلك أرقام التذاكر وحالة الحجز النهائية. (Get full details of a trip including ticket numbers).",
                 "operationId": "getTripDetails",
                 "parameters": [
                     {
                         "name": "Accept-Language",
                         "in": "header",
-                        "description": "The language of the response (ar, en)",
+                        "description": "لغة الاستجابة (ar, en)",
                         "required": false,
                         "schema": {
                             "type": "string",
@@ -2023,6 +2154,7 @@
                                 ],
                                 "properties": {
                                     "uniqueId": {
+                                        "description": "The UniqueID returned from the booking response",
                                         "type": "string",
                                         "example": "TR123456"
                                     }
@@ -2034,7 +2166,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Trip details retrieved",
+                        "description": "تم استرجاع تفاصيل الرحلة بنجاح",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2046,6 +2178,29 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Trip details retrieved successfully."
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "خطأ في البيانات المرسلة",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Validation failed."
                                         },
                                         "data": {
                                             "type": "object"
