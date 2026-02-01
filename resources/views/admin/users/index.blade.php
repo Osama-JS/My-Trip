@@ -1,15 +1,45 @@
 @extends('layouts.app')
 
+@section('title', __('Users'))
+@section('page-title', __('User Management'))
+
 @section('content')
+@php
+    $totalUsers = \App\Models\User::count();
+    $activeUsers = \App\Models\User::where('status', 'active')->count();
+    $verifiedUsers = \App\Models\User::whereNotNull('email_verified_at')->count();
+    $newThisMonth = \App\Models\User::whereMonth('created_at', now()->month)->count();
+@endphp
+
+{{-- Stats Cards --}}
+@include('components.stats-cards', ['stats' => [
+    [
+        'title' => __('Total Users'),
+        'value' => $totalUsers,
+        'icon' => 'fa-users',
+        'color' => 'primary',
+    ],
+    [
+        'title' => __('Active'),
+        'value' => $activeUsers,
+        'icon' => 'fa-user-check',
+        'color' => 'success',
+    ],
+    [
+        'title' => __('Verified'),
+        'value' => $verifiedUsers,
+        'icon' => 'fa-certificate',
+        'color' => 'info',
+    ],
+    [
+        'title' => __('New This Month'),
+        'value' => $newThisMonth,
+        'icon' => 'fa-user-plus',
+        'color' => 'warning',
+    ],
+]])
+
 <div class="container-fluid">
-    <div class="row page-titles">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item active"><a href="javascript:void(0)">Admin</a></li>
-            <li class="breadcrumb-item"><a href="javascript:void(0)">Users</a></li>
-        </ol>
-    </div>
-
-
     <div class="row">
         <div class="col-12">
             <div class="card">
@@ -50,7 +80,7 @@
             </div>
             <div class="modal-body" id="viewUserBody">
                 <!-- Data loaded via AJAX -->
-              
+
             </div>
         </div>
     </div>
@@ -284,7 +314,7 @@ $(document).ready(function() {
                 }
             });
         });
-    
+
 });
 
 
@@ -321,7 +351,7 @@ function viewUser(id) {
         });
     }
 
-    
+
 
     function editUser(id) {
         let url = "{{ route('admin.users.show', ':id') }}";
@@ -409,11 +439,11 @@ function viewUser(id) {
 @endsection
 
 @section('scripts')
-    
- 
+
+
 <script>
-   
-    
-    
+
+
+
 </script>
 @endsection

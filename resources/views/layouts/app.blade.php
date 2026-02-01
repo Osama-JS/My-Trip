@@ -1,12 +1,26 @@
+@php
+    $theme_version = $_COOKIE['version'] ?? 'light';
+    $typography = $_COOKIE['typography'] ?? 'poppins';
+    $layout = $_COOKIE['layout'] ?? 'vertical';
+    $nav_headerbg = $_COOKIE['navheaderBg'] ?? 'color_1';
+    $headerbg = $_COOKIE['headerBg'] ?? 'color_1';
+    $sidebarStyle = $_COOKIE['sidebarStyle'] ?? 'full';
+    $sidebarBg = $_COOKIE['sidebarBg'] ?? 'color_1';
+    $sidebarPosition = $_COOKIE['sidebarPosition'] ?? 'fixed';
+    $headerPosition = $_COOKIE['headerPosition'] ?? 'fixed';
+    $containerLayout = $_COOKIE['containerLayout'] ?? 'wide';
+    $primary = $_COOKIE['primary'] ?? 'color_1';
+    $direction = $_COOKIE['direction'] ?? (app()->getLocale() == 'ar' ? 'rtl' : 'ltr');
+@endphp
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ $direction }}" class="{{ $direction == 'rtl' ? 'rtl' : '' }}">
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', config('app.name', 'My Trip')) - Admin Dashboard</title>
+    <title>@yield('title', config('app.name', 'My Trip')) - {{ __('Admin Dashboard') }}</title>
 
     <!-- Favicon -->
     <link rel="shortcut icon" type="image/png" href="{{ asset(\App\Models\Setting::get('site_favicon', 'images/favicon.png')) }}">
@@ -23,8 +37,8 @@
     <script src="{{ asset('vendor/perfect-scrollbar/js/perfect-scrollbar.min.js') }}"></script>
     <script src="{{ asset('vendor/datatables/js/jquery.dataTables.min.js') }}"></script>
     <script src="{{ asset('vendor/toastr/js/toastr.min.js') }}"></script>
-    
-   
+
+
     <!-- Global Variables for Template -->
     <script>
         window.bootstrap = bootstrap;
@@ -45,7 +59,7 @@
 
     <!-- Custom Stylesheet -->
     <link href="{{ asset('vendor/jquery-nice-select/css/nice-select.css') }}" rel="stylesheet">
-   
+
     <link href="{{ asset('vendor/owl-carousel/owl.carousel.css') }}" rel="stylesheet">
     <link href="{{ asset('vendor/bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css') }}" rel="stylesheet">
     <link href="{{ asset('vendor/animate/animate.min.css') }}" rel="stylesheet">
@@ -71,18 +85,6 @@
 
     @stack('styles')
 </head>
-@php
-    $theme_version = $_COOKIE['version'] ?? 'light';
-    $typography = $_COOKIE['typography'] ?? 'poppins';
-    $layout = $_COOKIE['layout'] ?? 'vertical';
-    $nav_headerbg = $_COOKIE['navheaderBg'] ?? 'color_1';
-    $headerbg = $_COOKIE['headerBg'] ?? 'color_1';
-    $sidebarStyle = $_COOKIE['sidebarStyle'] ?? 'full';
-    $sidebarPosition = $_COOKIE['sidebarPosition'] ?? 'fixed';
-    $headerPosition = $_COOKIE['headerPosition'] ?? 'fixed';
-    $containerLayout = $_COOKIE['containerLayout'] ?? 'full';
-    $primary = $_COOKIE['primary'] ?? 'color_1';
-@endphp
 <body
     data-typography="{{ $typography }}"
     data-theme-version="{{ $theme_version }}"
@@ -90,10 +92,12 @@
     data-nav-headerbg="{{ $nav_headerbg }}"
     data-headerbg="{{ $headerbg }}"
     data-sidebar-style="{{ $sidebarStyle }}"
+    data-sibebarbg="{{ $sidebarBg }}"
     data-sidebar-position="{{ $sidebarPosition }}"
     data-header-position="{{ $headerPosition }}"
-    data-container-layout="{{ $containerLayout }}"
+    data-container="{{ $containerLayout }}"
     data-primary="{{ $primary }}"
+    direction="{{ $direction }}"
 >
 
     <!-- Preloader -->
@@ -138,7 +142,7 @@
         <!-- Footer -->
         @include('partials.footer')
     </div>
-    
+
     <!-- Vite JS -->
     @vite(['resources/js/app.js'])
 

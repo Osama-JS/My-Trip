@@ -12,7 +12,7 @@ var themeOptionArr = {
     sidebarPosition: "",
     headerPosition: "",
     containerLayout: "",
-    //direction: '',
+    direction: "",
 };
 
 /* Cookies Function */

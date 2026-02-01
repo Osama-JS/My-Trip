@@ -2214,6 +2214,681 @@
                 }
             }
         },
+        "/api/flights/booking-notes": {
+            "post": {
+                "tags": [
+                    "Flights"
+                ],
+                "summary": "إضافة ملاحظات للحجز (Add booking notes)",
+                "description": "إضافة ملاحظات نصية على الحجز الحالي. (Add textual remarks to an existing booking).",
+                "operationId": "addBookingNotes",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "uniqueId",
+                                    "notes"
+                                ],
+                                "properties": {
+                                    "uniqueId": {
+                                        "type": "string",
+                                        "example": "TR123456"
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "example": "Wheel chair needed at airport."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "تم إضافة الملاحظات بنجاح",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/flights/cancel": {
+            "post": {
+                "tags": [
+                    "Flights"
+                ],
+                "summary": "إلغاء الحجز (Cancel booking)",
+                "description": "إلغاء حجز (PNR) قبل إصدار التذكرة. (Cancel a PNR before ticket issuance).",
+                "operationId": "cancelBooking",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "uniqueId"
+                                ],
+                                "properties": {
+                                    "uniqueId": {
+                                        "type": "string",
+                                        "example": "TR123456"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "تم إلغاء الحجز بنجاح",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/flights/extra-services": {
+            "post": {
+                "tags": [
+                    "Flights"
+                ],
+                "summary": "الخدمات الإضافية (Get extra services)",
+                "description": "استعراض الخدمات الإضافية المتاحة (كالأمتعة والوجبات) للحجز. (Retrieve available extra services like baggage and meals).",
+                "operationId": "getExtraServices",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "session_id",
+                                    "fare_source_code"
+                                ],
+                                "properties": {
+                                    "session_id": {
+                                        "type": "string",
+                                        "example": "7906efba-09db..."
+                                    },
+                                    "fare_source_code": {
+                                        "type": "string",
+                                        "example": "MTY2ODE2Njg2Ml8yNjA5Mzk"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "تم استرجاع الخدمات الإضافية بنجاح",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/flights/fare-rules": {
+            "post": {
+                "tags": [
+                    "Flights"
+                ],
+                "summary": "شروط السعر (Get fare rules)",
+                "description": "عرض شروط وأحكام السعر المختار (مثل غرامات التغيير والإلغاء). (Get fare rules and conditions).",
+                "operationId": "getFareRules",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "session_id",
+                                    "fare_source_code"
+                                ],
+                                "properties": {
+                                    "session_id": {
+                                        "type": "string",
+                                        "example": "7906efba-09db..."
+                                    },
+                                    "fare_source_code": {
+                                        "type": "string",
+                                        "example": "MTY2ODE2Njg2Ml8yNjA5Mzk"
+                                    },
+                                    "fare_source_code_inbound": {
+                                        "type": "string",
+                                        "example": ""
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "تم استرجاع شروط السعر بنجاح",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/flights/refund-quote": {
+            "post": {
+                "tags": [
+                    "Flights"
+                ],
+                "summary": "طلب عرض سعر استرجاع (Refund Quote)",
+                "description": "الحصول على عرض سعر وقيمة المبلغ المسترد قبل تنفيذ عملية الاسترجاع. (Get a quote for refund amount).",
+                "operationId": "refundQuote",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "uniqueId",
+                                    "paxDetails"
+                                ],
+                                "properties": {
+                                    "uniqueId": {
+                                        "type": "string",
+                                        "example": "TR123456"
+                                    },
+                                    "remark": {
+                                        "type": "string",
+                                        "example": "Refund requested due to illness"
+                                    },
+                                    "paxDetails": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "type",
+                                                "title",
+                                                "firstName",
+                                                "lastName",
+                                                "eTicket"
+                                            ],
+                                            "properties": {
+                                                "type": {
+                                                    "type": "string",
+                                                    "example": "ADT"
+                                                },
+                                                "title": {
+                                                    "type": "string",
+                                                    "example": "Mr"
+                                                },
+                                                "firstName": {
+                                                    "type": "string",
+                                                    "example": "John"
+                                                },
+                                                "lastName": {
+                                                    "type": "string",
+                                                    "example": "Doe"
+                                                },
+                                                "eTicket": {
+                                                    "type": "string",
+                                                    "example": "TKT123456789"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "تم استرجاع عرض الاسترجاع بنجاح"
+                    }
+                }
+            }
+        },
+        "/api/flights/refund-ticket": {
+            "post": {
+                "tags": [
+                    "Flights"
+                ],
+                "summary": "تنفيذ استرجاع التذكرة (Refund Ticket)",
+                "description": "تنفيذ عملية استرجاع التذكرة فعلياً. (Process ticket refund).",
+                "operationId": "refundTicket",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "uniqueId",
+                                    "paxDetails"
+                                ],
+                                "properties": {
+                                    "uniqueId": {
+                                        "type": "string",
+                                        "example": "TR123456"
+                                    },
+                                    "remark": {
+                                        "type": "string",
+                                        "example": "Process refund"
+                                    },
+                                    "paxDetails": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "type",
+                                                "title",
+                                                "firstName",
+                                                "lastName",
+                                                "eTicket"
+                                            ],
+                                            "properties": {
+                                                "type": {
+                                                    "type": "string",
+                                                    "example": "ADT"
+                                                },
+                                                "title": {
+                                                    "type": "string",
+                                                    "example": "Mr"
+                                                },
+                                                "firstName": {
+                                                    "type": "string",
+                                                    "example": "John"
+                                                },
+                                                "lastName": {
+                                                    "type": "string",
+                                                    "example": "Doe"
+                                                },
+                                                "eTicket": {
+                                                    "type": "string",
+                                                    "example": "TKT123456789"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "تم طلب الاسترجاع بنجاح"
+                    }
+                }
+            }
+        },
+        "/api/flights/reissue-quote": {
+            "post": {
+                "tags": [
+                    "Flights"
+                ],
+                "summary": "طلب عرض سعر تعديل (Reissue Quote)",
+                "description": "الحصول على تكلفة تعديل الحجز. (Get a quote for ticket reissue/change).",
+                "operationId": "reissueQuote",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "uniqueId",
+                                    "paxDetails",
+                                    "OriginDestinationInfo"
+                                ],
+                                "properties": {
+                                    "uniqueId": {
+                                        "type": "string",
+                                        "example": "TR123456"
+                                    },
+                                    "paxDetails": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "type",
+                                                "title",
+                                                "firstName",
+                                                "lastName",
+                                                "eTicket"
+                                            ],
+                                            "properties": {
+                                                "type": {
+                                                    "type": "string",
+                                                    "example": "ADT"
+                                                },
+                                                "title": {
+                                                    "type": "string",
+                                                    "example": "Mr"
+                                                },
+                                                "firstName": {
+                                                    "type": "string",
+                                                    "example": "John"
+                                                },
+                                                "lastName": {
+                                                    "type": "string",
+                                                    "example": "Doe"
+                                                },
+                                                "eTicket": {
+                                                    "type": "string",
+                                                    "example": "TKT123456789"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "OriginDestinationInfo": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "departureDate": {
+                                                    "type": "string",
+                                                    "format": "date"
+                                                },
+                                                "airportOriginCode": {
+                                                    "type": "string"
+                                                },
+                                                "airportDestinationCode": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "تم استرجاع عرض التعديل بنجاح"
+                    }
+                }
+            }
+        },
+        "/api/flights/reissue-ticket": {
+            "post": {
+                "tags": [
+                    "Flights"
+                ],
+                "summary": "تنفيذ تعديل التذكرة (Reissue Ticket)",
+                "description": "تنفيذ عملية تعديل التذكرة فعلياً بناءً على العرض المختار. (Process ticket reissue).",
+                "operationId": "reissueTicket",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "uniqueId",
+                                    "ptrUniqueID",
+                                    "PreferenceOption"
+                                ],
+                                "properties": {
+                                    "uniqueId": {
+                                        "type": "string",
+                                        "example": "TR123456"
+                                    },
+                                    "ptrUniqueID": {
+                                        "type": "string",
+                                        "example": "9154"
+                                    },
+                                    "PreferenceOption": {
+                                        "type": "string",
+                                        "example": "1"
+                                    },
+                                    "remark": {
+                                        "type": "string",
+                                        "example": "Reissue please"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "تم طلب التعديل بنجاح"
+                    }
+                }
+            }
+        },
+        "/api/flights/void-quote": {
+            "post": {
+                "tags": [
+                    "Flights"
+                ],
+                "summary": "طلب عرض تكلفة الإلغاء (Void Quote)",
+                "description": "الحصول على تكلفة إلغاء التذكرة (Void) قبل تنفيذها. (Get void ticket quote).",
+                "operationId": "voidQuote",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "uniqueId",
+                                    "paxDetails"
+                                ],
+                                "properties": {
+                                    "uniqueId": {
+                                        "type": "string",
+                                        "example": "TR123456"
+                                    },
+                                    "paxDetails": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "type",
+                                                "title",
+                                                "firstName",
+                                                "lastName",
+                                                "eTicket"
+                                            ],
+                                            "properties": {
+                                                "type": {
+                                                    "type": "string",
+                                                    "example": "ADT"
+                                                },
+                                                "title": {
+                                                    "type": "string",
+                                                    "example": "Mr"
+                                                },
+                                                "firstName": {
+                                                    "type": "string",
+                                                    "example": "John"
+                                                },
+                                                "lastName": {
+                                                    "type": "string",
+                                                    "example": "Doe"
+                                                },
+                                                "eTicket": {
+                                                    "type": "string",
+                                                    "example": "TKT123456789"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "تم استرجاع عرض الإلغاء بنجاح"
+                    }
+                }
+            }
+        },
+        "/api/flights/void-ticket": {
+            "post": {
+                "tags": [
+                    "Flights"
+                ],
+                "summary": "تنفيذ إلغاء التذكرة (Void Ticket)",
+                "description": "إلغاء التذكرة (Void) في نفس يوم الإصدار. (Void ticket within same day).",
+                "operationId": "voidTicket",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "uniqueId",
+                                    "paxDetails"
+                                ],
+                                "properties": {
+                                    "uniqueId": {
+                                        "type": "string",
+                                        "example": "TR123456"
+                                    },
+                                    "remark": {
+                                        "type": "string",
+                                        "example": "Voiding ticket"
+                                    },
+                                    "paxDetails": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "type",
+                                                "title",
+                                                "firstName",
+                                                "lastName",
+                                                "eTicket"
+                                            ],
+                                            "properties": {
+                                                "type": {
+                                                    "type": "string",
+                                                    "example": "ADT"
+                                                },
+                                                "title": {
+                                                    "type": "string",
+                                                    "example": "Mr"
+                                                },
+                                                "firstName": {
+                                                    "type": "string",
+                                                    "example": "John"
+                                                },
+                                                "lastName": {
+                                                    "type": "string",
+                                                    "example": "Doe"
+                                                },
+                                                "eTicket": {
+                                                    "type": "string",
+                                                    "example": "TKT123456789"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "تم طلب الإلغاء بنجاح"
+                    }
+                }
+            }
+        },
+        "/api/flights/post-ticket-status": {
+            "post": {
+                "tags": [
+                    "Flights"
+                ],
+                "summary": "حالة طلب ما بعد التذكرة (Post-ticket status)",
+                "description": "الاستعلام عن حالة طلبات الاسترجاع، الإلغاء، أو التعديل. (Check status of Refund/Void/Reissue requests).",
+                "operationId": "searchPostTicketStatus",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "uniqueId",
+                                    "ptrUniqueID"
+                                ],
+                                "properties": {
+                                    "uniqueId": {
+                                        "type": "string",
+                                        "example": "TR123456"
+                                    },
+                                    "ptrUniqueID": {
+                                        "type": "string",
+                                        "example": "9154"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "تم استرجاع حالة الطلب بنجاح"
+                    }
+                }
+            }
+        },
         "/api/payment/initiate": {
             "post": {
                 "tags": [

@@ -23,6 +23,77 @@ class BookingController extends Controller
     }
 
     /**
+     * Display listing of local bookings
+     */
+    public function index()
+    {
+        return view('admin.bookings.index');
+    }
+
+    /**
+     * Display booking details
+     */
+    public function show($id)
+    {
+        $booking = \App\Models\Booking::with(['user', 'passengers', 'flightApiLogs'])->findOrFail($id);
+        return view('admin.bookings.show', compact('booking'));
+    }
+
+    /**
+     * Download Invoice
+     */
+    public function invoice($id)
+    {
+        $booking = \App\Models\Booking::findOrFail($id);
+        $service = new \App\Services\InvoiceService();
+        $pdf = $service->generateInvoice($booking);
+
+        if (!$pdf) {
+            return back()->with('error', 'Failed to generate invoice.');
+        }
+
+        return response($pdf)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="invoice-'.$booking->booking_reference.'.pdf"');
+    }
+
+    /**
+     * Get bookings for DataTables
+     */
+    public function getData(Request $request)
+    {
+        $bookings = \App\Models\Booking::with('user')->latest()->get();
+
+        return response()->json([
+            'data' => $bookings->map(function ($booking) {
+                $statusBadge = match($booking->status) {
+                    'confirmed' => '<span class="badge badge-success">Confirmed</span>',
+                    'paid' => '<span class="badge badge-info">Paid (Processing)</span>',
+                    'pending' => '<span class="badge badge-warning">Pending</span>',
+                    'cancelled' => '<span class="badge badge-danger">Cancelled</span>',
+                    default => '<span class="badge badge-light">'.$booking->status.'</span>'
+                };
+
+                return [
+                    'id' => $booking->id,
+                    'reference' => $booking->booking_reference,
+                    'user' => $booking->user ? $booking->user->name : 'N/A', // Assuming user->name exists or fix logic
+                    'amount' => $booking->total_amount . ' ' . $booking->currency,
+                    'status' => $statusBadge,
+                    'date' => $booking->created_at->format('Y-m-d H:i'),
+                    'actions' => '
+                        <div class="d-flex">
+                            <a href="'.route('admin.bookings.show', $booking->id).'" class="btn btn-primary shadow btn-xs sharp me-1"><i class="fa fa-eye"></i></a>
+                            '.($booking->ticket_status === 'ticketed'
+                                ? '<a href="'.route('admin.bookings.invoice', $booking->id).'" class="btn btn-secondary shadow btn-xs sharp" target="_blank"><i class="fa fa-file-invoice"></i></a>'
+                                : '').'
+                        </div>'
+                ];
+            })
+        ]);
+    }
+
+    /**
      * Search for flights via AJAX/POST
      */
     public function searchFlights(Request $request)
@@ -98,14 +169,19 @@ class BookingController extends Controller
     /**
      * Utility endpoints for UI (Airports/Airlines)
      */
-    public function getAirports()
+    /**
+     * Utility endpoints for UI (Airports/Airlines)
+     */
+    public function getAirports(Request $request)
     {
-        return response()->json($this->traveloproService->getAirportList());
+        $refresh = $request->boolean('refresh');
+        return response()->json($this->traveloproService->getAirportList($refresh));
     }
 
-    public function getAirlines()
+    public function getAirlines(Request $request)
     {
-        return response()->json($this->traveloproService->getAirlineList());
+        $refresh = $request->boolean('refresh');
+        return response()->json($this->traveloproService->getAirlineList($refresh));
     }
 
     // Hotels

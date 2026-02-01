@@ -1,8 +1,8 @@
-{{-- Sidebar start --}}
+{{-- Sidebar with Normal Dropdowns and Icons --}}
 <div class="dlabnav">
     <div class="dlabnav-scroll">
         <ul class="metismenu" id="menu">
-            <li class="nav-label">{{ __('Main Menu') }}</li>
+            {{-- Main Menu --}}
             <li>
                 <a href="{{ route('admin.dashboard') }}" aria-expanded="false">
                     <i class="flaticon-025-dashboard"></i>
@@ -10,68 +10,85 @@
                 </a>
             </li>
 
-            <li class="nav-label">{{ __('Settings') }}</li>
+
+            <li>
+                <a href="{{ route('admin.subscribers.index') }}" aria-expanded="false">
+                    <i class="fa fa-users"></i>
+                    <span class="nav-text">{{ __('Subscribers') }}</span>
+                </a>
+            </li>
+             {{-- Booking Management --}}
+            <li>
+                <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
+                    <i class="fa fa-solid fa-plane"></i>
+                    <span class="nav-text">{{ __('Flights') }}</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{{ route('admin.bookings.index') }}"><i class="fa fa-database "></i>{{ __('All Bookings') }}</a></li>
+                    <li><a href="{{ route('admin.bookings.flights.available') }}"><i class="fa fa-search "></i>{{ __('Search Flights') }}</a></li>
+                </ul>
+            </li>
+            <li>
+                <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
+                    <i class="fa fa-solid fa-hotel"></i>
+                    <span class="nav-text">{{ __('Hotels') }}</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{{ route('admin.bookings.hotels.index') }}"><i class="fa fa-hotel "></i>{{ __('Hotels List') }}</a></li>
+                    <li><a href="{{ route('admin.bookings.hotels.requests') }}"><i class="fa fa-concierge-bell "></i>{{ __('Requests') }}</a></li>
+                </ul>
+            </li>
+
+
+            {{-- Security & Access --}}
+            @can('view users')
+            <li class="mega-menu-container">
+                <a  class="has-arrow" href="javascript:void(0)" aria-expanded="false">
+                    <i class="flaticon-381-lock"></i>
+                    <span class="nav-text nav-text-arrow">
+                        {{ __('Access Control') }}
+                    </span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{{ route('admin.users.index') }}"><i class="fa fa-users "></i>{{ __('Users') }}</a></li>
+                    <li><a href="{{ route('admin.roles.index') }}"><i class="fa fa-user-shield "></i>{{ __('Roles') }}</a></li>
+                    @can('view permissions')
+                    <li><a href="{{ route('admin.permissions.index') }}"><i class="fa fa-key "></i>{{ __('Permissions') }}</a></li>
+                    @endcan
+                </ul>
+            </li>
+            @endcan
+
+            <li>
+                <a href="{{ route('profile.edit') }}" aria-expanded="false">
+                    <i class="fa fa-user-circle"></i>
+                    <span class="nav-text">{{ __('My Profile') }}</span>
+                </a>
+            </li>
+
+            {{-- Settings --}}
             <li>
                 <a href="{{ route('admin.settings.index') }}" aria-expanded="false">
                     <i class="flaticon-381-settings-2"></i>
                     <span class="nav-text">{{ __('Platform Settings') }}</span>
                 </a>
             </li>
-            <li class="nav-label">{{ __('Security & Access') }}</li>
-            @can('view users')
-            <li>
-                <a href="{{ route('admin.users.index') }}" aria-expanded="false">
-                    <i class="flaticon-050-info"></i>
-                    <span class="nav-text">{{ __('User Management') }}</span>
-                </a>
-            </li>
-            @endcan
 
-            @can('view roles')
+            {{-- Reports & Logs --}}
             <li>
-                <a href="{{ route('admin.roles.index') }}" aria-expanded="false">
-                    <i class="flaticon-381-settings"></i>
-                    <span class="nav-text">{{ __('Roles') }}</span>
-                </a>
-            </li>
-            @endcan
-
-            @can('view permissions')
-            <li>
-                <a href="{{ route('admin.permissions.index') }}" aria-expanded="false">
-                    <i class="flaticon-381-lock"></i>
-                    <span class="nav-text">{{ __('Permissions') }}</span>
-                </a>
-            </li>
-            @endcan
-
-            {{-- Hotel & Flight Categories --}}
-            <li class="nav-label">{{ __('Booking Management') }}</li>
-            <li>
-                <a class="has-arrow" href="javascript:void()" aria-expanded="false">
-                    <i class="flaticon-045-heart"></i>
-                    <span class="nav-text">{{ __('Hotels') }}</span>
+                <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
+                    <i class="flaticon-043-menu"></i>
+                    <span class="nav-text">{{ __('System Reports') }}</span>
                 </a>
                 <ul aria-expanded="false">
-                    <li><a href="{{ route('admin.bookings.hotels.index') }}">{{ __('Hotels List & Map') }}</a></li>
-                    <li><a href="{{ route('admin.bookings.hotels.requests') }}">{{ __('Hotel Booking Requests') }}</a></li>
-                </ul>
-            </li>
-            <li>
-                <a class="has-arrow" href="javascript:void()" aria-expanded="false">
-                    <i class="flaticon-041-graph"></i>
-                    <span class="nav-text">{{ __('Flights') }}</span>
-                </a>
-                <ul aria-expanded="false">
-                    <li><a href="{{ route('admin.bookings.flights.available') }}">{{ __('Available Flights') }}</a></li>
-                    <li><a href="{{ route('admin.bookings.flights.requests') }}">{{ __('Flight Booking Requests') }}</a></li>
-                    <li><a href="{{ route('admin.bookings.flights.ongoing') }}">{{ __('Tickets & Ongoing Flights') }}</a></li>
+                    <li><a href="{{ route('admin.reports.api_logs') }}"><i class="fa fa-code "></i>{{ __('API Logs') }}</a></li>
+                    <li><a href="{{ route('admin.reports.search_logs') }}"><i class="fa fa-chart-bar "></i>{{ __('Search Statistics') }}</a></li>
                 </ul>
             </li>
         </ul>
 
         <div class="copyright text-center">
-            <p><strong>My Trip Admin</strong> © {{ date('Y') }} All Rights Reserved</p>
+            <p><strong>My Trip</strong> © {{ date('Y') }}</p>
         </div>
     </div>
 </div>

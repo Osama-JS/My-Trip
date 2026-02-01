@@ -1,9 +1,37 @@
 @extends('layouts.app')
 
-@section('title', 'Manage Roles')
-@section('page-title', 'Roles')
+@section('title', __('Manage Roles'))
+@section('page-title', __('Roles'))
 
 @section('content')
+@php
+    $totalRoles = \Spatie\Permission\Models\Role::count();
+    $totalPermissions = \Spatie\Permission\Models\Permission::count();
+    $usersWithRoles = \App\Models\User::whereHas('roles')->count();
+@endphp
+
+{{-- Stats Cards --}}
+@include('components.stats-cards', ['stats' => [
+    [
+        'title' => __('Total Roles'),
+        'value' => $totalRoles,
+        'icon' => 'fa-user-shield',
+        'color' => 'primary',
+    ],
+    [
+        'title' => __('Total Permissions'),
+        'value' => $totalPermissions,
+        'icon' => 'fa-key',
+        'color' => 'success',
+    ],
+    [
+        'title' => __('Users with Roles'),
+        'value' => $usersWithRoles,
+        'icon' => 'fa-users-cog',
+        'color' => 'info',
+    ],
+]])
+
 <div class="row">
     <div class="col-12">
         <div class="card">

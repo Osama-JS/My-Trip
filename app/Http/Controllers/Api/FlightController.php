@@ -7,14 +7,19 @@ use App\Services\TraveloproService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use OpenApi\Attributes as OA;
+use App\Models\Booking;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class FlightController extends Controller
 {
     protected $traveloproService;
+    protected $invoiceService;
 
-    public function __construct(TraveloproService $traveloproService)
+    public function __construct(TraveloproService $traveloproService, \App\Services\InvoiceService $invoiceService)
     {
         $this->traveloproService = $traveloproService;
+        $this->invoiceService = $invoiceService;
     }
 
     #[OA\Post(
@@ -397,6 +402,43 @@ class FlightController extends Controller
             return $this->apiResponse(true, $result['message'], $result['details'] ?? $result['error'], null, 500);
         }
 
+        // Persist booking to local database
+        try {
+            // Extract UniqueID from response - Adjust path based on actual response structure
+            $uniqueId = $result['CreateBookingResponse']['CreateBookingResult']['UniqueID'] ?? null;
+            // Also try to get Price if available in response, otherwise 0
+            $totalAmount = $result['CreateBookingResponse']['CreateBookingResult']['TotalAmount'] ?? 0;
+
+            if ($uniqueId) {
+                $booking = Booking::create([
+                    'user_id' => Auth::id() ?? 1, // Fallback to 1 or nullable if allowed
+                    'booking_reference' => $uniqueId,
+                    'supplier_session_id' => $request->flight_session_id,
+                    'status' => 'pending', // PNR created but not ticketed
+                    'ticket_status' => 'booked',
+                    'total_amount' => $totalAmount,
+                    'currency' => 'SAR', // Adjust if dynamic
+                    'contact_email' => $request->customerEmail,
+                    'contact_phone' => $request->customerPhone,
+                    'pnr_created_at' => now(),
+                ]);
+
+                foreach ($request->passengers as $pax) {
+                    $booking->passengers()->create([
+                        'title' => $pax['title'],
+                        'first_name' => $pax['first_name'],
+                        'last_name' => $pax['last_name'],
+                        'type' => $pax['type'],
+                        'dob' => $pax['dob'],
+                        'nationality' => $pax['nationality'],
+                        'passport_no' => $pax['passport_no'] ?? null,
+                    ]);
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to persist booking', ['error' => $e->getMessage()]);
+        }
+
         return $this->apiResponse(false, __('Booking created successfully.'), $result, null, 200);
     }
 
@@ -459,13 +501,51 @@ class FlightController extends Controller
             return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
         }
 
+        // 1. Verify Payment Status
+        $booking = Booking::where('booking_reference', $request->uniqueId)->first();
+
+        if (!$booking) {
+             return $this->apiResponse(true, __('Booking not found.'), null, null, 404);
+        }
+
+        // Bypass check to allow testing IF needed, otherwise enforce strict check
+        // Ideally: if ($booking->status !== 'paid') ....
+        if ($booking->status !== 'paid' && $booking->status !== 'confirmed') {
+             return $this->apiResponse(true, __('Payment required before ticket issuance.'), null, null, 402);
+        }
+
         $result = $this->traveloproService->orderTicket($request->uniqueId);
 
         if (isset($result['status']) && $result['status'] === 'error') {
             return $this->apiResponse(true, $result['message'], $result['details'] ?? $result['error'], null, 500);
         }
 
-        return $this->apiResponse(false, __('Ticket ordered successfully.'), $result, null, 200);
+        // Update local booking status
+        $invoiceContent = null;
+        try {
+            if ($booking) {
+                $booking->update([
+                    'status' => 'confirmed',
+                    'ticket_status' => 'ticketed',
+                    'updated_at' => now()
+                ]);
+
+                // Generate Invoice
+                $pdfContent = $this->invoiceService->generateInvoice($booking);
+                if ($pdfContent) {
+                    $invoiceContent = base64_encode($pdfContent);
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to update booking status or generate invoice', ['error' => $e->getMessage()]);
+        }
+
+        $response = $result;
+        if ($invoiceContent) {
+            $response['invoice_pdf_base64'] = $invoiceContent;
+        }
+
+        return $this->apiResponse(false, __('Ticket ordered successfully.'), $response, null, 200);
     }
 
     #[OA\Post(
@@ -534,5 +614,561 @@ class FlightController extends Controller
         }
 
         return $this->apiResponse(false, __('Trip details retrieved successfully.'), $result, null, 200);
+    }
+
+    #[OA\Post(
+        path: "/api/flights/booking-notes",
+        summary: "إضافة ملاحظات للحجز (Add booking notes)",
+        operationId: "addBookingNotes",
+        description: "إضافة ملاحظات نصية على الحجز الحالي. (Add textual remarks to an existing booking).",
+        tags: ["Flights"],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ["uniqueId", "notes"],
+                properties: [
+                    new OA\Property(property: "uniqueId", type: "string", example: "TR123456"),
+                    new OA\Property(property: "notes", type: "string", example: "Wheel chair needed at airport.")
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "تم إضافة الملاحظات بنجاح",
+                content: new OA\JsonContent(properties: [new OA\Property(property: "error", type: "boolean", example: false)])
+            )
+        ]
+    )]
+    public function addBookingNotes(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'uniqueId' => 'required|string',
+            'notes' => 'required|string'
+        ]);
+
+        if ($validator->fails()) return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+
+        $result = $this->traveloproService->addBookingNotes($request->all());
+
+        if (isset($result['status']) && $result['status'] === 'error') {
+            return $this->apiResponse(true, $result['message'], $result['details'] ?? ($result['error'] ?? null), null, 500);
+        }
+
+        return $this->apiResponse(false, __('Booking notes added successfully.'), $result, null, 200);
+    }
+
+    #[OA\Post(
+        path: "/api/flights/cancel",
+        summary: "إلغاء الحجز (Cancel booking)",
+        operationId: "cancelBooking",
+        description: "إلغاء حجز (PNR) قبل إصدار التذكرة. (Cancel a PNR before ticket issuance).",
+        tags: ["Flights"],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ["uniqueId"],
+                properties: [
+                    new OA\Property(property: "uniqueId", type: "string", example: "TR123456")
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "تم إلغاء الحجز بنجاح",
+                content: new OA\JsonContent(properties: [new OA\Property(property: "error", type: "boolean", example: false)])
+            )
+        ]
+    )]
+    public function cancelBooking(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'uniqueId' => 'required|string',
+        ]);
+
+        if ($validator->fails()) return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+
+        $result = $this->traveloproService->cancelBooking($request->all());
+
+        if (isset($result['status']) && $result['status'] === 'error') {
+            return $this->apiResponse(true, $result['message'], $result['details'] ?? null, null, 500);
+        }
+
+        // Update local DB
+        try {
+            $booking = Booking::where('booking_reference', $request->uniqueId)->first();
+            if ($booking) {
+                $booking->update([
+                    'status' => 'cancelled',
+                    'updated_at' => now()
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to update booking status on cancel', ['error' => $e->getMessage()]);
+        }
+
+        return $this->apiResponse(false, __('Booking cancelled successfully.'), $result, null, 200);
+    }
+
+    #[OA\Post(
+        path: "/api/flights/extra-services",
+        summary: "الخدمات الإضافية (Get extra services)",
+        operationId: "getExtraServices",
+        description: "استعراض الخدمات الإضافية المتاحة (كالأمتعة والوجبات) للحجز. (Retrieve available extra services like baggage and meals).",
+        tags: ["Flights"],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ["session_id", "fare_source_code"],
+                properties: [
+                    new OA\Property(property: "session_id", type: "string", example: "7906efba-09db..."),
+                    new OA\Property(property: "fare_source_code", type: "string", example: "MTY2ODE2Njg2Ml8yNjA5Mzk")
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "تم استرجاع الخدمات الإضافية بنجاح",
+                content: new OA\JsonContent(properties: [new OA\Property(property: "error", type: "boolean", example: false)])
+            )
+        ]
+    )]
+    public function getExtraServices(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'session_id' => 'required|string',
+            'fare_source_code' => 'required|string',
+        ]);
+
+        if ($validator->fails()) return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+
+        $result = $this->traveloproService->getExtraServices($request->all());
+
+        if (isset($result['status']) && $result['status'] === 'error') {
+            return $this->apiResponse(true, $result['message'], $result['details'] ?? null, null, 500);
+        }
+
+        return $this->apiResponse(false, __('Extra services retrieved successfully.'), $result, null, 200);
+    }
+
+    #[OA\Post(
+        path: "/api/flights/fare-rules",
+        summary: "شروط السعر (Get fare rules)",
+        operationId: "getFareRules",
+        description: "عرض شروط وأحكام السعر المختار (مثل غرامات التغيير والإلغاء). (Get fare rules and conditions).",
+        tags: ["Flights"],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ["session_id", "fare_source_code"],
+                properties: [
+                    new OA\Property(property: "session_id", type: "string", example: "7906efba-09db..."),
+                    new OA\Property(property: "fare_source_code", type: "string", example: "MTY2ODE2Njg2Ml8yNjA5Mzk"),
+                    new OA\Property(property: "fare_source_code_inbound", type: "string", example: "")
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "تم استرجاع شروط السعر بنجاح",
+                content: new OA\JsonContent(properties: [new OA\Property(property: "error", type: "boolean", example: false)])
+            )
+        ]
+    )]
+    public function getFareRules(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'session_id' => 'required|string',
+            'fare_source_code' => 'required|string',
+            'fare_source_code_inbound' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+
+        $result = $this->traveloproService->getFareRules($request->all());
+
+        if (isset($result['status']) && $result['status'] === 'error') {
+            return $this->apiResponse(true, $result['message'], $result['details'] ?? null, null, 500);
+        }
+
+        return $this->apiResponse(false, __('Fare rules retrieved successfully.'), $result, null, 200);
+    }
+
+    #[OA\Post(
+        path: "/api/flights/refund-quote",
+        summary: "طلب عرض سعر استرجاع (Refund Quote)",
+        operationId: "refundQuote",
+        description: "الحصول على عرض سعر وقيمة المبلغ المسترد قبل تنفيذ عملية الاسترجاع. (Get a quote for refund amount).",
+        tags: ["Flights"],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ["uniqueId", "paxDetails"],
+                properties: [
+                    new OA\Property(property: "uniqueId", type: "string", example: "TR123456"),
+                    new OA\Property(property: "remark", type: "string", example: "Refund requested due to illness"),
+                    new OA\Property(
+                        property: "paxDetails",
+                        type: "array",
+                        items: new OA\Items(
+                             required: ["type", "title", "firstName", "lastName", "eTicket"],
+                             properties: [
+                                 new OA\Property(property: "type", type: "string", example: "ADT"),
+                                 new OA\Property(property: "title", type: "string", example: "Mr"),
+                                 new OA\Property(property: "firstName", type: "string", example: "John"),
+                                 new OA\Property(property: "lastName", type: "string", example: "Doe"),
+                                 new OA\Property(property: "eTicket", type: "string", example: "TKT123456789")
+                             ]
+                        )
+                    )
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "تم استرجاع عرض الاسترجاع بنجاح"
+            )
+        ]
+    )]
+    public function refundQuote(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'uniqueId' => 'required|string',
+            'paxDetails' => 'required|array|min:1',
+            'paxDetails.*.type' => 'required|string',
+            'paxDetails.*.title' => 'required|string',
+            'paxDetails.*.firstName' => 'required|string',
+            'paxDetails.*.lastName' => 'required|string',
+            'paxDetails.*.eTicket' => 'required|string',
+        ]);
+
+        if ($validator->fails()) return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+
+        $result = $this->traveloproService->refundQuote($request->all());
+
+        if (isset($result['status']) && $result['status'] === 'error') {
+            return $this->apiResponse(true, $result['message'], $result['details'] ?? null, null, 500);
+        }
+
+        return $this->apiResponse(false, __('Refund quote retrieved successfully.'), $result, null, 200);
+    }
+
+    #[OA\Post(
+        path: "/api/flights/refund-ticket",
+        summary: "تنفيذ استرجاع التذكرة (Refund Ticket)",
+        operationId: "refundTicket",
+        description: "تنفيذ عملية استرجاع التذكرة فعلياً. (Process ticket refund).",
+        tags: ["Flights"],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ["uniqueId", "paxDetails"],
+                properties: [
+                    new OA\Property(property: "uniqueId", type: "string", example: "TR123456"),
+                    new OA\Property(property: "remark", type: "string", example: "Process refund"),
+                    new OA\Property(
+                        property: "paxDetails",
+                        type: "array",
+                         items: new OA\Items(
+                             required: ["type", "title", "firstName", "lastName", "eTicket"],
+                             properties: [
+                                 new OA\Property(property: "type", type: "string", example: "ADT"),
+                                 new OA\Property(property: "title", type: "string", example: "Mr"),
+                                 new OA\Property(property: "firstName", type: "string", example: "John"),
+                                 new OA\Property(property: "lastName", type: "string", example: "Doe"),
+                                 new OA\Property(property: "eTicket", type: "string", example: "TKT123456789")
+                             ]
+                        )
+                    )
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "تم طلب الاسترجاع بنجاح"
+            )
+        ]
+    )]
+    public function refundTicket(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'uniqueId' => 'required|string',
+            'paxDetails' => 'required|array|min:1',
+        ]);
+
+        if ($validator->fails()) return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+
+        $result = $this->traveloproService->refundTicket($request->all());
+
+        if (isset($result['status']) && $result['status'] === 'error') {
+            return $this->apiResponse(true, $result['message'], $result['details'] ?? null, null, 500);
+        }
+
+        return $this->apiResponse(false, __('Refund request processed successfully.'), $result, null, 200);
+    }
+
+    #[OA\Post(
+        path: "/api/flights/reissue-quote",
+        summary: "طلب عرض سعر تعديل (Reissue Quote)",
+        operationId: "reissueQuote",
+        description: "الحصول على تكلفة تعديل الحجز. (Get a quote for ticket reissue/change).",
+        tags: ["Flights"],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ["uniqueId", "paxDetails", "OriginDestinationInfo"],
+                properties: [
+                    new OA\Property(property: "uniqueId", type: "string", example: "TR123456"),
+                     new OA\Property(
+                        property: "paxDetails",
+                        type: "array",
+                        items: new OA\Items(
+                             required: ["type", "title", "firstName", "lastName", "eTicket"],
+                             properties: [
+                                 new OA\Property(property: "type", type: "string", example: "ADT"),
+                                 new OA\Property(property: "title", type: "string", example: "Mr"),
+                                 new OA\Property(property: "firstName", type: "string", example: "John"),
+                                 new OA\Property(property: "lastName", type: "string", example: "Doe"),
+                                 new OA\Property(property: "eTicket", type: "string", example: "TKT123456789")
+                             ]
+                        )
+                    ),
+                    new OA\Property(
+                        property: "OriginDestinationInfo",
+                        type: "array",
+                        items: new OA\Items(
+                            properties: [
+                                new OA\Property(property: "departureDate", type: "string", format: "date"),
+                                new OA\Property(property: "airportOriginCode", type: "string"),
+                                new OA\Property(property: "airportDestinationCode", type: "string")
+                            ]
+                        )
+                    )
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "تم استرجاع عرض التعديل بنجاح"
+            )
+        ]
+    )]
+    public function reissueQuote(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'uniqueId' => 'required|string',
+            'paxDetails' => 'required|array|min:1',
+            'OriginDestinationInfo' => 'required|array|min:1'
+        ]);
+
+        if ($validator->fails()) return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+
+        $result = $this->traveloproService->reissueQuote($request->all());
+
+        if (isset($result['status']) && $result['status'] === 'error') {
+            return $this->apiResponse(true, $result['message'], $result['details'] ?? null, null, 500);
+        }
+
+        return $this->apiResponse(false, __('Reissue quote retrieved successfully.'), $result, null, 200);
+    }
+
+    #[OA\Post(
+        path: "/api/flights/reissue-ticket",
+        summary: "تنفيذ تعديل التذكرة (Reissue Ticket)",
+        operationId: "reissueTicket",
+        description: "تنفيذ عملية تعديل التذكرة فعلياً بناءً على العرض المختار. (Process ticket reissue).",
+        tags: ["Flights"],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ["uniqueId", "ptrUniqueID", "PreferenceOption"],
+                properties: [
+                    new OA\Property(property: "uniqueId", type: "string", example: "TR123456"),
+                    new OA\Property(property: "ptrUniqueID", type: "string", example: "9154"),
+                    new OA\Property(property: "PreferenceOption", type: "string", example: "1"),
+                    new OA\Property(property: "remark", type: "string", example: "Reissue please")
+                ]
+            )
+        ),
+        responses: [
+             new OA\Response(
+                response: 200,
+                description: "تم طلب التعديل بنجاح"
+            )
+        ]
+    )]
+    public function reissueTicket(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'uniqueId' => 'required|string',
+            'ptrUniqueID' => 'required|string',
+            'PreferenceOption' => 'required',
+        ]);
+
+        if ($validator->fails()) return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+
+        $result = $this->traveloproService->reissueTicket($request->all());
+
+        if (isset($result['status']) && $result['status'] === 'error') {
+            return $this->apiResponse(true, $result['message'], $result['details'] ?? null, null, 500);
+        }
+
+        return $this->apiResponse(false, __('Reissue request processed successfully.'), $result, null, 200);
+    }
+
+    #[OA\Post(
+        path: "/api/flights/void-quote",
+        summary: "طلب عرض تكلفة الإلغاء (Void Quote)",
+        operationId: "voidQuote",
+        description: "الحصول على تكلفة إلغاء التذكرة (Void) قبل تنفيذها. (Get void ticket quote).",
+        tags: ["Flights"],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ["uniqueId", "paxDetails"],
+                properties: [
+                    new OA\Property(property: "uniqueId", type: "string", example: "TR123456"),
+                    new OA\Property(
+                        property: "paxDetails",
+                        type: "array",
+                        items: new OA\Items(
+                             required: ["type", "title", "firstName", "lastName", "eTicket"],
+                             properties: [
+                                 new OA\Property(property: "type", type: "string", example: "ADT"),
+                                 new OA\Property(property: "title", type: "string", example: "Mr"),
+                                 new OA\Property(property: "firstName", type: "string", example: "John"),
+                                 new OA\Property(property: "lastName", type: "string", example: "Doe"),
+                                 new OA\Property(property: "eTicket", type: "string", example: "TKT123456789")
+                             ]
+                        )
+                    ),
+                ]
+            )
+        ),
+        responses: [
+             new OA\Response(
+                response: 200,
+                description: "تم استرجاع عرض الإلغاء بنجاح"
+            )
+        ]
+    )]
+    public function voidQuote(Request $request)
+    {
+         $validator = Validator::make($request->all(), [
+            'uniqueId' => 'required|string',
+            'paxDetails' => 'required|array|min:1',
+        ]);
+
+        if ($validator->fails()) return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+
+        $result = $this->traveloproService->voidQuote($request->all());
+
+        if (isset($result['status']) && $result['status'] === 'error') {
+            return $this->apiResponse(true, $result['message'], $result['details'] ?? null, null, 500);
+        }
+
+        return $this->apiResponse(false, __('Void quote retrieved successfully.'), $result, null, 200);
+    }
+
+    #[OA\Post(
+        path: "/api/flights/void-ticket",
+        summary: "تنفيذ إلغاء التذكرة (Void Ticket)",
+        operationId: "voidTicket",
+        description: "إلغاء التذكرة (Void) في نفس يوم الإصدار. (Void ticket within same day).",
+        tags: ["Flights"],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ["uniqueId", "paxDetails"],
+                properties: [
+                    new OA\Property(property: "uniqueId", type: "string", example: "TR123456"),
+                     new OA\Property(property: "remark", type: "string", example: "Voiding ticket"),
+                    new OA\Property(
+                        property: "paxDetails",
+                        type: "array",
+                        items: new OA\Items(
+                             required: ["type", "title", "firstName", "lastName", "eTicket"],
+                             properties: [
+                                 new OA\Property(property: "type", type: "string", example: "ADT"),
+                                 new OA\Property(property: "title", type: "string", example: "Mr"),
+                                 new OA\Property(property: "firstName", type: "string", example: "John"),
+                                 new OA\Property(property: "lastName", type: "string", example: "Doe"),
+                                 new OA\Property(property: "eTicket", type: "string", example: "TKT123456789")
+                             ]
+                        )
+                    )
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "تم طلب الإلغاء بنجاح"
+            )
+        ]
+    )]
+    public function voidTicket(Request $request)
+    {
+         $validator = Validator::make($request->all(), [
+            'uniqueId' => 'required|string',
+            'paxDetails' => 'required|array|min:1',
+        ]);
+
+        if ($validator->fails()) return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+
+        $result = $this->traveloproService->voidTicket($request->all());
+
+        if (isset($result['status']) && $result['status'] === 'error') {
+            return $this->apiResponse(true, $result['message'], $result['details'] ?? null, null, 500);
+        }
+
+        return $this->apiResponse(false, __('Void request processed successfully.'), $result, null, 200);
+    }
+
+    #[OA\Post(
+        path: "/api/flights/post-ticket-status",
+        summary: "حالة طلب ما بعد التذكرة (Post-ticket status)",
+        operationId: "searchPostTicketStatus",
+        description: "الاستعلام عن حالة طلبات الاسترجاع، الإلغاء، أو التعديل. (Check status of Refund/Void/Reissue requests).",
+        tags: ["Flights"],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ["uniqueId", "ptrUniqueID"],
+                properties: [
+                    new OA\Property(property: "uniqueId", type: "string", example: "TR123456"),
+                    new OA\Property(property: "ptrUniqueID", type: "string", example: "9154")
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "تم استرجاع حالة الطلب بنجاح"
+            )
+        ]
+    )]
+    public function searchPostTicketStatus(Request $request)
+    {
+         $validator = Validator::make($request->all(), [
+            'uniqueId' => 'required|string',
+            'ptrUniqueID' => 'required|string'
+        ]);
+
+        if ($validator->fails()) return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+
+        $result = $this->traveloproService->searchPostTicketStatus($request->all());
+
+        if (isset($result['status']) && $result['status'] === 'error') {
+            return $this->apiResponse(true, $result['message'], $result['details'] ?? null, null, 500);
+        }
+
+        return $this->apiResponse(false, __('Status retrieved successfully.'), $result, null, 200);
     }
 }

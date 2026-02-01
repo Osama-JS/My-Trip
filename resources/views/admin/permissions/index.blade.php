@@ -1,9 +1,30 @@
 @extends('layouts.app')
 
-@section('title', 'Manage Permissions')
-@section('page-title', 'Permissions')
+@section('title', __('Manage Permissions'))
+@section('page-title', __('Permissions'))
 
 @section('content')
+@php
+    $totalPermissions = \Spatie\Permission\Models\Permission::count();
+    $rolesCount = \Spatie\Permission\Models\Role::count();
+@endphp
+
+{{-- Stats Cards --}}
+@include('components.stats-cards', ['stats' => [
+    [
+        'title' => __('Total Permissions'),
+        'value' => $totalPermissions,
+        'icon' => 'fa-key',
+        'color' => 'primary',
+    ],
+    [
+        'title' => __('Total Roles'),
+        'value' => $rolesCount,
+        'icon' => 'fa-user-shield',
+        'color' => 'success',
+    ],
+]])
+
 <div class="row">
     <div class="col-12">
         <div class="card">

@@ -38,6 +38,7 @@ Route::get('/dashboard', function () {
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
@@ -51,6 +52,10 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     Route::post('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
     Route::resource('users', UserController::class);
 
+    // Subscribers
+    Route::get('subscribers', [UserController::class, 'subscribers'])->name('subscribers.index');
+    Route::get('subscribers/data', [UserController::class, 'subscribersData'])->name('subscribers.data');
+
     // Role Management
     Route::get('roles/data', [RoleController::class, 'getData'])->name('roles.data');
     Route::resource('roles', RoleController::class);
@@ -58,6 +63,11 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     // Bookings
     Route::group(['prefix' => 'bookings', 'as' => 'bookings.'], function() {
         // Flights
+        Route::get('/', [BookingController::class, 'index'])->name('index');
+        Route::get('/data', [BookingController::class, 'getData'])->name('data');
+        Route::get('/{id}/show', [BookingController::class, 'show'])->name('show');
+        Route::get('/{id}/invoice', [BookingController::class, 'invoice'])->name('invoice');
+
         Route::get('flights/available', [BookingController::class, 'availableFlights'])->name('flights.available');
         Route::post('flights/search', [BookingController::class, 'searchFlights'])->name('flights.search');
         Route::post('flights/validate', [BookingController::class, 'validateFare'])->name('flights.validate');
@@ -76,9 +86,18 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     Route::get('settings', [App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
     Route::post('settings', [App\Http\Controllers\Admin\SettingController::class, 'update'])->name('settings.update');
 
+    // User Activity
+    Route::get('users/{id}/activity', [UserController::class, 'activity'])->name('users.activity');
+
     // Permission Management
     Route::get('permissions/data', [PermissionController::class, 'getData'])->name('permissions.data');
     Route::resource('permissions', PermissionController::class);
+
+    // Reports
+    Route::group(['prefix' => 'reports', 'as' => 'reports.'], function() {
+        Route::get('api-logs', [App\Http\Controllers\Admin\ReportController::class, 'apiLogs'])->name('api_logs');
+        Route::get('search-logs', [App\Http\Controllers\Admin\ReportController::class, 'searchLogs'])->name('search_logs');
+    });
 });
 
 // Customer Routes

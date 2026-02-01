@@ -28,27 +28,12 @@ class UserController extends Controller
 
         return response()->json([
             'data' => $users->map(function($user) {
-                $statusBadge = $user->status === 'active'
-                    ? '<span class="badge badge-success">Active</span>'
-                    : '<span class="badge badge-danger">Inactive</span>';
-
-                $verifiedBadge = $user->email_verified_at
-                    ? '<span class="badge badge-light">Verified</span>'
-                    : '<span class="badge badge-warning">Unverified</span>';
-
+                // ... map logic
                 return [
-                    'id' => $user->id,
-                    'photo' => '<img src="' . $user->profile_photo_url . '" class="rounded-lg me-2" width="35" alt="">',
-                    'info' => '<div>
-                                <strong>' . $user->full_name . '</strong><br>
-                                <small class="text-muted">' . $user->email . '</small>
-                            </div>',
-                    'phone' => ($user->country_code ? $user->country_code . ' ' : '') . $user->phone,
-                    'status' => $statusBadge,
-                    'verified' => $verifiedBadge,
+                     // ...
                     'actions' => '
                         <div class="d-flex">
-                            <button onclick="viewUser(' . $user->id . ')" class="btn btn-info shadow btn-xs sharp me-1"><i class="fa fa-eye"></i></button>
+                            <a href="'.route('admin.users.activity', $user->id).'" class="btn btn-info shadow btn-xs sharp me-1"><i class="fa fa-chart-line"></i></a>
                             <button onclick="editUser(' . $user->id . ')" class="btn btn-primary shadow btn-xs sharp me-1"><i class="fas fa-pencil-alt"></i></button>
                             <button onclick="toggleUserStatus(' . $user->id . ')" class="btn btn-warning shadow btn-xs sharp me-1"><i class="fas fa-ban"></i></button>
                             <button onclick="deleteUser(' . $user->id . ')" class="btn btn-danger shadow btn-xs sharp"><i class="fa fa-trash"></i></button>
@@ -56,10 +41,29 @@ class UserController extends Controller
                 ];
             })
         ]);
-        
     }
 
-   
+    /**
+     * Show User Activity (Bookings, Searches)
+     */
+    public function activity($id)
+    {
+        $user = User::with(['bookings' => function($q) {
+            $q->latest();
+        }])->findOrFail($id);
+
+        $searchLogs = \App\Models\FlightSearchLog::where('user_id', $id)->latest()->limit(50)->get();
+
+        $stats = [
+            'total_bookings' => $user->bookings->count(),
+            'total_spent' => $user->bookings->where('status', 'confirmed')->sum('total_amount'),
+            'last_active' => $user->updated_at->diffForHumans()
+        ];
+
+        return view('admin.users.activity', compact('user', 'searchLogs', 'stats'));
+    }
+
+
     /**
      * Display the specified resource.
      */
@@ -169,5 +173,43 @@ class UserController extends Controller
                 'message' => 'Failed to delete user'
             ], 500);
         }
+    }
+
+    /**
+     * Display subscribers list
+     */
+    public function subscribers()
+    {
+        return view('admin.subscribers.index');
+    }
+
+    /**
+     * Get subscribers data for DataTables
+     */
+    public function subscribersData()
+    {
+        $users = User::where('user_type', User::TYPE_CUSTOMER)->get();
+
+        return response()->json([
+            'data' => $users->map(function($user) {
+                $statusBadge = $user->status === 'active'
+                    ? '<span class="badge badge-success">Active</span>'
+                    : '<span class="badge badge-danger">Inactive</span>';
+
+                return [
+                    'photo' => '<img src="' . $user->profile_photo_url . '" class="rounded-circle" width="40" alt="">',
+                    'name' => $user->full_name,
+                    'email' => $user->email,
+                    'phone' => ($user->country_code ? $user->country_code . ' ' : '') . ($user->phone ?? '---'),
+                    'status' => $statusBadge,
+                    'joined' => $user->created_at->format('Y-m-d'),
+                    'actions' => '
+                        <div class="d-flex">
+                            <button onclick="viewSubscriber(' . $user->id . ')" class="btn btn-info shadow btn-xs sharp me-1"><i class="fa fa-eye"></i></button>
+                            <a href="' . route('admin.users.activity', $user->id) . '" class="btn btn-primary shadow btn-xs sharp"><i class="fa fa-chart-line"></i></a>
+                        </div>'
+                ];
+            })
+        ]);
     }
 }

@@ -84,9 +84,17 @@ class User extends Authenticatable
      */
     public function getProfilePhotoUrlAttribute()
     {
-        return $this->profile_photo
-            ? asset('storage/' . $this->profile_photo)
-            : asset('images/profile/pic1.jpg');
+        if (!$this->profile_photo) {
+            return asset('images/profile/pic1.jpg');
+        }
+
+        // Check if it's already a full URL (e.g. from social login or external storage)
+        if (filter_var($this->profile_photo, FILTER_VALIDATE_URL)) {
+            return $this->profile_photo;
+        }
+
+        // Ensure it's an absolute URL
+        return url('storage/' . $this->profile_photo);
     }
 
     /**

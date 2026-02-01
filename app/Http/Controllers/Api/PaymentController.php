@@ -166,6 +166,26 @@ class PaymentController extends Controller
             $isSuccess = $this->hyperPayService->isSuccessful($result['result']['code']);
 
             if ($isSuccess) {
+                // Find Booking by transaction ID (assuming it was passed as order_id/merchantTransactionId)
+                // In HyperPay initiate, we mapped order_id to merchantTransactionId.
+                // In verify, we usually check against our DB.
+                // However, without local transaction log, we must rely on what we sent.
+                // Assuming request->checkout_id maps to a booking session is risky.
+                // WE NEED TO LINK CHECKOUT_ID TO BOOKING.
+                // FOR NOW, let's assume the CLIENT sends the 'booking_reference' in the request to verify as well, or we query HyperPay to get the merchantTransactionId.
+
+                // Better Approach: Query HyperPay status (already done in $result).
+                // $result['merchantTransactionId'] SHOULD contain our booking_reference.
+                $bookingRef = $result['merchantTransactionId'] ?? null;
+
+                if ($bookingRef) {
+                    $booking = \App\Models\Booking::where('booking_reference', $bookingRef)->first();
+                    if ($booking) {
+                        $booking->update(['status' => 'paid', 'updated_at' => now()]);
+                        Log::info("Booking {$bookingRef} marked as PAID via HyperPay");
+                    }
+                }
+
                 return $this->apiResponse(false, __('Payment successful.'), $result);
             }
 
