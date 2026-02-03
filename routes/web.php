@@ -111,4 +111,12 @@ Route::middleware(['auth'])->prefix('customer')->name('customer.')->group(functi
     Route::put('/profile', [\App\Http\Controllers\Customer\ProfileController::class, 'update'])->name('profile.update');
 });
 
+
+// Payment Routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/payment/{booking}', [App\Http\Controllers\Web\WebPaymentController::class, 'show'])->name('payment.show');
+    Route::post('/payment/{booking}', [App\Http\Controllers\Web\WebPaymentController::class, 'process'])->name('payment.process');
+    Route::get('/payment/callback/{gateway}', [App\Http\Controllers\Web\WebPaymentController::class, 'callbackWithGateway'])->name('payment.callback.web');
+});
+
 require __DIR__.'/auth.php';

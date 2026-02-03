@@ -434,12 +434,17 @@ class FlightController extends Controller
                         'passport_no' => $pax['passport_no'] ?? null,
                     ]);
                 }
+
+                // Add Payment URL to response
+                $result['payment_url'] = route('payment.show', $booking->id);
+                $result['payment_api_url'] = url('/api/payment/initiate'); // Hint for API users
+                $result['booking_id'] = $booking->id;
             }
         } catch (\Exception $e) {
             Log::error('Failed to persist booking', ['error' => $e->getMessage()]);
         }
 
-        return $this->apiResponse(false, __('Booking created successfully.'), $result, null, 200);
+        return $this->apiResponse(false, __('Booking created successfully. Please proceed to payment.'), $result, null, 200);
     }
 
     #[OA\Post(
@@ -510,7 +515,7 @@ class FlightController extends Controller
 
         // Bypass check to allow testing IF needed, otherwise enforce strict check
         // Ideally: if ($booking->status !== 'paid') ....
-        if ($booking->status !== 'paid' && $booking->status !== 'confirmed') {
+        if ($booking->status !== 'paid') {
              return $this->apiResponse(true, __('Payment required before ticket issuance.'), null, null, 402);
         }
 

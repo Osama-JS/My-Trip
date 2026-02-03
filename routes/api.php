@@ -45,5 +45,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/verify', [PaymentController::class, 'verify']);
     });
 
+    // User Bookings
+    Route::get('/user/bookings', [App\Http\Controllers\Api\UserBookingController::class, 'index']);
+    Route::get('/user/bookings/{reference}', [App\Http\Controllers\Api\UserBookingController::class, 'show']);
+
     Route::post('/logout', [AuthController::class, 'logout']);
 });

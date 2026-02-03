@@ -4,9 +4,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\HyperPayService;
+use App\Services\TabbyPaymentService;
+use App\Services\TamaraPaymentService;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 use OpenApi\Attributes as OA;
 
 class PaymentController extends Controller
@@ -14,10 +17,17 @@ class PaymentController extends Controller
     use ApiResponseTrait;
 
     protected $hyperPayService;
+    protected $tabbyService;
+    protected $tamaraService;
 
-    public function __construct(HyperPayService $hyperPayService)
-    {
+    public function __construct(
+        HyperPayService $hyperPayService,
+        TabbyPaymentService $tabbyService,
+        TamaraPaymentService $tamaraService
+    ) {
         $this->hyperPayService = $hyperPayService;
+        $this->tabbyService = $tabbyService;
+        $this->tamaraService = $tamaraService;
     }
 
     /**
@@ -25,9 +35,9 @@ class PaymentController extends Controller
      */
     #[OA\Post(
         path: "/api/payment/initiate",
-        summary: "Initiate HyperPay checkout",
+        summary: "Initiate payment checkout (HyperPay, Tabby, Tamara)",
         operationId: "initiatePayment",
-        description: "Initializes a payment session and returns a Checkout ID for the mobile SDK.",
+        description: "Initializes a payment session. For HyperPay, returns a Checkout ID. For Tabby/Tamara, returns a redirect URL.",
         tags: ["Payment"],
         security: [["bearerAuth" => []]],
         parameters: [
@@ -45,8 +55,16 @@ class PaymentController extends Controller
                 required: ["amount", "payment_type"],
                 properties: [
                     new OA\Property(property: "amount", type: "number", format: "float", example: 100.50),
-                    new OA\Property(property: "payment_type", type: "string", enum: ["mada", "visa_master", "apple_pay"], example: "visa_master"),
+                    new OA\Property(property: "payment_type", type: "string", enum: ["mada", "visa_master", "apple_pay", "tabby", "tamara"], example: "visa_master"),
                     new OA\Property(property: "order_id", type: "string", example: "ORDER-12345"),
+                    // Additional fields for Tabby/Tamara
+                    new OA\Property(property: "first_name", type: "string", example: "John"),
+                    new OA\Property(property: "last_name", type: "string", example: "Doe"),
+                    new OA\Property(property: "phone", type: "string", example: "966500000000"),
+                    new OA\Property(property: "email", type: "string", example: "john@example.com"),
+                    new OA\Property(property: "city", type: "string", example: "Riyadh"),
+                    new OA\Property(property: "address", type: "string", example: "123 Main St"),
+                    new OA\Property(property: "callback_url", type: "string", example: "https://mysite.com/payment/callback"),
                 ]
             )
         ),
@@ -58,10 +76,7 @@ class PaymentController extends Controller
                     properties: [
                         new OA\Property(property: "error", type: "boolean", example: false),
                         new OA\Property(property: "message", type: "string", example: "Checkout initialized successfully."),
-                        new OA\Property(property: "data", type: "object", properties: [
-                            new OA\Property(property: "id", type: "string", example: "8AC7A4CA728C..."),
-                            new OA\Property(property: "result", type: "object")
-                        ])
+                        new OA\Property(property: "data", type: "object")
                     ]
                 )
             ),
@@ -73,7 +88,7 @@ class PaymentController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'amount' => 'required|numeric|min:1',
-            'payment_type' => 'required|string|in:mada,visa_master,apple_pay',
+            'payment_type' => 'required|string|in:mada,visa_master,apple_pay,tabby,stc_pay,tamara', // Added stc_pay if needed for hyperpay later, but focus on requested
             'order_id' => 'nullable|string',
         ]);
 
@@ -81,14 +96,38 @@ class PaymentController extends Controller
             return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
         }
 
+        try {
+            $user = $request->user();
+            $paymentType = $request->payment_type;
+
+            // Handle Tabby
+            if ($paymentType === 'tabby') {
+                return $this->initiateTabby($request, $user);
+            }
+
+            // Handle Tamara
+            if ($paymentType === 'tamara') {
+                return $this->initiateTamara($request, $user);
+            }
+
+            // Handle HyperPay (Default)
+            return $this->initiateHyperPay($request, $user);
+
+        } catch (\Exception $e) {
+            Log::error("Payment Initiation Error: " . $e->getMessage());
+            return $this->apiResponse(true, __('Failed to initialize payment: ') . $e->getMessage(), null, null, 500);
+        }
+    }
+
+    protected function initiateHyperPay(Request $request, $user)
+    {
         $params = [];
         if ($request->order_id) {
             $params['merchantTransactionId'] = $request->order_id;
         }
 
-        // Add customer email if available
-        if ($request->user()->email) {
-            $params['customer.email'] = $request->user()->email;
+        if ($user->email) {
+            $params['customer.email'] = $user->email;
         }
 
         $result = $this->hyperPayService->prepareCheckout(
@@ -101,7 +140,61 @@ class PaymentController extends Controller
             return $this->apiResponse(false, __('Checkout initialized successfully.'), $result);
         }
 
-        return $this->apiResponse(true, __('Failed to initialize payment.'), null, null, 500);
+        throw new \Exception('HyperPay service returned error.');
+    }
+
+    protected function initiateTabby(Request $request, $user)
+    {
+        $data = [
+            'amount' => $request->amount,
+            // 'currency' => 'SAR', // Service defaults to SAR
+            'customer_name' => ($request->first_name && $request->last_name)
+                                ? $request->first_name . ' ' . $request->last_name
+                                : $user->name,
+            'customer_email' => $request->email ?? $user->email,
+            'customer_phone' => $request->phone ?? $user->phone, // Ensure user model has phone or request has it
+            'order_id' => $request->order_id ?? uniqid('ORD-'),
+            'callback_url' => $request->callback_url ?? route('payment.callback', ['gateway' => 'tabby']), // Fallback route if not provided
+            'items' => [], // Add logic to pass items if available
+            // Add other optional fields
+            'city' => $request->city,
+            'address' => $request->address,
+            'zip' => $request->zip,
+        ];
+
+        // Basic validation for Tabby requirements
+        if (!$data['customer_email'] || !$data['customer_phone'] || !$data['customer_name']) {
+             throw new \Exception('Missing required customer data for Tabby (name, email, phone).');
+        }
+
+        $result = $this->tabbyService->initiateCheckout($data);
+
+        return $this->apiResponse(false, __('Tabby checkout initialized.'), $result);
+    }
+
+    protected function initiateTamara(Request $request, $user)
+    {
+        $data = [
+            'amount' => $request->amount,
+            'customer_email' => $request->email ?? $user->email,
+            'customer_phone' => $request->phone ?? $user->phone,
+            'first_name' => $request->first_name ?? explode(' ', $user->name)[0],
+            'last_name' => $request->last_name ?? (explode(' ', $user->name)[1] ?? 'User'),
+            'order_id' => $request->order_id ?? uniqid('ORD-'),
+            'callback_url' => $request->callback_url ?? route('payment.callback', ['gateway' => 'tamara']),
+            'items' => [], // Add items logic
+             // Add other optional fields
+            'city' => $request->city,
+            'address' => $request->address,
+        ];
+
+         if (!$data['customer_email'] || !$data['customer_phone']) {
+             throw new \Exception('Missing required customer data for Tamara (email, phone).');
+        }
+
+        $result = $this->tamaraService->initiateCheckout($data);
+
+        return $this->apiResponse(false, __('Tamara checkout initialized.'), $result);
     }
 
     /**
@@ -109,82 +202,92 @@ class PaymentController extends Controller
      */
     #[OA\Post(
         path: "/api/payment/verify",
-        summary: "Verify HyperPay payment status",
+        summary: "Verify payment status",
         operationId: "verifyPayment",
-        description: "Checks the status of a payment using the Checkout ID after the transaction is completed on the client side.",
+        description: "Checks the status of a payment.",
         tags: ["Payment"],
         security: [["bearerAuth" => []]],
         parameters: [
-            new OA\Parameter(
-                name: "Accept-Language",
-                in: "header",
-                description: "The language of the response (ar, en)",
-                required: false,
-                schema: new OA\Schema(type: "string", default: "en", enum: ["en", "ar"])
-            )
+            new OA\Parameter(name: "Accept-Language", in: "header", required: false, schema: new OA\Schema(type: "string", default: "en"))
         ],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ["checkout_id", "payment_type"],
+                required: ["payment_type"], // checkout_id might be payment_id for others
                 properties: [
-                    new OA\Property(property: "checkout_id", type: "string", example: "8AC7A4CA728C..."),
-                    new OA\Property(property: "payment_type", type: "string", enum: ["mada", "visa_master", "apple_pay"], example: "visa_master"),
+                    new OA\Property(property: "payment_type", type: "string", enum: ["mada", "visa_master", "apple_pay", "tabby", "tamara"]),
+                    new OA\Property(property: "checkout_id", type: "string", description: "Required for HyperPay"),
+                    new OA\Property(property: "payment_id", type: "string", description: "Required for Tabby/Tamara"),
                 ]
             )
         ),
         responses: [
-            new OA\Response(
-                response: 200,
-                description: "Payment status retrieved",
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: "error", type: "boolean", example: false),
-                        new OA\Property(property: "status", type: "string", example: "paid"),
-                        new OA\Property(property: "message", type: "string", example: "Payment successful."),
-                        new OA\Property(property: "data", type: "object")
-                    ]
-                )
-            ),
+            new OA\Response(response: 200, description: "Payment status retrieved"),
             new OA\Response(response: 400, description: "Payment Failed")
         ]
     )]
     public function verify(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'checkout_id' => 'required|string',
-            'payment_type' => 'required|string|in:mada,visa_master,apple_pay',
+            'payment_type' => 'required|string|in:mada,visa_master,apple_pay,tabby,tamara',
+            'checkout_id' => 'required_if:payment_type,mada,visa_master,apple_pay', // HyperPay
+            'payment_id' => 'required_if:payment_type,tabby,tamara', // Tabby/Tamara ID
         ]);
 
         if ($validator->fails()) {
             return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
         }
 
+        try {
+            $type = $request->payment_type;
+
+            if ($type === 'tabby') {
+                $result = $this->tabbyService->verifyPayment($request->payment_id);
+                $status = $result['status'] ?? 'unknown';
+
+                if ($status == 'authorized' || $status == 'closed') {
+                     // Tabby returns order.reference_id
+                     $bookingRef = $result['order']['reference_id'] ?? null;
+                     $this->updateBookingStatus($bookingRef);
+
+                     return $this->apiResponse(false, __('Payment successful.'), $result);
+                }
+                return $this->apiResponse(true, __('Payment failed or pending.'), $result, null, 400);
+            }
+
+            if ($type === 'tamara') {
+                $result = $this->tamaraService->verifyPayment($request->payment_id);
+                $status = $result['status'] ?? 'unknown';
+
+                 if ($status == 'authorised' || $status == 'fully_captured') {
+                     // Tamara returns order_reference_id
+                     $bookingRef = $result['order_reference_id'] ?? null;
+                     $this->updateBookingStatus($bookingRef);
+
+                     return $this->apiResponse(false, __('Payment successful.'), $result);
+                }
+                return $this->apiResponse(true, __('Payment failed or pending.'), $result, null, 400);
+            }
+
+            // HyperPay Logic
+            return $this->verifyHyperPay($request);
+
+        } catch (\Exception $e) {
+             return $this->apiResponse(true, $e->getMessage(), null, null, 500);
+        }
+    }
+
+    protected function verifyHyperPay(Request $request)
+    {
         $result = $this->hyperPayService->getPaymentStatus($request->checkout_id, $request->payment_type);
 
         if ($result && isset($result['result']['code'])) {
             $isSuccess = $this->hyperPayService->isSuccessful($result['result']['code']);
 
             if ($isSuccess) {
-                // Find Booking by transaction ID (assuming it was passed as order_id/merchantTransactionId)
-                // In HyperPay initiate, we mapped order_id to merchantTransactionId.
-                // In verify, we usually check against our DB.
-                // However, without local transaction log, we must rely on what we sent.
-                // Assuming request->checkout_id maps to a booking session is risky.
-                // WE NEED TO LINK CHECKOUT_ID TO BOOKING.
-                // FOR NOW, let's assume the CLIENT sends the 'booking_reference' in the request to verify as well, or we query HyperPay to get the merchantTransactionId.
-
-                // Better Approach: Query HyperPay status (already done in $result).
-                // $result['merchantTransactionId'] SHOULD contain our booking_reference.
+                // HyperPay returns merchantTransactionId
                 $bookingRef = $result['merchantTransactionId'] ?? null;
-
-                if ($bookingRef) {
-                    $booking = \App\Models\Booking::where('booking_reference', $bookingRef)->first();
-                    if ($booking) {
-                        $booking->update(['status' => 'paid', 'updated_at' => now()]);
-                        Log::info("Booking {$bookingRef} marked as PAID via HyperPay");
-                    }
-                }
+                $this->updateBookingStatus($bookingRef);
 
                 return $this->apiResponse(false, __('Payment successful.'), $result);
             }
@@ -192,6 +295,17 @@ class PaymentController extends Controller
             return $this->apiResponse(true, $result['result']['description'] ?? __('Payment failed.'), $result, null, 400);
         }
 
-        return $this->apiResponse(true, __('Failed to verify payment.'), null, null, 500);
+        throw new \Exception('HyperPay verification failed.');
+    }
+
+    protected function updateBookingStatus($bookingRef)
+    {
+        if ($bookingRef) {
+            $booking = \App\Models\Booking::where('booking_reference', $bookingRef)->first();
+            if ($booking) {
+                $booking->update(['status' => 'paid', 'updated_at' => now()]);
+                Log::info("Booking {$bookingRef} marked as PAID via Payment Gateway");
+            }
+        }
     }
 }

@@ -149,7 +149,52 @@ class BookingController extends Controller
                 return response()->json(['error' => true, 'message' => $result['message']], 500);
             }
 
-            return response()->json(['error' => false, 'data' => $result]);
+            // Persist locally for Admin/Web flow as well
+            $uniqueId = $result['CreateBookingResponse']['CreateBookingResult']['UniqueID'] ?? null;
+            $totalAmount = $result['CreateBookingResponse']['CreateBookingResult']['TotalAmount'] ?? 0;
+            $redirectUrl = null;
+
+            if ($uniqueId) {
+                // Check if already exists to avoid dupes (though unlikely with new UUID)
+                $booking = \App\Models\Booking::firstOrCreate(
+                    ['booking_reference' => $uniqueId],
+                    [
+                        'user_id' => auth()->id() ?? 1,
+                        'supplier_session_id' => $request->flight_session_id,
+                        'status' => 'pending',
+                        'ticket_status' => 'booked',
+                        'total_amount' => $totalAmount,
+                        'currency' => 'SAR',
+                        'contact_email' => $request->customerEmail,
+                        'contact_phone' => $request->customerPhone,
+                        'pnr_created_at' => now(),
+                    ]
+                );
+
+                // Save Passengers
+                if ($request->has('passengers') && is_array($request->passengers)) {
+                    foreach ($request->passengers as $pax) {
+                        $booking->passengers()->create([
+                            'title' => $pax['title'] ?? 'Mr',
+                            'first_name' => $pax['first_name'],
+                            'last_name' => $pax['last_name'],
+                            'type' => $pax['type'] ?? 'adult',
+                            'dob' => $pax['dob'] ?? null,
+                            'nationality' => $pax['nationality'] ?? null,
+                            'passport_no' => $pax['passport_no'] ?? null,
+                        ]);
+                    }
+                }
+
+                $redirectUrl = route('payment.show', $booking->id);
+            }
+
+            return response()->json([
+                'error' => false,
+                'data' => $result,
+                'redirect_url' => $redirectUrl,
+                'message' => __('Booking created. Redirecting to payment...')
+            ]);
         } catch (\Exception $e) {
             Log::error('Admin Flight Booking Error: ' . $e->getMessage());
             return response()->json(['error' => true, 'message' => __('An error occurred while creating the booking.')], 500);
