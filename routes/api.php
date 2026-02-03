@@ -19,17 +19,19 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 
-// Flight Routes (Public for Testing)
+// Flight Routes
 Route::post('/flights/search', [FlightController::class, 'search']);
 Route::get('/flights/airports', [FlightController::class, 'getAirports']);
 Route::get('/flights/airlines', [FlightController::class, 'getAirlines']);
 Route::post('/flights/validate-fare', [FlightController::class, 'validateFare']);
-Route::post('/flights/book', [FlightController::class, 'book']);
-Route::post('/flights/order-ticket', [FlightController::class, 'orderTicket']);
-Route::post('/flights/trip-details', [FlightController::class, 'getTripDetails']);
 
 // Protected Routes
 Route::middleware('auth:sanctum')->group(function () {
+    // Flight Booking Routes (Now Protected)
+    Route::post('/flights/book', [FlightController::class, 'book']);
+    Route::post('/flights/order-ticket', [FlightController::class, 'orderTicket']);
+    Route::post('/flights/trip-details', [FlightController::class, 'getTripDetails']);
+
     Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
     Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
     Route::get('/check-token', [AuthController::class, 'checkToken']);

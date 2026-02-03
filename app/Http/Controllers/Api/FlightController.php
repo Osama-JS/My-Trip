@@ -416,7 +416,7 @@ class FlightController extends Controller
 
             if ($uniqueId) {
                 $booking = Booking::create([
-                    'user_id' => Auth::id() ?? 1, // Fallback to 1 or nullable if allowed
+                    'user_id' => Auth::id(),
                     'booking_reference' => $uniqueId,
                     'supplier_session_id' => $request->flight_session_id,
                     'status' => 'pending', // PNR created but not ticketed
