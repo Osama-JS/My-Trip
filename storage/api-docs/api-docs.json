@@ -1989,9 +1989,26 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Booking created successfully."
+                                            "example": "Booking created successfully. Please proceed to payment."
                                         },
                                         "data": {
+                                            "properties": {
+                                                "payment_url": {
+                                                    "type": "string",
+                                                    "example": "https://mysite.com/payment/1"
+                                                },
+                                                "payment_api_url": {
+                                                    "type": "string",
+                                                    "example": "https://mysite.com/api/payment/initiate"
+                                                },
+                                                "booking_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "CreateBookingResponse": {
+                                                    "type": "object"
+                                                }
+                                            },
                                             "type": "object"
                                         }
                                     },
@@ -2894,8 +2911,8 @@
                 "tags": [
                     "Payment"
                 ],
-                "summary": "Initiate HyperPay checkout",
-                "description": "Initializes a payment session and returns a Checkout ID for the mobile SDK.",
+                "summary": "Initiate payment checkout (HyperPay, Tabby, Tamara)",
+                "description": "Initializes a payment session. For HyperPay, returns a Checkout ID. For Tabby/Tamara, returns a redirect URL.",
                 "operationId": "initiatePayment",
                 "parameters": [
                     {
@@ -2933,13 +2950,43 @@
                                         "enum": [
                                             "mada",
                                             "visa_master",
-                                            "apple_pay"
+                                            "apple_pay",
+                                            "tabby",
+                                            "tamara"
                                         ],
                                         "example": "visa_master"
                                     },
                                     "order_id": {
                                         "type": "string",
                                         "example": "ORDER-12345"
+                                    },
+                                    "first_name": {
+                                        "type": "string",
+                                        "example": "John"
+                                    },
+                                    "last_name": {
+                                        "type": "string",
+                                        "example": "Doe"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "966500000000"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "example": "john@example.com"
+                                    },
+                                    "city": {
+                                        "type": "string",
+                                        "example": "Riyadh"
+                                    },
+                                    "address": {
+                                        "type": "string",
+                                        "example": "123 Main St"
+                                    },
+                                    "callback_url": {
+                                        "type": "string",
+                                        "example": "https://mysite.com/payment/callback"
                                     }
                                 },
                                 "type": "object"
@@ -2963,15 +3010,6 @@
                                             "example": "Checkout initialized successfully."
                                         },
                                         "data": {
-                                            "properties": {
-                                                "id": {
-                                                    "type": "string",
-                                                    "example": "8AC7A4CA728C..."
-                                                },
-                                                "result": {
-                                                    "type": "object"
-                                                }
-                                            },
                                             "type": "object"
                                         }
                                     },
@@ -2999,22 +3037,17 @@
                 "tags": [
                     "Payment"
                 ],
-                "summary": "Verify HyperPay payment status",
-                "description": "Checks the status of a payment using the Checkout ID after the transaction is completed on the client side.",
+                "summary": "Verify payment status",
+                "description": "Checks the status of a payment.",
                 "operationId": "verifyPayment",
                 "parameters": [
                     {
                         "name": "Accept-Language",
                         "in": "header",
-                        "description": "The language of the response (ar, en)",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "default": "en",
-                            "enum": [
-                                "en",
-                                "ar"
-                            ]
+                            "default": "en"
                         }
                     }
                 ],
@@ -3024,22 +3057,26 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "checkout_id",
                                     "payment_type"
                                 ],
                                 "properties": {
-                                    "checkout_id": {
-                                        "type": "string",
-                                        "example": "8AC7A4CA728C..."
-                                    },
                                     "payment_type": {
                                         "type": "string",
                                         "enum": [
                                             "mada",
                                             "visa_master",
-                                            "apple_pay"
-                                        ],
-                                        "example": "visa_master"
+                                            "apple_pay",
+                                            "tabby",
+                                            "tamara"
+                                        ]
+                                    },
+                                    "checkout_id": {
+                                        "description": "Required for HyperPay",
+                                        "type": "string"
+                                    },
+                                    "payment_id": {
+                                        "description": "Required for Tabby/Tamara",
+                                        "type": "string"
                                     }
                                 },
                                 "type": "object"
@@ -3049,7 +3086,41 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Payment status retrieved",
+                        "description": "Payment status retrieved"
+                    },
+                    "400": {
+                        "description": "Payment Failed"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/user/bookings": {
+            "get": {
+                "tags": [
+                    "User"
+                ],
+                "summary": "حجوزات المستخدم (User Bookings)",
+                "description": "عرض قائمة حجوزات المستخدم الحالي مع تفاصيل الحالة وأرقام التذاكر. (Get current user's bookings with status and ticket details).",
+                "operationId": "getUserBookings",
+                "parameters": [
+                    {
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "en"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "تم استرجاع الحجوزات بنجاح",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -3058,25 +3129,86 @@
                                             "type": "boolean",
                                             "example": false
                                         },
-                                        "status": {
-                                            "type": "string",
-                                            "example": "paid"
-                                        },
                                         "message": {
                                             "type": "string",
-                                            "example": "Payment successful."
+                                            "example": "Bookings retrieved successfully."
                                         },
                                         "data": {
-                                            "type": "object"
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "reference": {
+                                                        "type": "string",
+                                                        "example": "TR123456"
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "confirmed"
+                                                    },
+                                                    "ticket_status": {
+                                                        "type": "string",
+                                                        "example": "ticketed"
+                                                    },
+                                                    "total_amount": {
+                                                        "type": "number",
+                                                        "example": 1500
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
                                         }
                                     },
                                     "type": "object"
                                 }
                             }
                         }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/user/bookings/{reference}": {
+            "get": {
+                "tags": [
+                    "User"
+                ],
+                "summary": "تفاصيل حجز المستخدم (User Booking Details)",
+                "description": "عرض تفاصيل حجز معين باستخدام المرجع (Reference/UniqueId) وجلب التفاصيل الحية من Travelopro. (Get specific booking details and live status).",
+                "operationId": "getUserBookingDetails",
+                "parameters": [
+                    {
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "en"
+                        }
                     },
-                    "400": {
-                        "description": "Payment Failed"
+                    {
+                        "name": "reference",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
                     }
                 },
                 "security": [
@@ -3119,6 +3251,10 @@
         {
             "name": "Payment",
             "description": "Payment"
+        },
+        {
+            "name": "User",
+            "description": "User"
         }
     ]
 }

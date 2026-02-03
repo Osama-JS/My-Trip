@@ -350,8 +350,13 @@ class FlightController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: "error", type: "boolean", example: false),
-                        new OA\Property(property: "message", type: "string", example: "Booking created successfully."),
-                        new OA\Property(property: "data", type: "object")
+                        new OA\Property(property: "message", type: "string", example: "Booking created successfully. Please proceed to payment."),
+                        new OA\Property(property: "data", type: "object", properties: [
+                            new OA\Property(property: "payment_url", type: "string", example: "https://mysite.com/payment/1"),
+                            new OA\Property(property: "payment_api_url", type: "string", example: "https://mysite.com/api/payment/initiate"),
+                            new OA\Property(property: "booking_id", type: "integer", example: 1),
+                            new OA\Property(property: "CreateBookingResponse", type: "object")
+                        ])
                     ]
                 )
             ),
