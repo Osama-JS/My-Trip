@@ -28,4 +28,9 @@ class Booking extends Model
     {
         return $this->hasMany(BookingPassenger::class);
     }
+
+    public function flightApiLogs()
+    {
+        return $this->hasMany(FlightApiLog::class);
+    }
 }

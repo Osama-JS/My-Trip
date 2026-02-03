@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Auth;
 
 class TraveloproService
 {
-    private function logApiCall($action, $url, $payload, $response, $statusCode, $startTime)
+    private function logApiCall($action, $url, $payload, $response, $statusCode, $startTime, $bookingId = null)
     {
         $executionTime = microtime(true) - $startTime;
 
@@ -20,7 +20,8 @@ class TraveloproService
 
         try {
             FlightApiLog::create([
-                'user_id' => Auth::id(), // Login user ID not API user ID
+                'user_id' => Auth::id(),
+                'booking_id' => $bookingId,
                 'action' => $action,
                 'endpoint' => $url,
                 'method' => 'POST',
@@ -405,7 +406,7 @@ class TraveloproService
      * @param string $uniqueId
      * @return array
      */
-    public function orderTicket(string $uniqueId)
+    public function orderTicket(string $uniqueId, $bookingId = null)
     {
         Log::info('Travelopro Order Ticket Request', ['UniqueID' => $uniqueId]);
 
@@ -423,7 +424,7 @@ class TraveloproService
         try {
             $response = Http::timeout(60)->post($url, $payload);
 
-            $this->logApiCall('Order Ticket', $url, $payload, $response->json(), $response->status(), $startTime);
+            $this->logApiCall('Order Ticket', $url, $payload, $response->json(), $response->status(), $startTime, $bookingId);
 
             if ($response->successful()) {
                 return $response->json();
@@ -457,7 +458,7 @@ class TraveloproService
      * @param string $uniqueId
      * @return array
      */
-    public function getTripDetails(string $uniqueId)
+    public function getTripDetails(string $uniqueId, $bookingId = null)
     {
         // Trip Details Request
         $payload = [
@@ -474,7 +475,7 @@ class TraveloproService
         try {
             $response = Http::timeout(60)->post($url, $payload);
 
-            $this->logApiCall('Get Trip Details', $url, $payload, $response->json(), $response->status(), $startTime);
+            $this->logApiCall('Get Trip Details', $url, $payload, $response->json(), $response->status(), $startTime, $bookingId);
 
             if ($response->successful()) {
                 return $response->json();

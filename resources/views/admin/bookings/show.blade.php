@@ -29,16 +29,28 @@
                         <h3>{{ $booking->booking_reference }}</h3>
                     </div>
                     <div class="col-md-6 text-end">
-                        <h6 class="text-muted">Status</h6>
-                        @if($booking->status == 'confirmed')
-                            <span class="badge badge-success">Confirmed</span>
-                        @elseif($booking->status == 'paid')
-                            <span class="badge badge-info">Paid</span>
-                        @elseif($booking->status == 'cancelled')
-                            <span class="badge badge-danger">Cancelled</span>
-                        @else
-                            <span class="badge badge-warning">{{ $booking->status }}</span>
-                        @endif
+                        <div class="mb-2">
+                            <h6 class="text-muted mb-1">Payment Status</h6>
+                            @if($booking->status == 'confirmed' || $booking->status == 'paid')
+                                <span class="badge badge-success">Paid / Confirmed</span>
+                            @elseif($booking->status == 'cancelled')
+                                <span class="badge badge-danger">Cancelled</span>
+                            @else
+                                <span class="badge badge-warning">{{ ucfirst($booking->status) }}</span>
+                            @endif
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-1">Ticketing Status</h6>
+                            @if($booking->ticket_status == 'ticketed')
+                                <span class="badge badge-success">Ticketed</span>
+                            @elseif($booking->ticket_status == 'booked')
+                                <span class="badge badge-primary">Booked</span>
+                            @elseif($booking->ticket_status == 'cancelled')
+                                <span class="badge badge-danger">Cancelled</span>
+                            @else
+                                <span class="badge badge-outline-dark">{{ ucfirst($booking->ticket_status) }}</span>
+                            @endif
+                        </div>
                     </div>
                 </div>
 
@@ -50,43 +62,100 @@
                     <table class="table table-bordered">
                         <thead class="thead-light">
                             <tr>
-                                <th>Use Type</th>
+                                <th>Type</th>
                                 <th>Name</th>
-                                <th>Gender</th>
                                 <th>Passport No</th>
                                 <th>Nationality</th>
+                                <th>DOB</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($booking->passengers as $pax)
                             <tr>
-                                <td>{{ ucfirst($pax->passenger_type) }}</td>
+                                <td>{{ ucfirst($pax->type) }}</td>
                                 <td>{{ $pax->title }} {{ $pax->first_name }} {{ $pax->last_name }}</td>
-                                <td>{{ ucfirst($pax->gender) }}</td>
                                 <td>{{ $pax->passport_no ?? '-' }}</td>
                                 <td>{{ $pax->nationality }}</td>
+                                <td>{{ $pax->dob ?? '-' }}</td>
                             </tr>
                             @endforeach
                         </tbody>
                     </table>
                 </div>
 
-                <hr>
+                 <hr>
 
-                <!-- Contact Info -->
-                 <h5 class="mb-3 mt-4">Contact Information</h5>
-                 <div class="row">
-                     <div class="col-md-6">
-                         <strong>Email:</strong> {{ $booking->contact_email }}
-                     </div>
-                     <div class="col-md-6">
-                         <strong>Phone:</strong> {{ $booking->contact_phone }}
-                     </div>
-                 </div>
+                 <!-- Contact Info -->
+                  <h5 class="mb-3 mt-4">Contact Information</h5>
+                  <div class="row mb-4">
+                      <div class="col-md-6">
+                          <strong>Email:</strong> {{ $booking->contact_email }}
+                      </div>
+                      <div class="col-md-6">
+                          <strong>Phone:</strong> {{ $booking->contact_phone }}
+                      </div>
+                  </div>
 
-            </div>
-        </div>
-    </div>
+                  <hr>
+
+                  <!-- API Logs -->
+                  <h5 class="mb-3 mt-4">API Transaction Logs</h5>
+                  <div class="table-responsive">
+                      <table class="table table-sm table-hover">
+                          <thead>
+                              <tr>
+                                  <th>Action</th>
+                                  <th>Status</th>
+                                  <th>Time</th>
+                                  <th>Details</th>
+                              </tr>
+                          </thead>
+                          <tbody>
+                              @forelse($booking->flightApiLogs as $log)
+                              <tr>
+                                  <td>{{ $log->action }}</td>
+                                  <td>
+                                      <span class="badge badge-{{ $log->status_code >= 200 && $log->status_code < 300 ? 'success' : 'danger' }}">
+                                          {{ $log->status_code }}
+                                      </span>
+                                  </td>
+                                  <td>{{ $log->created_at->format('H:i:s') }}</td>
+                                  <td>
+                                      <button type="button" class="btn btn-info btn-xs" data-bs-toggle="modal" data-bs-target="#logModal{{ $log->id }}">
+                                          <i class="fa fa-info-circle"></i>
+                                      </button>
+
+                                      <!-- Modal -->
+                                      <div class="modal fade" id="logModal{{ $log->id }}" tabindex="-1" aria-hidden="true">
+                                          <div class="modal-dialog modal-lg">
+                                              <div class="modal-content">
+                                                  <div class="modal-header">
+                                                      <h5 class="modal-title">Log Detail: {{ $log->action }}</h5>
+                                                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                  </div>
+                                                  <div class="modal-body">
+                                                      <h6>Request Payload</h6>
+                                                      <pre class="bg-light p-2"><code>{{ json_encode($log->request_payload, JSON_PRETTY_PRINT) }}</code></pre>
+                                                      <h6 class="mt-3">Response Payload</h6>
+                                                      <pre class="bg-light p-2"><code>{{ json_encode($log->response_payload, JSON_PRETTY_PRINT) }}</code></pre>
+                                                  </div>
+                                              </div>
+                                          </div>
+                                      </div>
+                                  </td>
+                              </tr>
+                              @empty
+                              <tr>
+                                  <td colspan="4" class="text-center text-muted">No API logs found for this booking.</td>
+                              </tr>
+                              @endforelse
+                          </tbody>
+                      </table>
+                  </div>
+
+             </div>
+         </div>
+     </div>
 
     <!-- Sidebar Info -->
     <div class="col-xl-3 col-lg-4">

@@ -61,7 +61,8 @@
                                 <th>Reference</th>
                                 <th>User</th>
                                 <th>Amount</th>
-                                <th>Status</th>
+                                <th>Payment Status</th>
+                                <th>Ticket Status</th>
                                 <th>Date</th>
                                 <th>Actions</th>
                             </tr>
@@ -80,14 +81,15 @@
     $(document).ready(function() {
         $('#bookingsTable').DataTable({
             processing: true,
-            serverSide: false, // Client-side for now as we load all
+            serverSide: false,
             ajax: "{{ route('admin.bookings.data') }}",
             columns: [
                 { data: 'id', name: 'id' },
                 { data: 'reference', name: 'reference' },
                 { data: 'user', name: 'user' },
                 { data: 'amount', name: 'amount' },
-                { data: 'status', name: 'status' },
+                { data: 'payment_status', name: 'payment_status' },
+                { data: 'ticket_status', name: 'ticket_status' },
                 { data: 'date', name: 'date' },
                 { data: 'actions', name: 'actions', orderable: false, searchable: false }
             ],

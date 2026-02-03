@@ -8,6 +8,7 @@ class FlightApiLog extends Model
 {
     protected $fillable = [
         'user_id',
+        'booking_id',
         'action',
         'endpoint',
         'method',

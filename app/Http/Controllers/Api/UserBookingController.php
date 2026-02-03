@@ -25,7 +25,9 @@ class UserBookingController extends Controller
         tags: ["User"],
         security: [["bearerAuth" => []]],
         parameters: [
-            new OA\Parameter(name: "Accept-Language", in: "header", required: false, schema: new OA\Schema(type: "string", default: "en"))
+            new OA\Parameter(name: "Accept-Language", in: "header", required: false, schema: new OA\Schema(type: "string", default: "en")),
+            new OA\Parameter(name: "per_page", in: "query", required: false, schema: new OA\Schema(type: "integer", default: 10)),
+            new OA\Parameter(name: "page", in: "query", required: false, schema: new OA\Schema(type: "integer", default: 1))
         ],
         responses: [
             new OA\Response(
@@ -42,9 +44,22 @@ class UserBookingController extends Controller
                                 new OA\Property(property: "status", type: "string", example: "confirmed"),
                                 new OA\Property(property: "ticket_status", type: "string", example: "ticketed"),
                                 new OA\Property(property: "total_amount", type: "number", example: 1500.00),
-                                new OA\Property(property: "created_at", type: "string", format: "date-time")
+                                new OA\Property(property: "currency", type: "string", example: "USD"),
+                                new OA\Property(property: "pnr_date", type: "string", format: "date-time"),
+                                new OA\Property(property: "passengers_count", type: "integer", example: 2),
+                                new OA\Property(property: "invoice_url", type: "string", example: "https://mysite.com/invoice/1")
                             ]
-                        ))
+                        )),
+                        new OA\Property(property: "pagination", type: "object", properties: [
+                            new OA\Property(property: "pageNumber", type: "integer"),
+                            new OA\Property(property: "pageSize", type: "integer"),
+                            new OA\Property(property: "count", type: "integer"),
+                            new OA\Property(property: "totalPages", type: "integer"),
+                            new OA\Property(property: "hasNextPage", type: "boolean"),
+                            new OA\Property(property: "hasPreviousPage", type: "boolean"),
+                            new OA\Property(property: "nextPage", type: "string", nullable: true),
+                            new OA\Property(property: "previousPage", type: "string", nullable: true)
+                        ])
                     ]
                 )
             )
@@ -52,27 +67,31 @@ class UserBookingController extends Controller
     )]
     public function index(Request $request)
     {
+        $perPage = $request->input('per_page', 10);
         $bookings = Booking::where('user_id', $request->user()->id)
             ->latest()
-            ->get();
+            ->paginate($perPage);
 
-        return response()->json([
-            'error' => false,
-            'message' => __('Bookings retrieved successfully.'),
-            'data' => $bookings->map(function ($booking) {
-                return [
-                    'id' => $booking->id,
-                    'reference' => $booking->booking_reference, // UniqueId
-                    'status' => $booking->status,
-                    'ticket_status' => $booking->ticket_status,
-                    'total_amount' => $booking->total_amount,
-                    'currency' => $booking->currency,
-                    'pnr_date' => $booking->pnr_created_at,
-                    'passengers_count' => $booking->passengers->count(),
-                    'invoice_url' => $booking->ticket_status === 'ticketed' ? route('admin.bookings.invoice', $booking->id) : null,
-                ];
-            })
-        ]);
+        $data = $bookings->getCollection()->transform(function ($booking) {
+            return [
+                'id' => $booking->id,
+                'reference' => $booking->booking_reference, // UniqueId
+                'status' => $booking->status,
+                'ticket_status' => $booking->ticket_status,
+                'total_amount' => $booking->total_amount,
+                'currency' => $booking->currency,
+                'pnr_date' => $booking->pnr_created_at,
+                'passengers_count' => $booking->passengers->count(),
+                'invoice_url' => $booking->ticket_status === 'ticketed' ? route('admin.bookings.invoice', $booking->id) : null,
+            ];
+        });
+
+        return $this->apiResponse(
+            false,
+            __('Bookings retrieved successfully.'),
+            $data,
+            $this->formatPagination($bookings)
+        );
     }
 
     #[OA\Get(
@@ -94,18 +113,23 @@ class UserBookingController extends Controller
     {
         $booking = Booking::where('user_id', $request->user()->id)
             ->where('booking_reference', $reference)
-            ->with('passengers')
+            ->with(['passengers'])
             ->firstOrFail();
 
-        // Optional: Fetch live details from Travelopro if needed to sync status
-        // $liveDetails = $this->traveloproService->getTripDetails($reference);
+        // Fetch live details from Travelopro to sync status (Important for real-time status)
+        try {
+            $liveDetails = $this->traveloproService->getTripDetails($reference, $booking->id);
+        } catch (\Exception $e) {
+            \Log::error('Failed to fetch live trip details: ' . $e->getMessage());
+            $liveDetails = null;
+        }
 
         return response()->json([
             'error' => false,
             'message' => __('Booking details retrieved successfully.'),
             'data' => [
                 'local_details' => $booking,
-                // 'live_details' => $liveDetails // Uncomment if live fetch is desired
+                'live_details' => $liveDetails
             ]
         ]);
     }

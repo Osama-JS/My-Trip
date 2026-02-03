@@ -524,7 +524,7 @@ class FlightController extends Controller
              return $this->apiResponse(true, __('Payment required before ticket issuance.'), null, null, 402);
         }
 
-        $result = $this->traveloproService->orderTicket($request->uniqueId);
+        $result = $this->traveloproService->orderTicket($request->uniqueId, $booking->id);
 
         if (isset($result['status']) && $result['status'] === 'error') {
             return $this->apiResponse(true, $result['message'], $result['details'] ?? $result['error'], null, 500);
@@ -617,7 +617,13 @@ class FlightController extends Controller
             return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
         }
 
-        $result = $this->traveloproService->getTripDetails($request->uniqueId);
+        $booking = Booking::where('booking_reference', $request->uniqueId)->first();
+
+        if (!$booking) {
+             return $this->apiResponse(true, __('Booking not found.'), null, null, 404);
+        }
+
+        $result = $this->traveloproService->getTripDetails($request->uniqueId, $booking->id);
 
         if (isset($result['status']) && $result['status'] === 'error') {
             return $this->apiResponse(true, $result['message'], $result['details'] ?? $result['error'], null, 500);

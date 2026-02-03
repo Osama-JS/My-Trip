@@ -3116,6 +3116,24 @@
                             "type": "string",
                             "default": "en"
                         }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
                     }
                 ],
                 "responses": {
@@ -3157,13 +3175,56 @@
                                                         "type": "number",
                                                         "example": 1500
                                                     },
-                                                    "created_at": {
+                                                    "currency": {
+                                                        "type": "string",
+                                                        "example": "USD"
+                                                    },
+                                                    "pnr_date": {
                                                         "type": "string",
                                                         "format": "date-time"
+                                                    },
+                                                    "passengers_count": {
+                                                        "type": "integer",
+                                                        "example": 2
+                                                    },
+                                                    "invoice_url": {
+                                                        "type": "string",
+                                                        "example": "https://mysite.com/invoice/1"
                                                     }
                                                 },
                                                 "type": "object"
                                             }
+                                        },
+                                        "pagination": {
+                                            "properties": {
+                                                "pageNumber": {
+                                                    "type": "integer"
+                                                },
+                                                "pageSize": {
+                                                    "type": "integer"
+                                                },
+                                                "count": {
+                                                    "type": "integer"
+                                                },
+                                                "totalPages": {
+                                                    "type": "integer"
+                                                },
+                                                "hasNextPage": {
+                                                    "type": "boolean"
+                                                },
+                                                "hasPreviousPage": {
+                                                    "type": "boolean"
+                                                },
+                                                "nextPage": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "previousPage": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"

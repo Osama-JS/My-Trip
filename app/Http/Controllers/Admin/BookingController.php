@@ -66,26 +66,34 @@ class BookingController extends Controller
 
         return response()->json([
             'data' => $bookings->map(function ($booking) {
-                $statusBadge = match($booking->status) {
-                    'confirmed' => '<span class="badge badge-success">Confirmed</span>',
-                    'paid' => '<span class="badge badge-info">Paid (Processing)</span>',
-                    'pending' => '<span class="badge badge-warning">Pending</span>',
-                    'cancelled' => '<span class="badge badge-danger">Cancelled</span>',
-                    default => '<span class="badge badge-light">'.$booking->status.'</span>'
+                $paymentBadge = match($booking->status) {
+                    'confirmed' => '<span class="badge badge-success">'.__('Paid/Confirmed').'</span>',
+                    'paid' => '<span class="badge badge-info">'.__('Paid (Processing)').'</span>',
+                    'pending' => '<span class="badge badge-warning">'.__('Pending Payment').'</span>',
+                    'cancelled' => '<span class="badge badge-danger">'.__('Cancelled').'</span>',
+                    default => '<span class="badge badge-light">'.ucfirst($booking->status).'</span>'
+                };
+
+                $ticketBadge = match($booking->ticket_status) {
+                    'ticketed' => '<span class="badge badge-success">'.__('Ticketed').'</span>',
+                    'booked' => '<span class="badge badge-primary">'.__('Booked').'</span>',
+                    'cancelled' => '<span class="badge badge-danger">'.__('Cancelled').'</span>',
+                    default => '<span class="badge badge-outline-dark">'.ucfirst($booking->ticket_status).'</span>'
                 };
 
                 return [
                     'id' => $booking->id,
                     'reference' => $booking->booking_reference,
-                    'user' => $booking->user ? $booking->user->name : 'N/A', // Assuming user->name exists or fix logic
+                    'user' => $booking->user ? $booking->user->name : 'N/A',
                     'amount' => $booking->total_amount . ' ' . $booking->currency,
-                    'status' => $statusBadge,
+                    'payment_status' => $paymentBadge,
+                    'ticket_status' => $ticketBadge,
                     'date' => $booking->created_at->format('Y-m-d H:i'),
                     'actions' => '
                         <div class="d-flex">
-                            <a href="'.route('admin.bookings.show', $booking->id).'" class="btn btn-primary shadow btn-xs sharp me-1"><i class="fa fa-eye"></i></a>
+                            <a href="'.route('admin.bookings.show', $booking->id).'" class="btn btn-primary shadow btn-xs sharp me-1" title="View"><i class="fa fa-eye"></i></a>
                             '.($booking->ticket_status === 'ticketed'
-                                ? '<a href="'.route('admin.bookings.invoice', $booking->id).'" class="btn btn-secondary shadow btn-xs sharp" target="_blank"><i class="fa fa-file-invoice"></i></a>'
+                                ? '<a href="'.route('admin.bookings.invoice', $booking->id).'" class="btn btn-secondary shadow btn-xs sharp" target="_blank" title="Invoice"><i class="fa fa-file-invoice"></i></a>'
                                 : '').'
                         </div>'
                 ];
