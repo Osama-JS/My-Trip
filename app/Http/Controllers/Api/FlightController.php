@@ -421,7 +421,21 @@ class FlightController extends Controller
                 Log::error('Booking response structure unknown', ['full_response' => $result]);
             }
 
-            $uniqueId = $bookingData['BookFlightResult']['UniqueID'] ?? $bookingData['CreateBookingResult']['UniqueID'] ?? null;
+            $bookingResult = $bookingData['BookFlightResult'] ?? $bookingData['CreateBookingResult'] ?? null;
+            if ($bookingResult) {
+                $isSuccess = $bookingResult['Success'] ?? false;
+                if (is_string($isSuccess)) {
+                    $isSuccess = (strtolower($isSuccess) === 'true');
+                }
+
+                if (!$isSuccess) {
+                    $errorMessage = $bookingResult['Errors']['Error']['ErrorMessage'] ?? $bookingResult['Errors']['ErrorMessage'] ?? __('Booking failed at provider.');
+                    Log::warning('Travelopro API returned success=false', ['message' => $errorMessage]);
+                    return $this->apiResponse(true, $errorMessage, $result, null, 400);
+                }
+            }
+
+            $uniqueId = $bookingData['BookFlightResult']['UniqueID'] ?? $bookingData['BookFlightResult']['uniqueID'] ?? $bookingData['CreateBookingResult']['UniqueID'] ?? null;
             $totalAmount = $bookingData['BookFlightResult']['TotalAmount'] ?? $bookingData['CreateBookingResult']['TotalAmount'] ?? 0;
 
             Log::info('Extracted Booking Identity', ['uniqueId' => $uniqueId, 'totalAmount' => $totalAmount]);
