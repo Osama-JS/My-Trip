@@ -31,6 +31,74 @@ class PaymentController extends Controller
     }
 
     /**
+     * Get Available Payment Methods
+     */
+    #[OA\Get(
+        path: "/api/payment/methods",
+        summary: "Get available payment methods",
+        operationId: "getPaymentMethods",
+        description: "Returns a list of active payment gateways and their configuration for the UI.",
+        tags: ["Payment"],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "Success",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "error", type: "boolean", example: false),
+                        new OA\Property(property: "message", type: "string", example: "Payment methods retrieved."),
+                        new OA\Property(property: "data", type: "array", items: new OA\Items(
+                            properties: [
+                                new OA\Property(property: "key", type: "string", example: "visa_master"),
+                                new OA\Property(property: "name", type: "string", example: "Visa / MasterCard"),
+                                new OA\Property(property: "type", type: "string", example: "card"),
+                                new OA\Property(property: "icon", type: "string", example: "url_to_icon")
+                            ]
+                        ))
+                    ]
+                )
+            )
+        ]
+    )]
+    public function methods()
+    {
+        $methods = [
+            [
+                'key' => 'mada',
+                'name' => __('Mada'),
+                'type' => 'card',
+                'icon' => asset('assets/img/payments/mada.png')
+            ],
+            [
+                'key' => 'visa_master',
+                'name' => __('Visa / MasterCard'),
+                'type' => 'card',
+                'icon' => asset('assets/img/payments/visa.png')
+            ],
+            [
+                'key' => 'tabby',
+                'name' => __('Tabby (Installments)'),
+                'type' => 'redirect',
+                'icon' => asset('assets/img/payments/tabby.png')
+            ],
+            [
+                'key' => 'tamara',
+                'name' => __('Tamara'),
+                'type' => 'redirect',
+                'icon' => asset('assets/img/payments/tamara.png')
+            ],
+            [
+                'key' => 'apple_pay',
+                'name' => __('Apple Pay'),
+                'type' => 'digital_wallet',
+                'icon' => asset('assets/img/payments/apple-pay.png')
+            ]
+        ];
+
+        return $this->apiResponse(false, __('Payment methods retrieved successfully.'), $methods);
+    }
+
+    /**
      * Initiate Payment Checkout
      */
     #[OA\Post(

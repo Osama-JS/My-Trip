@@ -2005,7 +2005,7 @@
                                                     "type": "integer",
                                                     "example": 1
                                                 },
-                                                "CreateBookingResponse": {
+                                                "BookFlightResponse": {
                                                     "type": "object"
                                                 }
                                             },
@@ -2040,7 +2040,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/flights/order-ticket": {
@@ -2134,7 +2139,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/flights/trip-details": {
@@ -2228,7 +2238,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/flights/booking-notes": {
@@ -2902,6 +2917,62 @@
                 "responses": {
                     "200": {
                         "description": "تم استرجاع حالة الطلب بنجاح"
+                    }
+                }
+            }
+        },
+        "/api/payment/methods": {
+            "get": {
+                "tags": [
+                    "Payment"
+                ],
+                "summary": "Get available payment methods",
+                "description": "Returns a list of active payment gateways and their configuration for the UI.",
+                "operationId": "getPaymentMethods",
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Payment methods retrieved."
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "key": {
+                                                        "type": "string",
+                                                        "example": "visa_master"
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Visa / MasterCard"
+                                                    },
+                                                    "type": {
+                                                        "type": "string",
+                                                        "example": "card"
+                                                    },
+                                                    "icon": {
+                                                        "type": "string",
+                                                        "example": "url_to_icon"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }

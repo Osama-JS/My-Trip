@@ -298,6 +298,7 @@ class FlightController extends Controller
         operationId: "bookFlight",
         description: "إنشاء سجل حجز (PNR) مبدئي وحفظ بيانات المسافرين قبل عملية الدفع وإصدار التذكرة. (Create a PNR using passenger details).",
         tags: ["Flights"],
+        security: [["bearerAuth" => []]],
         parameters: [
             new OA\Parameter(
                 name: "Accept-Language",
@@ -355,7 +356,7 @@ class FlightController extends Controller
                             new OA\Property(property: "payment_url", type: "string", example: "https://mysite.com/payment/1"),
                             new OA\Property(property: "payment_api_url", type: "string", example: "https://mysite.com/api/payment/initiate"),
                             new OA\Property(property: "booking_id", type: "integer", example: 1),
-                            new OA\Property(property: "CreateBookingResponse", type: "object")
+                            new OA\Property(property: "BookFlightResponse", type: "object")
                         ])
                     ]
                 )
@@ -401,35 +402,48 @@ class FlightController extends Controller
             return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
         }
 
+        Log::info('Initiating Travelopro Booking Request', ['user_id' => Auth::id()]);
         $result = $this->traveloproService->createBooking($request->all());
 
         if (isset($result['status']) && $result['status'] === 'error') {
+            Log::error('Travelopro Booking Service Error', ['error' => $result]);
             return $this->apiResponse(true, $result['message'], $result['details'] ?? $result['error'], null, 500);
         }
 
         // Persist booking to local database
         try {
-            // Extract UniqueID from response - Adjust path based on actual response structure
-            $uniqueId = $result['CreateBookingResponse']['CreateBookingResult']['UniqueID'] ?? null;
-            // Also try to get Price if available in response, otherwise 0
-            $totalAmount = $result['CreateBookingResponse']['CreateBookingResult']['TotalAmount'] ?? 0;
+            Log::info('Travelopro API Response Received', ['keys' => array_keys($result)]);
+
+            // Handle both possible response keys: BookFlightResponse (Docs) or CreateBookingResponse (Current Code potentially)
+            $bookingData = $result['BookFlightResponse'] ?? $result['CreateBookingResponse'] ?? null;
+
+            if (!$bookingData) {
+                Log::error('Booking response structure unknown', ['full_response' => $result]);
+            }
+
+            $uniqueId = $bookingData['BookFlightResult']['UniqueID'] ?? $bookingData['CreateBookingResult']['UniqueID'] ?? null;
+            $totalAmount = $bookingData['BookFlightResult']['TotalAmount'] ?? $bookingData['CreateBookingResult']['TotalAmount'] ?? 0;
+
+            Log::info('Extracted Booking Identity', ['uniqueId' => $uniqueId, 'totalAmount' => $totalAmount]);
 
             if ($uniqueId) {
                 $booking = Booking::create([
                     'user_id' => Auth::id(),
                     'booking_reference' => $uniqueId,
                     'supplier_session_id' => $request->flight_session_id,
-                    'status' => 'pending', // PNR created but not ticketed
+                    'status' => 'pending',
                     'ticket_status' => 'booked',
                     'total_amount' => $totalAmount,
-                    'currency' => 'SAR', // Adjust if dynamic
+                    'currency' => 'SAR',
                     'contact_email' => $request->customerEmail,
                     'contact_phone' => $request->customerPhone,
                     'pnr_created_at' => now(),
                 ]);
 
+                Log::info('Local Booking Record Created', ['booking_id' => $booking->id]);
+
                 foreach ($request->passengers as $pax) {
-                    $booking->passengers()->create([
+                    $passenger = $booking->passengers()->create([
                         'title' => $pax['title'],
                         'first_name' => $pax['first_name'],
                         'last_name' => $pax['last_name'],
@@ -438,15 +452,23 @@ class FlightController extends Controller
                         'nationality' => $pax['nationality'],
                         'passport_no' => $pax['passport_no'] ?? null,
                     ]);
+                    Log::info('Passenger Saved', ['passenger_id' => $passenger->id]);
                 }
 
-                // Add Payment URL to response
+                // Add Payment and Tracking details to response
                 $result['payment_url'] = route('payment.show', $booking->id);
-                $result['payment_api_url'] = url('/api/payment/initiate'); // Hint for API users
+                $result['payment_api_url'] = url('/api/payment/initiate');
                 $result['booking_id'] = $booking->id;
+
+                Log::info('Booking Persistence Successfully Completed', ['booking_id' => $booking->id]);
+            } else {
+                Log::warning('No UniqueID found in booking response, persistence skipped.');
             }
         } catch (\Exception $e) {
-            Log::error('Failed to persist booking', ['error' => $e->getMessage()]);
+            Log::error('CRITICAL: Failed to persist booking to database', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
         }
 
         return $this->apiResponse(false, __('Booking created successfully. Please proceed to payment.'), $result, null, 200);
@@ -458,6 +480,7 @@ class FlightController extends Controller
         operationId: "orderTicket",
         description: "إصدار التذكرة النهائية وحجزها بشكل قطعي بعد عملية الحجز المبدئي (PNR) والتأكد من الدفع. (Issue ticket for a confirmed booking).",
         tags: ["Flights"],
+        security: [["bearerAuth" => []]],
         parameters: [
             new OA\Parameter(
                 name: "Accept-Language",
@@ -524,14 +547,14 @@ class FlightController extends Controller
              return $this->apiResponse(true, __('Payment required before ticket issuance.'), null, null, 402);
         }
 
+        Log::info('Initiating Travelopro Order Ticket Request', ['uniqueId' => $request->uniqueId, 'booking_id' => $booking->id]);
         $result = $this->traveloproService->orderTicket($request->uniqueId, $booking->id);
 
         if (isset($result['status']) && $result['status'] === 'error') {
+            Log::error('Travelopro Order Ticket Service Error', ['error' => $result, 'booking_id' => $booking->id]);
             return $this->apiResponse(true, $result['message'], $result['details'] ?? $result['error'], null, 500);
         }
 
-        // Update local booking status
-        $invoiceContent = null;
         try {
             if ($booking) {
                 $booking->update([
@@ -539,15 +562,20 @@ class FlightController extends Controller
                     'ticket_status' => 'ticketed',
                     'updated_at' => now()
                 ]);
+                Log::info('Booking Status Updated to Confirmed', ['booking_id' => $booking->id]);
 
                 // Generate Invoice
                 $pdfContent = $this->invoiceService->generateInvoice($booking);
                 if ($pdfContent) {
                     $invoiceContent = base64_encode($pdfContent);
+                    Log::info('Invoice Generated Successfully', ['booking_id' => $booking->id]);
                 }
             }
         } catch (\Exception $e) {
-            Log::error('Failed to update booking status or generate invoice', ['error' => $e->getMessage()]);
+            Log::error('Failed to update booking status or generate invoice', [
+                'error' => $e->getMessage(),
+                'booking_id' => $booking->id
+            ]);
         }
 
         $response = $result;
@@ -564,6 +592,7 @@ class FlightController extends Controller
         operationId: "getTripDetails",
         description: "استرجاع كافة تفاصيل الرحلة، بما في ذلك أرقام التذاكر وحالة الحجز النهائية. (Get full details of a trip including ticket numbers).",
         tags: ["Flights"],
+        security: [["bearerAuth" => []]],
         parameters: [
             new OA\Parameter(
                 name: "Accept-Language",

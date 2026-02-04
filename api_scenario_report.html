@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تقرير تحليل سيناريو الـ API الكامل - My-Trip</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Inter:wght@300;400;500;600&family=Tajawal:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --primary: #5e17eb;
+            --primary-light: #7c4dff;
+            --secondary: #00d2ff;
+            --dark: #0f172a;
+            --light: #f8fafc;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: #e2e8f0;
+            --glass: rgba(255, 255, 255, 0.8);
+        }
+
+        body {
+            font-family: 'Tajawal', 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            color: var(--dark);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        header {
+            background: var(--dark);
+            color: white;
+            padding: 60px 20px;
+            border-radius: 24px;
+            text-align: center;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, var(--primary-light) 0%, transparent 70%);
+            opacity: 0.1;
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.8;
+            font-weight: 300;
+        }
+
+        .card {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border: 1px solid white;
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        h2 {
+            display: flex;
+            align-items: center;
+            color: var(--primary);
+            font-size: 1.8rem;
+            margin-top: 0;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        h2 span {
+            background: var(--primary);
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 15px;
+            font-size: 1rem;
+        }
+
+        h3 {
+            color: var(--dark);
+            font-size: 1.3rem;
+            margin-top: 30px;
+        }
+
+        .phase-box {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .phase-item {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border-right: 4px solid var(--primary);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .phase-item strong {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--primary);
+        }
+
+        .mermaid {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        code {
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Inter', monospace;
+            color: var(--danger);
+            font-size: 0.9em;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-api {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+
+        .badge-db {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .tech-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .tech-table th,
+        .tech-table td {
+            text-align: right;
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tech-table th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px;
+            opacity: 0.6;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <header>
+            <h1>تحليل سيناريو الـ API الكامل</h1>
+            <p class="subtitle">دورة حياة الحجز في منصة My-Trip: من البحث إلى التذكرة</p>
+        </header>
+
+        <!-- المرحلة 1: البحث والتحقق -->
+        <div class="card">
+            <h2><span>1</span> المرحلة الأولى: الاكتشاف والتحقق (Search & Validation)</h2>
+            <p>تبدأ الرحلة عندما يقوم المستخدم بالبحث عن رحلة طيران. تتم هذه العملية عبر ثلاث خطوات أساسية لضمان دقة
+                الأسعار وتوافر المقاعد.</p>
+
+            <div class="phase-box">
+                <div class="phase-item">
+                    <strong>البحث (Search):</strong>
+                    استخدام <code>/api/flights/search</code> لإرسال معايير الرحلة (المغادرة، الوجهة، التاريخ) وجلب
+                    النتائج من Travelopro.
+                </div>
+                <div class="phase-item">
+                    <strong>التحقق من السعر (Validate Fare):</strong>
+                    استخدام <code>/api/flights/validate-fare</code> للتأكد من أن السعر المختار لا يزال متاحاً قبل البدء
+                    بجمع بيانات المسافرين.
+                </div>
+            </div>
+
+            <div class="mermaid">
+                sequenceDiagram
+                participant App as تطبيق الجوال
+                participant API as خادم My-Trip
+                participant Prov as Travelopro API
+
+                App->>API: POST /search (معايير الرحلة)
+                API->>Prov: طلب البحث (Availability)
+                Prov-->>API: قائمة الرحلات والأسعار
+                API-->>App: مصفوفة الرحلات المتاحة
+
+                App->>API: POST /validate-fare (FareSourceCode)
+                API->>Prov: إعادة التحقق من السعر المختار
+                Prov-->>API: السعر الحالي (مؤكد/متغير)
+                API-->>App: تأكيد السعر النهائي
+            </div>
+        </div>
+
+        <!-- المرحلة 2: الحجز المبدئي وتخزين البيانات -->
+        <div class="card">
+            <h2><span>2</span> المرحلة الثانية: الحجز المبدئي (PNR Creation & Persistence)</h2>
+            <p>هذه هي المرحلة الحاسمة حيث يتم ربط البيانات التقنية ببيانات المستخدم الحقيقية وحفظها في قاعدة البيانات
+                المحلية.</p>
+
+            <div class="phase-item" style="margin-bottom: 20px;">
+                <strong>نقطة النهاية:</strong> <code>POST /api/flights/book</code> <br>
+                <strong>المتطلبات:</strong> <code>Bearer Token</code> (يجب أن يكون المستخدم مسجلاً).
+            </div>
+
+            <div class="phase-box">
+                <div class="phase-item">
+                    <strong>العملية الخارجية:</strong>
+                    يتم إنشاء سجل PNR عالمي لدى شركة الطيران عبر Travelopro، والحصول على <code>UniqueID</code>.
+                </div>
+                <div class="phase-item">
+                    <strong>التخزين المحلي:</strong>
+                    يتم حفظ البيانات في جداولنا:
+                    <ul>
+                        <li><code>bookings</code>: السجل الرئيسي للحجز.</li>
+                        <li><code>booking_passengers</code>: كافة بيانات المسافرين.</li>
+                        <li><code>flight_api_logs</code>: ربط الطلب التقني برقم الحجز.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>حالات الحجز (Status Flow):</h3>
+            <table class="tech-table">
+                <tr>
+                    <th>الحالة (Status)</th>
+                    <th>حالة التذكرة (Ticket Status)</th>
+                    <th>المعنى</th>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-api">Pending</span></td>
+                    <td><span class="badge badge-api">Booked</span></td>
+                    <td>تم إنشاء الـ PNR وبانتظار الدفع.</td>
+                </tr>
+                <tr>
+                    <td><span class="badge" style="background: #e9d5ff; color: #6b21a8;">Processing</span></td>
+                    <td><span class="badge" style="background: #e9d5ff; color: #6b21a8;">Pending</span></td>
+                    <td>بدأت عملية الدفع ولم تنتهِ بعد.</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- المرحلة 3: نظام الدفع المتكامل -->
+        <div class="card">
+            <h2><span>3</span> المرحلة الثالثة: بوابة الدفع الآمنة (Secure Payment)</h2>
+            <p>لن يتم إصدار أي تذكرة ما لم تتغير حالة الحجز في قاعدة بياناتنا إلى <code>paid</code>.</p>
+
+            <div class="phase-box">
+                <div class="phase-item">
+                    <strong>بوابات الدفع:</strong>
+                    دعم كامل لـ <code>Tabby</code> (قسط شهري)، <code>Tamara</code>، و <code>HyperPay</code> (فيزا/مدى).
+                </div>
+                <div class="phase-item">
+                    <strong>التحديث التلقائي (Webhooks):</strong>
+                    عند نجاح الدفع، يقوم السيرفر بتحديث حالة الحجز فوراً ليكون جاهزاً للإصدار.
+                </div>
+            </div>
+
+            <div class="mermaid">
+                graph LR
+                A[إنشاء الحجز] --> B{اختيار الدفع}
+                B --> C[Tabby]
+                B --> D[Tamara]
+                B --> E[HyperPay]
+                C & D & E --> F[إعادة التوجيه للتطبيق]
+                F --> G[تحديث الحالة إلى Paid]
+            </div>
+        </div>
+
+        <!-- المرحلة 4: إصدار التذكرة والفاتورة -->
+        <div class="card">
+            <h2><span>4</span> المرحلة الرابعة: قطع التذكرة (Issuance & Invoicing)</h2>
+            <p>الخطوة النهائية التي تحول الحجز المبدئي إلى تذكرة سفر حقيقية.</p>
+
+            <div class="phase-box">
+                <div class="phase-item">
+                    <strong>الأمر الفني:</strong>
+                    نقطة النهاية <code>/api/flights/order-ticket</code> تطلب من Travelopro تحويل الـ PNR إلى تذاكر
+                    (Ticketing).
+                </div>
+                <div class="phase-item">
+                    <strong>المخرجات:</strong>
+                    <ul>
+                        <li>حالة الحجز: <code>Confirmed</code></li>
+                        <li>حالة التذكرة: <code>Ticketed</code></li>
+                        <li>توليد فاتورة PDF وإرسالها للمستخدم.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- المرحلة 5: عرض الحجوزات وإدارتها -->
+        <div class="card">
+            <h2><span>5</span> المرحلة الخامسة: أرشيف المستخدم (User Console)</h2>
+            <p>كيف يرى المستخدم حجوزاته في التطبيق ويتابع حالتها.</p>
+
+            <table class="tech-table">
+                <thead>
+                    <tr>
+                        <th>الخدمة</th>
+                        <th>الوصف</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>GET /api/user/bookings</code></td>
+                        <td>عرض كافة الحجوزات مع الترقيم (Pagination) وحالة كل حجز.</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/user/bookings/{ref}</code></td>
+                        <td>تفاصيل الحجز كاملة + جلب البيانات الحية (Live) من المزود للمزامنة.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- المرحلة 6: الإلغاء والحالات الاستثنائية -->
+        <div class="card" style="border-right: 4px solid var(--danger);">
+            <h2><span>6</span> المرحلة السادسة: الإلغاء والعمليات اللاحقة (Cancellation)</h2>
+            <p>تتعامل المنصة مع حالات التراجع أو الإلغاء بذكاء تقني عالي.</p>
+
+            <div class="phase-box">
+                <div class="phase-item">
+                    <strong>الإلغاء الفوري (Void):</strong>
+                    يتم عبر <code>/api/flights/void-ticket</code> إذا كان الإلغاء في نفس يوم الحجز (بناءً على سياسة
+                    الخطوط).
+                </div>
+                <div class="phase-item">
+                    <strong>الاسترداد (Refund Request):</strong>
+                    طلب عرض تكلفة الإلغاء أولاً <code>void-quote</code> ثم تنفيذ العملية.
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>تم إعداد هذا التقرير آلياً - نظام My-Trip API Analysis &copy; 2026</p>
+        </footer>
+    </div>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'forest', securityLevel: 'loose' });
+    </script>
+</body>
+
+</html>
