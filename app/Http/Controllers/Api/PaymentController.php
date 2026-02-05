@@ -222,7 +222,7 @@ class PaymentController extends Controller
             'customer_email' => $request->email ?? $user->email,
             'customer_phone' => $request->phone ?? $user->phone, // Ensure user model has phone or request has it
             'order_id' => $request->order_id ?? uniqid('ORD-'),
-            'callback_url' => $request->callback_url ?? route('payment.callback', ['gateway' => 'tabby']), // Fallback route if not provided
+            'callback_url' => route('payment.callback', ['gateway' => 'tabby']),
             'items' => [], // Add logic to pass items if available
             // Add other optional fields
             'city' => $request->city,
@@ -249,7 +249,7 @@ class PaymentController extends Controller
             'first_name' => $request->first_name ?? explode(' ', $user->name)[0],
             'last_name' => $request->last_name ?? (explode(' ', $user->name)[1] ?? 'User'),
             'order_id' => $request->order_id ?? uniqid('ORD-'),
-            'callback_url' => $request->callback_url ?? route('payment.callback', ['gateway' => 'tamara']),
+            'callback_url' => route('payment.callback', ['gateway' => 'tamara']),
             'items' => [], // Add items logic
              // Add other optional fields
             'city' => $request->city,
@@ -375,5 +375,47 @@ class PaymentController extends Controller
                 Log::info("Booking {$bookingRef} marked as PAID via Payment Gateway");
             }
         }
+    }
+
+    /**
+     * Centralized callback handler that provides a server-side landing page
+     */
+    public function handleCallback(Request $request)
+    {
+        $gateway = $request->gateway;
+        $status = $request->status;
+
+        // For Tabby, the payment ID is payment_id. For Tamara, it might be tap_id or similar.
+        // We will pass identifying info in the URL so the app can read it.
+        $paymentId = $request->payment_id ?? $request->tap_id ?? $request->id;
+
+        return response("
+            <!DOCTYPE html>
+            <html lang='ar' dir='rtl'>
+            <head>
+                <meta charset='UTF-8'>
+                <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+                <title>معالجة الدفع...</title>
+                <style>
+                    body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f8fafc; color: #1e293b; text-align: center; }
+                    .card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+                    .loader { border: 4px solid #f3f3f3; border-top: 4px solid #4f46e5; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
+                    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                </style>
+            </head>
+            <body>
+                <div class='card'>
+                    <div class='loader'></div>
+                    <h2>يتم معالجة عملية الدفع...</h2>
+                    <p>يرجى الانتظار، سيتم توجيهك إلى التطبيق تلقائياً.</p>
+                    <p style='font-size: 0.8rem; color: #64748b;'>ID: {$paymentId}</p>
+                </div>
+                <script>
+                    // This script is a fallback. The mobile app should intercept the URL before/at this point.
+                    console.log('Payment ID identified: {$paymentId}');
+                </script>
+            </body>
+            </html>
+        ")->header('Content-Type', 'text/html');
     }
 }

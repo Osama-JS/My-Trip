@@ -18,12 +18,14 @@ Route::get('/app-settings', [AppSettingController::class, 'index']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::get('/payment/callback', [PaymentController::class, 'handleCallback'])->name('payment.callback');
 
 // Flight Routes
 Route::post('/flights/search', [FlightController::class, 'search']);
 Route::get('/flights/airports', [FlightController::class, 'getAirports']);
 Route::get('/flights/airlines', [FlightController::class, 'getAirlines']);
 Route::post('/flights/validate-fare', [FlightController::class, 'validateFare']);
+Route::get('/payment/methods', [PaymentController::class, 'methods']);
 
 // Protected Routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -43,7 +45,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Payment Routes
     Route::prefix('payment')->group(function () {
-        Route::get('/methods', [PaymentController::class, 'methods']);
         Route::post('/initiate', [PaymentController::class, 'initiate']);
         Route::post('/verify', [PaymentController::class, 'verify']);
     });

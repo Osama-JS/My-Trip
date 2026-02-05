@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الدليل التقني الشامل لبوابات الدفع - My-Trip</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;600;700&family=Outfit:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-light: #818cf8;
+            --secondary: #10b981;
+            --accent: #f59e0b;
+            --dark: #0f172a;
+            --slate-800: #1e293b;
+            --slate-100: #f1f5f9;
+            --white: #ffffff;
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'IBM Plex Sans Arabic', 'Outfit', sans-serif;
+            background-color: #f8fafc;
+            color: var(--dark);
+            margin: 0;
+            padding: 0;
+            line-height: 1.7;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, var(--dark) 0%, #1e1b4b 100%);
+            color: white;
+            padding: 80px 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            bottom: -50px;
+            left: 0;
+            right: 0;
+            height: 100px;
+            background: #f8fafc;
+            transform: skewY(-2deg);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: -40px auto 60px;
+            padding: 0 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .card {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 30px;
+            border: 1px solid #e2e8f0;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        h2 {
+            color: var(--primary);
+            font-size: 1.8rem;
+            border-right: 5px solid var(--primary);
+            padding-right: 15px;
+            margin-top: 0;
+        }
+
+        h3 {
+            color: var(--slate-800);
+            font-size: 1.3rem;
+            margin-top: 25px;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .feature-box {
+            background: #f9fafb;
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid #edf2f7;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-box:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-light);
+        }
+
+        .feature-box h4 {
+            margin-top: 0;
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 12px;
+            font-family: 'Consolas', monospace;
+            direction: ltr;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            border-left: 5px solid var(--accent);
+            margin: 20px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th {
+            background: #f1f5f9;
+            text-align: right;
+            padding: 15px;
+            font-weight: 600;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .mermaid-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid #e2e8f0;
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        .alert {
+            padding: 15px 25px;
+            border-radius: 12px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+        }
+
+        .alert-info {
+            background: #e0f2fe;
+            color: #0369a1;
+            border-right: 5px solid #0369a1;
+        }
+
+        .badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .badge-post {
+            background: #10b981;
+            color: white;
+        }
+
+        .badge-get {
+            background: #3b82f6;
+            color: white;
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <section class="hero">
+        <span class="tag">التوثيق التقني الإصدار 2.0</span>
+        <h1>تكامل بوابات الدفع (HyperPay, Tabby, Tamara)</h1>
+        <p>دليل شامل للمطورين حول معمارية الدفع الموحدة ورحلة المستخدم</p>
+    </section>
+
+    <div class="container">
+
+        <!-- نظرة عامة -->
+        <div class="card">
+            <h2>1. استراتيجية قطع التذكرة (The Strategy)</h2>
+            <p>يعتمد النظام استراتيجية <strong>"الحجز المؤقت أولاً"</strong> لضمان حماية المقاعد والسعر قبل التزام
+                العميل بالدفع:</p>
+            <div class="mermaid-container">
+                <div class="mermaid">
+                    graph LR
+                    A[البحث] --> B[تأكيد السعر]
+                    B --> C[إنشاء PNR]
+                    C --> D[تهيئة الدفع]
+                    D --> E[التحقق من الدفع]
+                    E --> F[إصدار التذكرة Order]
+                    style C fill:#f9f,stroke:#333,stroke-width:2px
+                    style F fill:#00ff00,stroke:#333,stroke-width:2px
+                </div>
+            </div>
+            <p><strong>لماذا هذا الترتيب؟</strong> لضمان عدم قيام العميل بالدفع مقابل رحلة أصبحت "غير متاحة" فجأة. الحجز
+                (PNR) يحجز المقاعد لفترة زمنية محددة (Time Limit) تكفي لإتمام عملية الدفع.</p>
+        </div>
+
+        <!-- اختيار الوسيلة -->
+        <div class="card">
+            <h2>2. ديناميكية اختيار الوسيلة (Gateway Selection)</h2>
+            <p>نحن لا نثبت وسائل الدفع في التطبيق. بل نطلبها من السيرفر لتكون قابلة للتغيير في أي وقت:</p>
+            <div class="code-block">
+                <span class="badge badge-get">GET</span> /api/payment/methods
+            </div>
+            <p>يستخدم التطبيق هذه القائمة لعرض الخيارات (مدى، فيزا، تابي، تمارا) مع أيقوناتها المحدثة.</p>
+        </div>
+
+        <!-- تهيئة الدفع -->
+        <div class="card">
+            <h2>3. دالة التهيئة الموحدة (Unified Initiate)</h2>
+            <p>نقطة دخول واحدة لكافة البوابات. لاحظ أن <code>callback_url</code> أصبح يُدار بواسطة السيرفر لضمان
+                الموثوقية وتوحيد تجربة العودة:</p>
+            <div class="code-block">
+                <span class="badge badge-post">POST</span> /api/payment/initiate
+                <br><br>
+                {
+                "amount": 1250.0,
+                "payment_type": "tabby",
+                "order_id": "PNR_123456",
+                // لم يعد ارسال callback_url من التطبيق ضرورياً (السيرفر يحدده تلقائياً)
+                "email": "customer@email.com",
+                "phone": "9665XXXXXXXX"
+                }
+            </div>
+
+            <div class="grid">
+                <div class="feature-box">
+                    <h4>في HyperPay</h4>
+                    <p>يعيد السيرفر <code>checkout_id</code> فقط. يقوم التطبيق باستخدام الـ SDK أو WebView لعرض نموذج
+                        البطاقة البنكية.</p>
+                </div>
+                <div class="feature-box">
+                    <h4>في Tabby / Tamara</h4>
+                    <p>يعيد السيرفر <code>checkout_url</code>. يجب على التطبيق فتح هذا الرابط في WebView فوراً. السيرفر
+                        سيوجه بوابة الدفع للعودة لصفحة انتظار خاصة به.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- الـ Callback والمعالجة -->
+        <div class="card">
+            <h2>4. رحلة العودة والمعالجة (Server-Side Landing Page)</h2>
+            <p>بدلاً من العودة المباشرة للتطبيق عبر Deep Link، قمنا بتحسين العملية لتتم عبر السيرفر أولاً لضمان استقرار
+                جلسة الدفع وتسهيل عمل التطبيق:</p>
+
+            <div class="alert alert-info">
+                <strong>الاستراتيجية الجديدة:</strong> بوابة الدفع تعود لصفحة <code>/api/payment/callback</code> على
+                السيرفر، والتطبيق يراقب الـ URL لاستخلاص الـ ID.
+            </div>
+
+            <h3>تسلسل العودة الجديد:</h3>
+            <ol>
+                <li>العميل يكمل الدفع في WebView.</li>
+                <li>بوابة الدفع تعيد العميل لرابط السيرفر:
+                    <code>https://your-api.com/api/payment/callback?payment_id=XXX</code>.</li>
+                <li>تظهر للعميل صفحة "جاري المعالجة" احترافية داخل الـ WebView.</li>
+                <li><strong>دور التطبيق:</strong> يقوم بمراقبة (Intercept) رابط الـ WebView. عندما يجد أن الرابط يحتوي
+                    كـ نص على <code>/payment/callback</code>، يقوم بقراءة الـ <code>payment_id</code> من الـ Query
+                    Parameters وإغلاق الـ WebView.</li>
+                <li>يقوم التطبيق بطلب الـ <code>/verify</code> باستخدام الـ ID الذي استخلصه لتأكيد العملية رسمياً.</li>
+            </ol>
+        </div>
+
+        <!-- المقارنة التقنية -->
+        <div class="card">
+            <h2>5. مقارنة المعالجة التقنية</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>الخاصية</th>
+                        <th>هايبر باي (البطاقات)</th>
+                        <th>تابي و تمارا (التقسيط)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>الرد من التهيئة</td>
+                        <td>Checkout ID</td>
+                        <td>Checkout URL (رابط)</td>
+                    </tr>
+                    <tr>
+                        <td>طريقة العرض</td>
+                        <td>نموذج بطاقة (In-App)</td>
+                        <td>إعادة توجيه (External/WebView)</td>
+                    </tr>
+                    <tr>
+                        <td>متطلبات العميل</td>
+                        <td>البريد (اختياري)</td>
+                        <td>البريد، الهاتف، العنوان (إجباري)</td>
+                    </tr>
+                    <tr>
+                        <td>التحقق Verify</td>
+                        <td>عبر Checkout ID</td>
+                        <td>عبر Payment ID (من رابط العودة)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- قائمة التحقق -->
+        <div class="card">
+            <h2>6. قائمة التحقق للمطور (Checklist)</h2>
+            <ul style="padding-right: 20px;">
+                <li>[ ] استدعاء <code>/methods</code> لبناء خيارات الدفع.</li>
+                <li>[ ] التأكد من وجود PNR ناجح قبل طلب الدفع.</li>
+                <li>[ ] إرسال بيانات العميل كاملة عند اختيار تابي/تمارا لتجنب الرفض.</li>
+                <li>[ ] تعريف Deep Link في ملف (AndroidManifest.xml / Info.plist) للتطبيق.</li>
+                <li>[ ] استدعاء <code>/verify</code> فور العودة من بوابة الدفع.</li>
+                <li>[ ] استدعاء <code>/order-ticket</code> فقط بعد أن يكون رد الـ verify بنجاح.</li>
+            </ul>
+        </div>
+
+        <footer>
+            <p>تم إعداد هذا التقرير آلياً - فريق تطوير My-Trip &copy; 2026</p>
+        </footer>
+    </div>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'loose', rtl: true });
+    </script>
+</body>
+
+</html>
