@@ -41,6 +41,7 @@
     "Featured Hotels": "فنادق مميزة",
     "Night": "ليلة",
     "Booked": "تم الحجز",
+    "Question":"الاسئلة",
     "Stay In": "مقيم حالياً",
     "Recent Reservations": "أحدث الحجوزات",
     "Check In": "تسجيل الوصول",
@@ -67,7 +68,6 @@
     "Booking ID": "معرف الحجز",
     "Booking Date": "تاريخ الحجز",
     "Customer Name": "اسم العميل",
-
     "Hotel Name": "اسم الفندق",
     "Room Type": "نوع الغرفة",
     "Number of Guests": "عدد الضيوف",

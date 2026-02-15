@@ -74,6 +74,13 @@
                 </a>
             </li>
 
+            {{-- Settings --}}
+            <li>
+                <a href="{{ route('admin.questions.index') }}" aria-expanded="false">
+                    <i class="flaticon-381-settings-2"></i>
+                    <span class="nav-text">{{ __('Question') }}</span>
+                </a>
+            </li>
             {{-- Reports & Logs --}}
             <li>
                 <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">

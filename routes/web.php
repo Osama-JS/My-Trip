@@ -86,8 +86,15 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     Route::get('settings', [App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
     Route::post('settings', [App\Http\Controllers\Admin\SettingController::class, 'update'])->name('settings.update');
 
+    // Question Management
+    Route::get('questions/data', [App\Http\Controllers\Admin\QuestionController::class, 'getData'])->name('questions.data');
+    Route::post('questions/{question}/toggle-status', [App\Http\Controllers\Admin\QuestionController::class, 'toggleStatus'])->name('questions.toggle-status');
+    Route::resource('questions', App\Http\Controllers\Admin\QuestionController::class);
+
     // User Activity
     Route::get('users/{id}/activity', [UserController::class, 'activity'])->name('users.activity');
+
+
 
     // Permission Management
     Route::get('permissions/data', [PermissionController::class, 'getData'])->name('permissions.data');
