@@ -10,7 +10,7 @@
     },
     "servers": [
         {
-            "url": "http://localhost/my-trip/public",
+            "url": "http://localhost/Trip/My-Trip/public",
             "description": "Development Server"
         },
         {

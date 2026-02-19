@@ -91,6 +91,19 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     Route::post('questions/{question}/toggle-status', [App\Http\Controllers\Admin\QuestionController::class, 'toggleStatus'])->name('questions.toggle-status');
     Route::resource('questions', App\Http\Controllers\Admin\QuestionController::class);
 
+
+    // Countries Management
+    Route::get('countries/data', [App\Http\Controllers\Admin\CountryController::class, 'getData'])->name('countries.data');
+    Route::get('countries/active', [App\Http\Controllers\Admin\CountryController::class, 'getActiveCountries'])->name('countries.active');
+    Route::post('countries/{country}/toggle-status', [App\Http\Controllers\Admin\CountryController::class, 'toggleStatus'])->name('countries.toggle-status');
+    Route::resource('countries', App\Http\Controllers\Admin\CountryController::class);
+
+    // Cities Management
+    Route::get('cities/data', [App\Http\Controllers\Admin\CityController::class, 'getData'])->name('cities.data');
+    Route::get('cities/by-country/{country}', [App\Http\Controllers\Admin\CityController::class, 'byCountry'])->name('cities.by-country');
+    Route::post('cities/{city}/toggle-status', [App\Http\Controllers\Admin\CityController::class, 'toggleStatus'])->name('cities.toggle-status');
+    Route::resource('cities', App\Http\Controllers\Admin\CityController::class);
+
     // User Activity
     Route::get('users/{id}/activity', [UserController::class, 'activity'])->name('users.activity');
 

@@ -142,6 +142,16 @@
         <!-- Footer -->
         @include('partials.footer')
     </div>
+        <div id="globalLoader" style="
+        position: fixed;
+        inset: 0;
+        background: rgba(255,255,255,0.6);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;">
+        <div class="spinner-border text-primary"></div>
+    </div>
 
     <!-- Vite JS -->
     @vite(['resources/js/app.js'])

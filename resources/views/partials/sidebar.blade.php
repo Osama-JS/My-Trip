@@ -39,6 +39,18 @@
                 </ul>
             </li>
 
+            <li>
+                <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
+                    <i class="fa fa-solid fa-hotel"></i>
+                    <span class="nav-text">{{ __('Locations') }}</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{{ route('admin.countries.index') }}"><i class="fa fa-hotel "></i>{{ __('Country') }}</a></li>
+                    <li><a href="{{ route('admin.cities.index') }}"><i class="fa fa-concierge-bell "></i>{{ __('Cities') }}</a></li>
+                </ul>
+            </li>
+
+
 
             {{-- Security & Access --}}
             @can('view users')
