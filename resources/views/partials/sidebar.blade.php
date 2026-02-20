@@ -50,6 +50,18 @@
                 </ul>
             </li>
 
+            <li>
+                <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
+                    <i class="fa fa-solid fa-hotel"></i>
+                    <span class="nav-text">{{ __('Company') }}</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{{ route('admin.companies.index') }}"><i class="fa fa-hotel "></i>{{ __('Company') }}</a></li>
+                    <li><a href="{{ route('admin.companycodes.index') }}"><i class="fa fa-concierge-bell "></i>{{ __('CompanyCode') }}</a></li>
+                </ul>
+            </li>
+
+
 
 
             {{-- Security & Access --}}

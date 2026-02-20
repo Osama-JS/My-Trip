@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('title', __('Cities Management'))
+@section('page-title', __('Cities Management'))
 
 @section('page-header')
 <div class="row page-titles">
@@ -87,53 +88,181 @@
 </div>
 
 <!-- Add City Modal -->
-<div class="modal fade" id="addCityModal">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">{{ __('Add New City') }}</h5>
+<div class="modal fade" id="addCityModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+
+            <!-- Header -->
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">
+                    <i class="fas fa-city text-primary me-2"></i>
+                    {{ __('Add New City') }}
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
+
+            <!-- Form -->
             <form id="addCityForm">
                 @csrf
-                <div class="modal-body">
-                    <x-forms.select name="country_id" :label="__('Select Country')" :options="$countries" searchable required />
-                    <x-forms.input-text name="title_ar" :label="__('Name (Arabic)')" required />
-                    <x-forms.input-text name="title_en" :label="__('Name (English)')" required />
-                    <x-forms.checkbox name="active" :label="__('Active status')" checked type="switch" />
+                <div class="modal-body pt-2 px-4">
+
+                    <div class="row g-4">
+
+                        <!-- Country Select -->
+                        <div class="col-12">
+                            <x-forms.select 
+                                name="country_id" 
+                                :label="__('Select Country')" 
+                                :options="$countries" 
+                                searchable 
+                                required />
+                        </div>
+
+                        <!-- Arabic Name -->
+                        <div class="col-md-6">
+                            <x-forms.input-text 
+                                name="title_ar" 
+                                :label="__('Name (Arabic)')" 
+                                required />
+                        </div>
+
+                        <!-- English Name -->
+                        <div class="col-md-6">
+                            <x-forms.input-text 
+                                name="title_en" 
+                                :label="__('Name (English)')" 
+                                required />
+                        </div>
+
+                        <!-- Status Card -->
+                        <div class="col-12">
+                            <div class="mt-2 p-3 bg-light rounded-4 d-flex justify-content-between align-items-center border">
+                                <div>
+                                    <h6 class="mb-1 fw-semibold">{{ __('City Status') }}</h6>
+                                    <small class="text-muted">{{ __('Enable or disable this city in the system') }}</small>
+                                </div>
+                                <x-forms.checkbox 
+                                    name="active" 
+                                    :label="__('Active status')" 
+                                    checked 
+                                    type="switch" />
+                            </div>
+                        </div>
+
+                    </div>
+
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-danger light" data-bs-dismiss="modal">{{ __('Close') }}</button>
-                    <button type="submit" class="btn btn-primary">{{ __('Save City') }}</button>
+
+                <!-- Footer -->
+                <div class="modal-footer border-0 pt-0 px-4">
+                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">{{ __('Close') }}</button>
+                    <button type="submit" class="btn btn-primary px-4 shadow-sm">
+                        <i class="fas fa-save me-1"></i> {{ __('Save City') }}
+                    </button>
                 </div>
+
             </form>
+
         </div>
     </div>
 </div>
 
 <!-- Edit City Modal -->
-<div class="modal fade" id="editCityModal">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">{{ __('Edit City') }}</h5>
+<div class="modal fade" id="editCityModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+
+            <!-- Header -->
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">
+                    <i class="fas fa-city text-primary me-2"></i>
+                    {{ __('Edit City') }}
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
+
+            <!-- Form -->
             <form id="editCityForm">
                 @csrf
                 @method('PUT')
                 <input type="hidden" id="edit_city_id">
-                <div class="modal-body">
-                    <x-forms.select name="country_id" id="edit_country_id" :label="__('Select Country')" :options="$countries" searchable required />
-                    <x-forms.input-text name="title_ar" id="edit_title_ar" :label="__('Name (Arabic)')" required />
-                    <x-forms.input-text name="title_en" id="edit_title_en" :label="__('Name (English)')" required />
-                    <x-forms.checkbox name="active" id="edit_active" :label="__('Active status')" type="switch" />
+
+                <div class="modal-body pt-2 px-4">
+
+                    <div class="row g-4">
+
+                        <!-- Country Select -->
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">{{ __('Select Country') }}</label>
+                                <select name="country_id" id="edit_country_id" class="form-select select-search" required>
+                                    <option value="" disabled selected>{{ __('Select Country') }}</option>
+                                    @foreach($countries as $country)
+                                        <option value="{{ $country->id }}">{{ $country->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Arabic Name -->
+                        <div class="col-md-6">
+                            <div class="form-floating position-relative">
+                                <input type="text" 
+                                       id="edit_title_ar" 
+                                       name="title_ar" 
+                                       class="form-control ps-4" 
+                                       placeholder="Name (Arabic)" 
+                                       required>
+                                <label>{{ __('Name (Arabic)') }}</label>
+                                <i class="fas fa-language position-absolute top-50 start-0 translate-middle-y ms-2 text-muted"></i>
+                            </div>
+                        </div>
+
+                        <!-- English Name -->
+                        <div class="col-md-6">
+                            <div class="form-floating position-relative">
+                                <input type="text" 
+                                       id="edit_title_en" 
+                                       name="title_en" 
+                                       class="form-control ps-4" 
+                                       placeholder="Name (English)" 
+                                       required>
+                                <label>{{ __('Name (English)') }}</label>
+                                <i class="fas fa-font position-absolute top-50 start-0 translate-middle-y ms-2 text-muted"></i>
+                            </div>
+                        </div>
+
+                        <!-- Status Card -->
+                        <div class="col-12">
+                            <div class="mt-3 p-3 bg-light rounded-4 d-flex justify-content-between align-items-center border">
+                                <div>
+                                    <h6 class="mb-1 fw-semibold">{{ __('City Status') }}</h6>
+                                    <small class="text-muted">{{ __('Enable or disable this city in the system') }}</small>
+                                </div>
+                                <div class="form-check form-switch form-switch-lg">
+                                    <input class="form-check-input"
+                                        type="checkbox"
+                                        id="edit_active"
+                                        name="active"
+                                        value="1">
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-danger light" data-bs-dismiss="modal">{{ __('Close') }}</button>
-                    <button type="submit" class="btn btn-primary">{{ __('Update City') }}</button>
+
+                <!-- Footer -->
+                <div class="modal-footer border-0 pt-0 px-4">
+                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">{{ __('Close') }}</button>
+                    <button type="submit" class="btn btn-primary px-4 shadow-sm">
+                        <i class="fas fa-save me-1"></i> {{ __('Update City') }}
+                    </button>
                 </div>
+
             </form>
+
         </div>
     </div>
 </div>

@@ -3,6 +3,14 @@
 @section('title', __('Countries'))
 @section('page-title', __('Countries Management'))
 
+@section('page-header')
+<div class="row page-titles">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="javascript:void(0)">{{ __('Locations') }}</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ __('Countries') }}</a></li>
+    </ol>
+</div>
+@endsection
 @section('content')
 
 
@@ -73,94 +81,252 @@
 </div>
 
 
-<div class="modal fade" id="addCountryModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg"> <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i>{{ __('Add New Country') }}</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+<div class="modal fade" id="addCountryModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+
+            <!-- Header -->
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">
+                    <i class="fas fa-globe text-primary me-2"></i>
+                    {{ __('Add New Country') }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            
+
             <form id="addCountryForm" enctype="multipart/form-data">
                 @csrf
-                <div class="modal-body p-4">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-bold">{{ __('Name (Arabic)') }} <span class="text-danger">*</span></label>
-                            <input type="text" name="name" class="form-control"  required>
+
+                <div class="modal-body pt-2 px-4">
+
+                    <div class="row g-4">
+
+                        <!-- Arabic Name -->
+                        <div class="col-md-6">
+                            <div class="form-floating position-relative">
+                                <input type="text"
+                                       name="name"
+                                       class="form-control ps-5"
+                                       placeholder="Arabic Name"
+                                       required>
+                                <label>{{ __('Name (Arabic)') }}</label>
+                                <i class="fas fa-language position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                            </div>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-bold">{{ __('Name (English)') }} <span class="text-danger">*</span></label>
-                            <input type="text" name="nicename" class="form-control"  required>
+
+                        <!-- English Name -->
+                        <div class="col-md-6">
+                            <div class="form-floating position-relative">
+                                <input type="text"
+                                       name="nicename"
+                                       class="form-control ps-5"
+                                       placeholder="English Name"
+                                       required>
+                                <label>{{ __('Name (English)') }}</label>
+                                <i class="fas fa-font position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                            </div>
                         </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-bold">{{ __('Country Code (ISO)') }} <span class="text-danger">*</span></label>
-                            <input type="text" name="numcode" class="form-control"  required>
+
+                        <!-- ISO Code -->
+                        <div class="col-md-6">
+                            <div class="form-floating position-relative">
+                                <input type="text"
+                                       name="numcode"
+                                       class="form-control ps-5"
+                                       placeholder="ISO Code"
+                                       required>
+                                <label>{{ __('Country Code (ISO)') }}</label>
+                                <i class="fas fa-hashtag position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                            </div>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-bold">{{ __('Phone Code') }} <span class="text-danger">*</span></label>
-                            <input type="text" name="phonecode" class="form-control"  required>
+
+                        <!-- Phone Code -->
+                        <div class="col-md-6">
+                            <div class="form-floating position-relative">
+                                <input type="text"
+                                       name="phonecode"
+                                       class="form-control ps-5"
+                                       placeholder="Phone Code"
+                                       required>
+                                <label>{{ __('Phone Code') }}</label>
+                                <i class="fas fa-phone position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                            </div>
                         </div>
+
+                        <!-- Flag Upload -->
+                        <div class="col-12">
+                            <div class="border rounded-3 p-3 bg-light">
+                                <label class="form-label fw-semibold mb-2">
+                                    <i class="fas fa-flag me-2 text-primary"></i>
+                                    {{ __('Country Flag') }}
+                                </label>
+                                <x-forms.file-upload  name="flag" class="form-control"  accept="image/*" preview />
+                            </div>
+                        </div>
+
                     </div>
 
-                    <x-forms.file-upload name="flag" :label="__('Country Flag')" accept="image/*" />
-
-                    <div class="p-3 bg-light rounded-3 d-flex justify-content-between align-items-center">
+                    <!-- Status Card -->
+                    <div class="mt-4 p-4 bg-light rounded-4 d-flex justify-content-between align-items-center border">
                         <div>
-                            <h6 class="mb-0 fw-bold">{{ __('Status') }}</h6>
-                            <small class="text-muted">{{ __('Enable or disable this question from appearing') }}</small>
+                            <h6 class="mb-1 fw-semibold">
+                                {{ __('Country Status') }}
+                            </h6>
+                            <small class="text-muted">
+                                {{ __('Enable or disable this country from appearing in the system') }}
+                            </small>
                         </div>
-                        <div class="form-check form-switch form-check-lg">
-                            <input class="form-check-input" type="checkbox" name="active" role="switch" id="activeStatus" checked>
-                            <label class="form-check-label" for="activeStatus"></label>
+
+                        <div class="form-check form-switch form-switch-lg">
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   name="active"
+                                   value="1"
+                                   checked>
                         </div>
                     </div>
+
                 </div>
 
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
-                    <button type="submit" class="btn btn-primary px-4">
-                        <i class="fas fa-save me-1"></i> {{ __('Save Country') }}
+                <!-- Footer -->
+                <div class="modal-footer border-0 pt-0 px-4">
+                    <button type="button"
+                            class="btn btn-light px-4"
+                            data-bs-dismiss="modal">
+                        {{ __('Cancel') }}
+                    </button>
+
+                    <button type="submit"
+                            class="btn btn-primary px-4 shadow-sm">
+                        <i class="fas fa-save me-1"></i>
+                        {{ __('Save Country') }}
                     </button>
                 </div>
+
             </form>
+
         </div>
     </div>
 </div>
 
 
 <!-- Edit Country Modal -->
-<div class="modal fade" id="editCountryModal">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">{{ __('Edit Country') }}</h5>
+<div class="modal fade" id="editCountryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+
+            <!-- Header -->
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">
+                    <i class="fas fa-globe text-primary me-2"></i>
+                    {{ __('Edit Country') }}
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
+
+            <!-- Form -->
             <form id="editCountryForm" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
-                <input type="hidden"  id="edit_country_id" >
-                <div class="modal-body">
-                    <x-forms.input-text  id="edit_name" name="name" :label="__('Name (Arabic)')" required />
-                    <x-forms.input-text  id="edit_nicename" name="nicename" :label="__('Name (English)')" required />
-                    <div class="row">
+                <input type="hidden" id="edit_country_id">
+
+                <div class="modal-body pt-2 px-4">
+
+                    <div class="row g-4">
+
+                        <!-- Name Arabic -->
                         <div class="col-md-6">
-                            <x-forms.input-text  id="edit_numcode" name="numcode" :label="__('Country Code (ISO)')" required />
+                            <div class="form-floating position-relative">
+                                <input type="text"
+                                       id="edit_name"
+                                       name="name"
+                                       class="form-control ps-5"
+                                       placeholder="Name (Arabic)"
+                                       required>
+                                <label>{{ __('Name (Arabic)') }}</label>
+                                <i class="fas fa-language position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                            </div>
+                        </div>
+
+                        <!-- Name English -->
+                        <div class="col-md-6">
+                            <div class="form-floating position-relative">
+                                <input type="text"
+                                       id="edit_nicename"
+                                       name="nicename"
+                                       class="form-control ps-5"
+                                       placeholder="Name (English)"
+                                       required>
+                                <label>{{ __('Name (English)') }}</label>
+                                <i class="fas fa-font position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                            </div>
+                        </div>
+
+                        <!-- ISO & Phone -->
+                        <div class="col-md-6">
+                            <div class="form-floating position-relative">
+                                <input type="text"
+                                       id="edit_numcode"
+                                       name="numcode"
+                                       class="form-control ps-5"
+                                       placeholder="Country Code (ISO)"
+                                       required>
+                                <label>{{ __('Country Code (ISO)') }}</label>
+                                <i class="fas fa-hashtag position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                            </div>
                         </div>
                         <div class="col-md-6">
-                            <x-forms.input-text  id="edit_phonecode" name="phonecode" :label="__('Phone Code')" />
+                            <div class="form-floating position-relative">
+                                <input type="text"
+                                       id="edit_phonecode"
+                                       name="phonecode"
+                                       class="form-control ps-5"
+                                       placeholder="Phone Code">
+                                <label>{{ __('Phone Code') }}</label>
+                                <i class="fas fa-phone position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                            </div>
+                        </div>
+
+                        <!-- Flag Upload with Preview -->
+                        <div class="col-12">
+                            <div class="border rounded-3 p-3 bg-light">
+                                <label class="form-label fw-semibold mb-2">
+                                    <i class="fas fa-flag me-2 text-primary"></i>
+                                    {{ __('Country Flag') }}
+                                </label>
+                                <x-forms.file-upload  id="edit_flag" name="flag" class="form-control"  accept="image/*" preview />
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Status Card -->
+                    <div class="mt-4 p-4 bg-light rounded-4 d-flex justify-content-between align-items-center border">
+                        <div>
+                            <h6 class="mb-1 fw-semibold">{{ __('Country Status') }}</h6>
+                            <small class="text-muted">{{ __('Enable or disable this country in the system') }}</small>
+                        </div>
+                        <div class="form-check form-switch form-switch-lg">
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   id="edit_active"
+                                   name="active"
+                                   value="1">
                         </div>
                     </div>
-                    <x-forms.file-upload  id="edit_flag" name="flag" :label="__('Country Flag')" accept="image/*" preview />
-                    <x-forms.checkbox  id="edit_active" name="active" :label="__('Active status')" type="switch" />
+
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-danger light" data-bs-dismiss="modal">{{ __('Close') }}</button>
-                    <button type="submit" class="btn btn-primary">{{ __('Update Country') }}</button>
+
+                <!-- Footer -->
+                <div class="modal-footer border-0 pt-0 px-4">
+                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">{{ __('Close') }}</button>
+                    <button type="submit" class="btn btn-primary px-4 shadow-sm">
+                        <i class="fas fa-save me-1"></i> {{ __('Update Country') }}
+                    </button>
                 </div>
+
             </form>
+
         </div>
     </div>
 </div>
@@ -191,10 +357,24 @@
             }
         });
 
+        
+
         // Add Country Form Submit
         $('#addCountryForm').on('submit', function(e) {
             e.preventDefault();
+            $('input[name="flag"]').off('change').on('change', function(e){
 
+                const reader = new FileReader();
+
+                reader.onload = function(){
+                    $('#flagPreview')
+                        .attr('src', reader.result)
+                        .fadeIn();
+                }
+
+                reader.readAsDataURL(e.target.files[0]);
+
+            });
             submitAjaxForm({
                 formId: "addCountryForm",
                 url: "{{ route('admin.countries.store') }}",
@@ -204,6 +384,7 @@
                 buttonText: "{{ __('Save Country') }}"
             });
         });
+       
     //    $('#addCountryForm').on('submit', function (e) {
     //         e.preventDefault();
 
@@ -260,46 +441,14 @@
             let form = document.getElementById('editCountryForm');
             let formData = new FormData(form);
 
-            // تحويل checkbox إلى 1 أو 0
-            let isActive = $('#edit_active').is(':checked') ? 1 : 0;
-            formData.set('active', isActive);
-
-            // مهم إذا كنت تستخدم Route::resource
-            formData.append('_method', 'PUT');
-
-            $.ajax({
+            submitAjaxForm({
+                formId: "editCountryForm",
                 url: url,
-                type: 'POST',
-                data: formData,
-                processData: false,   // مهم
-                contentType: false,   // مهم
-                beforeSend: function() {
-                    $('#editCountryForm').find('button[type="submit"]')
-                        .prop('disabled', true)
-                        .html('<i class="fas fa-spinner fa-spin"></i>');
-                },
-                success: function(response) {
-                    if (response.success) {
-                        $('#editCountryModal').modal('hide');
-                        countriesTable.ajax.reload(null, false);
-                        toastr.success(response.message);
-                    }
-                },
-                error: function(xhr) {
-                    if (xhr.status === 422) {
-                        let errors = xhr.responseJSON.errors;
-                        Object.keys(errors).forEach(key => {
-                            toastr.error(errors[key][0]);
-                        });
-                    } else {
-                        toastr.error('Something went wrong');
-                    }
-                },
-                complete: function() {
-                    $('#editCountryForm').find('button[type="submit"]')
-                        .prop('disabled', false)
-                        .html("{{ __('Update Changes') }}");
-                }
+                modalId: "editCountryModal",
+                table: countriesTable,
+                successMessage: "{{ __('Country updated successfully') }}",
+                buttonText: "{{ __('Update Changes') }}",
+                usePut: true
             });
         });
 });

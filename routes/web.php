@@ -104,6 +104,17 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     Route::post('cities/{city}/toggle-status', [App\Http\Controllers\Admin\CityController::class, 'toggleStatus'])->name('cities.toggle-status');
     Route::resource('cities', App\Http\Controllers\Admin\CityController::class);
 
+     // companies Management
+    Route::get('companies/data', [App\Http\Controllers\Admin\CompanyController::class, 'getData'])->name('companies.data');
+    Route::get('companies/active', [App\Http\Controllers\Admin\CompanyController::class, 'getActivecompanies'])->name('companies.active');
+    Route::post('companies/{company}/toggle-status', [App\Http\Controllers\Admin\CompanyController::class, 'toggleStatus'])->name('companies.toggle-status');
+    Route::resource('companies', App\Http\Controllers\Admin\CompanyController::class);
+
+
+    Route::get('companycodes/data', [App\Http\Controllers\Admin\CompanyCodesController::class, 'getData'])->name('companycodes.data');
+    Route::post('companycodes/{companycode}/toggle-status', [App\Http\Controllers\Admin\CompanyCodesController::class, 'toggleStatus'])->name('companycodes.toggle-status');
+    Route::resource('companycodes', App\Http\Controllers\Admin\CompanyCodesController::class);
+
     // User Activity
     Route::get('users/{id}/activity', [UserController::class, 'activity'])->name('users.activity');
 

@@ -88,7 +88,7 @@ class CountryController extends Controller
         }
 
         $data = $request->only(['name', 'nicename', 'numcode', 'phonecode']);
-        $data['active'] = $request->boolean('active', true);
+        $data['active'] = $request->boolean('active');
 
         // Handle flag upload
         if ($request->hasFile('flag')) {

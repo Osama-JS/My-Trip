@@ -80,6 +80,10 @@ class CityController extends Controller
      */
     public function store(Request $request)
     {
+        $request->merge([
+            'active' => $request->boolean('active'), 
+        ]); 
+
         $validator = Validator::make($request->all(), [
             'country_id' => 'required|exists:countries,id',
             'title_ar' => 'required|string|max:255',
@@ -123,6 +127,9 @@ class CityController extends Controller
      */
     public function update(Request $request, City $city)
     {
+         $request->merge([
+             'active' => $request->boolean('active'),
+         ]);
         $validator = Validator::make($request->all(), [
             'country_id' => 'required|exists:countries,id',
             'title_ar' => 'required|string|max:255',
@@ -135,7 +142,7 @@ class CityController extends Controller
         }
 
         $data = $request->only(['country_id', 'title_ar','title_en']);
-        $data['active'] = $request->boolean('active', true);
+        $data['active'] = $request->boolean('active');
 
         $city->update($data);
 
