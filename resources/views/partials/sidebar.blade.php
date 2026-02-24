@@ -62,6 +62,18 @@
             </li>
 
 
+            <li>
+                <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
+                    <i class="fa fa-solid fa-hotel"></i>
+                    <span class="nav-text">{{ __('Trips') }}</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{{ route('admin.trips.index') }}"><i class="fa fa-hotel "></i>{{ __('Trips') }}</a></li>
+                    <li><a href="{{ route('admin.trip-categories.index') }}">{{ __('Trip Categories') }}</a></li>
+                </ul>
+            </li>
+
+
 
 
             {{-- Security & Access --}}

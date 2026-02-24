@@ -26,6 +26,14 @@ class Company extends Model
         return $this->hasMany(CompanyCodes::class);
     }
 
+     /**
+     * Scope a query to only include active companies.
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('active', true);
+    }
+
 
     
 }

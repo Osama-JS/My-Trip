@@ -6,6 +6,8 @@ use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\BookingController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Admin\TripsController;
+use App\Http\Controllers\Admin\TripCategoryController;
 use Illuminate\Support\Facades\Route;
 
 // Language switcher
@@ -114,6 +116,30 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     Route::get('companycodes/data', [App\Http\Controllers\Admin\CompanyCodesController::class, 'getData'])->name('companycodes.data');
     Route::post('companycodes/{companycode}/toggle-status', [App\Http\Controllers\Admin\CompanyCodesController::class, 'toggleStatus'])->name('companycodes.toggle-status');
     Route::resource('companycodes', App\Http\Controllers\Admin\CompanyCodesController::class);
+
+
+     // Trips Management
+    Route::get('trips/data', [App\Http\Controllers\Admin\TripsController::class, 'getData'])->name('trips.data');
+    Route::post('trips/{trip}/toggle-status', [App\Http\Controllers\Admin\TripsController::class, 'toggleStatus'])->name('trips.toggle-status');
+    Route::post('/trips/{trip}/renew', [App\Http\Controllers\Admin\TripsController::class, 'renew'])->name('trips.renew');
+    Route::resource('trips', App\Http\Controllers\Admin\TripsController::class);
+    Route::post('/trips/{trip}/images', [App\Http\Controllers\Admin\TripsController::class, 'imagestore'])->name('trips.images-store');
+    Route::get('/trips/{id}/get-images', [App\Http\Controllers\Admin\TripsController::class, 'getImages'])->name('trips.get-images');
+    Route::delete('/trips/{image}/destroyimages', [App\Http\Controllers\Admin\TripsController::class, 'imagedestroy'])->name('trips.images-destroy');
+
+    // Trip Itinerary
+    Route::get('/trips/{trip}/itinerary', [TripsController::class, 'itinerary'])->name('trips.itinerary');
+    Route::post('/trips/{trip}/itinerary', [TripsController::class, 'storeItinerary'])->name('trips.itinerary.store');
+    Route::put('/trips/itinerary/{itinerary}', [TripsController::class, 'updateItinerary'])->name('trips.itinerary.update');
+    Route::post('/trips/itinerary/reorder', [TripsController::class, 'reorderItinerary'])->name('trips.itinerary.reorder');
+    Route::delete('/trips/itinerary/{itinerary}', [TripsController::class, 'destroyItinerary'])->name('trips.itinerary.destroy');
+
+
+    // Trip Categories
+    Route::get('trip-categories/data', [TripCategoryController::class, 'getData'])->name('trip-categories.data');
+    Route::get('trip-categories', [TripCategoryController::class, 'index'])->name('trip-categories.index');
+    Route::get('trip-categories/all', [TripCategoryController::class, 'getAll'])->name('trip-categories.all');
+    Route::resource('trip-categories', TripCategoryController::class)->except(['index']);
 
     // User Activity
     Route::get('users/{id}/activity', [UserController::class, 'activity'])->name('users.activity');
