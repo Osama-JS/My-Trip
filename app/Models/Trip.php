@@ -37,11 +37,14 @@ class Trip extends Model
        'page_visits',
        'base_capacity',
        'extra_passenger_price',
+       'is_featured',
     ];
 
     protected $casts = [
         'active' => 'boolean',
         'expiry_date' => 'date',
+        'tickets' => 'integer',
+        'price' => 'decimal:2',
     ];
 
     public function company() {

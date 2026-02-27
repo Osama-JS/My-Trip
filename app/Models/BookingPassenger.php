@@ -2,24 +2,28 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class BookingPassenger extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
-        'booking_id',
-        'title',
-        'first_name',
-        'last_name',
-        'type',
-        'ticket_number',
-        'passport_no',
+        'trip_booking_id',
+        'name',
+        'phone',
+        'passport_number',
+        'passport_expiry',
         'nationality',
-        'dob',
+    ];
+
+    protected $casts = [
+        'passport_expiry' => 'date',
     ];
 
     public function booking()
     {
-        return $this->belongsTo(Booking::class);
+        return $this->belongsTo(TripBooking::class, 'trip_booking_id');
     }
 }

@@ -41,7 +41,7 @@
 
             <li>
                 <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
-                    <i class="fa fa-solid fa-hotel"></i>
+                    <i class="flaticon-381-map"></i>
                     <span class="nav-text">{{ __('Locations') }}</span>
                 </a>
                 <ul aria-expanded="false">
@@ -52,7 +52,7 @@
 
             <li>
                 <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
-                    <i class="fa fa-solid fa-hotel"></i>
+                   <i class="flaticon-381-home"></i>
                     <span class="nav-text">{{ __('Company') }}</span>
                 </a>
                 <ul aria-expanded="false">
@@ -64,13 +64,20 @@
 
             <li>
                 <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
-                    <i class="fa fa-solid fa-hotel"></i>
+                    <i class="fa fa-plane"></i>
                     <span class="nav-text">{{ __('Trips') }}</span>
                 </a>
                 <ul aria-expanded="false">
                     <li><a href="{{ route('admin.trips.index') }}"><i class="fa fa-hotel "></i>{{ __('Trips') }}</a></li>
                     <li><a href="{{ route('admin.trip-categories.index') }}">{{ __('Trip Categories') }}</a></li>
                 </ul>
+            </li>
+
+             <li>
+                <a href="{{ route('admin.trip-bookings.index') }}" aria-expanded="false">
+                    <i class="flaticon-381-calendar-1"></i>
+                    <span class="nav-text">{{ __('Bookings') }}</span>
+                </a>
             </li>
 
 

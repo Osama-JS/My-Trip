@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 
 class BookingController extends Controller
 {
-    protected $traveloproService;
+     protected $traveloproService;
 
     public function __construct(TraveloproService $traveloproService)
     {
@@ -19,86 +19,12 @@ class BookingController extends Controller
     // Flights
     public function availableFlights()
     {
-        return view('admin.bookings.flights.available');
-    }
-
-    /**
-     * Display listing of local bookings
-     */
-    public function index()
-    {
-        return view('admin.bookings.index');
-    }
-
-    /**
-     * Display booking details
-     */
-    public function show($id)
-    {
-        $booking = \App\Models\Booking::with(['user', 'passengers', 'flightApiLogs'])->findOrFail($id);
-        return view('admin.bookings.show', compact('booking'));
-    }
-
-    /**
-     * Download Invoice
-     */
-    public function invoice($id)
-    {
-        $booking = \App\Models\Booking::findOrFail($id);
-        $service = new \App\Services\InvoiceService();
-        $pdf = $service->generateInvoice($booking);
-
-        if (!$pdf) {
-            return back()->with('error', 'Failed to generate invoice.');
-        }
-
-        return response($pdf)
-            ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'inline; filename="invoice-'.$booking->booking_reference.'.pdf"');
-    }
-
-    /**
-     * Get bookings for DataTables
-     */
-    public function getData(Request $request)
-    {
-        $bookings = \App\Models\Booking::with('user')->latest()->get();
-
-        return response()->json([
-            'data' => $bookings->map(function ($booking) {
-                $paymentBadge = match($booking->status) {
-                    'confirmed' => '<span class="badge badge-success">'.__('Paid/Confirmed').'</span>',
-                    'paid' => '<span class="badge badge-info">'.__('Paid (Processing)').'</span>',
-                    'pending' => '<span class="badge badge-warning">'.__('Pending Payment').'</span>',
-                    'cancelled' => '<span class="badge badge-danger">'.__('Cancelled').'</span>',
-                    default => '<span class="badge badge-light">'.ucfirst($booking->status).'</span>'
-                };
-
-                $ticketBadge = match($booking->ticket_status) {
-                    'ticketed' => '<span class="badge badge-success">'.__('Ticketed').'</span>',
-                    'booked' => '<span class="badge badge-primary">'.__('Booked').'</span>',
-                    'cancelled' => '<span class="badge badge-danger">'.__('Cancelled').'</span>',
-                    default => '<span class="badge badge-outline-dark">'.ucfirst($booking->ticket_status).'</span>'
-                };
-
-                return [
-                    'id' => $booking->id,
-                    'reference' => $booking->booking_reference,
-                    'user' => $booking->user ? $booking->user->name : 'N/A',
-                    'amount' => $booking->total_amount . ' ' . $booking->currency,
-                    'payment_status' => $paymentBadge,
-                    'ticket_status' => $ticketBadge,
-                    'date' => $booking->created_at->format('Y-m-d H:i'),
-                    'actions' => '
-                        <div class="d-flex">
-                            <a href="'.route('admin.bookings.show', $booking->id).'" class="btn btn-primary shadow btn-xs sharp me-1" title="View"><i class="fa fa-eye"></i></a>
-                            '.($booking->ticket_status === 'ticketed'
-                                ? '<a href="'.route('admin.bookings.invoice', $booking->id).'" class="btn btn-secondary shadow btn-xs sharp" target="_blank" title="Invoice"><i class="fa fa-file-invoice"></i></a>'
-                                : '').'
-                        </div>'
-                ];
-            })
-        ]);
+        $stats = [
+            'total_routes' => 245,
+            'airlines' => 15,
+            'today_searches' => 120
+        ];
+        return view('admin.bookings.flights.available', compact('stats'));
     }
 
     /**
@@ -157,52 +83,7 @@ class BookingController extends Controller
                 return response()->json(['error' => true, 'message' => $result['message']], 500);
             }
 
-            // Persist locally for Admin/Web flow as well
-            $uniqueId = $result['CreateBookingResponse']['CreateBookingResult']['UniqueID'] ?? null;
-            $totalAmount = $result['CreateBookingResponse']['CreateBookingResult']['TotalAmount'] ?? 0;
-            $redirectUrl = null;
-
-            if ($uniqueId) {
-                // Check if already exists to avoid dupes (though unlikely with new UUID)
-                $booking = \App\Models\Booking::firstOrCreate(
-                    ['booking_reference' => $uniqueId],
-                    [
-                        'user_id' => auth()->id() ?? 1,
-                        'supplier_session_id' => $request->flight_session_id,
-                        'status' => 'pending',
-                        'ticket_status' => 'booked',
-                        'total_amount' => $totalAmount,
-                        'currency' => 'SAR',
-                        'contact_email' => $request->customerEmail,
-                        'contact_phone' => $request->customerPhone,
-                        'pnr_created_at' => now(),
-                    ]
-                );
-
-                // Save Passengers
-                if ($request->has('passengers') && is_array($request->passengers)) {
-                    foreach ($request->passengers as $pax) {
-                        $booking->passengers()->create([
-                            'title' => $pax['title'] ?? 'Mr',
-                            'first_name' => $pax['first_name'],
-                            'last_name' => $pax['last_name'],
-                            'type' => $pax['type'] ?? 'adult',
-                            'dob' => $pax['dob'] ?? null,
-                            'nationality' => $pax['nationality'] ?? null,
-                            'passport_no' => $pax['passport_no'] ?? null,
-                        ]);
-                    }
-                }
-
-                $redirectUrl = route('payment.show', $booking->id);
-            }
-
-            return response()->json([
-                'error' => false,
-                'data' => $result,
-                'redirect_url' => $redirectUrl,
-                'message' => __('Booking created. Redirecting to payment...')
-            ]);
+            return response()->json(['error' => false, 'data' => $result]);
         } catch (\Exception $e) {
             Log::error('Admin Flight Booking Error: ' . $e->getMessage());
             return response()->json(['error' => true, 'message' => __('An error occurred while creating the booking.')], 500);
@@ -211,40 +92,58 @@ class BookingController extends Controller
 
     public function flightRequests()
     {
-        return view('admin.bookings.flights.requests');
+        $stats = [
+            'total' => 156, // Mock data
+            'pending' => 42,
+            'confirmed' => 98,
+            'cancelled' => 16
+        ];
+        return view('admin.bookings.flights.requests', compact('stats'));
     }
 
     public function ongoingFlights()
     {
-        return view('admin.bookings.flights.ongoing');
+        $stats = [
+            'active_flights' => 12,
+            'in_air' => 8,
+            'on_ground' => 4,
+            'delayed' => 1
+        ];
+        return view('admin.bookings.flights.ongoing', compact('stats'));
     }
 
     /**
      * Utility endpoints for UI (Airports/Airlines)
      */
-    /**
-     * Utility endpoints for UI (Airports/Airlines)
-     */
-    public function getAirports(Request $request)
+    public function getAirports()
     {
-        $refresh = $request->boolean('refresh');
-        return response()->json($this->traveloproService->getAirportList($refresh));
+        return response()->json($this->traveloproService->getAirportList());
     }
 
-    public function getAirlines(Request $request)
+    public function getAirlines()
     {
-        $refresh = $request->boolean('refresh');
-        return response()->json($this->traveloproService->getAirlineList($refresh));
+        return response()->json($this->traveloproService->getAirlineList());
     }
 
     // Hotels
     public function hotelList()
     {
-        return view('admin.bookings.hotels.index');
+        $stats = [
+            'total_hotels' => 45,
+            'featured' => 12,
+            'top_rated' => 8
+        ];
+        return view('admin.bookings.hotels.index', compact('stats'));
     }
 
     public function hotelRequests()
     {
-        return view('admin.bookings.hotels.requests');
+        $stats = [
+            'total' => 89,
+            'pending' => 12,
+            'confirmed' => 65,
+            'cancelled' => 12
+        ];
+        return view('admin.bookings.hotels.requests', compact('stats'));
     }
 }

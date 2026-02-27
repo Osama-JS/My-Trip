@@ -3,17 +3,17 @@
 @section('title', __('Cities Management'))
 @section('page-title', __('Cities Management'))
 
-@section('page-header')
-<div class="row page-titles">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="javascript:void(0)">{{ __('Locations') }}</a></li>
-        <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ __('Cities') }}</a></li>
-    </ol>
-</div>
-@endsection
 
 @section('content')
+<div class="container-fluid">
+    <div class="row page-titles">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ __('Locations') }}</a></li>
+            <li class="breadcrumb-item"><a href="javascript:void(0)">{{ __('Cities') }}</a></li>
+        </ol>
+    </div>
 
+    
     <div class="row my-2">
         <div class="col-xl-3 col-sm-6">
             <x-stats-card
@@ -85,6 +85,7 @@
             </div>
         </div>
     </div>
+</div>
 </div>
 
 <!-- Add City Modal -->

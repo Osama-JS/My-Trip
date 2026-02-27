@@ -3,16 +3,14 @@
 @section('title', __('Countries'))
 @section('page-title', __('Countries Management'))
 
-@section('page-header')
-<div class="row page-titles">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="javascript:void(0)">{{ __('Locations') }}</a></li>
-        <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ __('Countries') }}</a></li>
-    </ol>
-</div>
-@endsection
 @section('content')
-
+<div class="container-fluid">
+    <div class="row page-titles">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ __('Locations') }}</a></li>
+            <li class="breadcrumb-item"><a href="javascript:void(0)">{{ __('Countries') }}</a></li>
+        </ol>
+    </div>
 
     <div class="row my-2">
         <div class="col-xl-3 col-sm-6">
@@ -63,6 +61,7 @@
                             <thead>
                                 <tr>
                                     <th>{{ __('Flag') }}</th>
+                                    <th>{{ __('Landmark') }}</th>
                                     <th>{{ __('Name (Ar)') }}</th>
                                     <th>{{ __('Name (En)') }}</th>
                                     <th>{{ __('Code') }}</th>
@@ -161,6 +160,17 @@
                                     {{ __('Country Flag') }}
                                 </label>
                                 <x-forms.file-upload  name="flag" class="form-control"  accept="image/*" preview />
+                            </div>
+                        </div>
+
+                        <!-- Flag Upload -->
+                        <div class="col-12">
+                            <div class="border rounded-3 p-3 bg-light">
+                                <label class="form-label fw-semibold mb-2">
+                                    <i class="fas fa-flag me-2 text-primary"></i>
+                                    {{ __('Landmark Image') }}
+                                </label>
+                                <x-forms.file-upload  name="landmark_image" class="form-control"  accept="image/*" preview />
                             </div>
                         </div>
 
@@ -298,6 +308,16 @@
                             </div>
                         </div>
 
+                        <div class="col-12">
+                            <div class="border rounded-3 p-3 bg-light">
+                                <label class="form-label fw-semibold mb-2">
+                                    <i class="fas fa-flag me-2 text-primary"></i>
+                                    {{ __('Landmark Image') }}
+                                </label>
+                                <x-forms.file-upload  id="edit_landmark_image" name="landmark_image" class="form-control"  accept="image/*" preview />
+                            </div>
+                        </div>
+
                     </div>
 
                     <!-- Status Card -->
@@ -344,6 +364,7 @@
             ajax: countriesDataUrl,
             columns: [
                 { data: 'flag' },
+                { data: 'landmark' },
                 { data: 'name' },
                 { data: 'nicename' },
                 { data: 'numcode' },
@@ -475,6 +496,14 @@
                     $('#editCountryForm .current-image-preview').show();
                 } else {
                     $('#editCountryForm .current-image-preview').hide();
+                }
+
+                // Show current landmark image
+                if (country.landmark_image) {
+                    $('#editCountryForm .landmark_image-preview img').attr('src', response.landmark_image_url);
+                    $('#editCountryForm .landmark_image-preview').show();
+                } else {
+                    $('#editCountryForm .landmark_image-preview').hide();
                 }
 
                 $('#editCountryModal').modal('show');

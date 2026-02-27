@@ -179,6 +179,7 @@ class TripsController extends Controller
         $data['is_featured'] = $request->boolean('is_featured');
         $data['is_ad']       = $request->boolean('is_ad');
         $data['active']      = $request->boolean('active');
+        $data['page_visits']      = 1;
 
         // Admin who created the trip
         $data['admin_id'] = auth()->id();
@@ -191,20 +192,22 @@ class TripsController extends Controller
                 : 0;
         }
 
+        dd($data);
         $trip = Trip::create($data);
-
+        
         if ($request->has('category_ids')) {
             $trip->categories()->sync($request->category_ids);
         }
 
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'message' =>  __('Trip created successfully'),
-            ]);
-        }
+        
+        // if ($request->ajax()) {
+        //     return response()->json([
+        //         'success' => true,
+        //         'message' =>  __('Trip created successfully'),
+        //     ]);
+        // }
 
-        return redirect()->route('admin.trips.index')->with('success', __('Trip created successfully'));
+        // return redirect()->route('admin.trips.index')->with('success', __('Trip created successfully'));
     }
 
     /**
