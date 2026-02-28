@@ -61,6 +61,16 @@
                 </ul>
             </li>
 
+            <li>
+                <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
+                   <i class="flaticon-381-home"></i>
+                    <span class="nav-text">{{ __('Banner') }}</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{{ route('admin.banners.index') }}"><i class="fa fa-hotel "></i>{{ __('Banner') }}</a></li>
+                </ul>
+            </li>
+
 
             <li>
                 <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">

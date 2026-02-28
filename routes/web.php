@@ -117,6 +117,12 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     Route::post('companycodes/{companycode}/toggle-status', [App\Http\Controllers\Admin\CompanyCodesController::class, 'toggleStatus'])->name('companycodes.toggle-status');
     Route::resource('companycodes', App\Http\Controllers\Admin\CompanyCodesController::class);
 
+    // Banners Management
+    Route::get('banners/data', [App\Http\Controllers\Admin\BannerController::class, 'getData'])->name('banners.data');
+    Route::post('banners/{banner}/toggle-status', [App\Http\Controllers\Admin\BannerController::class, 'toggleStatus'])->name('banners.toggle-status');
+    Route::post('banners/reorder', [App\Http\Controllers\Admin\BannerController::class, 'reorder'])->name('banners.reorder');
+    Route::resource('banners', App\Http\Controllers\Admin\BannerController::class);
+
 
      // Trips Management
     Route::get('trips/data', [App\Http\Controllers\Admin\TripsController::class, 'getData'])->name('trips.data');
@@ -165,12 +171,25 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     });
 });
 
+
+
 // Customer Routes
 Route::middleware(['auth'])->prefix('customer')->name('customer.')->group(function () {
     // Dashboard
     Route::get('/dashboard', function () {
         return view('customer.dashboard');
     })->name('dashboard');
+
+    // Route::get('/dashboard', [CustomerDashboardController::class, 'index'])->name('dashboard');
+
+    // Bookings
+    Route::get('/bookings', [CustomerBookingController::class, 'index'])->name('bookings.index');
+    Route::get('/bookings/create/{trip_id}', [CustomerBookingController::class, 'create'])->name('bookings.create');
+    Route::get('/bookings/{id}', [CustomerBookingController::class, 'show'])->name('bookings.show');
+    Route::post('/bookings', [CustomerBookingController::class, 'store'])->name('bookings.store');
+    Route::post('/bookings/{id}/cancel', [CustomerBookingController::class, 'cancel'])->name('bookings.cancel');
+    Route::get('/bookings/{id}/invoice', [CustomerBookingController::class, 'downloadInvoice'])->name('bookings.invoice');
+
 
     Route::get('/profile', [\App\Http\Controllers\Customer\ProfileController::class, 'index'])->name('profile');
     Route::put('/profile', [\App\Http\Controllers\Customer\ProfileController::class, 'update'])->name('profile.update');

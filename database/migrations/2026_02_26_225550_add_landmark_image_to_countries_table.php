@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('countries', function (Blueprint $table) {
-            //
+            $table->dropColumn('landmark_image');
         });
     }
 };

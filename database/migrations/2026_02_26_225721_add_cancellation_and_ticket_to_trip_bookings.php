@@ -23,7 +23,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('trip_bookings', function (Blueprint $table) {
-            $table->enum('booking_state', ['received', 'preparing', 'confirmed', 'tickets_sent', 'cancelled'])->default('received')->after('status');
+            $table->dropColumn(['cancellation_reason', 'ticket_file_path']);
         });
     }
 };

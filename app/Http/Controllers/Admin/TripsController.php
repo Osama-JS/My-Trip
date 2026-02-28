@@ -150,11 +150,11 @@ class TripsController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'title_ar'                 => 'required|string|max:255',
-            'title_en'                 => 'required|string|max:255',
+            'title_ar'              => 'required|string|max:255',
+            'title_en'              => 'required|string|max:255',
             'tickets'               => 'nullable|string',
-            'description_ar'           => 'required|string',
-            'description_en'           => 'required|string',
+            'description_ar'        => 'required|string',
+            'description_en'        => 'required|string',
             'company_id'            => 'required|exists:companies,id',
             'from_country_id'       => 'required|exists:countries,id',
             'from_city_id'          => 'required|exists:cities,id',
@@ -174,40 +174,43 @@ class TripsController extends Controller
             'active'                => 'nullable|boolean',
         ]);
 
-        // Checkbox handling
+        // Handle checkboxes
         $data['is_public']   = $request->boolean('is_public');
         $data['is_featured'] = $request->boolean('is_featured');
         $data['is_ad']       = $request->boolean('is_ad');
         $data['active']      = $request->boolean('active');
-        $data['page_visits']      = 1;
 
-        // Admin who created the trip
+        // Admin ID
         $data['admin_id'] = auth()->id();
 
-        // Auto-calculate profit
+        // Calculate profit
+        $data['profit'] = 0;
+
         if (!empty($data['price_before_discount'])) {
-            $data['profit'] = $data['price'] - $data['price_before_discount'];
-            $data['percentage_profit_margin'] = $data['price_before_discount'] > 0
-                ? round(($data['profit'] / $data['price_before_discount']) * 100, 2)
-                : 0;
+            $data['profit'] = max(
+                0,
+                $data['price_before_discount'] - $data['price']
+            );
         }
 
-        dd($data);
+        // Create Trip
         $trip = Trip::create($data);
-        
-        if ($request->has('category_ids')) {
-            $trip->categories()->sync($request->category_ids);
+
+        // Sync categories
+        if (!empty($data['category_ids'])) {
+            $trip->categories()->sync($data['category_ids']);
         }
 
-        
-        // if ($request->ajax()) {
-        //     return response()->json([
-        //         'success' => true,
-        //         'message' =>  __('Trip created successfully'),
-        //     ]);
-        // }
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => __('Trip created successfully'),
+                'data'    => $trip
+            ]);
+        }
 
-        // return redirect()->route('admin.trips.index')->with('success', __('Trip created successfully'));
+        return redirect()->route('admin.trips.index')->with('success', __('Trip updated successfully'));
+
     }
 
     /**
