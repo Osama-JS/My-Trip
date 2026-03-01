@@ -86,7 +86,7 @@
                                     <span class="text-primary">{{ __($booking->booking_state ?? 'received') }}</span>
                                 </span>
                                 @if($booking->trip)
-                                    <h4 class="mb-1"><a href="{{ route('trips.show', $booking->trip->id) }}" target="_blank">{{ $booking->trip->title }}</a></h4>
+                                    <h4 class="mb-1"><a href="#" target="_blank">{{ $booking->trip->title_ar }}</a></h4>
                                     <p class="mb-1 text-muted">{{ Str::limit($booking->trip->description, 150) }}</p>
                                     <div class="mt-2">
                                         <span class="badge badge-light text-dark border me-1"><i class="fas fa-map-marker-alt me-1"></i> {{ $booking->trip->toCity->name ?? '' }}, {{ $booking->trip->toCountry->name ?? '' }}</span>

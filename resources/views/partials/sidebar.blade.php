@@ -90,8 +90,17 @@
                 </a>
             </li>
 
-
-
+            {{-- Financial Management --}}
+             <li>
+                <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
+                    <i class="flaticon-381-layer-1"></i>
+                    <span class="nav-text">{{ __('Financial Management') }}</span>
+                </a>
+                <ul aria-expanded="false">
+                   <li><a href="{{ route('admin.payments.index') }}">{{ __('Payment Records') }}</a></li>
+                    <li><a href="{{ route('admin.bank-transfers.index') }}">{{ __('Bank Transfer Review') }}</a></li>
+                </ul>
+            </li>
 
             {{-- Security & Access --}}
             @can('view users')

@@ -60,6 +60,22 @@ class TripBooking extends Model
         return $this->hasMany(BookingPassenger::class);
     }
 
+    public function payments()
+    {
+        return $this->hasMany(Payment::class, 'trip_booking_id');
+    }
+
+    public function bankTransfers()
+    {
+        return $this->hasMany(BankTransfer::class, 'trip_booking_id');
+    }
+
+    public function payment()
+    {
+        return $this->hasOne(Payment::class, 'trip_booking_id')->latest();
+    }
+
+
     public function histories()
     {
         return $this->hasMany(BookingHistory::class, 'trip_booking_id');

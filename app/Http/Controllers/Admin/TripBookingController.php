@@ -106,7 +106,7 @@ class TripBookingController extends Controller
         $booking = TripBooking::findOrFail($id);
 
         $oldState = $booking->booking_state;
-        $booking->update(['status' => $request->status]);
+        $boo =$booking->update(['status' => $request->status]);
 
         if ($request->status == 'cancelled') {
             $booking->update(['booking_state' => TripBooking::STATE_CANCELLED]);
@@ -135,8 +135,8 @@ class TripBookingController extends Controller
 
         $oldState = $booking->booking_state;
         $newState = $request->booking_state;
-        $booking->update(['booking_state' => $newState]);
-
+        $boo = $booking->update(['booking_state' => $newState]);
+        dd($boo);
         \App\Models\BookingHistory::create([
             'trip_booking_id' => $booking->id,
             'user_id' => auth()->id(),

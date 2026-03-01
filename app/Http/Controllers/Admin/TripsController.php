@@ -209,18 +209,18 @@ class TripsController extends Controller
             ]);
         }
 
-        return redirect()->route('admin.trips.index')->with('success', __('Trip updated successfully'));
+        return redirect()->route('admin.trips.index')->with('success', __('Trip updated successfully')); 
 
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Trip $trip)
+      public function show(Trip $trip)
     {
         return response()->json([
             'success' => true,
-            'Trip' => $trip,
+            'Trip' => $trip->load('categories'),
         ]);
     }
 

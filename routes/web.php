@@ -155,6 +155,20 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     Route::post('trip-bookings/{id}/send-ticket', [App\Http\Controllers\Admin\TripBookingController::class, 'sendTicket'])->name('trip-bookings.send-ticket');
     Route::resource('trip-bookings', App\Http\Controllers\Admin\TripBookingController::class);
 
+        // Payments Management
+    Route::get('payments', [App\Http\Controllers\Admin\PaymentLogController::class, 'index'])->name('payments.index');
+    Route::get('payments/{id}', [App\Http\Controllers\Admin\PaymentLogController::class, 'show'])->name('payments.show');
+
+
+     // Bank Transfers Review
+    Route::get('bank-transfers', [App\Http\Controllers\Admin\BankTransferController::class, 'index'])->name('bank-transfers.index');
+    Route::get('bank-transfers/data', [App\Http\Controllers\Admin\BankTransferController::class, 'getData'])->name('bank-transfers.data');
+    Route::get('bank-transfers/{id}', [App\Http\Controllers\Admin\BankTransferController::class, 'show'])->name('bank-transfers.show');
+    // We use POST for actions to be safe
+    Route::post('bank-transfers/{id}/approve', [App\Http\Controllers\Admin\BankTransferController::class, 'approve'])->name('bank-transfers.approve');
+    Route::post('bank-transfers/{id}/reject', [App\Http\Controllers\Admin\BankTransferController::class, 'reject'])->name('bank-transfers.reject');
+
+
     // User Activity
     Route::get('users/{id}/activity', [UserController::class, 'activity'])->name('users.activity');
 
@@ -180,16 +194,9 @@ Route::middleware(['auth'])->prefix('customer')->name('customer.')->group(functi
         return view('customer.dashboard');
     })->name('dashboard');
 
-    // Route::get('/dashboard', [CustomerDashboardController::class, 'index'])->name('dashboard');
+  
 
-    // Bookings
-    Route::get('/bookings', [CustomerBookingController::class, 'index'])->name('bookings.index');
-    Route::get('/bookings/create/{trip_id}', [CustomerBookingController::class, 'create'])->name('bookings.create');
-    Route::get('/bookings/{id}', [CustomerBookingController::class, 'show'])->name('bookings.show');
-    Route::post('/bookings', [CustomerBookingController::class, 'store'])->name('bookings.store');
-    Route::post('/bookings/{id}/cancel', [CustomerBookingController::class, 'cancel'])->name('bookings.cancel');
-    Route::get('/bookings/{id}/invoice', [CustomerBookingController::class, 'downloadInvoice'])->name('bookings.invoice');
-
+   
 
     Route::get('/profile', [\App\Http\Controllers\Customer\ProfileController::class, 'index'])->name('profile');
     Route::put('/profile', [\App\Http\Controllers\Customer\ProfileController::class, 'update'])->name('profile.update');
