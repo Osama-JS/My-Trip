@@ -2,45 +2,48 @@
 
 namespace App\Services;
 
+use App\Models\TripBooking;
 use Mpdf\Mpdf;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
-use App\Models\Booking;
 
 class InvoiceService
 {
     /**
-     * Generate Invoice PDF for a booking
+     * Generate invoice for a booking
      *
-     * @param Booking $booking
-     * @return string|null Raw PDF content or null on failure
+     * @param TripBooking $booking
+     * @return string|false Path to the generated PDF
      */
-    public function generateInvoice(Booking $booking)
+    public function generateInvoice(TripBooking $booking)
     {
         try {
-            // Configuration for Arabic Support
-            $config = [
+            $booking->load(['user', 'trip.toCountry', 'trip.toCity', 'passengers']);
+
+            $mpdf = new Mpdf([
                 'mode' => 'utf-8',
                 'format' => 'A4',
                 'margin_left' => 10,
                 'margin_right' => 10,
                 'margin_top' => 10,
                 'margin_bottom' => 10,
-                'autoScriptToLang' => true,
-                'autoLangToFont' => true,
-            ];
+            ]);
 
-            $mpdf = new Mpdf($config);
+            // Set RTL for Arabic support
             $mpdf->SetDirectionality('rtl');
 
-            // Render the invoice view
-            $html = view('invoices.flight_invoice', compact('booking'))->render();
-
+            $html = view('invoices.trip_booking', compact('booking'))->render();
             $mpdf->WriteHTML($html);
 
-            return $mpdf->Output('', 'S'); // Return as string
+            $fileName = 'invoice_' . $booking->id . '_' . time() . '.pdf';
+            $filePath = 'invoices/' . $fileName;
+
+            Storage::disk('public')->put($filePath, $mpdf->Output('', 'S'));
+
+            return $filePath;
         } catch (\Exception $e) {
-            Log::error("Invoice Generation Failed: " . $e->getMessage());
-            return null;
+            Log::error('Invoice Generation Failed: ' . $e->getMessage());
+            return false;
         }
     }
 }
