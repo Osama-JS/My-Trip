@@ -51,7 +51,7 @@ class Trip extends Model
         return $this->belongsTo(Company::class);
     }
 
-    public function fromCountry() {
+        public function fromCountry() {
         return $this->belongsTo(Country::class, 'from_country_id');
     }
 
@@ -65,6 +65,14 @@ class Trip extends Model
 
     public function fromCity() {
         return $this->belongsTo(City::class, 'from_city_id');
+    }
+
+     /**
+     * Get the user (agent/admin) who created the trip.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function scopeDeactivateExpired($query)
@@ -103,6 +111,11 @@ class Trip extends Model
     public function categories()
     {
         return $this->belongsToMany(TripCategory::class, 'trip_category_trip');
+    }
+
+     public function bookings()
+    {
+        return $this->hasMany(TripBooking::class, 'trip_id');
     }
 
 

@@ -8,10 +8,13 @@ class Company extends Model
 {
     protected $table = 'companies';
     
-    protected $fillable = [
+     protected $fillable = [
         'name',
+        'en_name',
+        'logo',
         'email',
         'phone',
+        'phone_code',
         'notes',
         'active',
     ];
@@ -21,9 +24,36 @@ class Company extends Model
         'active' => 'boolean',
     ];
 
+
+     /**
+     * Get logo URL
+     */
+    public function getLogoUrlAttribute()
+    {
+        return $this->logo ? asset('storage/' . $this->logo) : asset('images/demo/company-placeholder.jpg');
+    }
+
+    public function getLocalizedNameAttribute()
+    {
+        return (app()->getLocale() == 'en' && $this->en_name) ? $this->en_name : $this->name;
+    }
+
+    /**
+     * Get company agents
+     */
+    public function agents()
+    {
+        return $this->hasMany(User::class)->where('user_type', User::TYPE_AGENT);
+    }
+
     public function company_codes()
     {
         return $this->hasMany(CompanyCodes::class);
+    }
+
+    public function trips()
+    {
+        return $this->hasMany(Trip::class);
     }
 
      /**

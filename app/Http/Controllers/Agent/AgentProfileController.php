@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Customer;
+namespace App\Http\Controllers\Agent;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -9,12 +9,12 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules;
 
-class ProfileController extends Controller
+class AgentProfileController extends Controller
 {
-    public function index()
+     public function index()
     {
         $user = Auth::user();
-        return view('frontend.customer.profile', compact('user'));
+        return view('frontend.agent.profile', compact('user'));
     }
 
     public function update(Request $request)
@@ -41,7 +41,7 @@ class ProfileController extends Controller
             'date_of_birth' => $request->birth_date,
         ]);
 
-        return back()->with('success', __('تم تحديث الملف الشخصي بنجاح.'));
+        return back()->with('success', __('Profile updated successfully.'));
     }
 
     public function updatePhoto(Request $request)
@@ -61,7 +61,7 @@ class ProfileController extends Controller
 
         $user->update(['profile_photo' => $path]);
 
-        return back()->with('success', __('تم تحديث الصورة الشخصية.'));
+        return back()->with('success', __('Profile photo updated successfully.'));
     }
 
     public function changePassword(Request $request)
@@ -74,11 +74,11 @@ class ProfileController extends Controller
         $user = Auth::user();
 
         if (!Hash::check($request->current_password, $user->password)) {
-            return back()->withErrors(['current_password' => __('كلمة المرور الحالية غير صحيحة.')]);
+            return back()->withErrors(['current_password' => __('Current password is incorrect.')]);
         }
 
         $user->update(['password' => Hash::make($request->password)]);
 
-        return back()->with('success', __('تم تغيير كلمة المرور بنجاح.'));
+        return back()->with('success', __('Password changed successfully.'));
     }
 }

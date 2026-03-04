@@ -16,31 +16,52 @@ class UserController extends Controller
      */
     public function index()
     {
-        return view('admin.users.index');
+         $stats = [
+            'total' => User::where('user_type', User::TYPE_ADMIN)->count(),
+            'active' => User::where('user_type', User::TYPE_ADMIN)->where('status', 'active')->count(),
+            'inactive' => User::where('user_type', User::TYPE_ADMIN)->where('status', 'inactive')->count(),
+            'unverified' => User::where('user_type', User::TYPE_ADMIN)->whereNull('email_verified_at')->count(),
+        ];
+        return view('admin.users.index', compact('stats'));
     }
 
-    /**
+ /**
      * Get users for DataTables.
      */
     public function getData(Request $request)
     {
-        $users = User::where('user_type', User::TYPE_CUSTOMER)->get();
+        $users = User::where('user_type', User::TYPE_ADMIN)->get();
 
         return response()->json([
             'data' => $users->map(function($user) {
-                // ... map logic
+                $statusBadge = $user->status === 'active'
+                    ? '<span class="badge badge-success">'.__('Active').'</span>'
+                    : '<span class="badge badge-danger">'.__('Inactive').'</span>';
+
+                $verifiedBadge = $user->email_verified_at
+                    ? '<span class="badge badge-light">'.__('Verified').'</span>'
+                    : '<span class="badge badge-warning">'.__('Unverified').'</span>';
+
                 return [
-                     // ...
-                    'actions' => '
+                    'id' => $user->id,
+                    'photo' => '<img src="' . $user->profile_photo_url . '" class="rounded-lg me-2" width="35" alt="">',
+                    'info' => '<div>
+                                <strong>' . $user->full_name . '</strong><br>
+                                <small class="text-muted">' . $user->email . '</small>
+                            </div>',
+                    'phone' => ($user->country_code ? $user->country_code . ' ' : '') . $user->phone,
+                    'status' => $statusBadge,
+                    'verified' => $verifiedBadge,
+                    'actions' => auth()->user()->can('manage users') ? '
                         <div class="d-flex">
-                            <a href="'.route('admin.users.activity', $user->id).'" class="btn btn-info shadow btn-xs sharp me-1"><i class="fa fa-chart-line"></i></a>
                             <button onclick="editUser(' . $user->id . ')" class="btn btn-primary shadow btn-xs sharp me-1"><i class="fas fa-pencil-alt"></i></button>
                             <button onclick="toggleUserStatus(' . $user->id . ')" class="btn btn-warning shadow btn-xs sharp me-1"><i class="fas fa-ban"></i></button>
                             <button onclick="deleteUser(' . $user->id . ')" class="btn btn-danger shadow btn-xs sharp"><i class="fa fa-trash"></i></button>
-                        </div>'
+                        </div>' : ''
                 ];
             })
         ]);
+
     }
 
     /**

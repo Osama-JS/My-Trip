@@ -12,12 +12,13 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasApiTokens, HasFactory, Notifiable, HasRoles;
 
     // User Types Constants
     const TYPE_ADMIN = 'admin';
     const TYPE_CUSTOMER = 'customer';
+    const TYPE_AGENT = 'agent';
 
     /**
      * The attributes that are mass assignable.
@@ -30,6 +31,7 @@ class User extends Authenticatable
         'email',
         'password',
         'user_type',
+        'company_id',
         'profile_photo',
         'phone',
         'country_code',
@@ -133,8 +135,53 @@ class User extends Authenticatable
     /**
      * Check if user is customer
      */
+    /**
+     * Get user bookings
+     */
+    public function bookings()
+    {
+        return $this->hasMany(TripBooking::class);
+    }
+
     public function isCustomer(): bool
     {
         return $this->user_type === self::TYPE_CUSTOMER;
+    }
+
+    /**
+     * Check if user is agent
+     */
+    public function isAgent(): bool
+    {
+        return $this->user_type === self::TYPE_AGENT;
+    }
+
+    /**
+     * Get user company
+     */
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
+
+    /**
+     * Get user favorites.
+     */
+    public function favorites()
+    {
+        return $this->hasMany(Favorite::class);
+    }
+
+    public function country()
+    {
+        return $this->belongsTo(Country::class);
+    }
+
+    /**
+     * Get user bank transfers.
+     */
+    public function bankTransfers()
+    {
+        return $this->hasMany(BankTransfer::class);
     }
 }

@@ -383,8 +383,8 @@
                                     ? '<span class="badge bg-success" style="font-size:0.65rem;">FCM ✓</span>'
                                     : '<span class="badge bg-secondary" style="font-size:0.65rem;">No FCM</span>';
                                 dropdown.append(`
-                                    <div class="search-item" onclick="addUser(${user.id}, '${user.name.replace(/'/g, "\\'")}', ${user.has_fcm})">
-                                        <div class="user-info">${user.name} ${fcmIcon}</div>
+                                    <div class="search-item" onclick="addUser(${user.id}, '${user.first_name.replace(/'/g, "\\'")}', ${user.has_fcm})">
+                                        <div class="user-info">${user.first_name} ${fcmIcon}</div>
                                         <div class="user-meta">${user.email} · ${user.phone || '-'}</div>
                                     </div>
                                 `);

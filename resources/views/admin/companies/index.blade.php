@@ -57,7 +57,9 @@
                         <table id="Companys-table" class="display" style="min-width: 845px">
                             <thead>
                                 <tr>
+                                    <th>{{ __('Logo') }}</th>
                                     <th>{{ __('Name') }}</th>
+                                    <th>{{ __('English Name') }}</th>
                                     <th>{{ __('Email') }}</th>
                                     <th>{{ __('Phone') }}</th>
                                     <th>{{ __('Notes') }}</th>
@@ -71,6 +73,23 @@
             </div>
         </div>
     </div>
+
+
+<!-- View Company Modal -->
+<div class="modal fade" id="viewCompanyModal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ __('Company Profile') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="viewCompanyBody">
+                <!-- Data loaded via AJAX -->
+
+            </div>
+        </div>
+    </div>
+</div>
 
 
     <!-- Add Company Modal -->
@@ -91,7 +110,13 @@
                 @csrf
 
                 <div class="modal-body p-4">
-
+                    <div class="mb-3 text-center">
+                        <label class="form-label d-block">{{ __('Company Logo') }}</label>
+                        <div class="mb-2">
+                            <img id="logoPreviewAdd" src="{{ asset('images/demo/company-placeholder.jpg') }}" class="rounded-circle border" width="100" height="100" style="object-fit: cover;">
+                        </div>
+                        <input type="file" name="logo" class="form-control" accept="image/*" onchange="previewImage(this, 'logoPreviewAdd')">
+                    </div>
                     <div class="row g-3">
 
                         <div class="col-md-6">
@@ -101,6 +126,13 @@
                             <input type="text" name="name" class="form-control form-control-lg"
                                    placeholder="{{ __('Enter company name') }}" required>
                         </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                {{ __('English Name') }} <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" name="en_name" class="form-control form-control-lg"
+                                   placeholder="{{ __('Enter company name (en)') }}" required>
+                        </div>
 
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">
@@ -108,6 +140,14 @@
                             </label>
                             <input type="email" name="email" class="form-control form-control-lg"
                                    placeholder="{{ __('Enter company email') }}" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                {{ __('Code') }}
+                            </label>
+                            <input type="text" name="phone_code" class="form-control"
+                                   placeholder="{{ __('Enter Code') }}">
                         </div>
 
                         <div class="col-md-6">
@@ -185,7 +225,13 @@
                 <input type="hidden" id="edit_Company_id">
 
                 <div class="modal-body pt-2">
-
+                    <div class="mb-3 text-center">
+                        <label class="form-label d-block">{{ __('Company Logo') }}</label>
+                        <div class="mb-2">
+                            <img id="logoPreviewEdit" src="{{ asset('images/demo/company-placeholder.jpg') }}" class="rounded-circle border" width="100" height="100" style="object-fit: cover;">
+                        </div>
+                        <input type="file" name="logo" class="form-control" accept="image/*" onchange="previewImage(this, 'logoPreviewEdit')">
+                    </div>
                     <div class="row g-4">
 
                         <!-- Name -->
@@ -202,6 +248,20 @@
                             </div>
                         </div>
 
+                         <!-- Name -->
+                        <div class="col-md-6">
+                            <div class="form-floating position-relative">
+                                <input type="text"
+                                       name="en_name"
+                                       id="edit_en_name"
+                                       class="form-control ps-5"
+                                       placeholder="Company Name (en)">
+                                <label>{{ __('Company Name (en)') }}</label>
+                                <i class="fas fa-building position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+
                         <!-- Email -->
                         <div class="col-md-6">
                             <div class="form-floating position-relative">
@@ -213,6 +273,19 @@
                                 <label>{{ __('Email Address') }}</label>
                                 <i class="fas fa-envelope position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
                                 <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+
+                        <!-- Code -->
+                        <div class="col-md-6">
+                            <div class="form-floating position-relative">
+                                <input type="text"
+                                       name="phone_code"
+                                       id="edit_phone_code"
+                                       class="form-control ps-5"
+                                       placeholder="Code">
+                                <label>{{ __('Code') }}</label>
+                                <i class="fas fa-code position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
                             </div>
                         </div>
 
@@ -292,7 +365,9 @@ $(document).ready(function() {
             serverSide: false, // Set to true if huge data
             ajax: "{{ route('admin.companies.data') }}",
             columns: [
+                { data: 'logo', orderable: false, searchable: false },
                 { data: 'name' },
+                { data: 'en_name' },
                 { data: 'email' },
                 { data: 'phone' },
                 { data: 'notes' },
@@ -369,10 +444,13 @@ $(document).ready(function() {
                 const company = response.Company;
                 $('#edit_Company_id').val(company.id);
                 $('#edit_name').val(company.name);
+                $('#edit_en_name').val(company.en_name);
                 $('#edit_email').val(company.email);
+                $('#edit_phone_code').val(company.phone_code);
                 $('#edit_phone').val(company.phone);
                 $('#edit_notes').val(company.notes);
                 $('#edit_active').prop('checked', company.active);
+                $('#logoPreviewEdit').attr('src', response.logo_url);
                 $('#editCompanyModal').modal('show');
             }
         });
@@ -437,6 +515,23 @@ $(document).ready(function() {
                 });
             }
         });
+    }
+</script>
+
+<script>
+    function previewImage(input, previewId) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                $('#' + previewId).attr('src', e.target.result);
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function resetForm() {
+        $('#addCompanyForm')[0].reset();
+        $('#logoPreviewAdd').attr('src', "{{ asset('images/demo/company-placeholder.jpg') }}");
     }
 </script>
 
