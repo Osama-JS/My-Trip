@@ -3,16 +3,23 @@
 @section('title', __('لوحة التحكم'))
 @section('page-title', __('لوحة التحكم'))
 
-@push('styles')
+@section('content')
+
 <style>
 /* ─── Stats Cards ─── */
+
+:root {
+    --card-bg: #f9fafb; /* لون رمادي فاتح بدل الأبيض */
+}
+.card, .dash-section, .booking-card, .welcome-banner {
+    background: var(--card-bg);
+}
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 20px;
     margin-bottom: 28px;
 }
-
 @media (max-width: 1100px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 520px)  { .stats-grid { grid-template-columns: 1fr; } }
 
@@ -26,7 +33,6 @@
     box-shadow: 0 2px 12px rgba(0,0,0,.06);
     transition: transform .2s, box-shadow .2s;
 }
-
 .stat-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 6px 20px rgba(0,0,0,.1);
@@ -42,11 +48,9 @@
     font-size: 1.3rem;
     flex-shrink: 0;
 }
-
 .stat-icon-blue   { background: #eff6ff; color: #2563eb; }
 .stat-icon-green  { background: #f0fdf4; color: #16a34a; }
 .stat-icon-orange { background: #fff7ed; color: #ea580c; }
-.stat-icon-red    { background: #fef2f2; color: #dc2626; }
 .stat-icon-purple { background: #faf5ff; color: #9333ea; }
 
 .stat-card .stat-info .stat-label {
@@ -54,7 +58,6 @@
     color: #6b7280;
     margin-bottom: 2px;
 }
-
 .stat-card .stat-info .stat-value {
     font-size: 1.65rem;
     font-weight: 700;
@@ -69,7 +72,6 @@
     box-shadow: 0 2px 12px rgba(0,0,0,.06);
     margin-bottom: 24px;
 }
-
 .dash-section-header {
     padding: 18px 22px;
     border-bottom: 1px solid #f3f4f6;
@@ -77,7 +79,6 @@
     align-items: center;
     justify-content: space-between;
 }
-
 .dash-section-header h3 {
     font-size: 1rem;
     font-weight: 700;
@@ -87,21 +88,14 @@
     align-items: center;
     gap: 8px;
 }
-
-.dash-section-header h3 i {
-    color: var(--accent-color, #e8532e);
-}
-
+.dash-section-header h3 i { color: var(--accent-color, #0f172a); }
 .dash-section-link {
     font-size: .83rem;
-    color: var(--accent-color, #e8532e);
+    color: var(--accent-color, #0f172a);
     text-decoration: none;
     font-weight: 600;
 }
-
-.dash-section-body {
-    padding: 16px 22px;
-}
+.dash-section-body { padding: 16px 22px; }
 
 /* ─── Booking Row ─── */
 .booking-row {
@@ -111,7 +105,6 @@
     padding: 14px 0;
     border-bottom: 1px solid #f9fafb;
 }
-
 .booking-row:last-child { border-bottom: none; }
 
 .booking-thumb {
@@ -121,7 +114,6 @@
     object-fit: cover;
     flex-shrink: 0;
 }
-
 .booking-thumb-placeholder {
     width: 56px;
     height: 56px;
@@ -134,9 +126,7 @@
     font-size: 1.3rem;
     flex-shrink: 0;
 }
-
 .booking-info { flex: 1; min-width: 0; }
-
 .booking-title {
     font-weight: 600;
     font-size: .9rem;
@@ -145,13 +135,11 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
-
 .booking-meta {
     font-size: .78rem;
     color: #6b7280;
     margin-top: 2px;
 }
-
 .booking-price {
     font-weight: 700;
     font-size: .95rem;
@@ -170,7 +158,6 @@
     font-weight: 600;
     white-space: nowrap;
 }
-
 .status-pending   { background: #fff7ed; color: #c2410c; }
 .status-confirmed { background: #f0fdf4; color: #15803d; }
 .status-cancelled { background: #fef2f2; color: #b91c1c; }
@@ -181,7 +168,6 @@
     padding: 32px 20px;
     color: #9ca3af;
 }
-
 .empty-state i { font-size: 2.5rem; margin-bottom: 10px; display: block; }
 .empty-state p { font-size: .9rem; margin-bottom: 16px; }
 
@@ -197,7 +183,6 @@
     border: 1px solid #f1f5f9;
     box-shadow: 0 4px 20px rgba(0,0,0,0.03);
 }
-
 .welcome-banner::after {
     content: '';
     position: absolute;
@@ -209,25 +194,9 @@
     border-radius: 50%;
     z-index: 0;
 }
-
-.welcome-banner h2, .welcome-banner p {
-    position: relative;
-    z-index: 1;
-}
-
-.welcome-banner h2 {
-    font-size: 1.5rem;
-    font-weight: 800;
-    margin: 0 0 8px;
-    color: #0f172a;
-}
-
-.welcome-banner p {
-    font-size: .95rem;
-    color: #64748b;
-    margin: 0;
-    font-weight: 500;
-}
+.welcome-banner h2, .welcome-banner p { position: relative; z-index: 1; }
+.welcome-banner h2 { font-size: 1.5rem; font-weight: 800; margin: 0 0 8px; color: #0f172a; }
+.welcome-banner p { font-size: .95rem; color: #64748b; margin: 0; font-weight: 500; }
 
 /* ─── 2-column grid ─── */
 .dash-two-cols {
@@ -235,7 +204,6 @@
     grid-template-columns: 1fr 1fr;
     gap: 20px;
 }
-
 @media (max-width: 900px) { .dash-two-cols { grid-template-columns: 1fr; } }
 
 /* ─── Payment Row ─── */
@@ -247,30 +215,11 @@
     border-bottom: 1px solid #f9fafb;
     gap: 10px;
 }
-
 .payment-row:last-child { border-bottom: none; }
-
-.payment-row .pay-info .pay-trip {
-    font-weight: 600;
-    font-size: .88rem;
-    color: #111827;
-}
-
-.payment-row .pay-info .pay-date {
-    font-size: .75rem;
-    color: #9ca3af;
-}
-
-.payment-row .pay-amount {
-    font-weight: 700;
-    font-size: .95rem;
-    color: #16a34a;
-    white-space: nowrap;
-}
+.payment-row .pay-info .pay-trip { font-weight: 600; font-size: .88rem; color: #111827; }
+.payment-row .pay-info .pay-date { font-size: .75rem; color: #9ca3af; }
+.payment-row .pay-amount { font-weight: 700; font-size: .95rem; color: #16a34a; white-space: nowrap; }
 </style>
-@endpush
-
-@section('content')
 
 {{-- Welcome Banner --}}
 <div class="welcome-banner">
@@ -280,45 +229,17 @@
 
 {{-- Stats Cards --}}
 <div class="stats-grid">
-    <div class="stat-card">
-        <div class="stat-icon stat-icon-blue">
-            <i class="fas fa-ticket-alt"></i>
+    @foreach($stats as $stat)
+        <div class="stat-card">
+            <div class="stat-icon {{ $stat['color'] }}">
+                <i class="{{ $stat['icon'] }}"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-label">{{ $stat['label'] }}</div>
+                <div class="stat-value">{{ $stat['value'] }}</div>
+            </div>
         </div>
-        <div class="stat-info">
-            <div class="stat-label">{{ __('Total Bookings') }}</div>
-            <div class="stat-value">{{ $totalBookings }}</div>
-        </div>
-    </div>
-
-    <div class="stat-card">
-        <div class="stat-icon stat-icon-orange">
-            <i class="fas fa-clock"></i>
-        </div>
-        <div class="stat-info">
-            <div class="stat-label">{{ __('Pending') }}</div>
-            <div class="stat-value">{{ $pendingBookings }}</div>
-        </div>
-    </div>
-
-    <div class="stat-card">
-        <div class="stat-icon stat-icon-green">
-            <i class="fas fa-check-circle"></i>
-        </div>
-        <div class="stat-info">
-            <div class="stat-label">{{ __('Confirmed') }}</div>
-            <div class="stat-value">{{ $confirmedBookings }}</div>
-        </div>
-    </div>
-
-    <div class="stat-card">
-        <div class="stat-icon stat-icon-purple">
-            <i class="fas fa-heart"></i>
-        </div>
-        <div class="stat-info">
-            <div class="stat-label">{{ __('Favorites') }}</div>
-            
-        </div>
-    </div>
+    @endforeach
 </div>
 
 {{-- Two columns --}}
@@ -354,7 +275,6 @@
                 <div class="empty-state">
                     <i class="fas fa-ticket-alt"></i>
                     <p>{{ __('No bookings yet') }}</p>
-                    <a href="{{ route('trips.index') }}" class="btn btn-accent btn-sm">{{ __('Explore Trips') }}</a>
                 </div>
             @endforelse
         </div>
@@ -392,16 +312,21 @@
         <h3><i class="fas fa-bolt"></i> {{ __('Quick Access') }}</h3>
     </div>
     <div class="dash-section-body" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; padding: 18px 22px;">
-        <a href="{{ route('customer.bookings.index') }}" style="display:flex;align-items:center;gap:10px;padding:14px 16px;background:#f8fafc;border-radius:10px;text-decoration:none;color:#374151;font-weight:600;font-size:.88rem;transition:all .2s;" onmouseover="this.style.background='var(--accent-color,#e8532e)';this.style.color='#fff'" onmouseout="this.style.background='#f8fafc';this.style.color='#374151'">
-            <i class="fas fa-ticket-alt"></i> {{ __('My Bookings') }}
-        </a>
-        <a href="{{ route('customer.favorites.index') }}" style="display:flex;align-items:center;gap:10px;padding:14px 16px;background:#f8fafc;border-radius:10px;text-decoration:none;color:#374151;font-weight:600;font-size:.88rem;transition:all .2s;" onmouseover="this.style.background='var(--accent-color,#e8532e)';this.style.color='#fff'" onmouseout="this.style.background='#f8fafc';this.style.color='#374151'">
-            <i class="fas fa-heart"></i> {{ __('Favorites') }}
-        </a>
-        <a href="{{ route('customer.profile') }}" style="display:flex;align-items:center;gap:10px;padding:14px 16px;background:#f8fafc;border-radius:10px;text-decoration:none;color:#374151;font-weight:600;font-size:.88rem;transition:all .2s;" onmouseover="this.style.background='var(--accent-color,#e8532e)';this.style.color='#fff'" onmouseout="this.style.background='#f8fafc';this.style.color='#374151'">
-            <i class="fas fa-user-edit"></i> {{ __('Profile') }}
-        </a>
+        <a href="{{ route('customer.bookings.index') }}" class="quick-link"><i class="fas fa-ticket-alt"></i> {{ __('My Bookings') }}</a>
+        <a href="{{ route('customer.favorites.index') }}" class="quick-link"><i class="fas fa-heart"></i> {{ __('Favorites') }}</a>
+        <a href="{{ route('customer.profile') }}" class="quick-link"><i class="fas fa-user-edit"></i> {{ __('Profile') }}</a>
     </div>
 </div>
+
+
+<style>
+.quick-link {
+    display:flex;align-items:center;gap:10px;padding:14px 16px;
+    background:#f8fafc;border-radius:10px;text-decoration:none;color:#374151;
+    font-weight:600;font-size:.88rem;transition:all .2s;
+}
+.quick-link:hover { background:var(--accent-color,#0f172a); color:#fff; }
+</style>
+
 
 @endsection

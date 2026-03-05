@@ -9,6 +9,17 @@ use App\Http\Controllers\Admin\NotificationController as AdminNotificationContro
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\TripsController;
 use App\Http\Controllers\Admin\TripCategoryController;
+
+// Customer Controllers
+use App\Http\Controllers\Customer\CustomerDashboardController;
+use App\Http\Controllers\Customer\BookingController as CustomerBookingController;
+use App\Http\Controllers\Customer\FavoriteController;
+use App\Http\Controllers\Customer\ProfileController as CustomerProfileController;
+use App\Http\Controllers\Customer\CustomerPaymentController;
+use App\Http\Controllers\Customer\NotificationController as CustomerNotificationController;
+use App\Http\Controllers\CompanyProfileController;
+
+
 use Illuminate\Support\Facades\Route;
 
 // Language switcher
@@ -262,32 +273,32 @@ Route::middleware(['auth', 'isCustomer'])->prefix('customer')->name('customer.')
     Route::get('/dashboard', [\App\Http\Controllers\Customer\CustomerDashboardController::class, 'index'])->name('dashboard');
 
     // Bookings
-    Route::get('/bookings', [\App\Http\Controllers\Customer\CustomerBookingController::class, 'index'])->name('bookings.index');
-    Route::get('/bookings/create/{trip_id}', [\App\Http\Controllers\Customer\CustomerBookingController::class, 'create'])->name('bookings.create');
-    Route::get('/bookings/{id}', [\App\Http\Controllers\Customer\CustomerBookingController::class, 'show'])->name('bookings.show');
-    Route::post('/bookings', [\App\Http\Controllers\Customer\CustomerBookingController::class, 'store'])->name('bookings.store');
-    Route::post('/bookings/{id}/cancel', [\App\Http\Controllers\Customer\CustomerBookingController::class, 'cancel'])->name('bookings.cancel');
-    Route::get('/bookings/{id}/invoice', [\App\Http\Controllers\Customer\CustomerBookingController::class, 'downloadInvoice'])->name('bookings.invoice');
+    Route::get('/bookings', [CustomerBookingController::class, 'index'])->name('bookings.index');
+    Route::get('/bookings/create/{trip_id}', [CustomerBookingController::class, 'create'])->name('bookings.create');
+    Route::get('/bookings/{id}', [CustomerBookingController::class, 'show'])->name('bookings.show');
+    Route::post('/bookings', [CustomerBookingController::class, 'store'])->name('bookings.store');
+    Route::post('/bookings/{id}/cancel', [CustomerBookingController::class, 'cancel'])->name('bookings.cancel');
+    Route::get('/bookings/{id}/invoice', [CustomerBookingController::class, 'downloadInvoice'])->name('bookings.invoice');
 
     // Favorites
-    Route::get('/favorites', [\App\Http\Controllers\Customer\FavoriteController::class, 'index'])->name('favorites.index');
-    Route::post('/favorites/{tripId}/toggle', [\App\Http\Controllers\Customer\FavoriteController::class, 'toggle'])->name('favorites.toggle');
+    Route::get('/favorites', [FavoriteController::class, 'index'])->name('favorites.index');
+    Route::post('/favorites/{tripId}/toggle', [FavoriteController::class, 'toggle'])->name('favorites.toggle');
 
     // Profile
-    Route::get('/profile', [\App\Http\Controllers\Customer\CustomerProfileController::class, 'index'])->name('profile');
-    Route::put('/profile', [\App\Http\Controllers\Customer\CustomerProfileController::class, 'update'])->name('profile.update');
-    Route::post('/profile/photo', [\App\Http\Controllers\Customer\CustomerProfileController::class, 'updatePhoto'])->name('profile.photo');
-    Route::post('/profile/password', [\App\Http\Controllers\Customer\CustomerProfileController::class, 'changePassword'])->name('profile.password');
+    Route::get('/profile', [CustomerProfileController::class, 'index'])->name('profile');
+    Route::put('/profile', [CustomerProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/photo', [CustomerProfileController::class, 'updatePhoto'])->name('profile.photo');
+    Route::post('/profile/password', [CustomerProfileController::class, 'changePassword'])->name('profile.password');
 
     // Payments & Invoices
-    Route::get('/payments', [\App\Http\Controllers\Customer\CustomerPaymentController::class, 'index'])->name('payments.index');
-    Route::get('/payments/checkout/{bookingId}', [\App\Http\Controllers\Customer\CustomerPaymentController::class, 'checkout'])->name('payments.checkout');
-    Route::get('/payments/{bookingId}/invoice', [\App\Http\Controllers\Customer\CustomerPaymentController::class, 'downloadInvoice'])->name('payments.invoice');
+    Route::get('/payments', [CustomerPaymentController::class, 'index'])->name('payments.index');
+    Route::get('/payments/checkout/{bookingId}', [CustomerPaymentController::class, 'checkout'])->name('payments.checkout');
+    Route::get('/payments/{bookingId}/invoice', [CustomerPaymentController::class, 'downloadInvoice'])->name('payments.invoice');
 
     // Notifications
-    Route::get('/notifications', [\App\Http\Controllers\Customer\CustomerNotificationController::class, 'index'])->name('notifications.index');
-    Route::post('/notifications/{id}/read', [\App\Http\Controllers\Customer\CustomerNotificationController::class, 'markAsRead'])->name('notifications.read');
-    Route::post('/notifications/read-all', [\App\Http\Controllers\Customer\CustomerNotificationController::class, 'markAllRead'])->name('notifications.read-all');
+    Route::get('/notifications', [CustomerNotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{id}/read', [CustomerNotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [CustomerNotificationController::class, 'markAllRead'])->name('notifications.read-all');
 });
 
 

@@ -48,7 +48,7 @@
     top: 0;
     bottom: 0;
     width: 4px;
-    background: var(--accent-color, #e8532e);
+    background: var(--accent-color, #0f172a);
 }
 
 .notif-icon {
@@ -66,7 +66,7 @@
 
 .unread .notif-icon {
     background: #fdf2f0;
-    color: var(--accent-color, #e8532e);
+    color: var(--accent-color, #0f172a);
 }
 
 .notif-content { flex: 1; min-width: 0; }
@@ -96,7 +96,7 @@
 .btn-read-all {
     font-size: .8rem;
     font-weight: 600;
-    color: var(--accent-color, #e8532e);
+    color: var(--accent-color, #0f172a);
     border: none;
     background: transparent;
     cursor: pointer;

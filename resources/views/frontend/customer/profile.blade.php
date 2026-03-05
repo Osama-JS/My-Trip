@@ -5,171 +5,167 @@
 
 @push('styles')
 <style>
+/* ───── Grid Layout ───── */
 .profile-grid {
     display: grid;
-    grid-template-columns: 280px 1fr;
-    gap: 22px;
+    grid-template-columns: 300px 1fr;
+    gap: 24px;
     align-items: start;
 }
-
 @media (max-width: 900px) { .profile-grid { grid-template-columns: 1fr; } }
 
+/* ───── Profile Card ───── */
 .profile-card {
-    background: #fff;
-    border-radius: 14px;
-    box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    background: linear-gradient(145deg, #ffffff, #f4f6f9);
+    border-radius: 20px;
+    box-shadow: 0 8px 25px rgba(0,0,0,.12);
     overflow: hidden;
+    transition: transform .3s, box-shadow .3s;
+}
+.profile-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 35px rgba(0,0,0,.15);
 }
 
 .profile-card-header {
-    background: linear-gradient(135deg, #1a2537, #2d3f5e);
-    padding: 28px 22px;
+    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    padding: 36px 22px 24px;
     text-align: center;
     color: #fff;
+    position: relative;
 }
 
 .profile-avatar-wrap {
     position: relative;
-    width: 90px;
-    margin: 0 auto 12px;
+    width: 100px;
+    margin: 0 auto 14px;
 }
-
 .profile-avatar {
-    width: 90px;
-    height: 90px;
+    width: 100px;
+    height: 100px;
     border-radius: 50%;
     object-fit: cover;
-    border: 3px solid var(--accent-color, #e8532e);
+    border: 4px solid #fff;
+    transition: transform .3s, box-shadow .3s;
 }
+.profile-avatar:hover { transform: scale(1.08); box-shadow: 0 4px 15px rgba(0,0,0,.2); }
 
 .profile-avatar-edit {
     position: absolute;
     bottom: 0;
-    inset-inline-end: -4px;
-    width: 28px;
-    height: 28px;
-    background: var(--accent-color, #e8532e);
+    right: -6px;
+    width: 32px;
+    height: 32px;
+    background: #ff6b6b;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: .7rem;
+    font-size: .75rem;
     color: #fff;
     cursor: pointer;
     border: 2px solid #fff;
+    transition: background .3s, transform .2s;
 }
+.profile-avatar-edit:hover { background: #ff4757; transform: scale(1.1); }
 
-.profile-name {
-    font-size: 1rem;
-    font-weight: 700;
-    margin-bottom: 4px;
-}
+.profile-name { font-size: 1.3rem; font-weight: 800; margin-bottom: 4px; }
+.profile-email { font-size: .85rem; opacity: .85; }
 
-.profile-email {
-    font-size: .8rem;
-    opacity: .7;
-}
-
-.profile-card-body { padding: 18px; }
-
+/* ───── Stats inside Card ───── */
+.profile-card-body { padding: 24px; }
 .profile-stat {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 0;
-    border-bottom: 1px solid #f3f4f6;
-    font-size: .88rem;
+    padding: 14px 0;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: .92rem;
+    transition: all .2s;
+    border-radius: 12px;
 }
-
 .profile-stat:last-child { border-bottom: none; }
-.profile-stat .label { color: #6b7280; }
+.profile-stat:hover { background: #f1f5f9; box-shadow: inset 0 0 8px rgba(0,0,0,.03); }
+.profile-stat .label { color: #6b7280; font-weight: 500; }
 .profile-stat .value { font-weight: 700; color: #111827; }
 
-/* Form card */
+/* ───── Form Cards ───── */
 .form-card {
     background: #fff;
-    border-radius: 14px;
-    box-shadow: 0 2px 10px rgba(0,0,0,.06);
-    margin-bottom: 22px;
+    border-radius: 18px;
+    box-shadow: 0 8px 25px rgba(0,0,0,.1);
+    margin-bottom: 26px;
+    transition: transform .3s, box-shadow .3s;
+}
+.form-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(0,0,0,.12);
 }
 
 .form-card-header {
-    padding: 16px 22px;
-    border-bottom: 1px solid #f3f4f6;
+    padding: 20px 22px;
+    border-bottom: 1px solid #e5e7eb;
     font-weight: 700;
-    font-size: .95rem;
+    font-size: 1rem;
     color: #111827;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
 }
+.form-card-header i { color: #6a11cb; }
 
-.form-card-header i { color: var(--accent-color, #e8532e); }
-.form-card-body { padding: 22px; }
+.form-card-body { padding: 26px 22px; }
 
-.form-row-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-}
-
+/* Form Fields */
+.form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 @media (max-width: 600px) { .form-row-2 { grid-template-columns: 1fr; } }
 
-.form-group {
-    margin-bottom: 16px;
-}
-
+.form-group { margin-bottom: 18px; }
 .form-group label {
     display: block;
-    font-size: .83rem;
+    font-size: .87rem;
     font-weight: 600;
     color: #374151;
-    margin-bottom: 5px;
+    margin-bottom: 6px;
 }
-
 .form-group input,
 .form-group select {
     width: 100%;
     border: 1.5px solid #e5e7eb;
-    border-radius: 9px;
-    padding: 10px 14px;
-    font-size: .9rem;
+    border-radius: 14px;
+    padding: 12px 16px;
+    font-size: .95rem;
     outline: none;
-    background: #fafafa;
-    transition: border .2s;
+    background: #f9fafc;
+    transition: all .3s;
 }
-
 .form-group input:focus,
 .form-group select:focus {
-    border-color: var(--accent-color, #e8532e);
+    border-color: #6a11cb;
     background: #fff;
-    box-shadow: 0 0 0 3px rgba(232,83,46,.08);
+    box-shadow: 0 0 0 4px rgba(106,17,203,.1);
 }
 
-.form-group .error-msg {
-    color: #ef4444;
-    font-size: .78rem;
-    margin-top: 4px;
-}
+.form-group .error-msg { color: #ef4444; font-size: .78rem; margin-top: 4px; }
 
+/* Buttons */
 .btn-save {
-    padding: 11px 28px;
-    background: var(--accent-color, #e8532e);
+    padding: 13px 34px;
+    background: #6a11cb;
     color: #fff;
     border: none;
-    border-radius: 9px;
+    border-radius: 14px;
     font-weight: 700;
-    font-size: .9rem;
+    font-size: .95rem;
     cursor: pointer;
-    transition: background .2s;
+    transition: all .3s;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
 }
+.btn-save:hover { background: #2575fc; transform: translateY(-1px); }
 
-.btn-save:hover { background: #d04525; }
-
-/* Photo upload */
+/* Photo Input Hidden */
 #photoInput { display: none; }
 </style>
 @endpush

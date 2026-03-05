@@ -18,6 +18,8 @@ class RoleSeeder extends Seeder
         $superAdmin = Role::firstOrCreate(['name' => 'super-admin']);
         $admin = Role::firstOrCreate(['name' => 'admin']);
         $manager = Role::firstOrCreate(['name' => 'manager']);
+        $agent = Role::firstOrCreate(['name' => 'agent']);
+        $customer = Role::firstOrCreate(['name' => 'customer']);
 
         // Super Admin gets all permissions
         $superAdmin->givePermissionTo(Permission::all());

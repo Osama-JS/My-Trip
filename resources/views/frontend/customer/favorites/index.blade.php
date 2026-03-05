@@ -287,9 +287,6 @@
         </div>
         <h3 style="font-weight:900; color:#1e293b; margin-bottom:10px;">{{ __('Your wishlist is empty') }}</h3>
         <p style="color:#64748b; margin-bottom:30px; max-width:400px; margin-inline:auto;">{{ __("You haven't added any trips to your favorites yet. Start exploring and save the ones you love!") }}</p>
-        <a href="{{ route('trips.index') }}" class="btn-accent-main">
-            {{ __('Explore Trips') }}
-        </a>
     </div>
 @endif
 

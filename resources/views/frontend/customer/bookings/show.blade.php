@@ -32,7 +32,7 @@
     gap: 8px;
 }
 
-.detail-card-header i { color: var(--accent-color, #e8532e); }
+.detail-card-header i { color: var(--accent-color, #0f172a); }
 
 .detail-card-body { padding: 20px 22px; }
 
@@ -91,7 +91,7 @@ html[dir="rtl"] .timeline-step::after { right: 50%; }
 
 .timeline-step:last-child::after { display: none; }
 
-.timeline-step.done::after { background: var(--accent-color, #e8532e); }
+.timeline-step.done::after { background: var(--accent-color, #0f172a); }
 
 .step-dot {
     width: 32px;
@@ -110,14 +110,14 @@ html[dir="rtl"] .timeline-step::after { right: 50%; }
 }
 
 .timeline-step.active .step-dot {
-    border-color: var(--accent-color, #e8532e);
-    background: var(--accent-color, #e8532e);
+    border-color: var(--accent-color, #0f172a);
+    background: var(--accent-color, #0f172a);
     color: #fff;
 }
 
 .timeline-step.done .step-dot {
-    border-color: var(--accent-color, #e8532e);
-    background: var(--accent-color, #e8532e);
+    border-color: var(--accent-color, #0f172a);
+    background: var(--accent-color, #0f172a);
     color: #fff;
 }
 
@@ -129,7 +129,7 @@ html[dir="rtl"] .timeline-step::after { right: 50%; }
 
 .timeline-step.active .step-label,
 .timeline-step.done .step-label {
-    color: var(--accent-color, #e8532e);
+    color: var(--accent-color, #0f172a);
 }
 
 /* Info row */
@@ -161,7 +161,7 @@ html[dir="rtl"] .timeline-step::after { right: 50%; }
 .passenger-avatar {
     width: 38px;
     height: 38px;
-    background: var(--accent-color, #e8532e);
+    background: var(--accent-color, #0f172a);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -222,7 +222,7 @@ html[dir="rtl"] .timeline-step::after { right: 50%; }
 }
 
 .action-btn-primary {
-    background: var(--accent-color, #e8532e);
+    background: var(--accent-color, #0f172a);
     color: #fff;
 }
 
@@ -234,7 +234,7 @@ html[dir="rtl"] .timeline-step::after { right: 50%; }
     color: #374151;
 }
 
-.action-btn-outline:hover { border-color: var(--accent-color, #e8532e); color: var(--accent-color, #e8532e); }
+.action-btn-outline:hover { border-color: var(--accent-color, #0f172a); color: var(--accent-color, #0f172a); }
 
 .action-btn-danger {
     background: #fef2f2;
@@ -254,7 +254,7 @@ html[dir="rtl"] .timeline-step::after { right: 50%; }
     font-weight: 700;
 }
 
-.status-pending   { background: #fff7ed; color: #c2410c; }
+.status-pending   { background: #fff7ed; color: #0f172a; }
 .status-confirmed { background: #f0fdf4; color: #15803d; }
 .status-cancelled { background: #fef2f2; color: #b91c1c; }
 
@@ -270,7 +270,7 @@ html[dir="rtl"] .timeline-step::after { right: 50%; }
     transition: color .2s;
 }
 
-.back-link:hover { color: var(--accent-color, #e8532e); }
+.back-link:hover { color: var(--accent-color, #0f172a); }
 </style>
 @endpush
 

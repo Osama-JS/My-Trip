@@ -493,7 +493,9 @@
             <a href="{{ route('agent.trips.create') }}" class="quick-link-item">
                 <i class="fas fa-plus-circle"></i> {{ __('Add New Trip') }}
             </a>
-            
+            <a href="{{ route('agent.trips.index') }}" class="quick-link-item">
+                <i class="fas fa-map-marked-alt"></i> {{ __('Manage Trips') }}
+            </a>
             <a href="{{ route('agent.bookings.index') }}" class="quick-link-item">
                 <i class="fas fa-ticket-alt"></i> {{ __('Manage Bookings') }}
             </a>

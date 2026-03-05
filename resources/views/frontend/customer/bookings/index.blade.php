@@ -27,8 +27,8 @@
 
 .filter-btn:hover,
 .filter-btn.active {
-    background: var(--accent-color, #e8532e);
-    border-color: var(--accent-color, #e8532e);
+    background: var(--accent-color, #0f172a);
+    border-color: var(--accent-color, #0f172a);
     color: #fff;
 }
 
@@ -156,10 +156,10 @@
     color: #374151;
 }
 
-.btn-outline:hover { border-color: var(--accent-color, #e8532e); color: var(--accent-color, #e8532e); }
+.btn-outline:hover { border-color: var(--accent-color, #0f172a); color: var(--accent-color, #0f172a); }
 
 .btn-accent {
-    background: var(--accent-color, #e8532e);
+    background: var(--accent-color, #0f172a);
     color: #fff;
 }
 
@@ -283,9 +283,6 @@
         <div class="empty-icon"><i class="fas fa-ticket-alt"></i></div>
         <h3>{{ __('No bookings found') }}</h3>
         <p>{{ __('You have not made any bookings yet. Start exploring available trips!') }}</p>
-        <a href="{{ route('trips.index') }}" class="btn-sm btn-accent" style="display:inline-flex;">
-            <i class="fas fa-search"></i> {{ __('Explore Trips') }}
-        </a>
     </div>
 @endforelse
 

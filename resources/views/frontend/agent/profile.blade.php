@@ -50,7 +50,7 @@
     inset-inline-end: -6px;
     width: 32px;
     height: 32px;
-    background: var(--accent-color, #e8532e);
+    background: var(--accent-color, #0f172a);
     border-radius: 10px;
     display: flex;
     align-items: center;
@@ -117,7 +117,7 @@
     gap: 10px;
 }
 
-.form-card-header i { color: var(--accent-color, #e8532e); }
+.form-card-header i { color: var(--accent-color, #0f172a); }
 .form-card-body { padding: 24px; }
 
 .form-row-2 {
@@ -154,7 +154,7 @@
 
 .form-group input:focus,
 .form-group select:focus {
-    border-color: var(--accent-color, #e8532e);
+    border-color: var(--accent-color, #0f172a);
     background: #fff;
     box-shadow: 0 0 0 4px rgba(232,83,46,0.06);
 }
@@ -170,7 +170,7 @@
 
 .btn-save {
     padding: 12px 32px;
-    background: var(--accent-color, #e8532e);
+    background: var(--accent-color, #0f172a);
     color: #fff;
     border: none;
     border-radius: 10px;

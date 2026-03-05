@@ -5,103 +5,130 @@
 
 @push('styles')
 <style>
+/* ───── Card Container ───── */
 .payment-list-card {
-    background: #fff;
-    border-radius: 14px;
-    box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    background: linear-gradient(145deg, #ffffff, #f4f6f9);
+    border-radius: 20px;
+    box-shadow: 0 8px 25px rgba(0,0,0,.08);
     overflow: hidden;
+    transition: transform .3s, box-shadow .3s;
+}
+.payment-list-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(0,0,0,.12);
 }
 
+/* ───── Header ───── */
 .payment-list-header {
-    padding: 18px 22px;
-    border-bottom: 1px solid #f3f4f6;
+    padding: 24px 26px;
+    border-bottom: 1px solid #e5e7eb;
     font-weight: 700;
-    font-size: .95rem;
+    font-size: 1rem;
     color: #111827;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
 }
+.payment-list-header i { color: #6a11cb; }
 
-.payment-list-header i { color: var(--accent-color, #e8532e); }
-
+/* ───── Payment Row ───── */
 .payment-row {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 16px 22px;
-    border-bottom: 1px solid #f9fafb;
-    transition: background .15s;
+    gap: 18px;
+    padding: 18px 26px;
+    border-bottom: 1px solid #f3f4f6;
+    border-radius: 14px;
+    margin: 10px 16px 0;
+    transition: all .25s;
+    background: #fff;
 }
-
+.payment-row:hover { 
+    background: linear-gradient(90deg, #f9f9ff, #f1f5ff); 
+    box-shadow: 0 6px 20px rgba(0,0,0,.05);
+}
 .payment-row:last-child { border-bottom: none; }
-.payment-row:hover { background: #fafafa; }
 
+/* ───── Payment Icon ───── */
 .payment-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 10px;
-    background: #f0fdf4;
-    color: #16a34a;
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
+    background: #e0f2fe;
+    color: #2563eb;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     flex-shrink: 0;
+    transition: transform .2s, background .2s;
 }
+.payment-row:hover .payment-icon { transform: scale(1.05); background: #bae6fd; }
 
+/* ───── Info ───── */
 .payment-info { flex: 1; min-width: 0; }
-.payment-trip-name { font-weight: 700; font-size: .9rem; color: #111827; }
-.payment-meta { font-size: .77rem; color: #9ca3af; margin-top: 2px; }
+.payment-trip-name { font-weight: 700; font-size: .95rem; color: #111827; }
+.payment-meta { font-size: .78rem; color: #6b7280; margin-top: 4px; }
 
+/* ───── Amount & Status ───── */
 .payment-amount {
     font-weight: 700;
     font-size: 1rem;
     color: #111827;
     text-align: end;
 }
-
-.payment-amount .currency { font-size: .78rem; color: #9ca3af; font-weight: 400; }
+.payment-amount .currency { font-size: .78rem; color: #6b7280; font-weight: 500; }
 
 .status-badge {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 3px 10px;
-    border-radius: 20px;
-    font-size: .73rem;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 22px;
+    font-size: .75rem;
     font-weight: 600;
+    transition: all .2s;
 }
+.badge-success { background: #d1fae5; color: #15803d; }
+.badge-pending { background: #ffedd5; color: #c2410c; }
+.badge-failed { background: #fee2e2; color: #b91c1c; }
 
-.badge-success { background: #f0fdf4; color: #15803d; }
-.badge-pending  { background: #fff7ed; color: #c2410c; }
-.badge-failed   { background: #fef2f2; color: #b91c1c; }
-
+/* ───── Download Button ───── */
 .dl-btn {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 6px 12px;
-    background: #f1f5f9;
-    border-radius: 8px;
+    gap: 6px;
+    padding: 8px 16px;
+    background: #f3f4f6;
+    border-radius: 12px;
     text-decoration: none;
     color: #374151;
-    font-size: .78rem;
+    font-size: .85rem;
     font-weight: 600;
-    transition: all .2s;
+    transition: all .3s;
     white-space: nowrap;
 }
+.dl-btn:hover { background: #6a11cb; color: #fff; transform: translateY(-1px); }
 
-.dl-btn:hover { background: var(--accent-color, #e8532e); color: #fff; }
-
+/* ───── Empty State ───── */
 .empty-state {
     text-align: center;
-    padding: 60px 20px;
+    padding: 80px 20px;
     color: #9ca3af;
 }
+.empty-state i { font-size: 3.5rem; display: block; margin-bottom: 14px; color: #c7d2fe; }
+.empty-state p { font-size: 1rem; color: #6b7280; }
 
-.empty-state i { font-size: 3rem; display: block; margin-bottom: 12px; }
-.empty-state p { font-size: .9rem; }
+/* ───── Pagination Centering ───── */
+.pagination { display: flex; justify-content: center; margin-top: 20px; }
+.pagination li a, .pagination li span {
+    border-radius: 12px;
+    padding: 8px 12px;
+    margin: 0 4px;
+    transition: all .2s;
+}
+.pagination li a:hover { background: #6a11cb; color: #fff; }
+.pagination li.active span { background: #6a11cb; color: #fff; font-weight: 700; }
 </style>
 @endpush
 
