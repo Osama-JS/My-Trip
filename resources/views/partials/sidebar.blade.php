@@ -90,6 +90,14 @@
                 </a>
             </li>
 
+            <li>
+                <a href="{{ route('admin.notifications.index') }}" aria-expanded="false">
+                    <i class="fas fa-bell"></i>
+                    <span class="nav-text">{{ __('Notifications') }}</span>
+                </a>
+            </li>
+
+
             {{-- Financial Management --}}
              <li>
                 <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">

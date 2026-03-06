@@ -61,31 +61,36 @@ class TripBookingController extends Controller
 
     private function getActionButtons($booking)
     {
-        $showBtn = '<a href="' . route('admin.trip-bookings.show', $booking->id) . '" class="btn btn-primary btn-sm me-1" title="' . __('View Details') . '"><i class="fas fa-eye"></i></a>';
+        $showBtn = '';
+        if (auth()->user()->can('view bookings')) {
+            $showBtn = '<a href="' . route('admin.trip-bookings.show', $booking->id) . '" class="btn btn-primary btn-sm me-1" title="' . __('View Details') . '"><i class="fas fa-eye"></i></a>';
+        }
 
         // Status Buttons
         $statusBtns = '';
-        if ($booking->status == 'pending') {
-            $statusBtns .= '<form action="' . route('admin.trip-bookings.update-status', $booking->id) . '" method="POST" class="d-inline confirm-action" data-confirm-message="' . __('Are you sure you want to confirm this booking?') . '">
-                ' . csrf_field() . '
-                <input type="hidden" name="status" value="confirmed">
-                <button type="submit" class="btn btn-success btn-sm me-1" title="' . __('Confirm') . '"><i class="fas fa-check"></i></button>
-            </form>';
+        if (auth()->user()->can('manage bookings')) {
+            if ($booking->status == 'pending') {
+                $statusBtns .= '<form action="' . route('admin.trip-bookings.update-status', $booking->id) . '" method="POST" class="d-inline confirm-action" data-confirm-message="' . __('Are you sure you want to confirm this booking?') . '">
+                    ' . csrf_field() . '
+                    <input type="hidden" name="status" value="confirmed">
+                    <button type="submit" class="btn btn-success btn-sm me-1" title="' . __('Confirm') . '"><i class="fas fa-check"></i></button>
+                </form>';
 
-            $statusBtns .= '<form action="' . route('admin.trip-bookings.update-status', $booking->id) . '" method="POST" class="d-inline confirm-action" data-confirm-message="' . __('Are you sure you want to cancel this booking?') . '">
-            ' . csrf_field() . '
-            <input type="hidden" name="status" value="cancelled">
-            <button type="submit" class="btn btn-danger btn-sm me-1" title="' . __('Cancel') . '"><i class="fas fa-times"></i></button>
+                $statusBtns .= '<form action="' . route('admin.trip-bookings.update-status', $booking->id) . '" method="POST" class="d-inline confirm-action" data-confirm-message="' . __('Are you sure you want to cancel this booking?') . '">
+                ' . csrf_field() . '
+                <input type="hidden" name="status" value="cancelled">
+                <button type="submit" class="btn btn-danger btn-sm me-1" title="' . __('Cancel') . '"><i class="fas fa-times"></i></button>
+                </form>';
+            }
+
+            $statusBtns .= '<form action="' . route('admin.trip-bookings.destroy', $booking->id) . '" method="POST" class="d-inline confirm-action" data-confirm-message="' . __('Are you sure you want to delete this booking?') . '">
+                ' . csrf_field() . '
+                ' . method_field('DELETE') . '
+                <button type="submit" class="btn btn-danger btn-sm" title="' . __('Delete') . '"><i class="fas fa-trash"></i></button>
             </form>';
         }
 
-        $deleteBtn = '<form action="' . route('admin.trip-bookings.destroy', $booking->id) . '" method="POST" class="d-inline confirm-action" data-confirm-message="' . __('Are you sure you want to delete this booking?') . '">
-            ' . csrf_field() . '
-            ' . method_field('DELETE') . '
-            <button type="submit" class="btn btn-danger btn-sm" title="' . __('Delete') . '"><i class="fas fa-trash"></i></button>
-        </form>';
-
-        return '<div class="d-flex">' . $showBtn . $statusBtns . $deleteBtn . '</div>';
+        return '<div class="d-flex">' . $showBtn . $statusBtns . '</div>';
     }
 
     /**
@@ -106,7 +111,7 @@ class TripBookingController extends Controller
         $booking = TripBooking::findOrFail($id);
 
         $oldState = $booking->booking_state;
-        $boo =$booking->update(['status' => $request->status]);
+        $booking->update(['status' => $request->status]);
 
         if ($request->status == 'cancelled') {
             $booking->update(['booking_state' => TripBooking::STATE_CANCELLED]);
@@ -135,8 +140,8 @@ class TripBookingController extends Controller
 
         $oldState = $booking->booking_state;
         $newState = $request->booking_state;
-        $boo = $booking->update(['booking_state' => $newState]);
-        dd($boo);
+        $booking->update(['booking_state' => $newState]);
+
         \App\Models\BookingHistory::create([
             'trip_booking_id' => $booking->id,
             'user_id' => auth()->id(),

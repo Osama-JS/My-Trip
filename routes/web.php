@@ -5,10 +5,57 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\BookingController;
+use App\Http\Controllers\Admin\NotificationController as AdminNotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\TripsController;
 use App\Http\Controllers\Admin\TripCategoryController;
+
+// Customer Controllers
+use App\Http\Controllers\Customer\CustomerDashboardController;
+use App\Http\Controllers\Customer\BookingController as CustomerBookingController;
+use App\Http\Controllers\Customer\FavoriteController;
+use App\Http\Controllers\Customer\ProfileController as CustomerProfileController;
+use App\Http\Controllers\Customer\CustomerPaymentController;
+use App\Http\Controllers\Customer\NotificationController as CustomerNotificationController;
+use App\Http\Controllers\CompanyProfileController;
+
+
 use Illuminate\Support\Facades\Route;
+
+
+// =============================================================================
+// WEB VIEW PAYMENT ROUTES
+// =============================================================================
+Route::group(['prefix' => 'payments', 'as' => 'payments.web.'], function () {
+    Route::get('/checkout/{booking_id}/{method}', [PaymentWebController::class, 'checkout'])->name('checkout');
+    Route::post('/initiate', [PaymentWebController::class, 'initiateRedirect'])->name('initiate');
+    Route::post('/bank-transfer', [PaymentWebController::class, 'submitBankTransfer'])->name('bank_transfer');
+    Route::get('/success', [PaymentWebController::class, 'success'])->name('success');
+    Route::get('/failure', [PaymentWebController::class, 'failure'])->name('failure');
+
+    // Specialized callback that triggers verification then redirects to success/failure
+    Route::get('/callback/{payment_type}', function (Illuminate\Http\Request $request, $payment_type) {
+        $paymentId = $request->payment_id ?? $request->orderId ?? $request->id;
+        $checkoutId = $request->id; // For HyperPay
+
+        // We'll redirect to success or failure based on basic query params for now,
+        // but ideally we verify here. For the WebView flow, we'll let the success/failure
+        // pages handle the verification or use this intermediate route.
+        if ($request->status === 'cancel') {
+             return redirect()->route('payments.web.failure', ['error' => __('Payment cancelled by user.')]);
+        }
+
+        // Return a processing page that will then call the verify logic
+        return view('payments.callback_processing', [
+            'payment_type' => $payment_type,
+            'payment_id' => $paymentId,
+            'checkout_id' => $checkoutId,
+            'status' => $request->status,
+            'source' => $request->source
+        ]);
+    })->name('callback');
+});
+
 
 // Language switcher
 Route::get('lang/{locale}', function ($locale) {
@@ -110,6 +157,16 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     Route::get('companies/data', [App\Http\Controllers\Admin\CompanyController::class, 'getData'])->name('companies.data');
     Route::get('companies/active', [App\Http\Controllers\Admin\CompanyController::class, 'getActivecompanies'])->name('companies.active');
     Route::post('companies/{company}/toggle-status', [App\Http\Controllers\Admin\CompanyController::class, 'toggleStatus'])->name('companies.toggle-status');
+
+    // Agent Management for Company
+    Route::get('companies/{company}/agents', [App\Http\Controllers\Admin\CompanyAgentController::class, 'index'])->name('companies.agents');
+    Route::get('companies/{company}/agents/data', [App\Http\Controllers\Admin\CompanyAgentController::class, 'getData'])->name('companies.agents.data');
+    Route::post('companies/{company}/agents', [App\Http\Controllers\Admin\CompanyAgentController::class, 'store'])->name('companies.agents.store');
+    Route::get('agents/{user}/edit', [App\Http\Controllers\Admin\CompanyAgentController::class, 'edit'])->name('companies.agents.edit');
+    Route::put('agents/{user}', [App\Http\Controllers\Admin\CompanyAgentController::class, 'update'])->name('companies.agents.update');
+    Route::post('agents/{user}/toggle-status', [App\Http\Controllers\Admin\CompanyAgentController::class, 'toggleStatus'])->name('companies.agents.toggle-status');
+    Route::delete('agents/{user}', [App\Http\Controllers\Admin\CompanyAgentController::class, 'destroy'])->name('companies.agents.destroy');
+    
     Route::resource('companies', App\Http\Controllers\Admin\CompanyController::class);
 
 
@@ -155,7 +212,16 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     Route::post('trip-bookings/{id}/send-ticket', [App\Http\Controllers\Admin\TripBookingController::class, 'sendTicket'])->name('trip-bookings.send-ticket');
     Route::resource('trip-bookings', App\Http\Controllers\Admin\TripBookingController::class);
 
-        // Payments Management
+
+    // Notifications Management
+    Route::get('notifications', [AdminNotificationController::class, 'index'])->name('notifications.index');
+    Route::get('notifications/data', [AdminNotificationController::class, 'getData'])->name('notifications.data');
+    Route::get('notifications/search-users', [AdminNotificationController::class, 'searchUsers'])->name('notifications.search-users');
+    Route::post('notifications/send', [AdminNotificationController::class, 'send'])->name('notifications.send');
+    Route::delete('notifications/{id}', [AdminNotificationController::class, 'destroy'])->name('notifications.destroy');
+
+
+     // Payments Management
     Route::get('payments', [App\Http\Controllers\Admin\PaymentLogController::class, 'index'])->name('payments.index');
     Route::get('payments/{id}', [App\Http\Controllers\Admin\PaymentLogController::class, 'show'])->name('payments.show');
 
@@ -187,20 +253,105 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
 
 
 
-// Customer Routes
-Route::middleware(['auth'])->prefix('customer')->name('customer.')->group(function () {
+// =============================================================================
+// AGENT ROUTES
+// =============================================================================
+Route::middleware(['auth', 'isAgent'])->prefix('agent')->name('agent.')->group(function () {
     // Dashboard
-    Route::get('/dashboard', function () {
-        return view('customer.dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [\App\Http\Controllers\Agent\AgentDashboardController::class, 'index'])->name('dashboard');
+
+    // Profile
+    Route::get('/profile', [\App\Http\Controllers\Agent\AgentProfileController::class, 'index'])->name('profile.index');
+    Route::put('/profile', [\App\Http\Controllers\Agent\AgentProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/photo', [\App\Http\Controllers\Agent\AgentProfileController::class, 'updatePhoto'])->name('profile.photo');
+    Route::post('/profile/password', [\App\Http\Controllers\Agent\AgentProfileController::class, 'changePassword'])->name('profile.password');
+
+    // Trips (Company-scoped)
+    Route::get('/trips', [\App\Http\Controllers\Agent\AgentTripController::class, 'index'])->name('trips.index');
+
+    Route::get('/trips/create', [\App\Http\Controllers\Agent\AgentTripController::class, 'create'])->name('trips.create');
+    Route::post('/trips', [\App\Http\Controllers\Agent\AgentTripController::class, 'store'])->name('trips.store');
+    Route::get('/trips/{trip}/edit', [\App\Http\Controllers\Agent\AgentTripController::class, 'edit'])->name('trips.edit');
+    Route::put('/trips/{trip}', [\App\Http\Controllers\Agent\AgentTripController::class, 'update'])->name('trips.update');
+    Route::delete('/trips/{trip}', [\App\Http\Controllers\Agent\AgentTripController::class, 'destroy'])->name('trips.destroy');
+
+    // Trip Show / Details
+    Route::get('/trips/{trip}/show', [\App\Http\Controllers\Agent\AgentTripController::class, 'show'])->name('trips.show');
+
+    // Trip Images
+    Route::post('/trips/{trip_id}/images', [\App\Http\Controllers\Agent\AgentTripController::class, 'imageStore'])->name('trips.images.store');
+    Route::delete('/trips/images/{image}', [\App\Http\Controllers\Agent\AgentTripController::class, 'imageDestroy'])->name('trips.images.destroy');
+    Route::get('/trips/{trip_id}/images', [\App\Http\Controllers\Agent\AgentTripController::class, 'getImages'])->name('trips.images.get');
+
+    // Trip Itinerary
+    Route::post('/trips/{trip}/itinerary', [\App\Http\Controllers\Agent\AgentTripController::class, 'storeItinerary'])->name('trips.itinerary.store');
+    Route::post('/trips/itinerary/reorder', [\App\Http\Controllers\Agent\AgentTripController::class, 'reorderItinerary'])->name('trips.itinerary.reorder');
+    Route::post('/trips/itinerary/{itinerary}', [\App\Http\Controllers\Agent\AgentTripController::class, 'updateItinerary'])->name('trips.itinerary.update');
+    Route::delete('/trips/itinerary/{itinerary}', [\App\Http\Controllers\Agent\AgentTripController::class, 'destroyItinerary'])->name('trips.itinerary.destroy');
+
+    // Bookings (Company-scoped)
+    Route::get('/bookings', [\App\Http\Controllers\Agent\AgentBookingController::class, 'index'])->name('bookings.index');
+    Route::get('/bookings/{booking}', [\App\Http\Controllers\Agent\AgentBookingController::class, 'show'])->name('bookings.show');
+    Route::post('/bookings/{booking}/tickets', [\App\Http\Controllers\Agent\AgentBookingController::class, 'uploadTickets'])->name('bookings.tickets');
+
+    // Favorites
+    Route::get('/favorites', [\App\Http\Controllers\Agent\AgentFavoriteController::class, 'index'])->name('favorites.index');
+    Route::post('/favorites/{tripId}/toggle', [\App\Http\Controllers\Agent\AgentFavoriteController::class, 'toggle'])->name('favorites.toggle');
+});
+
+// =============================================================================
+// CUSTOMER (USER) ROUTES
+// =============================================================================
+Route::middleware(['auth', 'isCustomer'])->prefix('customer')->name('customer.')->group(function () {
+
+    // Dashboard
+    Route::get('/dashboard', [\App\Http\Controllers\Customer\CustomerDashboardController::class, 'index'])->name('dashboard');
+
+    // Bookings
+    Route::get('/bookings', [CustomerBookingController::class, 'index'])->name('bookings.index');
+    Route::get('/bookings/create/{trip_id}', [CustomerBookingController::class, 'create'])->name('bookings.create');
+    Route::get('/bookings/{id}', [CustomerBookingController::class, 'show'])->name('bookings.show');
+    Route::post('/bookings', [CustomerBookingController::class, 'store'])->name('bookings.store');
+    Route::post('/bookings/{id}/cancel', [CustomerBookingController::class, 'cancel'])->name('bookings.cancel');
+    Route::get('/bookings/{id}/invoice', [CustomerBookingController::class, 'downloadInvoice'])->name('bookings.invoice');
+
+    // Favorites
+    Route::get('/favorites', [FavoriteController::class, 'index'])->name('favorites.index');
+    Route::post('/favorites/{tripId}/toggle', [FavoriteController::class, 'toggle'])->name('favorites.toggle');
+
+    // Profile
+    Route::get('/profile', [CustomerProfileController::class, 'index'])->name('profile');
+    Route::put('/profile', [CustomerProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/photo', [CustomerProfileController::class, 'updatePhoto'])->name('profile.photo');
+    Route::post('/profile/password', [CustomerProfileController::class, 'changePassword'])->name('profile.password');
+
+    // Payments & Invoices
+    Route::get('/payments', [CustomerPaymentController::class, 'index'])->name('payments.index');
+    Route::get('/payments/checkout/{bookingId}', [CustomerPaymentController::class, 'checkout'])->name('payments.checkout');
+    Route::get('/payments/{bookingId}/invoice', [CustomerPaymentController::class, 'downloadInvoice'])->name('payments.invoice');
+
+    // Notifications
+    Route::get('/notifications', [CustomerNotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{id}/read', [CustomerNotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [CustomerNotificationController::class, 'markAllRead'])->name('notifications.read-all');
+});
+
+
+
+// // Customer Routes
+// Route::middleware(['auth'])->prefix('customer')->name('customer.')->group(function () {
+//     // Dashboard
+//     Route::get('/dashboard', function () {
+//         return view('customer.dashboard');
+//     })->name('dashboard');
 
   
 
    
 
-    Route::get('/profile', [\App\Http\Controllers\Customer\ProfileController::class, 'index'])->name('profile');
-    Route::put('/profile', [\App\Http\Controllers\Customer\ProfileController::class, 'update'])->name('profile.update');
-});
+//     Route::get('/profile', [\App\Http\Controllers\Customer\ProfileController::class, 'index'])->name('profile');
+//     Route::put('/profile', [\App\Http\Controllers\Customer\ProfileController::class, 'update'])->name('profile.update');
+// });
 
 
 // Payment Routes

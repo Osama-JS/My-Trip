@@ -58,5 +58,35 @@ class AdminUserSeeder extends Seeder
 
         // Assign manager role
         $manager->assignRole('manager');
+
+        $agent = User::updateOrCreate(
+            ['email' => 'company@example.com'],
+            [
+                'first_name' => 'Company',
+                'last_name' => 'User',
+                'password' => Hash::make('password'),
+                'user_type' => User::TYPE_AGENT,
+                'email_verified_at' => now(),
+            ]
+        );
+
+        // Assign agent role
+        $agent->assignRole('agent');
+
+
+        $customer = User::updateOrCreate(
+            ['email' => 'customer@example.com'],
+            [
+                'first_name' => 'Customer',
+                'last_name' => 'User',
+                'password' => Hash::make('password'),
+                'user_type' => User::TYPE_CUSTOMER,
+                'email_verified_at' => now(),
+            ]
+        );
+
+        // Assign customer role
+        $customer->assignRole('customer');
+
     }
 }
