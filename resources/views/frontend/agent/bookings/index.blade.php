@@ -7,7 +7,7 @@
 @push('styles')
 <style>
     :root {
-        --accent-color: #e8532e;
+        --accent-color: #0f172a;
         --accent-soft: rgba(232, 83, 46, 0.08);
         --accent-hover: #d14424;
         --border-light: #f1f5f9;

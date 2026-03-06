@@ -8,7 +8,7 @@
 <style>
     :root {
         --accent-soft: rgba(232, 83, 46, 0.08);
-        --accent-color: #e8532e;
+        --accent-color: #0f172a;
         --accent-hover: #d14424;
     }
 

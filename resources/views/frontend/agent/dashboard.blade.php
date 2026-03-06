@@ -136,12 +136,12 @@
 }
 
 .dash-section-header h3 i {
-    color: var(--accent-color, #e8532e);
+    color: var(--accent-color, #0f172a);
 }
 
 .dash-section-link {
     font-size: .83rem;
-    color: var(--accent-color, #e8532e);
+    color: var(--accent-color, #0f172a);
     text-decoration: none;
     font-weight: 600;
 }
@@ -249,9 +249,9 @@
 }
 
 .quick-link-item:hover {
-    background: var(--accent-color, #e8532e);
+    background: var(--accent-color, #0f172a);
     color: #fff;
-    border-color: var(--accent-color, #e8532e);
+    border-color: var(--accent-color, #0f172a);
     transform: translateX(5px);
 }
 

@@ -10,6 +10,7 @@ use App\Models\City;
 use App\Models\TripCategory;
 use App\Models\TripImage;
 use App\Models\TripItinerary;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;

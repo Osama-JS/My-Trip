@@ -143,6 +143,12 @@ class User extends Authenticatable
         return $this->hasMany(TripBooking::class);
     }
 
+    public function trips()
+    {
+        return $this->hasMany(Trip::class);
+    }
+
+
     public function isCustomer(): bool
     {
         return $this->user_type === self::TYPE_CUSTOMER;

@@ -517,11 +517,11 @@ html[dir="rtl"] .timeline-step::after { right: 50%; }
             <i class="fas fa-list"></i> {{ __('All Bookings') }}
         </a>
 
-        @if($trip)
+        {{--@if($trip)
             <a href="{{ route('trips.show', $trip->id) }}" class="action-btn action-btn-outline">
                 <i class="fas fa-info-circle"></i> {{ __('Trip Details') }}
             </a>
-        @endif
+        @endif--}}
     </div>
 
 </div>

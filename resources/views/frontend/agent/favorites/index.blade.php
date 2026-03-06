@@ -7,7 +7,7 @@
 @push('styles')
 <style>
     :root {
-        --accent-color: #e8532e;
+        --accent-color: #0f172a;
         --accent-soft: rgba(232, 83, 46, 0.08);
         --accent-hover: #d14424;
     }
@@ -261,9 +261,9 @@
         </div>
         <h3 style="font-weight:900; color:#1e293b; margin-bottom:10px;">{{ __('Your wishlist is empty') }}</h3>
         <p style="color:#64748b; margin-bottom:30px; max-width:400px; margin-inline:auto;">{{ __("You haven't added any trips to your favorites yet. Start exploring and save the ones you love!") }}</p>
-        <a href="{{ route('trips.index') }}" class="btn-filter" style="display:inline-flex;">
+        {{--<a href="{{ route('trips.index') }}" class="btn-filter" style="display:inline-flex;">
             {{ __('Explore Trips') }}
-        </a>
+        </a>--}}
     </div>
 @endif
 

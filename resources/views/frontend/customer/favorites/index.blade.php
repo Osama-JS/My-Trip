@@ -235,9 +235,9 @@
                     </div>
 
                     <div class="favorite-body">
-                        <a href="{{ route('trips.show', $trip->id) }}" class="fav-trip-title">
+                        {{--<a href="{{ route('trips.show', $trip->id) }}" class="fav-trip-title">
                             {{ $trip->title }}
-                        </a>
+                        </a>--}}
 
                         <div class="fav-meta">
                             @if($trip->toCountry)
@@ -265,9 +265,9 @@
                                 <span class="p-label">{{ __('Price') }}</span>
                                 <span class="p-value">{{ number_format($trip->price, 0) }} <small style="font-size:0.6em;">{{ __('SAR') }}</small></span>
                             </div>
-                            <a href="{{ route('trips.show', $trip->id) }}" class="btn-view-trip">
+                            {{--<a href="{{ route('trips.show', $trip->id) }}" class="btn-view-trip">
                                 {{ __('View Details') }} <i class="fas fa-chevron-{{ app()->isLocale('ar') ? 'left' : 'right' }} ms-1" style="font-size:0.75rem;"></i>
-                            </a>
+                            </a>--}}
                         </div>
                     </div>
                 </div>
