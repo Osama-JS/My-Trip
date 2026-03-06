@@ -1,0 +1,118 @@
+Cities
+This API returns the city details, which is needed in the geo-location wise and city wise hotel search.
+
+Request
+
+Method	URL
+GET	https://travelnext.works/api/hotel-api-v6/cities?user_id=<user_id>&user_password=<user_password>&ip_address=<p_address>&access=Test
+Sample Response
+
+{
+  "cities": [
+    {
+      "id": 1,
+      "city_name": "Bangalore",
+      "country_name": "India",
+      "latitude": "12.9678",
+      "longitude": "77.5887"
+    },
+    {
+      "id": 2,
+      "city_name": "Dubai",
+      "country_name": "United Arab Emirates",
+      "latitude": "25.270265579224",
+      "longitude": "55.307498931885"
+    },
+    {
+      "id": 3,
+      "city_name": "Chennai",
+      "country_name": "India",
+      "latitude": "13.040538787842",
+      "longitude": "80.233711242676"
+    },
+    {
+      "id": 4,
+      "city_name": "Delhi",
+      "country_name": "India",
+      "latitude": "28.7040592",
+      "longitude": "77.10249019999999"
+    },
+    {
+      "id": 5,
+      "city_name": "London",
+      "country_name": "United Kingdom",
+      "latitude": "51.500999450684",
+      "longitude": "-0.12634299695492"
+    },
+    {
+      "id": 6,
+      "city_name": "Mumbai",
+      "country_name": "India",
+      "latitude": "18.968976974487",
+      "longitude": "72.818969726562"
+    },
+    {
+      "id": 7,
+      "city_name": "Miami beach",
+      "country_name": "United states of america",
+      "latitude": "25.790300369263",
+      "longitude": "-80.130302429199"
+    },
+    {
+      "id": 8,
+      "city_name": "Singapore",
+      "country_name": "Singapore",
+      "latitude": "1.2930599451065",
+      "longitude": "103.85600280762"
+    },
+    {
+      "id": 9,
+      "city_name": "Barcelona",
+      "country_name": "Spain",
+      "latitude": "41.387100219727",
+      "longitude": "2.1700100898743"
+    },
+    {
+      "id": 10,
+      "city_name": "1. zurich old town–city centre",
+      "country_name": "Switzerland",
+      "latitude": "47.373659931838",
+      "longitude": "8.5427136303716"
+    },
+    {
+      "id": 11,
+      "city_name": "Goa",
+      "country_name": "India",
+      "latitude": "15.2993",
+      "longitude": "74.1240"
+    },
+    {
+      "id": 12,
+      "city_name": "Gran Canaria",
+      "country_name": "Spain",
+      "latitude": "27.9202202",
+      "longitude": "-15.547437299999999"
+    },
+    {
+      "id": 13,
+      "city_name": "Berlin",
+      "country_name": "Germany",
+      "latitude": "52.520431518555",
+      "longitude": "13.409406661987"
+    },
+    {
+      "id": 14,
+      "city_name": "Rome",
+      "country_name": "Italy",
+      "latitude": "41.89587020874",
+      "longitude": "12.482617378235"
+    },
+    {
+      "id": 15,
+      "city_name": "Hamburg",
+      "country_name": "Germany",
+      "latitude": "53.54999923706",
+      "longitude": "10"
+    }
+  ]
+}

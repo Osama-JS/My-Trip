@@ -1,0 +1,117 @@
+Hotel Availability Search
+Hotel Search Results API allows you to retrieve hotel search results based on the search request fields that were provided in the Hotel Search API call.
+
+This API returns the hotels that are available in the given location for the given guest count (occupants) and the duration of stay (check-in and check-out dates). Every result set that the Hotel Search Results API returns has a unique token. This token enables you to retrieve any previously missed or timed-out search results based on the token provided. To get progressive results, in the token parameter of the next Hotel Search Results call, use the value of the nextToken field from the appropriate Hotel Search Results API’s response.
+
+Hotel Search Request
+
+Method	URL
+POST	https://travelnext.works/api/hotel-api-v6/hotel_search
+Hotel Search Elements
+
+Element	Format	Description	Required
+user_id	String	It is used to specify the user name	REQUIRED
+user_password	String	It is used to specify the password	REQUIRED
+access	String	It is used to access the website	REQUIRED
+ip_address	String	It is used to get ip_address of the system from which website is accessed	REQUIRED
+maxResult	Integer	Send how many results required in search response	REQUIRED
+latitude	Float	Latitude of the location	REQUIRED for geo-location wise search.
+longitude	Float	Longitude of the location	REQUIRED for geo-location wise search
+hotelCodes	Array	array of hotel code which you can get it from static content API, maximum limit 1000 hotels codes	REQUIRED for Hotelcode wise search
+city_name	string	name of city which you can get it from city loaction API.	REQUIRED for City wise search
+country_name	string	name of city which you can get it from city loaction API.	REQUIRED for City wise search
+radius	integer	Radius from center in KM	REQUIRED
+occupancy	Array	Array of rooms with pax details	REQUIRED
+room_no	Integer	Specify room number	REQUIRED
+adult	integer	Array of adult details for in the particular room	REQUIRED
+child	integer	Array of child details for in the particular room	REQUIRED
+child_age	Array	Array of child age details for in the particular child	REQUIRED
+checkin	Date	Date of check in (format (YYYY-MM-DD))	REQUIRED
+checkout	Date	Date of check out (format (YYYY-MM-DD))	REQUIRED
+requiredCurrency	String	3-character ISO code that indicates the currency in which the rate is returned.	REQUIRED
+requiredLanguage	String	The language code for the language in which you want the descriptions to be returned. The Language code can get it from Language API	OPTIONAL
+nationality	String	To specify array of Alpha-2 Country Codes of nationality of lead guest. This may result in nationality wise concessions.	REQUIRED
+Sample Hotel Search Request
+
+1 room, 2 adults and 0 child
+{
+  "user_id": "<user_id>",
+  "user_password": "<user_password>",
+  "access": "Test",
+  "ip_address": "<ip_address>",
+  "requiredCurrency": "INR",
+  "nationality": "IN",
+  "checkin": "2020-04-17",
+  "checkout": "2020-04-18",
+  "latitude": 25.270265579224,
+  "longitude": 55.307498931885,
+  "hotelCodes": [
+    "22014",
+    "24312",
+    "24313",
+    "24315",
+    "24369",
+    "24370",
+    "100272"
+  ],
+  "city_name": "London",
+  "country_name": "United Kingdom",
+  "radius": 20,
+  "maxResult": 20,
+  "occupancy": [
+    {
+      "room_no": 1,
+      "adult": 2,
+      "child": 0,
+      "child_age": [
+        0
+      ]
+    }
+  ]
+}
+
+2 rooms, 1 room for 2 adults and 2 room for 1 adults and 2 children (5 and 7)
+{
+  "user_id": "<user_id>",
+  "user_password": "<user_password>",
+  "access": "Test",
+  "ip_address": "<ip_address>",
+  "requiredCurrency": "INR",
+  "nationality": "IN",
+  "checkin": "2020-04-17",
+  "checkout": "2020-04-18",
+  "latitude": 25.270265579224,
+  "longitude": 55.307498931885,
+  "hotelCodes": [
+    "22014",
+    "24312",
+    "24313",
+    "24315",
+    "24369",
+    "24370",
+    "100272"
+  ],
+  "city_name": "London",
+  "country_name": "United Kingdom",
+  "radius": 20,
+  "maxResult": 20,
+  "occupancy": [
+    {
+      "room_no": 1,
+      "adult": 2,
+      "child": 0,
+      "child_age": [
+        0
+      ]
+    },
+    {
+      "room_no": 2,
+      "adult": 1,
+      "child": 2,
+      "child_age": [
+        5,
+        7
+      ]
+    }
+  ]
+}

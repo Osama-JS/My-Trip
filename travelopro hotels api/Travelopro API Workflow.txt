@@ -1,0 +1,78 @@
+Travelopro API Workflow
+1. Introduction
+1.1 Purpose
+The aim of this application is to develop a systematic analysis of the procedure involved in the reservation of hotel.This should be used in an effective way so that various advantages are obtained from the website.The introduction may be divided into various steps based on the developer and also depending upon the operation to be performed using the particular software.The “HOTEL BOOKING SYSTEM” under takes as a project based on relevant technologies.The main aim of this project is to develop the software for the process of reserving Hotel should lead to increased efficiency and reduced drawbacks which were present in the previous procedure of vehicle reservation.The website should be error controlled both logically as well as insyntactic manner.The features deal with the different operations involved in the process of HOTEL BOOKING.
+
+1.2 Scope
+This project designs and implements HBS to fulfill all the vision statements. Supported by a well-designed database,all available hotels booking information is integrated together and can be accessed easily through a single point.HBS provided an Agent interface used for administration purposes.
+
+2. System Overview
+2.1 Requirement Analysis
+Requirements are prone to issues of the ambiguity,incompleteness and inconsistency Techniques such as rigorous inspection have been shown to help deal with these issues. Ambiguity, incompleteness and inconsistencies that can be resolved in the requirement phase typically cost orders of the magnitude less to correct than when these same issues are found in later stages of product development.The purpose of developing the specified software is to describe the analysis involved in the reservation of hotel.
+
+2.2 Functional Analysis
+Input: Collecting the information of the person who is going to travel.
+
+Output: The booking of hotel on the particular date specified by the traveler.
+
+2.3 Process
+Enter the details in the Search Engine.
+Check for hotel available. (Hotel Availability Search)
+Request full details of hotel ,rooms and prices.
+Request Rules and rate description (Hotel Details)
+Reservation form:Passenger details. (Pre Booking Page)
+HotelBooking: Request to store an itinerary. Hotel booking includes the Hotel rate detail information and hotel property in the reservation. Hotel booking creates a reservation based on results captured from the Hotel Details response and Hotel Rule Response.
+2.4 Flow of the system
+Search Engine
+Search Results
+Hotel Details, Room Options
+Hotel Rules
+Passenger Details
+Hotel Booking
+Confirm & Voucher
+MODULE 1: SEARCH ENGINE
+This module is used to search the hotel by giving the location, check in and check out dates and with number of adult and child with the age’s information.
+
+Field Name	Input Element	Required
+Going to (City)	Drop down	Yes
+Check In	Drop Down	Yes
+Check Out	Drop Down	Yes
+No of Room	Drop Down	Yes
+Adult	Drop Down	Yes
+Children	Drop Down	Yes
+Residency	Drop Down	Yes
+Nationality	Drop Down	Yes
+Search Hotels	Tab	Yes
+MODULE 2: SEARCH RESULTS
+The available hotel will display here with all the details
+
+MODULE 3: HOTEL DETAILS, ROOM OPTIONS
+Hotel Details provides the vendors details for an itinerary specified in the request, hotel property, Rooms , Rates and different type or charges that they applied, Payment method they are using on the rooms that make up the itinerary.
+
+MODULE 4: HOTEL RULES
+Hotel Rules provides room rates , Cancelation details , Inclusions and Amenities and different type or charges that they applied, Payment method they are using on the rooms that make up the itinerary.
+
+MODULE 5: PASSENGER DETAILS
+Field Name	Input Element	Required
+Adults(As per searched)	Text Box	Yes
+Childs(As per searched)	Text Box	Yes
+Address	textarea	Yes
+Email	Text Box	Yes
+Alternate Email	Text Box	No
+Mobile Number	Text Box	Yes
+City	Text Box	Yes
+State	Text Box	Yes
+Country	Text Box	Yes
+Phone Number (Country Code, Area Code, Phone No.)	Text Box	No
+Zip Code	Text Box	Yes
+Terms and Conditions	Check Box	Yes
+MODULE 6: HOTEL BOOKING
+Hotel booking is a request to store hotel’s room itinerary. Hotel booking can include pricing information, traveler information, payment information and hotel information in the reservation.Hotel Booking creates a reservation based on the results captured from the Hotel details response and Hotel rule response .
+
+MODULE 7: CONFIRM & VOUCHER
+Confirmation and getting the voucher with hotel reservation reference number.
+
+3. System Architecture
+
+4. Cancellation
+The Cancel API allows you to cancel an existing booking. If you have a multi-room booking, you can cancel each room separately or cancel the entire booking altogether. Additionally, you can retrieve the cancellation status and the cancellation details from the supplier.

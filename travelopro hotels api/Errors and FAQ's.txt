@@ -1,0 +1,38 @@
+Errors and FAQ's
+Error List
+{"status":{"errors":[{"errorMessage":"No Access"}]}}
+{"status":{"errors":[{"errorMessage":"Invalid access"}]}}
+{"status":{"errors":[{"errorMessage":"Check out date must be atleast 1 day after checkin."}]}}
+{"errorMessage":"Adult count required"},{"errorMessage":"Child count required"},{"errorMessage":"Child age at room 3 is required"},
+{"status":{"errors":[{"errorMessage":"Room Count must be integer a value"}]}}
+{"status":{"errors":[{"errorMessage":"City name required"}]}}
+{"sessionId":"MTU2NTQxMTU5ODg2MA==","hotelId":"226549","isRateAvailable":false,"errors":{"message":"No Rooms Found"}}
+{"status":{"errors":[{"errorMessage":"Session Expired"}]}}
+{"status":"Failed","supplierConfirmationNum":null,"reference":null,"roomBookingDetails":[],"errors":{"errorMessage":"In-Sufficient Balance."},"warnings":[],"supplierid":"trx108"}
+{"status":"Failed","cancelled":"FALSE"}
+{"status":{"sessionId":"MTU2NTU4MzkwNjY3Mg==","moreResults":"false","succeededSuppliers":[],"faultedSuppliers":[],"warnings":[]},"itineraries":[]}
+Warnings
+Wrong Field –A field or fields in the request are not correct.
+
+Internal Error – Unexpected error from our server
+
+FAQ's
+1. Do you provide hotel filters api?
+
+Yes, from the API response all details available for hotel Filters.
+
+2. Why there is different endpoint to get room options?
+
+Only one end-point URL exists for Room options.
+
+3. Does your hotel api provide static content related to hotel?
+
+Yes, able to download all contents for the hotel
+
+4. How much session expiration time?
+
+20 Minutes
+
+5. Hotel name Search available?
+
+Yes

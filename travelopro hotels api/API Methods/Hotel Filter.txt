@@ -1,0 +1,142 @@
+Hotel Filter
+Hotel filter API allows you to retrieve hotel search results based on the filter request fields that based on hotel search response.
+
+This API returns the hotels that are available in the given criteria of filtration parameters. To get progressive results for particular session, use the value of the sessionId field from the appropriate Hotel Search Results API’s response.
+
+Hotel Filter: Request
+
+Method	URL
+POST	https://travelnext.works/api/hotel-api-v6/filterResults
+Hotel Filter Elements
+
+Element	Format	Description	Required
+sessionId	String	Use the sessionId that was returned in the Hotel search result API's response.	REQUIRED
+maxResult	Integer	Send how many results required in filter search response.	REQUIRED
+filters	Array	Array of all filteration parameters.	REQUIRED
+price	Array	Array of minmum and maximum price range.	OPTIONAL
+rating	String	Pass the rating values are ranging from 0 to 5. Ex. "0,1,2,3,4,5".	OPTIONAL
+tripadvisorRating	String	Pass the rating values are ranging from 0 to 5. Ex. "0,1,1.5,2,2.5,3,3.5,4,4.5,5".	OPTIONAL
+hotelName	String	Use hotel initial name to search from the response.	OPTIONAL
+faretype	String	Filter results by Refundable/ Non-Refundable.	OPTIONAL
+propertyType	String	Filter by property type which comes from hotel search response. Ex. "HOTELS, RESORTS,APARTMENTS".	OPTIONAL
+facility	String	Filter by facility which comes from hotel search response. Ex. "WLAN access,Room Service, Laundry Service".	OPTIONAL
+sorting	String	Sort results by rating, price, distance from center, alphabetic.
+Ex. "price-low-high,"price-high-low","rating-low-high","rating-high-low","alpha-A-Z","alpha-Z-A","distance-low-high","distance-high-low"	OPTIONAL
+locality	String	Filter by locality/region which comes from hotel search response.	OPTIONAL
+Sample Hotel Filter Request
+
+{
+  "sessionId":"TVRVNE1qSTJNRFkzTUY4ek9EQmZNVEkxTGprNUxqSTBNUzR5TkE9PV8w",
+  "maxResult":20,
+  "filters":{
+    "price":{
+      "min": 100,
+      "max": 500000
+    },
+    "rating":"1,2,3,4,5",
+    "tripadvisorRating":"1,1.5,2,2.5,3,3.5,4.5,5",
+    "hotelName":"Hotel",
+    "faretype": "Non-Refundable",
+    "propertyType":"HOTELS",
+    "facility":"Internet access,Air conditioning",
+    "sorting": "price-low-high",
+    "locality":"region_name1,region_name2"
+  }
+}
+
+Sample Hotel Filter Response
+
+{
+  "status": {
+    "sessionId": "TVRVNE1qSTJNVFE1TWw4ME9ESmZNVEkxTGprNUxqSTBNUzR5TkE9PV8w",
+    "moreResults": true,
+    "nextToken": "MjE=",
+    "filterKey": "MCwxLDIsMyw0LDVfMCwxLDEuNSwyLDIuNSwzLDMuNSw0LDQuNSw1XzEwMF81MDAwMDBfYWxsX3ByaWNlLWxvdy1oaWdoXzIwX19fXw=="
+  },
+  "itineraries": [
+    {
+      "hotelId": "882885",
+      "twxHotelId": "456392",
+      "productId": "trx101",
+      "tokenId": "TdjpJ7ikRnHSyZNth3ob",
+      "hotelName": "DELMON PALACE",
+      "city": "Dubai",
+      "locality": "Riqqah al Butayn",
+      "distanceValue": 1.8400000000000000799360577730112709105014801025390625,
+      "distanceUnit": "KM",
+      "country": "United Arab Emirates",
+      "address": "Al Rigga Road, Al Rigga RoadDeiraDubai, Dubai, PO21969, United Arab Emirates, United Arab Emirates",
+      "latitude": "25.2609897",
+      "longitude": "55.3226453",
+      "hotelRating": 4,
+      "total": 1834.23000000000001818989403545856475830078125,
+      "currency": "INR",
+      "fareType": "Non-Refundable",
+      "propertyType": "HOTELS",
+      "postalCode": "0",
+      "phone": "971-422-22333",
+      "email": "reservation@delmonpalace.ae",
+      "thumbNailUrl": "https://i.travelapi.com/hotels/15000000/14590000/14581300/14581244/0fb39be1_t.jpg",
+      "facilities": [
+        "24-hour reception",
+        "Lift",
+        "Cafe",
+        "Shops",
+        "Bar",
+        "Nightclub",
+        "Theatre",
+        "Casino",
+        "Games room",
+        "Restaurant",
+        "Conference Room",
+        "Internet access",
+        "WLAN access",
+        "Laundry Service",
+        "Car Park",
+        "TV Room"
+      ],
+      "tripAdvisorRating": "2.0",
+      "tripAdvisorReview": "54"
+    },
+    {
+      "hotelId": "651665",
+      "twxHotelId": "120436",
+      "productId": "trx101",
+      "tokenId": "vkPeJioqgX4sMnUtYhIu",
+      "hotelName": "Fortune Pearl Hotel Deira",
+      "city": "Dubai",
+      "locality": "Al Murar al Jadid",
+      "distanceValue": 1.12000000000000010658141036401502788066864013671875,
+      "distanceUnit": "KM",
+      "country": "United Arab Emirates",
+      "address": "Omar Bin Khattab Road, After Naif Signal and behind Al BarahaP.O. Box 98661Deira, Dubai, 95661, Unit",
+      "latitude": "25.278530999999997",
+      "longitude": "55.313779",
+      "hotelRating": 3,
+      "total": 2095.11000000000012732925824820995330810546875,
+      "currency": "INR",
+      "fareType": "Non-Refundable",
+      "propertyType": "HOTELS",
+      "postalCode": "95661",
+      "phone": "+97142725888",
+      "email": "crs@fortune-hotels.net",
+      "thumbNailUrl": "https://assets.cosmos-data.com/thumbnails/large/77/32b585909b133cb041cf37dd66ba73a7/488809.jpg",
+      "facilities": [
+        "Lift",
+        "Cafe",
+        "Bar",
+        "Nightclub",
+        "Restaurant",
+        "Conference Room",
+        "Internet access",
+        "WLAN access",
+        "Room Service",
+        "Laundry Service",
+        "Medical Assistance",
+        "Car Park"
+      ],
+      "tripAdvisorRating": "3.0",
+      "tripAdvisorReview": "83"
+    }
+  ]
+}

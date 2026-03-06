@@ -1,0 +1,26 @@
+Languages
+This API returns the language details, which is needed in the geo-location wise and city wise hotel search.
+
+Request
+
+Method	URL
+GET	https://travelnext.works/api/hotel-api-v6/languages?user_id=<user_id>&user_password=<user_password>&ip_address=<p_address>&access=Test
+Sample Response
+
+{
+    "total": 3,
+    "languages": [
+        {
+            "language_name": "Arabic",
+            "language_code": "ARA"
+        },
+        {
+            "language_name": "Bulgarian",
+            "language_code": "BUL"
+        },
+        {
+            "language_name": "Catalan",
+            "language_code": "CAT"
+        }
+    ]
+}

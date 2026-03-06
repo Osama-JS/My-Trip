@@ -1,0 +1,99 @@
+Hotel Static Content
+This API returns the static contents of Hotels in the given city.
+
+Request
+
+Method	URL
+GET	https://travelnext.works/api/hotel-api-v6/static_content?from=1&to=100&user_id=<user_id>&user_password=<user_password>&ip_address=<ip_address>&access=Test&city_name=<city_name>&country_name=<country_name>
+Search Elements
+
+Element	Format	Description	Required
+user_id	String	It is used to specify the user name	REQUIRED
+user_password	String	It is used to specify the password	REQUIRED
+access	String	It is used to access the website	REQUIRED
+ip_address	String	It is used to get ip_address of the system from which website is accessed	REQUIRED
+from	Integer	It is used to specify the starting range of list	REQUIRED
+to	Integer	It is used to specify the ending range of list	REQUIRED
+city_name	String	It is used to specify the city name	OPTIONAL
+country_name	String	It is used to specify the country name	OPTIONAL
+Sample Response
+
+{
+  "from": "1",
+  "to": "100",
+  "total": 1165057,
+  "hotels": [
+    {
+      "hotelId": "896",
+      "name": "Ramanashree Brunton",
+      "city": "Bangalore",
+      "state": "Karnataka",
+      "country": "India",
+      "address": "No. 2/1, Brunton Road, Off MG Road, Opp Old Passport Office, Bengaluru, Karnataka 560001, India",
+      "latitude": "12.9723081",
+      "longitude": "77.61499599999999",
+      "hotelType": "Hotels",
+      "rating": "3.0",
+      "email": "brunton@ramanashree.com",
+      "phone": "+91 80-30519000",
+      "description": "This hotel is located just 5 km from MG Road (Mahatma Gandhi Road) and is conveniently close to the railway station and the bus stop. Guests will find a number of places of interest nearby, including Vidhana Soudha (2 km), the Botanical Gardens (4 km), Bangalore Palace (5 km) and the Iskcon Temple (12 km). The hotel lies only 7 km from Bangalore Airport.",
+      "images": [
+        "https://assets.cosmos-data.com/thumbnails/large/14/05a12b9b63f26eba085d8095062c1fb9/1132823.jpg",
+        "https://assets.cosmos-data.com/thumbnails/large/14/de871f1b065a11fea5f543ef6da63763/1132823.jpg",
+        "https://assets.cosmos-data.com/thumbnails/large/14/9420948a0e0c59d2fd3e5f7432634208/1132823.jpg",
+        "https://assets.cosmos-data.com/thumbnails/large/14/fc21a2bbfca7eabd54858907c05cc7ad/1132823.jpg",
+        "https://assets.cosmos-data.com/thumbnails/large/14/8aa018cb67ed0e3c5318b4ec879ab622/1132823.jpg",
+        "https://assets.cosmos-data.com/thumbnails/large/14/27fe626628e3bdec499320f5ce4b0659/1132823.jpg",
+        "https://assets.cosmos-data.com/thumbnails/large/77/b53e01ff4cabd1a1e38e797532cbead9/62872.jpg",
+        "https://assets.cosmos-data.com/thumbnails/large/14/1dd9d252620ec693022e5944990e5158/1132823.jpg",
+        "https://assets.cosmos-data.com/thumbnails/large/1/489ffa5fe2346d7034d9b7d5a7f60593/260963.jpg",
+        "https://assets.cosmos-data.com/thumbnails/large/1/c9e78ca7552c71776c9a85738fb5f030/260963.jpg",
+        "https://assets.cosmos-data.com/thumbnails/large/1/8b8ee311680c52de78221ff95210ece5/260963.jpg",
+        "https://assets.cosmos-data.com/thumbnails/large/1/7d40bc7fc76886a5b19b600468d76c85/260963.jpg"
+      ]
+    },
+    {
+      "hotelId": "897",
+      "name": "The Elite Hotel",
+      "city": "Bangalore",
+      "state": "Karnataka",
+      "country": "India",
+      "address": "Plot No. 14 9th Main, 13th Cross, Sector 6, HSR Layout, Bengaluru, Karnataka 560034, India",
+      "latitude": "12.915759",
+      "longitude": "77.634738",
+      "hotelType": "Hotels",
+      "rating": "3",
+      "email": null,
+      "phone": null,
+      "description": "The Elite, as rightly named, is a top-notch and most sought for hotel in Kormangala, completed with Three Type of Room along with Separate Floor for Suite Rooms,A Conference hall with Attached Pre Function Area,24-hours Room Service. The Elite is Combined with Comfort and luxury and together create different ambiance altogether.",
+      "images": [
+        ""
+      ]
+    },
+    {
+      "hotelId": "898",
+      "name": "Museum Inn",
+      "city": "Bangalore",
+      "state": "Karnataka",
+      "country": "India",
+      "address": "Museum Rd, Shanthala Nagar, Ashok Nagar, Bengaluru, Karnataka 560001, India",
+      "latitude": "12.9739509",
+      "longitude": "77.602791",
+      "hotelType": "Hotels",
+      "rating": "3",
+      "email": "museuminn@bjnhotels.com",
+      "phone": "+918041113335",
+      "description": "The hotel is located on Museum road, approximately 40 km from the airport, 2 km from Bangalore Cant railway station and around 5 km from the bus station.",
+      "images": [
+        "https://s3.amazonaws.com/hotelgallary/320/101265/1025781.jpg",
+        "https://s3.amazonaws.com/hotelgallary/320/101265/1025784.jpg",
+        "https://s3.amazonaws.com/hotelgallary/320/101265/1025787.jpg",
+        "https://s3.amazonaws.com/hotelgallary/320/101265/1025790.jpg",
+        "https://assets.cosmos-data.com/thumbnails/large/1/8508c9dffa818a2dc3c869bb6dc02f67/328056.jpg",
+        "https://assets.cosmos-data.com/thumbnails/large/16/393f8f390fe0f58cfa0ecc6be6618490/109476.jpg",
+        "https://assets.cosmos-data.com/thumbnails/large/1/aa3722dd5220c0b4d695808315cdbe6a/328056.jpg",
+        "https://assets.cosmos-data.com/thumbnails/large/1/bf99c69d4f49d339edf59bf4fe0b5e83/328056.jpg"
+      ]
+    }
+  ]
+}

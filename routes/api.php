@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AppSettingController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\FlightController;
+use App\Http\Controllers\Api\HotelController;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,6 +26,12 @@ Route::post('/flights/search', [FlightController::class, 'search']);
 Route::get('/flights/airports', [FlightController::class, 'getAirports']);
 Route::get('/flights/airlines', [FlightController::class, 'getAirlines']);
 Route::post('/flights/validate-fare', [FlightController::class, 'validateFare']);
+
+// Hotel Routes
+Route::post('/hotels/search', [HotelController::class, 'search']);
+Route::post('/hotels/room-rates', [HotelController::class, 'roomRates']);
+Route::post('/hotels/check-rates', [HotelController::class, 'checkRates']);
+
 Route::get('/payment/methods', [PaymentController::class, 'methods']);
 
 // Protected Routes
@@ -33,6 +40,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/flights/book', [FlightController::class, 'book']);
     Route::post('/flights/order-ticket', [FlightController::class, 'orderTicket']);
     Route::post('/flights/trip-details', [FlightController::class, 'getTripDetails']);
+
+    // Hotel Booking Routes (Protected)
+    Route::post('/hotels/book', [HotelController::class, 'book']);
+    Route::post('/hotels/cancel', [HotelController::class, 'cancel']);
 
     Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
     Route::post('/resend-otp', [AuthController::class, 'resendOtp']);

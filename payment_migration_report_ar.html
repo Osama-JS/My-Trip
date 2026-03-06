@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دليل نقل خدمات الدفع الإلكتروني - My-Trip</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --secondary: #10b981;
+            --dark: #0f172a;
+            --gray: #64748b;
+            --light: #f8fafc;
+            --white: #ffffff;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: var(--light);
+            color: var(--dark);
+            margin: 0;
+            padding: 0;
+            line-height: 1.8;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--dark) 0%, #1e1b4b 100%);
+            color: var(--white);
+            padding: 60px 40px;
+            border-radius: 20px;
+            text-align: center;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 2.2rem;
+        }
+
+        .subtitle {
+            opacity: 0.8;
+            font-weight: 300;
+            margin-top: 10px;
+        }
+
+        .card {
+            background: var(--white);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+
+        h2 {
+            color: var(--primary);
+            border-right: 4px solid var(--primary);
+            padding-right: 15px;
+            margin-top: 0;
+            font-size: 1.5rem;
+        }
+
+        .file-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .file-list li {
+            background: #f1f5f9;
+            margin-bottom: 8px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            direction: ltr;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .file-list li::after {
+            content: "📄";
+        }
+
+        .step-num {
+            background: var(--primary);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            margin-left: 10px;
+            font-weight: bold;
+        }
+
+        code {
+            background: #ffe4e6;
+            color: #be123c;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            direction: ltr;
+            text-align: left;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-right: 5px solid;
+        }
+
+        .alert-info {
+            background: #e0f2fe;
+            color: #0369a1;
+            border-color: #0369a1;
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px;
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <header>
+            <h1>دليل نقل تقنية الدفع لمشروع البكجات السياحية</h1>
+            <p class="subtitle">كيفية الاستفادة من معمارية الدفع الحالية ودمجها في نظامك الجديد</p>
+        </header>
+
+        <div class="card">
+            <h2>نظرة عامة على المعمارية</h2>
+            <p>نظام الدفع في مشروع <strong>My-Trip</strong> يعتمد على مبدأ <strong>Services Pattern</strong>، وهو أفضل
+                أسلوب برمجي في Laravel لضمان سهولة النقل. حيث يتم عزل منطق الربط مع البوابات (Tabby, Tamara, HyperPay)
+                في فئات مستقلة تماماً عن بقية كود المشروع.</p>
+        </div>
+
+        <div class="card">
+            <h2>أولاً: الملفات التي يجب نسخها</h2>
+            <p>قم بنسخ الملفات التالية إلى مشروعك الجديد مع الحفاظ على نفس المسار:</p>
+
+            <h3>1. مجمعات الخدمات (Services)</h3>
+            <ul class="file-list">
+                <li>app/Services/HyperPayService.php</li>
+                <li>app/Services/TabbyPaymentService.php</li>
+                <li>app/Services/TamaraPaymentService.php</li>
+            </ul>
+
+            <h3>2. المتحكمات والسمات (Controllers & Traits)</h3>
+            <ul class="file-list">
+                <li>app/Http/Controllers/Api/PaymentController.php</li>
+                <li>app/Traits/ApiResponseTrait.php</li>
+            </ul>
+
+            <h3>3. ملفات الإعدادات (Config)</h3>
+            <ul class="file-list">
+                <li>config/hyperpay.php</li>
+                <li>config/services.php (انسخ أقسام Tabby و Tamara فقط)</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>ثانياً: خطوات الدمج في المشروع الجديد</h2>
+
+            <h3><span class="step-num">1</span> ضبط الـ Routes</h3>
+            <p>في ملف <code>routes/api.php</code> بمشروعك الجديد، أضف السطور التالية:</p>
+            <pre>
+Route::get('/payment/methods', [PaymentController::class, 'methods']);
+Route::get('/payment/callback', [PaymentController::class, 'handleCallback'])->name('payment.callback');
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/payment/initiate', [PaymentController::class, 'initiate']);
+    Route::post('/payment/verify', [PaymentController::class, 'verify']);
+});</pre>
+
+            <h3><span class="step-num">2</span> إضافة المتغيرات لملف <code>.env</code></h3>
+            <p>تأكد من نقل مفاتيح الربط الخاصة بكل بوابة:</p>
+            <pre>
+# HyperPay
+HYPERPAY_BASE_URL=https://test.oppwa.com/v1/
+HYPERPAY_ACCESS_TOKEN=...
+HYPERPAY_ENTITY_ID_MADA=...
+HYPERPAY_ENTITY_ID_VISA_MASTER=...
+
+# Tabby
+TABBY_PUBLIC_KEY=...
+TABBY_SECRET_KEY=...
+TABBY_MERCHANT_CODE=...
+
+# Tamara
+TAMARA_API_TOKEN=...
+TAMARA_API_URL=https://api.tamara.co</pre>
+        </div>
+
+        <div class="card">
+            <h2>ثالثاً: التعديل لصالح مشروع "البكجات السياحية"</h2>
+            <p>بما أن مشروعك الجديد يبيع <strong>بكجات سياحية</strong> بدلاً من تذاكر الطيران، ستحتاج لإجراء تعديلات
+                بسيطة في ملف <code>PaymentController.php</code>:</p>
+
+            <div class="alert alert-info">
+                <strong>ملاحظة هامة:</strong> في دالة <code>verify</code>، بدلاً من تحديث جدول الرحلات
+                <code>FlightBooking</code>، ستقوم بتحديث حالة حجز "البكج" في جدولك الجديد (مثلاً
+                <code>PackageBooking</code>).
+            </div>
+
+            <p>ابحث عن الكود التالي في دالة <code>markBookingAsPaid</code> وقم بتغييره:</p>
+            <pre>
+protected function markBookingAsPaid($bookingRef)
+{
+    // بدلاً من البحث في الحجوزات العامة، ابحث في حجوزات البكجات
+    $booking = \App\Models\PackageBooking::where('booking_reference', $bookingRef)->first();
+    if ($booking) {
+        $booking->update(['status' => 'paid']);
+        // هنا يمكنك إضافة منطق إرسال فوتشر البكج للعميل
+    }
+}</pre>
+        </div>
+
+        <div class="card">
+            <h2>رابعاً: نصائح تقنية للنجاح</h2>
+            <ul>
+                <li><strong>الـ Deep Links:</strong> بما أنك تستخدم صفحة Landing Page (`handleCallback`) التي أنشأناها،
+                    فإن تطبيقك الجديد سيقرأ الرابط النهائي فقط لإغلاق الـ WebView.</li>
+                <li><strong>بيانات العميل:</strong> تمارا وتابي يطلبان بيانات العميل (الاسم، البريد، الجوال) بشكل
+                    إجباري، قمنا برمجياً بجعل المشروع يرسلها تلقائياً، تأكد أن موديلات حجز البكجات لديك تحتوي على هذه
+                    البيانات.</li>
+            </ul>
+        </div>
+
+        <footer>
+            <p>تقرير تقني - استراتيجية نقل أنظمة الدفع &copy; 2026</p>
+        </footer>
+    </div>
+
+</body>
+
+</html>

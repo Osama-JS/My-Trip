@@ -1,0 +1,138 @@
+Hotel Booking Request
+The Book API allows you to create a hotel reservation for one or more priced rooms, for the number of guests specified in each room, through an API.
+
+Before calling the Book API, you must call the Get Rate Rules API to ensure that you have received appropriately priced rooms from the API or to obtain the information that you need to call the Book API.
+
+The Book API allows you to retrieve the booking status and the booking details from the API.
+
+Hotel Booking Request
+
+Method	URL
+POST	https://travelnext.works/api/hotel-api-v6/hotel_book
+Hotel Booking Elements
+
+Element	Format	Description	Required
+sessionId	String	Indicates the sessionId for which the search results were requested. You must use this sessionId to make the next API request.	REQUIRED
+productId	String	Unique ID of the product through whom you want to book the hotel. You can obtain the product ID from the productId field in the Room Rates Results API's response.	REQUIRED
+tokenId	String	Use the TokenId that was returned in the Hotel Search Results API's response.response.	REQUIRED
+rateBasisId	String	Unique identifier provided by the supplier to identify the room for booking. Which is coming from check rate rules API.	REQUIRED
+clientRef	String	Client side generated booking ref number.	REQUIRED
+customerEmail	String	Email address of the customer.	REQUIRED
+customerPhone	String	Mobile number of the customer.	REQUIRED
+bookingNote	String	A booking number or reference code.	REQUIRED
+Hotel Booking Elements
+
+Element	Format	Description	Required
+room_no	Integer	Specifies room number.	REQUIRED
+adult	Array	The Array of adult details for particular room.	REQUIRED
+title	Array	Array of adult titles.	REQUIRED
+firstName	Array	Array of adult first name	REQUIRED
+lastName	Array	Array of adult last name.	REQUIRED
+child	Array	The Array of child details for particular room.
+title	Array	The title of the child guest.	REQUIRED
+firstName	Array	The first names of the child guest.	REQUIRED
+lastName	Array	The last names of the child guest.	REQUIRED
+Sample Booking Request
+
+1 room , 1st room for 2 adults
+{
+  "sessionId":"TVRVNE1qSTJOelEzTVY4ME5UZGZNVEkxTGprNUxqSTBNUzR5TkE9PV8w",
+  "productId":"trx101",
+  "tokenId":"HTB0zd1QyPEeR3oIpmVn",
+  "rateBasisId": "MTU3",
+  "clientRef":"TDB85454",
+  "customerEmail":"test@gmail.com",
+  "customerPhone":"53453454334",
+  "bookingNote":"Remark",
+  "paxDetails":[
+    {
+      "room_no":1,
+      "adult":{
+        "title":["Mr","Mr"],
+        "firstName":["test1","test2"],
+        "lastName":["last1","last2"]
+      }
+    }
+  ]
+}
+
+2 rooms, 1st room for 2 adults and 2nd room for 1 adult 2 child
+{
+  "sessionId":"TVRVNE1qSTJOelEzTVY4ME5UZGZNVEkxTGprNUxqSTBNUzR5TkE9PV8w",
+  "productId":"trx101",
+  "tokenId":"HTB0zd1QyPEeR3oIpmVn",
+  "rateBasisId": "MTU3",
+  "clientRef":"TDB85454",
+  "customerEmail":"test@gmail.com",
+  "customerPhone":"53453454334",
+  "bookingNote":"Remark",
+  "paxDetails":[
+    {
+      "room_no":1,
+      "adult":{
+        "title":["Mr","Mr"],
+        "firstName":["test1","test2"],
+        "lastName":["last1","last2"]
+      }
+    },
+    {
+      "room_no":2,
+      "adult":{
+        "title":["Mr"],
+        "firstName":["test"],
+        "lastName":["last"]
+      },
+      "child":{
+        "title":["Mr","Mr"],
+        "firstName":["test1","last1"],
+        "lastName":["last1","last2"]
+      }
+    }
+  ]
+}
+
+Sample Booking Response
+
+{
+  "status": "CONFIRMED",
+  "supplierConfirmationNum": "HTL-ATE-205850",
+  "referenceNum": 212,
+  "clientRefNum": "TDB85454",
+  "productId": "trx101",
+  "roomBookDetails": {
+    "hotelId": "882885",
+    "checkIn": "2020-04-18",
+    "checkOut": "2020-04-19",
+    "days": 1,
+    "currency": "INR",
+    "NetPrice": "9961.28",
+    "fareType": "Non-Refundable",
+    "cancellationPolicy": "If Cancellation done from 2020-04-16 17:30:01 Cancellation charge would be INR 8558.16|t|If Cancellation done from 2020-04-17 01:30:01 Cancellation charge would be INR 0",
+    "customerEmail": "test@gmail.com",
+    "customerPhone": "53453454334",
+    "rooms": [
+      {
+        "name": "STANDARD ROOM",
+        "description": "STANDARD ROOM",
+        "boardType": "Room Only",
+        "paxDetails": {
+          "name": [
+            "Mr test1 last1",
+            "Mr test1 last2"
+          ]
+        }
+      }
+    ]
+  },
+  "error": ""
+}
+
+Booking Response Elements
+
+Element	Format	Description
+status	String	Indicates booking status.
+supplierConfirmationNum	String	Confirmation number received from the API for the booking. You can obtain this information from the Book API's response.
+referenceNum	String	Reference number received from the API for the booking.
+clientRefNum	String	Specifies client reference number which is passed in booking request.
+productId	String	Unique ID of the product through whom you want to book the hotel. You can obtain the product ID from the productId.
+roomBookDetails	Array	Contain all information including room, hotel and passangers

@@ -1,0 +1,80 @@
+Check Room Rates
+You can use this method to check if the parameter is moreResults is true from the Room Rates Results API’s response. With the Check Room Rates API, you can retrieve the list of rooms for a specific hotel, along with their rates.
+
+Check Room Rates Request
+
+Method	URL
+POST	https://travelnext.works/api/hotel-api-v6/get_rate_rules
+Check Room Rates Elements
+
+Element	Format	Description	Required
+tokenId	String	Use the TokenId that was returned in the Hotel Search Results API's response.	REQUIRED
+productId	String	Use the productId that was returned in the Hotel Search Results API's response.	REQUIRED
+sessionId	String	Use the sessionId that was returned in the Hotel Search Results API's response.	REQUIRED
+rateBasisId	String	Unique room ID that identifies a specific room for which you want to proceed for the booking.	REQUIRED
+Sample Check Room Rates Request – Per Room Rate
+
+{
+  "sessionId": "TVRVNE1Ua3lNVE15TWw4M05UVmZNVEkxTGprNUxqSTBNUzR5TkE9PV84NQ==",
+  "productId": "trx102",
+  "tokenId": "MjAyMDAzMTFfMV8yXzBfMTA0XzFjZWI3OTY5ZmEzYjRlZTJiYWI5ZDQ3OTljYjYyN2FjXzE1ODE5MjEzMjY=",
+  "rateBasisId": "MTE="
+}
+
+Sample Check Room Rates Response – Per Book Rate
+
+{
+  "sessionId": "TVRVNE1qSTJOelEzTVY4ME5UZGZNVEkxTGprNUxqSTBNUzR5TkE9PV8w",
+  "hotelId": "882885",
+  "tokenId": "HTB0zd1QyPEeR3oIpmVn",
+  "roomRates": {
+    "perBookingRates": [
+      {
+        "productId": "trx101",
+        "roomType": "STANDARD ROOM",
+        "description": "STANDARD ROOM",
+        "roomCode": "116574885",
+        "fareType": "",
+        "rateBasisId": "MTU3",
+        "currency": "INR",
+        "netPrice": "9961.28",
+        "boardType": "Room Only",
+        "maxOccupancyPerRoom": "4",
+        "inventoryType": "prepaid",
+        "cancellationPolicy": "If Cancellation done from 2020-04-16 17:30:01 Cancellation charge would be INR 8558.16|t|If Cancellation done from 2020-04-17 01:30:01 Cancellation charge would be INR 0",
+        "roomImages": [],
+        "facilities": [
+          "Wi-Fi",
+          "Room Service",
+          "Telephone",
+          "Attached Bathroom",
+          "Internet Access"
+        ],
+        "remark": "Car park YES (With additional debit notes). Benefits included: Free room upgrade, Parking, Express check-in, Free WiFi."
+      }
+    ]
+  }
+}
+
+Check Room Rates Response Elements
+
+Element	Description
+sessionId	Indicates the sessionId for which the search results were requested. You must use this sessionId to make the next API request.
+tokenId	Use the TokenId that was returned in the Hotel Search Results API's response.
+hotelId	Unique hotel ID that identifies a specific hotel. This is the unique ID that has assigned to the hotel.
+roomType	Name of this room as provided by the supplier.
+description	Description of this room as provided by the supplier.
+roomCode	Unique identifier provided by the supplier to identify the room.
+fareType	Indicates whether the room booking is Refundable/Non-Refundable.
+rateBasisId	Unique identifier provided by the supplier to identify the room.
+perBookingRates	Contains information about the rates applicable for a per booking pricing model from the supplier. This means that the supplier provides the rates based on the booking, comprising different rooms, instead of a per room rate basis.
+productId	Unique ID of the supplier who returned the room rates.
+currency	3-character ISO code that indicates the currency in which the rate is returned by the supplier.
+netPrice	Total cost of the room after considering the baseRate, discount.amount, and taxesAndFees.amount.
+cancellation_policy	Contains the list of applicable cancellation penalties, including information such as the window determining the penalty period and the penalties incurred for the cancellation.
+boardBasis	Indicates the board type of the room.
+inventoryType	Pay at web, Pay at hotel.
+roomImages	Contains the all room related images.
+facilities	Contains the facility which available;
+maxOccupancyPerRoom	Maximum occupany of the room.
+remark	Indicates the remark of the room.

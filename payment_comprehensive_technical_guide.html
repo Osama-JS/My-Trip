@@ -212,9 +212,9 @@
 <body>
 
     <section class="hero">
-        <span class="tag">التوثيق التقني الإصدار 2.0</span>
-        <h1>تكامل بوابات الدفع (HyperPay, Tabby, Tamara)</h1>
-        <p>دليل شامل للمطورين حول معمارية الدفع الموحدة ورحلة المستخدم</p>
+        <span class="tag">التوثيق التقني الإصدار 2.1</span>
+        <h1>تكامل بوابات الدفع (HyperPay, Tabby, Tamara, Apple Pay)</h1>
+        <p>دليل شامل للمطورين حول معمارية الدفع الموحدة ودعم Apple Pay بالكامل</p>
     </section>
 
     <div class="container">
@@ -297,7 +297,8 @@
             <ol>
                 <li>العميل يكمل الدفع في WebView.</li>
                 <li>بوابة الدفع تعيد العميل لرابط السيرفر:
-                    <code>https://your-api.com/api/payment/callback?payment_id=XXX</code>.</li>
+                    <code>https://your-api.com/api/payment/callback?payment_id=XXX</code>.
+                </li>
                 <li>تظهر للعميل صفحة "جاري المعالجة" احترافية داخل الـ WebView.</li>
                 <li><strong>دور التطبيق:</strong> يقوم بمراقبة (Intercept) رابط الـ WebView. عندما يجد أن الرابط يحتوي
                     كـ نص على <code>/payment/callback</code>، يقوم بقراءة الـ <code>payment_id</code> من الـ Query
@@ -306,9 +307,34 @@
             </ol>
         </div>
 
+        <!-- واجهة هايبر باي -->
+        <div class="card">
+            <h2>5. تصميم واجهة هايبر باي (HyperPay UI Options)</h2>
+            <p>لست بحاجة لتصميم واجهة إدخال البطاقة من الصفر في التطبيق، بل يفضل استخدام الحلول الجاهزة التي توفرها
+                هايبر باي لضمان الأمان وامتثال PCI DSS:</p>
+
+            <div class="grid">
+                <div class="feature-box">
+                    <h4>الخيار 1: Ready-to-use UI (SDK)</h4>
+                    <p><strong>الأفضل للتطبيقات:</strong> يوفر SDK هايبر باي (Oppwa) واجهات جاهزة ومؤمنة تماماً. المبرمج
+                        يستدعي الـ SDK ويمرر له الـ <code>checkout_id</code> فقط، والـ SDK يتولى كل شيء.</p>
+                </div>
+                <div class="feature-box">
+                    <h4>الخيار 2: HPP (WebView)</h4>
+                    <p><strong>الأسهل في التنفيذ:</strong> يمكن للمبرمج فتح صفحة دفع مستضافة (Hosted Payment Page) داخل
+                        WebView. هذا الخيار لا يتطلب دمج SDK، ولكنه أقل مرونة في تجربة المستخدم.</p>
+                </div>
+            </div>
+
+            <div class="alert alert-info">
+                <strong>توصية:</strong> يفضل دائماً استخدام الـ <strong>SDK</strong> للبطاقات البنكية لتوفير تجربة
+                Native Native وسلسة للمستخدم (مثل دعم Apple Pay و Google Pay تلقائياً).
+            </div>
+        </div>
+
         <!-- المقارنة التقنية -->
         <div class="card">
-            <h2>5. مقارنة المعالجة التقنية</h2>
+            <h2>6. مقارنة المعالجة التقنية</h2>
             <table>
                 <thead>
                     <tr>
@@ -325,8 +351,8 @@
                     </tr>
                     <tr>
                         <td>طريقة العرض</td>
-                        <td>نموذج بطاقة (In-App)</td>
-                        <td>إعادة توجيه (External/WebView)</td>
+                        <td>SDK جاهز أو WebView</td>
+                        <td>إعادة توجيه لـ WebView</td>
                     </tr>
                     <tr>
                         <td>متطلبات العميل</td>
@@ -344,14 +370,16 @@
 
         <!-- قائمة التحقق -->
         <div class="card">
-            <h2>6. قائمة التحقق للمطور (Checklist)</h2>
+            <h2>7. قائمة التحقق للمطور (Checklist)</h2>
             <ul style="padding-right: 20px;">
-                <li>[ ] استدعاء <code>/methods</code> لبناء خيارات الدفع.</li>
+                <li>[ ] استدعاء <code>/methods</code> لبراء خيارات الدفع ديناميكياً.</li>
                 <li>[ ] التأكد من وجود PNR ناجح قبل طلب الدفع.</li>
-                <li>[ ] إرسال بيانات العميل كاملة عند اختيار تابي/تمارا لتجنب الرفض.</li>
-                <li>[ ] تعريف Deep Link في ملف (AndroidManifest.xml / Info.plist) للتطبيق.</li>
-                <li>[ ] استدعاء <code>/verify</code> فور العودة من بوابة الدفع.</li>
-                <li>[ ] استدعاء <code>/order-ticket</code> فقط بعد أن يكون رد الـ verify بنجاح.</li>
+                <li>[ ] <strong>هايبر باي:</strong> دمج SDK هايبر باي في التطبيق لعرض نماذج الدفع الجاهزة.</li>
+                <li>[ ] <strong>تابي/تمارا:</strong> إرسال بيانات العميل كاملة (العنوان، الهاتف) لتجنب رفض الطلب.</li>
+                <li>[ ] مراقبة الروابط (Intercept) في WebView لالتقاط الـ <code>payment_id</code> عند العودة للسيرفر.
+                </li>
+                <li>[ ] استدعاء <code>/verify</code> فور الحصول على المعرف لتأكيد العملية.</li>
+                <li>[ ] استدعاء <code>/order-ticket</code> فقط بعد نجاح التحقق لإصدار التذكرة.</li>
             </ul>
         </div>
 

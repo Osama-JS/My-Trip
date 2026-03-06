@@ -1,0 +1,42 @@
+Travelopro API Webservices
+Overview
+It is intended to make the Travelopro Search & Booking Engine Platform (TraveloproV6) available to registered clients through a JSON based Application Programming Interface (API) by describing existing data formats, API communication structures, methods and testing procedures.
+
+To achieve this, an API will be provided to allow various types of client systems to integrate with the TraveloproV6 Search & Booking Engine system using defined set of published specific JSON messages by using the JSON Schema standards.
+
+TraveloproV6 Search & Booking Engine’s JSON API system is a REST API framework based communication interface between online systems and Travelopro customers around the world such as OTA’s, tour operators, wholesalers, affiliates etc. to execute functions and tasks such as content delivery, searching, reservation, ticketing and cancellation.
+
+The purpose of this document is to outline the communication between TraveloproV6 and Customer though this API.
+
+Functionality
+The communication part of the system is based on HTTP and secure HTTP requests.
+
+Communication layer consists of JSON based API interaction that provides customer side the functions as follows :
+
+Fetching up-to-date inventory of Travelopro including Airline fares, hotels, properties, facilities, countries, destinations, regions, cars, Transfers & Sightseeing
+Updating own inventory
+Searching for hotel information
+Caching the search results
+Checking availability
+Revalidating Pricing
+Booking
+Ticketing
+Cancellation
+Checking status of a booking
+Getting list of bookings
+To become a TraveloproV6 JSON affiliate, the client needs to be registered as Travelopro agency / affiliate at Travelopro website Travelopro.travel firstly.
+
+Environments
+During API implementation, Travelopro will provide a test environment along with log in credentials, testing URL and static data.
+
+Travelopro will provide support during development stage.
+
+Implementation process consists of :
+
+Static Database Implementation & Database fetching
+Inventory mapping
+Searching / Test scenario applications
+Check Availability / Test scenario applications
+Fare Rules, Cancellation Policy
+Provisioning – Booking – Ticketing Cancelling / Test scenario applications
+Final Tests & Approval

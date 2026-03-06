@@ -1,0 +1,12 @@
+More Hotel Pagination
+You can use this method to check if the parameter is moreResults is true from the Hotel Results API’s response.
+
+More Hotel Results Pagination Request
+
+Method	URL
+GET	https://travelnext.works/api/hotel-api-v6/moreResultsPagination?sessionId=<sessionId> &nextToken=<nextToken
+More Hotel Pagination Elements
+
+Element	Format	Description	Required
+sessionId	String	Use the sessionId that was returned in the Hotel Search Results API's response.	REQUIRED
+nextToken	String	Every result set that the Hotel Search Results API returns has a unique token. This token enables you to retrieve any previously missed or timed-out search results.	REQUIRED

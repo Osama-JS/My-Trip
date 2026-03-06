@@ -1,0 +1,165 @@
+Room Rates
+With the Room Rates API, you can retrieve the list of rooms for a specific hotel, along with their rates.
+
+Room Rates Request
+
+Method	URL
+POST	https://travelnext.works/api/hotel-api-v6/get_room_rates
+Room Rates Elements
+
+Element	Format	Description	Required
+tokenId	String	Use the TokenId that was returned in the Hotel Search Results API's response.	REQUIRED
+productId	String	Use the productId that was returned in the Hotel Search Results API's response.	REQUIRED
+sessionId	String	Use the sessionId that was returned in the Hotel Search Results API's response.	REQUIRED
+hotelId	String	Unique hotel ID that identifies a specific hotel for which you want to obtain the list of room options, along with their room rates. You can obtain the hotel ID from the hotelId field in the Hotel Search Results API's response.	REQUIRED
+Sample Room Rates Request
+
+{
+  "sessionId":"TVRVNE1qSTJOVEExTlY4ek1URmZNVEkxTGprNUxqSTBNUzR5TkE9PV8w",
+  "productId":"trx101",
+  "tokenId":"IP8Z2AeBKGrnVvi6Hdbq",
+  "hotelId":"882885"
+}
+
+Room Rates Response Elements
+
+Element	Description
+sessionId	Indicates the sessionId for which the search results were requested. You must use this sessionId to make the next API request.
+tokenId	Use the TokenId that was returned in the Hotel Search Results API's response.
+hotelId	Unique hotel ID that identifies a specific hotel. This is the unique ID that has assigned to the hotel.
+roomType	Name of this room as provided by the supplier.
+description	Description of this room as provided by the supplier.
+roomCode	Unique identifier provided by the supplier to identify the room.
+fareType	Indicates whether the room booking is Refundable/Non-Refundable.
+rateBasisId	Unique identifier provided by the supplier to identify the room.
+perBookingRates	Contains information about the rates applicable for a per booking pricing model from the supplier. This means that the supplier provides the rates based on the booking, comprising different rooms, instead of a per room rate basis.
+productId	Unique ID of the supplier who returned the room rates.
+currency	3-character ISO code that indicates the currency in which the rate is returned by the supplier.
+netPrice	Total cost of the room after considering the baseRate, discount.amount, and taxesAndFees.amount.
+cancellation_policy	Contains the list of applicable cancellation penalties, including information such as the window determining the penalty period and the penalties incurred for the cancellation.
+boardBasis	Indicates the board type of the room.
+inventoryType	Pay at web, Pay at hotel.
+roomImages	Contains the all room related images.
+facilities	Contains the facility which available.
+maxOccupancyPerRoom	Maximum occupany of the room.
+Sample Room Rates Response
+
+{
+  "sessionId": "TVRVNE1qSTJOVEExTlY4ek1URmZNVEkxTGprNUxqSTBNUzR5TkE9PV8w",
+  "hotelId": "882885",
+  "tokenId": "IP8Z2AeBKGrnVvi6Hdbq",
+  "roomRates": {
+    "perBookingRates": [
+      {
+        "productId": "trx101",
+        "roomType": "STANDARD ROOM",
+        "description": "STANDARD ROOM",
+        "roomCode": "4686615",
+        "fareType": "Non-Refundable",
+        "rateBasisId": "MTA1",
+        "currency": "INR",
+        "netPrice": "1834.3",
+        "boardType": "Room Only",
+        "maxOccupancyPerRoom": "4",
+        "inventoryType": "prepaid",
+        "cancellationPolicy": "Cancellation will not be possible from 2020-02-21 11:50:43|t|If Cancellation done from 2020-04-19 01:30:00 Cancellation charge would be INR 1834.3",
+        "roomImages": [],
+        "facilities": [
+          "Wi-Fi",
+          "Room Service",
+          "Telephone",
+          "Attached Bathroom",
+          "Internet Access"
+        ]
+      },
+      {
+        "productId": "trx101",
+        "roomType": "STANDARD ROOM",
+        "description": "STANDARD ROOM",
+        "roomCode": "4686615",
+        "fareType": "Non-Refundable",
+        "rateBasisId": "MTA2",
+        "currency": "INR",
+        "netPrice": "2055.58",
+        "boardType": "Room Only",
+        "maxOccupancyPerRoom": "4",
+        "inventoryType": "prepaid",
+        "cancellationPolicy": "If Cancellation done between Current date and 2020-04-18 01:29:59 Cancellation charge would be INR 2055.58|t|Cancellation will not be possible from 2020-04-18 01:30:00|t|If Cancellation done from 2020-04-19 01:30:00 Cancellation charge would be INR 2055.58",
+        "roomImages": [],
+        "facilities": [
+          "Wi-Fi",
+          "Room Service",
+          "Telephone",
+          "Attached Bathroom",
+          "Internet Access"
+        ]
+      },
+      {
+        "productId": "trx101",
+        "roomType": "STANDARD ROOM",
+        "description": "STANDARD ROOM",
+        "roomCode": "4686615",
+        "fareType": "Non-Refundable",
+        "rateBasisId": "MTA3",
+        "currency": "INR",
+        "netPrice": "2445.49",
+        "boardType": "Breakfast",
+        "maxOccupancyPerRoom": "4",
+        "inventoryType": "prepaid",
+        "cancellationPolicy": "Cancellation will not be possible from 2020-02-21 11:50:43|t|If Cancellation done from 2020-04-19 01:30:00 Cancellation charge would be INR 2445.49",
+        "roomImages": [],
+        "facilities": [
+          "Wi-Fi",
+          "Room Service",
+          "Telephone",
+          "Attached Bathroom",
+          "Internet Access"
+        ]
+      },
+      {
+        "productId": "trx101",
+        "roomType": "STANDARD ROOM",
+        "description": "STANDARD ROOM",
+        "roomCode": "4686615",
+        "fareType": "Non-Refundable",
+        "rateBasisId": "MTA4",
+        "currency": "INR",
+        "netPrice": "2740.06",
+        "boardType": "Breakfast",
+        "maxOccupancyPerRoom": "4",
+        "inventoryType": "prepaid",
+        "cancellationPolicy": "If Cancellation done between Current date and 2020-04-18 01:29:59 Cancellation charge would be INR 2740.06|t|Cancellation will not be possible from 2020-04-18 01:30:00|t|If Cancellation done from 2020-04-19 01:30:00 Cancellation charge would be INR 2740.06",
+        "roomImages": [],
+        "facilities": [
+          "Wi-Fi",
+          "Room Service",
+          "Telephone",
+          "Attached Bathroom",
+          "Internet Access"
+        ]
+      },
+      {
+        "productId": "trx101",
+        "roomType": "Room Standard",
+        "description": "Room Standard",
+        "roomCode": "131376885",
+        "fareType": "Non-Refundable",
+        "rateBasisId": "MTA5",
+        "currency": "INR",
+        "netPrice": "2348.73",
+        "boardType": "Room Only",
+        "maxOccupancyPerRoom": "2",
+        "inventoryType": "prepaid",
+        "cancellationPolicy": "If Cancellation done from 2020-03-18 21:30:01 Cancellation charge would be INR 2348.73",
+        "roomImages": [],
+        "facilities": [
+          "Wi-Fi",
+          "Room Service",
+          "Telephone",
+          "Attached Bathroom",
+          "Internet Access"
+        ]
+      }
+    ]
+  }
+}

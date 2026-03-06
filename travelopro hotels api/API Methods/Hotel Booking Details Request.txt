@@ -1,0 +1,26 @@
+Hotel Booking Details Request
+This api is allows you to get complete booking details.
+
+Hotel Booking Details Request
+
+Method	URL
+POST	https://travelnext.works/api/hotel-api-v6/bookingDetails
+Hotel Booking Details Elements
+
+Element	Format	Description	Required
+user_id	String	It is used to specify the user name.	REQUIRED
+user_password	String	It is used to specify the password.	REQUIRED
+access	String	It is used to access the website.	REQUIRED
+ip_address	String	It is used to get ip_address of the system from which website is accessed.	REQUIRED
+supplierConfirmationNum	String	Confirmation number received from the API for the booking. You can obtain this information from the Book API's response.	REQUIRED
+reference	String	Reference number received from the API for the booking.	REQUIRED
+Sample Book Details Request
+
+{
+  "user_id": "<user_id>",
+  "user_password": "<user_password>",
+  "access": "Test",
+  "ip_address": "<ip_address> ",
+  "supplierConfirmationNum": "HTL-ATE-933745",
+  "referenceNum":"224"
+}

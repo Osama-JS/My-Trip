@@ -1,0 +1,34 @@
+Cancel Booking Request
+The Cancel API allows you to cancel an existing booking. If you have a multi-room booking, you can cancel each room separately or cancel the entire booking altogether. Additionally, you can retrieve the cancellation status and the cancellation details from the supplier.
+
+Cancel Booking Request
+
+Method	URL
+POST	https://travelnext.works/api/hotel-api-v6/cancel
+Cancel Booking Elements
+
+Element	Format	Description	Required
+user_id	String	It is used to specify the user name.	REQUIRED
+user_password	String	It is used to specify the password.	REQUIRED
+access	String	It is used to access the website.	REQUIRED
+ip_address	String	It is used to get ip_address of the system from which website is accessed.	REQUIRED
+supplierConfirmationNum	String	Confirmation number received from the API for the booking. You can obtain this information from the Book API's response.	REQUIRED
+reference	String	Reference number received from the API for the booking.	REQUIRED
+Sample Cancel Request
+
+{
+  "user_id": "<user_id>",
+  "user_password": "<user_password>",
+  "access": "Test",
+  "ip_address": "<ip_address>",
+  "supplierConfirmationNum": "HTL-ATE-205850",
+  "referenceNum":"212"
+}
+
+Sample Cancel Response
+
+{
+  "status": "CANCELLED",
+  "cancelReferenceNum": "CNCL-2202",
+  "message": "Booking has been cancelled successfully having supplierConfirmationNum as HTL-ATE-205850"
+}

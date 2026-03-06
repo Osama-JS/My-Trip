@@ -10,7 +10,7 @@
     },
     "servers": [
         {
-            "url": "http://localhost/Trip/My-Trip/public",
+            "url": "http://localhost/my-trip/public",
             "description": "Development Server"
         },
         {
@@ -2921,6 +2921,264 @@
                 }
             }
         },
+        "/api/hotels/search": {
+            "post": {
+                "tags": [
+                    "Hotels"
+                ],
+                "summary": "البحث عن الفنادق (Search for hotels)",
+                "description": "البحث عن الفنادق المتاحة عبر Travelopro API مع دعم التصفية المتقدمة. (Search for hotel availability).",
+                "operationId": "searchHotels",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "checkIn",
+                                    "checkOut",
+                                    "rooms",
+                                    "adults"
+                                ],
+                                "properties": {
+                                    "cityName": {
+                                        "type": "string",
+                                        "example": "Dubai"
+                                    },
+                                    "countryName": {
+                                        "type": "string",
+                                        "example": "United Arab Emirates"
+                                    },
+                                    "checkIn": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2024-12-01"
+                                    },
+                                    "checkOut": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2024-12-10"
+                                    },
+                                    "rooms": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "adults": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "childs": {
+                                        "type": "integer",
+                                        "example": 0
+                                    },
+                                    "childAge": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": []
+                                    },
+                                    "requiredCurrency": {
+                                        "type": "string",
+                                        "example": "SAR"
+                                    },
+                                    "residentNationality": {
+                                        "type": "string",
+                                        "example": "SA"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "تم استرجاع الفنادق بنجاح"
+                    }
+                }
+            }
+        },
+        "/api/hotels/room-rates": {
+            "post": {
+                "tags": [
+                    "Hotels"
+                ],
+                "summary": "جلب أسعار الغرف (Get room rates)",
+                "operationId": "getRoomRates",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "hotelId",
+                                    "sessionId"
+                                ],
+                                "properties": {
+                                    "hotelId": {
+                                        "type": "string",
+                                        "example": "H12345"
+                                    },
+                                    "sessionId": {
+                                        "type": "string",
+                                        "example": "sess-abc-123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "تم استرجاع أسعار الغرف بنجاح"
+                    }
+                }
+            }
+        },
+        "/api/hotels/check-rates": {
+            "post": {
+                "tags": [
+                    "Hotels"
+                ],
+                "summary": "التحقق من السعر قبل الحجز (Check room rates)",
+                "operationId": "checkRoomRates",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "rateBasisId",
+                                    "sessionId"
+                                ],
+                                "properties": {
+                                    "rateBasisId": {
+                                        "type": "string",
+                                        "example": "RB123"
+                                    },
+                                    "sessionId": {
+                                        "type": "string",
+                                        "example": "sess-abc-123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "تم التحقق من السعر بنجاح"
+                    }
+                }
+            }
+        },
+        "/api/hotels/book": {
+            "post": {
+                "tags": [
+                    "Hotels"
+                ],
+                "summary": "حجز فندق (Book a hotel)",
+                "operationId": "bookHotel",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "rateBasisId",
+                                    "sessionId",
+                                    "customerEmail",
+                                    "customerPhone",
+                                    "paxDetails"
+                                ],
+                                "properties": {
+                                    "rateBasisId": {
+                                        "type": "string",
+                                        "example": "RB123"
+                                    },
+                                    "sessionId": {
+                                        "type": "string",
+                                        "example": "sess-abc-123"
+                                    },
+                                    "customerEmail": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "guest@example.com"
+                                    },
+                                    "customerPhone": {
+                                        "type": "string",
+                                        "example": "966500000000"
+                                    },
+                                    "paxDetails": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "تم طلب الحجز بنجاح"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/hotels/cancel": {
+            "post": {
+                "tags": [
+                    "Hotels"
+                ],
+                "summary": "إلغاء حجز فندق (Cancel hotel booking)",
+                "operationId": "cancelHotelBooking",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "supplierConfirmationNumber",
+                                    "referenceNumber"
+                                ],
+                                "properties": {
+                                    "supplierConfirmationNumber": {
+                                        "type": "string",
+                                        "example": "SUP123"
+                                    },
+                                    "referenceNumber": {
+                                        "type": "string",
+                                        "example": "REF456"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "تم إلغاء الحجز بنجاح"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/payment/methods": {
             "get": {
                 "tags": [
@@ -3379,6 +3637,10 @@
         {
             "name": "Flights",
             "description": "Flights"
+        },
+        {
+            "name": "Hotels",
+            "description": "Hotels"
         },
         {
             "name": "Payment",

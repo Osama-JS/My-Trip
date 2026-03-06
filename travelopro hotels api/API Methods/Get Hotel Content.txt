@@ -1,0 +1,76 @@
+Get Hotel Content
+The Hotel Content API allows you to retrieve the most up-to-date static descriptive and media content for hotels. Our API automatically aggregates all hotel content attributes from various suppliers and allowing you faster access to a rich source of extensive hotel content attributes. Hotel Content API returns the basic contents of hotels like name, address, rating and image.
+
+Get hotel content attributes for Specific Hotels
+This API allows you to retrieve the hotel content attributes for specific hotels across multiple suppliers.
+
+Specific Hotel Content Request
+
+Method	URL
+GET	https://travelnext.works/api/hotel-api-v6/hotelDetails?sessionId=<sessionId> &hotelId=<hotelId>&productId=trx104&tokenId=<tokenId>
+Specific Hotel Content Elements
+
+Element	Format	Description	Required
+hotelId	String	Unique hotel ID that retrieves a specific hotel contents. You can obtain the hotel ID from the hotelId field in the Hotel Search Results API's response.	REQUIRED
+sessionId	String	Use the sessionId that was returned in the Hotel search Results API's response.	REQUIRED
+productId	String	Contains the Product ID from whom you want to obtain the list of room options for a specific hotel (hotelId), along with their rates. You can obtain the list of Product IDs that have successfully returned results from the productId field in the Hotel Search Results API's response.	REQUIRED
+tokenId	String	Token ID from search response.	REQUIRED
+Specific Hotel Content Response
+
+{
+  "hotelId": "882885",
+  "name": "Delmon Palace Hotel",
+  "address": "Al Rigga Road, Al Rigga RoadDeiraDubai, Dubai, PO21969, United Arab Emirates, United Arab Emirates",
+  "city": "Dubai",
+  "postalCode": "0",
+  "latitude": "25.2609897",
+  "longitude": "55.3226453",
+  "hotelRating": "4",
+  "description": {
+    "content": "The hotel is located nearby many interesting places in Dubai, such as Arabian shopping bazaars, cultural centres and more. It is accessible by both public and private transport and the nearest metro station Al Rigga is just 5 minutes away. The hotel is also close to the landmark Deira Clocktower and the shopping district."
+  },
+  "facilities": [
+    "24-hour reception",
+    "Lift",
+    "Cafe",
+    "Shops",
+    "Bar",
+    "Nightclub",
+    "Theatre",
+    "Casino",
+    "Games room",
+    "Restaurant",
+    "Conference Room",
+    "Internet access",
+    "WLAN access",
+    "Laundry Service",
+    "Car Park",
+    "TV Room"
+  ],
+  "hotelImages": [
+    {
+      "caption": "GEN",
+      "url": "https://assets.cosmos-data.com/thumbnails/large/67/c936a5737e90b1a432738135c339dce4/176166.jpg"
+    },
+    {
+      "caption": "GEN",
+      "url": "https://assets.cosmos-data.com/thumbnails/large/67/fb79626cce7af97e7e02be85c54274d6/176166.jpg"
+    },
+    {
+      "caption": "GEN",
+      "url": "https://assets.cosmos-data.com/thumbnails/large/16/5a5582f106cc60b57f067cabe5718641/337878.jpg"
+    },
+    {
+      "caption": "GEN",
+      "url": "https://assets.cosmos-data.com/thumbnails/large/20/35a4fb8feea838ab56ab5eb4bda52a74/AEKXNS.jpg"
+    },
+    {
+      "caption": "GEN",
+      "url": "https://assets.cosmos-data.com/thumbnails/large/1/f47eb4e5995484660eb48e6f11f2f955/644187.jpg"
+    },
+    {
+      "caption": "GEN",
+      "url": "https://assets.cosmos-data.com/thumbnails/large/1/470582727392976ff7ffeef6b88a6743/644187.jpg"
+    }
+  ]
+}

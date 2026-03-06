@@ -1,0 +1,41 @@
+Certification Process and Documentation
+Certification
+In order to ensure that your connection to our API is set up correctly and that you understand our work flow, we will need you to perform the following queries & Scenarios.
+
+Booking Flow.
+You can choose the dates and Hotels you prefer.
+
+Case	Travelopro Booking Reference	Hotel Name, Region Name, Dates of Stay, Price returned by Travelopro	Cancellation policy displayed on your site	Travelopro Voucher reference
+One room booking with one adult for one night
+One room booking with one adult for two nights, then subsequently cancel this booking
+Two rooms with one adult in each, for two nights
+Two room booking – First with one adult and next with two adults, for three nights
+A five night stay at any room of your choice
+One room booking with two adults and one child for two nights
+Two room booking with two adults and one child in each room, for one night
+Two room booking – First with two adults and one child. Second with one adult. Both for two nights
+One room with two adults and two children for one night
+One room with three adults for two nights
+Send us the above information filled to complete the Certification process.
+
+We will be checking the below data.
+
+a. Usage of general data structure of our API
+
+b. Usage of the correct booking flow : Search, Check More Results, Get Hotel Content, Room Rates, Check Room Rates, Booking, Cancel
+
+c. The Check-in & Check-out Dates
+
+d. The correct handling of Room Price
+
+e. Cancellation Policies
+
+f. The Mandatory booking fields implementation
+
+g. GZIP Compression
+
+How to apply for the Certification Process.
+When you have finishing developing against our API, you will need to submit above test cases listed along with website URL where the API integrated.
+
+Documentation
+As part of your development to our API, Travelopro will provide access to online documentation which will aid you in developing the integration. Please note that this documentation is subject to changes and ongoing improvements.

@@ -1,0 +1,369 @@
+Hotel Availability Response
+Hotel Search Response Elements
+
+Element	Description
+status	Indicate the status of the request.
+sessionId	Indicates the sessionId for which the search results were requested. You must use this sessionId to make the next API request.
+moreResults	Indicates whether all the requested suppliers have returned all the search results. If this field returns true, this means that more results are available from some suppliers and another more_hotel_results API call can be made to retrieve the updated list of search results. If this field returns false, this means that all the search results from all the requested suppliers are already provided in the current result set.
+nextToken	Every result set that the hotel_availabilty_search API returns has a unique token. This token enables you to retrieve any previously missed or timed-out search results based on the token provided. To get progressive results, use the value returned in this field as the value of the token parameter in the next more_hotel_results API call.
+totalResults	Indicates total number of hotel results count.
+supplierid	Unique ID of the suppliers.
+twxHotelId	Unique ID for this specific hotel.
+hotelId	Unique hotel ID that identifies a specific hotel. This is the unique ID that has assigned to the hotel.
+TokenId	Indicated the unique token id provided.
+productId	Contains the Product ID from whom you want to obtain the list of room options for a specific hotel (hotelId), along with their rates. You can obtain the list of Product IDs that have successfully returned results from the productId field in the Hotel Search Results API's response.
+currency	3-character ISO code that indicates the currency in which the rate is returned.
+price	Base price of the room.
+hotelName	Name of the hotel as provided by the supplier.
+address	Address of the hotel as provided by the supplier.
+latitude	The latitude coordinate for the hotel.
+longitude	The longitude coordinate for the hotel.
+thumbNailUrl	The image of the hotel.
+hotelRating	Contains rating information for the hotel.
+phone	Phone number of the hotel.
+email	Email of hotel.
+postalCode	Zipcode/Postalcode of hotel.
+facilities	Facilities provided by the hotel.
+city	City of hotel.
+locality	Region name where hotel located.
+distanceValue	Distance of hotel from center of city in KM.
+distanceUnit	Unit of distance.
+fareType	Rate class of hotel Refundable/Non-Refundable.
+propertyType	Indicates the the type of accomodation.
+tripAdvisorRating	Trip advisor rating count.
+tripAdvisorReview	Trip advisor review count.
+Sample Hotel Search Response
+
+  {
+    "status": {
+    "sessionId": "TVRVNE1qSTJNVFE1TWw4ME9ESmZNVEkxTGprNUxqSTBNUzR5TkE9PV8w",
+    "moreResults": true,
+    "nextToken": "MjE=",
+    "totalResults": 686
+  },
+  "itineraries": [
+  {
+    "hotelId": "882885",
+    "twxHotelId": "456392",
+    "productId": "trx101",
+    "tokenId": "TdjpJ7ikRnHSyZNth3ob",
+    "hotelName": "DELMON PALACE",
+    "city": "Dubai",
+    "locality": "Riqqah al Butayn",
+    "distanceValue": 1.84,
+    "distanceUnit": "KM",
+    "country": "United Arab Emirates",
+    "address": "Al Rigga Road, Al Rigga RoadDeiraDubai, Dubai, PO21969, United Arab Emirates, United Arab Emirates",
+    "latitude": "25.2609897",
+    "longitude": "55.3226453",
+    "hotelRating": 4,
+    "total": 1834.23,
+    "currency": "INR",
+    "fareType": "Non-Refundable",
+    "propertyType": "HOTELS",
+    "postalCode": "0",
+    "phone": "971-422-22333",
+    "email": "reservation@delmonpalace.ae",
+    "thumbNailUrl": "https://i.travelapi.com/hotels/15000000/14590000/14581300/14581244/0fb39be1_t.jpg",
+    "facilities": [
+    "24-hour reception",
+    "Lift",
+    "Cafe",
+    "Shops",
+    "Bar",
+    "Nightclub",
+    "Theatre",
+    "Casino",
+    "Games room",
+    "Restaurant",
+    "Conference Room",
+    "Internet access",
+    "WLAN access",
+    "Laundry Service",
+    "Car Park",
+    "TV Room"
+    ],
+    "tripAdvisorRating": "2.0",
+    "tripAdvisorReview": "54"
+  },
+  {
+    "hotelId": "2237735",
+    "twxHotelId": "555590",
+    "productId": "trx101",
+    "tokenId": "ic3NXZbajOgxKuPBVDQR",
+    "hotelName": "DELMON BOUTIQUE HOTEL NAIF(EX DULF HOTEL)",
+    "city": "Dubai",
+    "locality": "Al Murar al Jadid",
+    "distanceValue": 0.80,
+    "distanceUnit": "KM",
+    "country": "United Arab Emirates",
+    "address": "Naif Deira",
+    "latitude": "25.275671",
+    "longitude": "55.312781",
+    "hotelRating": 3,
+    "total": 1834.23,
+    "currency": "INR",
+    "fareType": "Non-Refundable",
+    "propertyType": "HOTEL",
+    "postalCode": null,
+    "phone": "+971 null",
+    "email": null,
+    "thumbNailUrl": "https://us.dotwconnect.com/poze_hotel/22/2237735/bLSIeLJb_903e768422724aa987bf595d9f3ba472.jpeg",
+    "facilities": [
+    "Housekeeping",
+    "Restaurant",
+    "Currency Exchange",
+    "Laundry Service",
+    "Room Service",
+    "Bar",
+    "Wheelchair"
+    ],
+    "tripAdvisorRating": null,
+    "tripAdvisorReview": null
+  },
+  {
+    "hotelId": "H!0436613",
+    "twxHotelId": "643098",
+    "productId": "trx107",
+    "tokenId": "3ldz57kdwxsxwmenorz56bdibm",
+    "hotelName": "Delmon Boutique Hotel",
+    "city": "Dubai",
+    "locality": "Al Murar al Jadid",
+    "distanceValue": 0.80,
+    "distanceUnit": "KM",
+    "country": "United Arab Emirates",
+    "address": "Naif Street, Opposite Al Futtaim Masjad, Dubai",
+    "latitude": "25.2756972",
+    "longitude": "55.31278888",
+    "hotelRating": 3,
+    "total": 1978,
+    "currency": "INR",
+    "fareType": "Refundable",
+    "propertyType": "HOTELS",
+    "postalCode": "0",
+    "phone": "+97142285444",
+    "email": "reservations@delmonboutiquehotel.com",
+    "thumbNailUrl": "https://images.grnconnect.com/H!0436613/5cc05f6412069f313824954e699d0a80.jpg",
+    "facilities": [
+    "Air conditioning",
+    "Bar",
+    "Restaurant",
+    "Nightclub",
+    "Shower"
+    ],
+    "tripAdvisorRating": null,
+    "tripAdvisorReview": null
+  },
+  {
+    "hotelId": "176166",
+    "twxHotelId": "1209077",
+    "productId": "trx109",
+    "tokenId": "raDTVZ1xzsdhPiEcCXF5",
+    "hotelName": "Delmon Palace",
+    "city": "DEIRA",
+    "locality": "DEIRA",
+    "distanceValue": 1.84,
+    "distanceUnit": "KM",
+    "country": "United Arab Emirates",
+    "address": "A Street,Al Rigga Rd,42 ",
+    "latitude": "25.26084",
+    "longitude": "55.322517",
+    "hotelRating": 3,
+    "total": 1985.14,
+    "currency": "INR",
+    "fareType": "Non-Refundable",
+    "propertyType": "HOTEL",
+    "postalCode": "21969",
+    "phone": "042222333,+97142222333,+97142223777",
+    "email": "reservation@delmonpalace.ae",
+    "thumbNailUrl": null,
+    "facilities": [
+    "Wi-Fi",
+    "Bath",
+    "Room Service",
+    "Internet access"
+    ],
+    "tripAdvisorRating": null,
+    "tripAdvisorReview": null
+  },
+  {
+    "hotelId": "82730",
+    "twxHotelId": "1188664",
+    "productId": "trx109",
+    "tokenId": "tSdPBDZwK1OY7laqINEU",
+    "hotelName": "Grand Central Hotel",
+    "city": "DEIRA - DUBAI",
+    "locality": "DEIRA - DUBAI",
+    "distanceValue": 2.06,
+    "distanceUnit": "KM",
+    "country": "United Arab Emirates",
+    "address": "AL RIGGA ROAD - DUBAI PO BOX 14441, ",
+    "latitude": "25.263903",
+    "longitude": "55.32677",
+    "hotelRating": 4,
+    "total": 2059.84,
+    "currency": "INR",
+    "fareType": "Non-Refundable",
+    "propertyType": "HOTEL",
+    "postalCode": "IG8 9NY",
+    "phone": "0097142999977,0097142999977,0097142999977,0097142980333",
+    "email": "reservations@grandcentraldxb.com",
+    "thumbNailUrl": null,
+    "facilities": [
+    "Wi-Fi",
+    "Bath",
+    "Room Service",
+    "Internet access"
+    ],
+    "tripAdvisorRating": null,
+    "tripAdvisorReview": null
+  },
+  {
+    "hotelId": "651665",
+    "twxHotelId": "120436",
+    "productId": "trx101",
+    "tokenId": "vkPeJioqgX4sMnUtYhIu",
+    "hotelName": "Fortune Pearl Hotel Deira",
+    "city": "Dubai",
+    "locality": "Al Murar al Jadid",
+    "distanceValue": 1.12,
+    "distanceUnit": "KM",
+    "country": "United Arab Emirates",
+    "address": "Omar Bin Khattab Road, After Naif Signal and behind Al BarahaP.O. Box 98661Deira, Dubai, 95661, Unit",
+    "latitude": "25.278530999999997",
+    "longitude": "55.313779",
+    "hotelRating": 3,
+    "total": 2095.11,
+    "currency": "INR",
+    "fareType": "Non-Refundable",
+    "propertyType": "HOTELS",
+    "postalCode": "95661",
+    "phone": "+97142725888",
+    "email": "crs@fortune-hotels.net",
+    "thumbNailUrl": "https://assets.cosmos-data.com/thumbnails/large/77/32b585909b133cb041cf37dd66ba73a7/488809.jpg",
+    "facilities": [
+    "Lift",
+    "Cafe",
+    "Bar",
+    "Nightclub",
+    "Restaurant",
+    "Conference Room",
+    "Internet access",
+    "WLAN access",
+    "Room Service",
+    "Laundry Service",
+    "Medical Assistance",
+    "Car Park"
+    ],
+    "tripAdvisorRating": "3.0",
+    "tripAdvisorReview": "83"
+  },
+  {
+    "hotelId": "209ce0",
+    "twxHotelId": "643389",
+    "productId": "trx102",
+    "tokenId": "MjAyMDA0MTdfMV8yXzBfMTA0X3plbmY5NjZhMDZhNzVkMjRiMTY4MGY1MmI0ZjY1NWFlNTY0XzE1ODIyNjA2Nzg=",
+    "hotelName": "Studio M Arabian Plaza",
+    "city": "Al Qusais",
+    "locality": "Mintaqat Dubayy at Talimiyah",
+    "distanceValue": 4.66,
+    "distanceUnit": "KM",
+    "country": "United Arab Emirates",
+    "address": "Al Qiyadah Metro Station - Al Ittihad Rd - Dubai - United Arab Emirates",
+    "latitude": "25.277899",
+    "longitude": "55.353099",
+    "hotelRating": 3,
+    "total": 2113.92,
+    "currency": "INR",
+    "fareType": "Non-Refundable",
+    "propertyType": "HOTELS",
+    "postalCode": null,
+    "phone": null,
+    "email": "reservations.smap@millenniumhotels.com",
+    "thumbNailUrl": "https://assets.cosmos-data.com/uploads/thumbnails/large/1082980/1082980-1544446162-gym 2.jpg",
+    "facilities": [
+    "Wi-Fi",
+    "Bath",
+    "Room Service",
+    "Internet access"
+    ],
+    "tripAdvisorRating": null,
+    "tripAdvisorReview": null
+  },
+  {
+    "hotelId": "94423",
+    "twxHotelId": "1190753",
+    "productId": "trx109",
+    "tokenId": "xFze7fhpLyNH2t4Tr38k",
+    "hotelName": "Royalton Hotel Dubai",
+    "city": "DEIRA DUBAI",
+    "locality": "DEIRA DUBAI",
+    "distanceValue": 0.64,
+    "distanceUnit": "KM",
+    "country": "United Arab Emirates",
+    "address": "Al Maktoum Hospital Rd, 2nd Street, PO BOX 14963, ",
+    "latitude": "25.268988",
+    "longitude": "55.31375",
+    "hotelRating": 2,
+    "total": 2162.30,
+    "currency": "INR",
+    "fareType": "Non-Refundable",
+    "propertyType": "HOTEL",
+    "postalCode": "31952",
+    "phone": "0097142229226,0097142229226,0097142229227",
+    "email": "ROYALTON@EMIRATES.NET.AE",
+    "thumbNailUrl": null,
+    "facilities": [
+    "Wi-Fi",
+    "Bath",
+    "Room Service",
+    "Internet access"
+    ],
+    "tripAdvisorRating": null,
+    "tripAdvisorReview": null
+  },
+  {
+    "hotelId": "136071",
+    "twxHotelId": "101212",
+    "productId": "trx109",
+    "tokenId": "oZDPKdcMA6uErYig4kCq",
+    "hotelName": "Mount Royal Hotel",
+    "city": "DUBAI",
+    "locality": "As Sabkhah",
+    "distanceValue": 0.14,
+    "distanceUnit": "KM",
+    "country": "United Arab Emirates",
+    "address": "NASIR SQUARE DEIRA DUBAI, ",
+    "latitude": "25.27019",
+    "longitude": "55.30614",
+    "hotelRating": 2,
+    "total": 2224.92,
+    "currency": "INR",
+    "fareType": "Non-Refundable",
+    "propertyType": "HOTELS",
+    "postalCode": "129666",
+    "phone": "+97142292804,+97142292804,+97142292803",
+    "email": "reservation@thephmhotels.com",
+    "thumbNailUrl": "https://assets.cosmos-data.com/thumbnails/large/1/2b7fadc62c431aa7f97083f95b504071/494836.jpg",
+    "facilities": [
+    "Air conditioning",
+    "24-hour reception",
+    "24-hour check-in",
+    "Currency Exchange",
+    "Lift",
+    "Cafe",
+    "Bar",
+    "Pub",
+    "Nightclub",
+    "Restaurant",
+    "Internet access",
+    "WLAN access",
+    "Room Service",
+    "Laundry Service",
+    "Car Park"
+    ],
+    "tripAdvisorRating": "2.5",
+    "tripAdvisorReview": "28"
+  }
+  ]
+}
