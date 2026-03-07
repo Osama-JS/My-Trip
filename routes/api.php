@@ -29,8 +29,13 @@ Route::post('/flights/validate-fare', [FlightController::class, 'validateFare'])
 
 // Hotel Routes
 Route::post('/hotels/search', [HotelController::class, 'search']);
+Route::post('/hotels/next-page', [HotelController::class, 'nextToken']);
+Route::post('/hotels/filter', [HotelController::class, 'filter']);
+Route::post('/hotels/content', [HotelController::class, 'getHotelContent']);
 Route::post('/hotels/room-rates', [HotelController::class, 'roomRates']);
 Route::post('/hotels/check-rates', [HotelController::class, 'checkRates']);
+Route::get('/hotels/cities', [HotelController::class, 'getCities']);
+Route::get('/hotels/languages', [HotelController::class, 'getLanguages']);
 
 Route::get('/payment/methods', [PaymentController::class, 'methods']);
 
@@ -44,6 +49,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Hotel Booking Routes (Protected)
     Route::post('/hotels/book', [HotelController::class, 'book']);
     Route::post('/hotels/cancel', [HotelController::class, 'cancel']);
+    Route::post('/hotels/booking-details', [HotelController::class, 'getBookingDetails']);
 
     Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
     Route::post('/resend-otp', [AuthController::class, 'resendOtp']);

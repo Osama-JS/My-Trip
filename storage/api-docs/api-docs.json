@@ -2985,6 +2985,10 @@
                                     "residentNationality": {
                                         "type": "string",
                                         "example": "SA"
+                                    },
+                                    "requiredLanguage": {
+                                        "type": "string",
+                                        "example": "ARA"
                                     }
                                 },
                                 "type": "object"
@@ -3177,6 +3181,187 @@
                         "bearerAuth": []
                     }
                 ]
+            }
+        },
+        "/api/hotels/next-page": {
+            "post": {
+                "tags": [
+                    "Hotels"
+                ],
+                "summary": "جلب المزيد من الفنادق (Pagination)",
+                "operationId": "hotelNextPage",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "sessionId",
+                                    "nextToken"
+                                ],
+                                "properties": {
+                                    "sessionId": {
+                                        "type": "string"
+                                    },
+                                    "nextToken": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "تم استرجاع الصفحة التالية بنجاح"
+                    }
+                }
+            }
+        },
+        "/api/hotels/filter": {
+            "post": {
+                "tags": [
+                    "Hotels"
+                ],
+                "summary": "تصفية الفنادق (Filter hotels)",
+                "operationId": "filterHotels",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "sessionId"
+                                ],
+                                "properties": {
+                                    "sessionId": {
+                                        "type": "string"
+                                    },
+                                    "hotelName": {
+                                        "type": "string"
+                                    },
+                                    "minPrice": {
+                                        "type": "number"
+                                    },
+                                    "maxPrice": {
+                                        "type": "number"
+                                    },
+                                    "starRating": {
+                                        "type": "string"
+                                    },
+                                    "requiredLanguage": {
+                                        "type": "string",
+                                        "example": "ARA"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "تم تصفية النتائج بنجاح"
+                    }
+                }
+            }
+        },
+        "/api/hotels/content": {
+            "post": {
+                "tags": [
+                    "Hotels"
+                ],
+                "summary": "جلب محتوى الفندق (Hotel content)",
+                "operationId": "getHotelContent",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "hotelId"
+                                ],
+                                "properties": {
+                                    "hotelId": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "تم استرجاع محتوى الفندق بنجاح"
+                    }
+                }
+            }
+        },
+        "/api/hotels/booking-details": {
+            "post": {
+                "tags": [
+                    "Hotels"
+                ],
+                "summary": "تفاصيل الحجز (Booking details)",
+                "operationId": "getHotelBookingDetails",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "bookingReference"
+                                ],
+                                "properties": {
+                                    "bookingReference": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "تم استرجاع تفاصيل الحجز بنجاح"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/hotels/cities": {
+            "get": {
+                "tags": [
+                    "Hotels"
+                ],
+                "summary": "قائمة المدن (Cities list)",
+                "operationId": "getHotelCities",
+                "responses": {
+                    "200": {
+                        "description": "تم استرجاع قائمة المدن بنجاح"
+                    }
+                }
+            }
+        },
+        "/api/hotels/languages": {
+            "get": {
+                "tags": [
+                    "Hotels"
+                ],
+                "summary": "قائمة اللغات (Languages list)",
+                "operationId": "getHotelLanguages",
+                "responses": {
+                    "200": {
+                        "description": "تم استرجاع قائمة اللغات بنجاح"
+                    }
+                }
             }
         },
         "/api/payment/methods": {

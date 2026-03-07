@@ -40,7 +40,8 @@ class HotelController extends Controller
                     new OA\Property(property: "childs", type: "integer", example: 0),
                     new OA\Property(property: "childAge", type: "array", items: new OA\Items(type: "integer"), example: []),
                     new OA\Property(property: "requiredCurrency", type: "string", example: "SAR"),
-                    new OA\Property(property: "residentNationality", type: "string", example: "SA")
+                    new OA\Property(property: "residentNationality", type: "string", example: "SA"),
+                    new OA\Property(property: "requiredLanguage", type: "string", example: "ARA")
                 ]
             )
         ),
@@ -56,14 +57,18 @@ class HotelController extends Controller
             'latitude' => 'required_without:cityName|numeric',
             'longitude' => 'required_without:cityName|numeric',
             'radius' => 'nullable|integer',
-            'checkIn' => 'required|date_format:Y-m-d',
+            'checkIn' => 'required|date_format:Y-m-d|after_or_equal:today',
             'checkOut' => 'required|date_format:Y-m-d|after:checkIn',
             'rooms' => 'required|integer|min:1',
             'adults' => 'required|integer|min:1',
             'childs' => 'nullable|integer|min:0',
             'childAge' => 'required_if:childs,>0|array',
             'requiredCurrency' => 'nullable|string|size:3',
-            'residentNationality' => 'nullable|string|size:2',
+            'requiredLanguage' => 'nullable|string|size:3',
+        ], [
+            'checkIn.after_or_equal' => __('تاريخ الدخول يجب أن يكون اليوم أو تاريخاً مستقبلياً.'),
+            'checkOut.after' => __('تاريخ الخروج يجب أن يكون بعد تاريخ الدخول.'),
+            'cityName.required_without' => __('يجب إدخال اسم المدينة أو الإحداثيات.'),
         ]);
 
         if ($validator->fails()) {
@@ -103,6 +108,8 @@ class HotelController extends Controller
         $validator = Validator::make($request->all(), [
             'hotelId' => 'required|string',
             'sessionId' => 'required|string',
+            'productId' => 'required|string',
+            'tokenId' => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -142,6 +149,8 @@ class HotelController extends Controller
         $validator = Validator::make($request->all(), [
             'rateBasisId' => 'required|string',
             'sessionId' => 'required|string',
+            'productId' => 'required|string',
+            'tokenId' => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -185,10 +194,13 @@ class HotelController extends Controller
         $validator = Validator::make($request->all(), [
             'rateBasisId' => 'required|string',
             'sessionId' => 'required|string',
+            'productId' => 'required|string',
+            'tokenId' => 'required|string',
             'customerEmail' => 'required|email',
             'customerPhone' => 'required|string',
             'paxDetails' => 'required|array|min:1',
             'bookingNote' => 'nullable|string',
+            'clientRef' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -227,11 +239,212 @@ class HotelController extends Controller
             new OA\Response(response: 200, description: "تم إلغاء الحجز بنجاح")
         ]
     )]
+    #[OA\Post(
+        path: "/api/hotels/next-page",
+        summary: "جلب المزيد من الفنادق (Pagination)",
+        operationId: "hotelNextPage",
+        tags: ["Hotels"],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ["sessionId", "nextToken"],
+                properties: [
+                    new OA\Property(property: "sessionId", type: "string"),
+                    new OA\Property(property: "nextToken", type: "string")
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: "تم استرجاع الصفحة التالية بنجاح")
+        ]
+    )]
+    public function nextToken(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'sessionId' => 'required|string',
+            'nextToken' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+        }
+
+        $result = $this->hotelService->nextToken($request->all());
+
+        if (isset($result['status']) && $result['status'] === 'error') {
+            return $this->apiResponse(true, $result['message'], $result['details'] ?? null, null, 500);
+        }
+
+        return $this->apiResponse(false, __('Next page retrieved successfully.'), $result, null, 200);
+    }
+
+    #[OA\Post(
+        path: "/api/hotels/filter",
+        summary: "تصفية الفنادق (Filter hotels)",
+        operationId: "filterHotels",
+        tags: ["Hotels"],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ["sessionId"],
+                properties: [
+                    new OA\Property(property: "sessionId", type: "string"),
+                    new OA\Property(property: "hotelName", type: "string"),
+                    new OA\Property(property: "minPrice", type: "number"),
+                    new OA\Property(property: "maxPrice", type: "number"),
+                    new OA\Property(property: "starRating", type: "string"),
+                    new OA\Property(property: "requiredLanguage", type: "string", example: "ARA")
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: "تم تصفية النتائج بنجاح")
+        ]
+    )]
+    public function filter(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'sessionId' => 'required|string',
+            'requiredLanguage' => 'nullable|string|size:3',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+        }
+
+        $result = $this->hotelService->filter($request->all());
+
+        if (isset($result['status']) && $result['status'] === 'error') {
+            return $this->apiResponse(true, $result['message'], $result['details'] ?? null, null, 500);
+        }
+
+        return $this->apiResponse(false, __('Hotels filtered successfully.'), $result, null, 200);
+    }
+
+    #[OA\Post(
+        path: "/api/hotels/content",
+        summary: "جلب محتوى الفندق (Hotel content)",
+        operationId: "getHotelContent",
+        tags: ["Hotels"],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ["hotelId"],
+                properties: [
+                    new OA\Property(property: "hotelId", type: "string")
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: "تم استرجاع محتوى الفندق بنجاح")
+        ]
+    )]
+    public function getHotelContent(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'hotelId' => 'required|string',
+            'sessionId' => 'required|string',
+            'productId' => 'required|string',
+            'tokenId' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+        }
+
+        $result = $this->hotelService->getHotelContent($request->all());
+
+        if (isset($result['status']) && $result['status'] === 'error') {
+            return $this->apiResponse(true, $result['message'], $result['details'] ?? null, null, 500);
+        }
+
+        return $this->apiResponse(false, __('Hotel content retrieved successfully.'), $result, null, 200);
+    }
+
+    #[OA\Post(
+        path: "/api/hotels/booking-details",
+        summary: "تفاصيل الحجز (Booking details)",
+        operationId: "getHotelBookingDetails",
+        tags: ["Hotels"],
+        security: [["bearerAuth" => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ["bookingReference"],
+                properties: [
+                    new OA\Property(property: "bookingReference", type: "string")
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: "تم استرجاع تفاصيل الحجز بنجاح")
+        ]
+    )]
+    public function getBookingDetails(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'supplierConfirmationNum' => 'required|string',
+            'referenceNum' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+        }
+
+        $result = $this->hotelService->getBookingDetails($request->all());
+
+        if (isset($result['status']) && $result['status'] === 'error') {
+            return $this->apiResponse(true, $result['message'], $result['details'] ?? null, null, 500);
+        }
+
+        return $this->apiResponse(false, __('Booking details retrieved successfully.'), $result, null, 200);
+    }
+
+    #[OA\Get(
+        path: "/api/hotels/cities",
+        summary: "قائمة المدن (Cities list)",
+        operationId: "getHotelCities",
+        tags: ["Hotels"],
+        responses: [
+            new OA\Response(response: 200, description: "تم استرجاع قائمة المدن بنجاح")
+        ]
+    )]
+    public function getCities(Request $request)
+    {
+        $result = $this->hotelService->getCities($request->all());
+
+        if (isset($result['status']) && $result['status'] === 'error') {
+            return $this->apiResponse(true, $result['message'], $result['details'] ?? null, null, 500);
+        }
+
+        return $this->apiResponse(false, __('Cities retrieved successfully.'), $result, null, 200);
+    }
+
+    #[OA\Get(
+        path: "/api/hotels/languages",
+        summary: "قائمة اللغات (Languages list)",
+        operationId: "getHotelLanguages",
+        tags: ["Hotels"],
+        responses: [
+            new OA\Response(response: 200, description: "تم استرجاع قائمة اللغات بنجاح")
+        ]
+    )]
+    public function getLanguages(Request $request)
+    {
+        $result = $this->hotelService->getLanguages($request->all());
+
+        if (isset($result['status']) && $result['status'] === 'error') {
+            return $this->apiResponse(true, $result['message'], $result['details'] ?? null, null, 500);
+        }
+
+        return $this->apiResponse(false, __('Languages retrieved successfully.'), $result, null, 200);
+    }
+
     public function cancel(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'supplierConfirmationNumber' => 'required|string',
-            'referenceNumber' => 'required|string',
+            'supplierConfirmationNum' => 'required|string',
+            'referenceNum' => 'required|string',
         ]);
 
         if ($validator->fails()) {
