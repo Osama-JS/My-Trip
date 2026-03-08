@@ -14,14 +14,14 @@ class SettingSeeder extends Seeder
     public function run(): void
     {
         $settings = [
-            'site_name_en' => 'My Trip',
-            'site_name_ar' => 'ماي تريب',
+            'site_name_en' => 'Fly Vio',
+            'site_name_ar' => 'فلاي فيو',
             'site_description_en' => 'Your ultimate travel companion.',
             'site_description_ar' => 'رفيقك الأمثل في السفر.',
             'site_logo' => 'images/logo.png',
             'site_favicon' => 'images/favicon.png',
             'maintenance_mode' => '0',
-            'contact_email' => 'support@mytrip.com',
+            'contact_email' => 'support@Flyvio.com',
             'contact_phone' => '+966 500 000 000',
             'facebook_url' => 'https://facebook.com/mytrip',
             'twitter_url' => 'https://twitter.com/mytrip',

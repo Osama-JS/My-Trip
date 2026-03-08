@@ -554,7 +554,7 @@ html[dir="rtl"] .cdash-main{
 
                 <span class="active-indicator"></span>
                 <i class="fas fa-map-marked-alt"></i>
-                <span>{{ __('My Trips') }}</span>
+                <span>{{ __('Fly Vio') }}</span>
 
             </a>
 

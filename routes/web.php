@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\NotificationController as AdminNotificationContro
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\TripsController;
 use App\Http\Controllers\Admin\TripCategoryController;
+use App\Http\Controllers\FrontendController;
 
 // Customer Controllers
 use App\Http\Controllers\Customer\CustomerDashboardController;
@@ -65,8 +66,12 @@ Route::get('lang/{locale}', function ($locale) {
     return redirect()->back();
 })->name('lang.switch');
 
-// Redirect root to login
 Route::get('/', function () {
+    return view('frontend/landing');
+});
+
+// Redirect root to login
+Route::get('/login', function () {
     if (auth()->check()) {
         if (auth()->user()->isAdmin()) {
             return redirect()->route('admin.dashboard');
