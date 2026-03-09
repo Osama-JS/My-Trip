@@ -8,7 +8,7 @@
     <div class="col-xl-12">
         <div class="card">
             <div class="card-header border-0 pb-0">
-                <h4 class="fs-20">Welcome to My Trip, {{ auth()->user()->name }}!</h4>
+                <h4 class="fs-20">Welcome to Fly Vio, {{ auth()->user()->name }}!</h4>
             </div>
             <div class="card-body">
                 <p>Enjoy your travel planning with us. Here you can view your bookings and manage your profile.</p>

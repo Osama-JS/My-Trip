@@ -20,7 +20,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', config('app.name', 'My Trip')) - {{ __('Admin Dashboard') }}</title>
+    <title>@yield('title', config('app.name', 'Fly Vio')) - {{ __('Admin Dashboard') }}</title>
 
     <!-- Favicon -->
     <link rel="shortcut icon" type="image/png" href="{{ asset(\App\Models\Setting::get('site_favicon', 'images/favicon.png')) }}">

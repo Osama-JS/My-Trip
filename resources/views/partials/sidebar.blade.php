@@ -165,7 +165,7 @@
         </ul>
 
         <div class="copyright text-center">
-            <p><strong>My Trip</strong> © {{ date('Y') }}</p>
+            <p><strong>Fly Vio</strong> © {{ date('Y') }}</p>
         </div>
     </div>
 </div>
