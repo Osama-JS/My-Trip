@@ -1,372 +1,263 @@
 @extends('frontend.layouts.app')
 
 @section('title', __('Home'))
-
-
+@section('meta_description', __('Discover amazing travel experiences. Book tours, flights, and hotels.'))
 
 @section('content')
-    {{-- Hero Section --}}
-    <section class="hero-premium-v1">
-        {{-- Decorative SVG Shapes --}}
-        <div class="hero-decorations">
-            <svg class="decoration-item plane-trail" width="400" height="200" viewBox="0 0 400 200" fill="none">
-                <path d="M10 150C50 120 150 50 350 20" stroke="var(--color-primary)" stroke-width="2" stroke-dasharray="8 8" opacity="0.15" />
-                <path d="M345 15L355 20L348 28" fill="var(--color-primary)" opacity="0.2" />
-            </svg>
-            <div class="decoration-item blob-1"></div>
-            <div class="decoration-item blob-2"></div>
-            <div class="decoration-item circle-dots"></div>
-        </div>
-
-        <div class="container hero-container">
-            <div class="hero-grid">
-                {{-- Left Content --}}
-                <div class="hero-text-content">
-                    {{-- Badge --}}
-                    <div class="hero-badge scroll-animate">
-                        <svg class="hero-badge-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+    {{-- ═══ HERO SECTION ═══ --}}
+    <section class="fe-hero">
+        <div class="fe-container">
+            <div class="fe-hero-grid">
+                {{-- Content --}}
+                <div class="fe-hero-content">
+                    <div class="fe-hero-badge">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                         </svg>
-                        <span class="hero-badge-text">{{ __('Premium Tourism Experience') }}</span>
+                        {{ __('Premium Tourism Experience') }}
                     </div>
 
-                    {{-- Title --}}
-                    <h1 class="hero-title scroll-animate delay-100">
-                        {{ __('Discover Your') }}
-                        <br>
-                        <span class="hero-title-accent">{{ __('Dream Destination') }}</span>
+                    <h1 class="fe-hero-title">
+                        {{ __('Discover Your') }}<br>
+                        <span>{{ __('Dream Destination') }}</span>
                     </h1>
 
-                    {{-- Description --}}
-                    <p class="hero-desc scroll-animate delay-200">
+                    <p class="fe-hero-desc">
                         {{ __('Explore the world with our curated travel experiences. From exotic beaches to mountain adventures, we make your travel dreams come true.') }}
                     </p>
 
-                    {{-- CTA Buttons --}}
-                    <div class="hero-cta scroll-animate delay-300">
-                        <a href="{{ route('trips.index') }}" class="btn btn-primary btn-lg">
+                    <div class="fe-hero-cta">
+                        <a href="{{ route('trips.index') }}" class="fe-btn fe-btn-primary fe-btn-lg">
                             {{ __('Explore Trips') }}
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M5 12h14"/>
-                                <path d="m12 5 7 7-7 7"/>
-                            </svg>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                         </a>
-                        <a href="{{ route('about') }}" class="btn btn-outline btn-lg">
+                        <a href="{{ route('about') }}" class="fe-btn fe-btn-outline fe-btn-lg" style="border-color:rgba(255,255,255,0.3);color:white">
                             {{ __('Learn More') }}
                         </a>
                     </div>
-
-                    {{-- Search Box --}}
-                    <div class="hero-search-inline scroll-animate delay-400">
-                        @include('frontend.components.search-box', ['countries' => $countries ?? []])
-                    </div>
                 </div>
 
-                {{-- Right Image --}}
-                <div class="hero-image-content scroll-animate-right">
-                    @php
-                        $heroBg = \App\Models\Setting::get('hero_bg');
-                    @endphp
-                    <div class="hero-main-image-wrapper">
-                        <img src="{{ $heroBg ? asset($heroBg) : asset('images/hero-bg.jpg') }}" alt="{{ __('Travel with Wjhtak') }}" class="hero-main-image">
-                        <div class="hero-image-card card-glass shadow-xl animate-float">
-                            <i class="fas fa-map-marked-alt text-primary"></i>
-                            <div>
-                                <strong>500+</strong>
-                                <span>{{ __('Places to Visit') }}</span>
-                            </div>
+                {{-- Hero Image --}}
+                <div class="fe-hero-image">
+                    @php $heroBg = \App\Models\Setting::get('hero_bg'); @endphp
+                    <img src="{{ $heroBg ? asset($heroBg) : asset('images/hero-bg.jpg') }}" alt="{{ __('Travel with Wejhtak') }}" class="fe-hero-img-main">
+
+                    <div class="fe-hero-float-card card-1" style="bottom:30px;{{ app()->getLocale()=='ar' ? 'right:-20px' : 'left:-20px' }}">
+                        <div class="icon-circle"><i class="fas fa-plane-departure"></i></div>
+                        <div>
+                            <strong>{{ $stats['trips'] ?? '500' }}+</strong>
+                            <div style="font-size:0.8rem;opacity:0.7">{{ __('Trips') }}</div>
+                        </div>
+                    </div>
+
+                    <div class="fe-hero-float-card card-2" style="top:40px;{{ app()->getLocale()=='ar' ? 'left:-20px' : 'right:-20px' }}">
+                        <div class="icon-circle"><i class="fas fa-star"></i></div>
+                        <div>
+                            <strong>{{ $stats['rating'] ?? '4.8' }}</strong>
+                            <div style="font-size:0.8rem;opacity:0.7">{{ __('Rating') }}</div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {{-- New Professional Counters Section --}}
-            <div class="hero-stats-new scroll-animate delay-500">
-                <div class="stats-grid">
-                    <div class="stat-card-premium">
-                        <div class="stat-icon-box">
-                            <i class="fas fa-plane-departure"></i>
-                        </div>
-                        <div class="stat-info">
-                            <h3 class="hero-stat-value" data-counter="{{ $stats['trips'] ?? 500 }}" data-suffix="+">0</h3>
-                            <p class="hero-stat-label">{{ __('Trips') }}</p>
-                        </div>
-                    </div>
-
-                    <div class="stat-card-premium">
-                        <div class="stat-icon-box">
-                            <i class="fas fa-globe-americas"></i>
-                        </div>
-                        <div class="stat-info">
-                            <h3 class="hero-stat-value" data-counter="{{ $stats['destinations'] ?? 50 }}" data-suffix="+">0</h3>
-                            <p class="hero-stat-label">{{ __('Destinations') }}</p>
-                        </div>
-                    </div>
-
-                    <div class="stat-card-premium">
-                        <div class="stat-icon-box">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <div class="stat-info">
-                            <h3 class="hero-stat-value" data-counter="{{ $stats['customers'] ?? 10000 }}" data-suffix="+">0</h3>
-                            <p class="hero-stat-label">{{ __('Happy Travelers') }}</p>
-                        </div>
-                    </div>
-
-                    <div class="stat-card-premium">
-                        <div class="stat-icon-box">
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <div class="stat-info">
-                            <h3 class="hero-stat-value" data-counter="{{ $stats['rating'] ?? 4.9 }}" data-prefix="">0</h3>
-                            <p class="hero-stat-label">{{ __('Rating') }}</p>
-                        </div>
-                    </div>
+            {{-- Stats --}}
+            <div class="fe-hero-stats">
+                <div class="fe-stat-card">
+                    <div class="fe-stat-icon"><i class="fas fa-plane-departure"></i></div>
+                    <div class="fe-stat-value">{{ $stats['trips'] ?? 0 }}+</div>
+                    <div class="fe-stat-label">{{ __('Trips') }}</div>
+                </div>
+                <div class="fe-stat-card">
+                    <div class="fe-stat-icon"><i class="fas fa-globe-americas"></i></div>
+                    <div class="fe-stat-value">{{ $stats['destinations'] ?? 0 }}+</div>
+                    <div class="fe-stat-label">{{ __('Destinations') }}</div>
+                </div>
+                <div class="fe-stat-card">
+                    <div class="fe-stat-icon"><i class="fas fa-users"></i></div>
+                    <div class="fe-stat-value">{{ $stats['customers'] ?? 0 }}+</div>
+                    <div class="fe-stat-label">{{ __('Happy Travelers') }}</div>
+                </div>
+                <div class="fe-stat-card">
+                    <div class="fe-stat-icon"><i class="fas fa-star"></i></div>
+                    <div class="fe-stat-value">{{ $stats['rating'] ?? '4.8' }}</div>
+                    <div class="fe-stat-label">{{ __('Rating') }}</div>
                 </div>
             </div>
         </div>
     </section>
 
-    {{-- Popular Destinations --}}
-    <section class="section bg-surface">
-        <div class="container">
-            <div class="section-header">
-                <span class="section-subtitle">{{ __("Top Picks") }}</span>
-                <h2 class="section-title">{{ __("Popular Destinations") }}</h2>
-                <p class="section-desc">
-                    {{ __("Discover our most loved destinations, handpicked by thousands of travelers around the world.") }}
-                </p>
-            </div>
-
-
-
-
-            <div class="home-destinations-grid scroll-animate">
-                @forelse($destinations ?? [] as $index => $destination)
-                    @php
-                        $gridStyles = [
-                            0 => '--desktop-grid-row: span 2;',
-                            1 => '',
-                            2 => '',
-                            3 => '--desktop-grid-column: span 2;',
-                        ];
-                    @endphp
-                    <div class="home-destination-item" style="{{ $gridStyles[$index % 4] ?? '' }}">
-                        @include('frontend.components.destination-card', [
-                            'destination' => $destination,
-                            'tripCount' => $destination->trips_count ?? 0
-                        ])
-                    </div>
-                @empty
-                    {{-- Demo Destinations if no data --}}
-                    @php
-                        $demoDestinations = [
-                            ['name' => __('Switzerland'), 'iso' => 'ch', 'trips_count' => 12],
-                            ['name' => __('Turkey'), 'iso' => 'tr', 'trips_count' => 25],
-                            ['name' => __('France'), 'iso' => 'fr', 'trips_count' => 18],
-                            ['name' => __('Japan'), 'iso' => 'jp', 'trips_count' => 15],
-                        ];
-                    @endphp
-                    @foreach($demoDestinations as $index => $demo)
-                        @php
-                            $gridStyles = [
-                                0 => '--desktop-grid-row: span 2;',
-                                1 => '',
-                                2 => '',
-                                3 => '--desktop-grid-column: span 2;',
-                            ];
-                            // Create a dummy object to satisfy component expectations if necessary,
-                            // but component uses $destination->nicename etc.
-                            $destObj = (object)$demo;
-                        @endphp
-                        <div class="home-destination-item" style="{{ $gridStyles[$index % 4] ?? '' }}">
-                            @include('frontend.components.destination-card', [
-                                'destination' => $destObj,
-                                'tripCount' => $demo['trips_count']
-                            ])
-                        </div>
-                    @endforeach
-                @endforelse
-            </div>
-
-            <div class="text-center" style="margin-top: var(--space-10);">
-                <a href="{{ route('destinations') }}" class="btn btn-outline">
-                    {{ __('View All Destinations') }}
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
-                    </svg>
-                </a>
-            </div>
-        </div>
+    {{-- ═══ SEARCH BOX ═══ --}}
+    <section class="fe-container" style="position:relative;z-index:20">
+        @include('frontend.components.search-box', ['countries' => $countries ?? []])
     </section>
 
-    {{-- Featured Trips Section --}}
-    <section class="section">
-        <div class="container">
-            <div class="section-header">
-                <span class="section-subtitle">{{ __("Best Deals") }}</span>
-                <h2 class="section-title">{{ __("Featured Trips") }}</h2>
-                <p class="section-desc">
-                    {{ __("Explore our handpicked travel packages with exclusive offers and unforgettable experiences.") }}
-                </p>
+    {{-- ═══ FEATURED TRIPS ═══ --}}
+    <section class="fe-section">
+        <div class="fe-container">
+            <div class="fe-section-header">
+                <span class="fe-section-subtitle">{{ __('Best Deals') }}</span>
+                <h2 class="fe-section-title">{{ __('Featured Trips') }}</h2>
+                <p class="fe-section-desc">{{ __('Explore our handpicked travel packages with exclusive offers and unforgettable experiences.') }}</p>
             </div>
 
-            {{-- Trips Grid --}}
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" style="gap: var(--space-6);">
-                @forelse($featuredTrips ?? [] as $trip)
-                    <div class="scroll-animate">
-                        @include('frontend.components.trip-card', ['trip' => $trip, 'featured' => true])
-                    </div>
+            <div class="fe-trips-grid">
+                @forelse($featuredTrips as $trip)
+                    @include('frontend.components.trip-card', ['trip' => $trip])
                 @empty
-                    {{-- Demo cards if no data --}}
-                    @for($i = 0; $i < 6; $i++)
-                        <article class="trip-card scroll-animate delay-{{ (($i % 3) + 1) * 100 }}">
-                            <div class="trip-card-image">
-                                <img src="{{ asset('images/demo/trip-' . (($i % 3) + 1) . '.jpg') }}" alt="Trip" loading="lazy">
-                                <span class="trip-card-badge">{{ rand(10, 30) }}% {{ __('Off') }}</span>
-                                <button class="trip-card-favorite"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg></button>
-                                <div class="trip-card-overlay">
-                                    <div class="trip-card-rating"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><span>{{ number_format(rand(40, 50) / 10, 1) }}</span></div>
-                                </div>
-                            </div>
-                            <div class="trip-card-content">
-                                <div class="trip-card-location"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg><span>{{ [__('Dubai → Maldives'), __('Cairo → Luxor'), __('Riyadh → Istanbul')][$i % 3] }}</span></div>
-                                <h3 class="trip-card-title"><a href="#">{{ [__('Luxury Beach Resort'), __('Ancient Wonders Tour'), __('Cultural Heritage Trip')][$i % 3] }}</a></h3>
-                                <div class="trip-card-meta">
-                                    <div class="trip-card-meta-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>{{ rand(3, 10) }} {{ __('Days') }}</span></div>
-                                    <div class="trip-card-price"><span class="trip-card-price-old">${{ rand(800, 1200) }}</span><span class="trip-card-price-current">${{ rand(500, 799) }}<span class="trip-card-price-unit">/ {{ __('person') }}</span></span></div>
-                                </div>
-                            </div>
-                        </article>
-                    @endfor
+                    <div class="fe-empty-state" style="grid-column:1/-1">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                        <p>{{ __('No featured trips available at the moment.') }}</p>
+                    </div>
                 @endforelse
             </div>
 
-            {{-- View All Button --}}
-            <div class="text-center" style="margin-top: var(--space-10);">
-                <a href="{{ route('trips.index') }}" class="btn btn-primary btn-lg">
+            <div class="text-center" style="margin-top:var(--space-10)">
+                <a href="{{ route('trips.index') }}" class="fe-btn fe-btn-outline">
                     {{ __('View All Trips') }}
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
-                    </svg>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                 </a>
             </div>
         </div>
     </section>
 
-    {{-- Banner Slider Section --}}
+    {{-- ═══ POPULAR DESTINATIONS ═══ --}}
+    <section class="fe-section fe-section-alt">
+        <div class="fe-container">
+            <div class="fe-section-header">
+                <span class="fe-section-subtitle">{{ __('Top Picks') }}</span>
+                <h2 class="fe-section-title">{{ __('Popular Destinations') }}</h2>
+                <p class="fe-section-desc">{{ __('Discover our most loved destinations, handpicked by thousands of travelers.') }}</p>
+            </div>
+
+            <div class="fe-destinations-grid">
+                @forelse($destinations as $destination)
+                    @include('frontend.components.destination-card', [
+                        'destination' => $destination,
+                        'tripCount' => $destination->trips_count ?? 0
+                    ])
+                @empty
+                    <div class="fe-empty-state" style="grid-column:1/-1">
+                        <p>{{ __('No destinations available yet.') }}</p>
+                    </div>
+                @endforelse
+            </div>
+
+            <div class="text-center" style="margin-top:var(--space-10)">
+                <a href="{{ route('destinations') }}" class="fe-btn fe-btn-outline">
+                    {{ __('View All Destinations') }}
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    {{-- ═══ BANNER SLIDER ═══ --}}
     @if(isset($banners) && count($banners) > 0)
-    <section class="section" style="padding: 0;">
-        <div data-slider="banner" class="slider">
-            @foreach($banners as $banner)
-                <div class="slider-slide">
-                    <div style="position: relative; overflow: hidden;">
-                        <img
-                            src="{{ asset('storage/' . $banner->image_path) }}"
-                            alt="{{ $banner->title_ar }}"
-                            style="width: 100%; height: 100%; object-fit: cover;"
-                        >
-                        <div style="position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0,0,0,0.7) 0%, transparent 100%);"></div>
-                        <div class="container" style="position: absolute; inset: 0; display: flex; align-items: center;">
-                            <div style="max-width: 500px; color: white !important;">
-                                <h2 style="font-size: var(--text-4xl); font-weight: var(--font-bold); margin-bottom: var(--space-4); color: white !important;">
-                                    {{ app()->getLocale() == 'ar' ? $banner->title_ar : $banner->title_en }}
-                                </h2>
-                                <p style="font-size: var(--text-lg); opacity: 0.9; margin-bottom: var(--space-6); color: white !important;">
-                                     {{ app()->getLocale() == 'ar' ? $banner->description_ar : $banner->description_en }}
-                                </p>
+    <section class="fe-section" style="padding-bottom:0">
+        <div class="fe-container">
+            <div class="fe-banner-slider">
+                <div class="fe-banner-track">
+                    @foreach($banners as $banner)
+                    <div class="fe-banner-slide">
+                        <img src="{{ asset('storage/' . $banner->image_path) }}" alt="{{ app()->getLocale()=='ar' ? $banner->title_ar : $banner->title_en }}">
+                        <div class="fe-banner-slide-overlay"></div>
+                        <div class="fe-banner-slide-content">
+                            <div>
+                                <h2 class="fe-banner-slide-title">{{ app()->getLocale()=='ar' ? $banner->title_ar : $banner->title_en }}</h2>
+                                <p class="fe-banner-slide-desc">{{ app()->getLocale()=='ar' ? $banner->description_ar : $banner->description_en }}</p>
                                 @if($banner->trip_id)
-                                    <a href="{{ route('trips.show', $banner->trip_id) }}" class="btn btn-accent">
-                                        {{ __('View Details') }}
-                                    </a>
+                                    <a href="{{ route('trips.show', $banner->trip_id) }}" class="fe-btn fe-btn-accent">{{ __('View Details') }}</a>
                                 @elseif($banner->link)
-                                    <a href="{{ $banner->link }}" class="btn btn-accent" target="_blank">
-                                        {{ __('View Details') }}
-                                    </a>
+                                    <a href="{{ $banner->link }}" class="fe-btn fe-btn-accent" target="_blank">{{ __('View Details') }}</a>
                                 @endif
                             </div>
                         </div>
                     </div>
+                    @endforeach
                 </div>
-            @endforeach
+                <div class="fe-banner-dots">
+                    @foreach($banners as $index => $banner)
+                        <button class="fe-banner-dot {{ $index == 0 ? 'active' : '' }}"></button>
+                    @endforeach
+                </div>
+            </div>
         </div>
     </section>
     @endif
 
-    {{-- Why Choose Us --}}
-
-    <section class="section bg-surface">
-        <div class="container">
-            <div class="section-header">
-                <span class="section-subtitle">{{ __("Why Us") }}</span>
-                <h2 class="section-title">{{ __("Why Choose Wjhtak") }}</h2>
-                <p class="section-desc">
-                    {{ __("We provide exceptional travel experiences with unmatched service quality.") }}
-                </p>
+    {{-- ═══ LATEST TRIPS ═══ --}}
+    @if(isset($latestTrips) && count($latestTrips) > 0)
+    <section class="fe-section">
+        <div class="fe-container">
+            <div class="fe-section-header">
+                <span class="fe-section-subtitle">{{ __('New Arrivals') }}</span>
+                <h2 class="fe-section-title">{{ __('Latest Trips') }}</h2>
+                <p class="fe-section-desc">{{ __('Check out our newest travel packages just added to satisfy your wanderlust.') }}</p>
             </div>
 
-           @php
-            // تعريف المسارات الكاملة لكل أيقونة (SVG Paths)
-            $icons = [
-                'M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z', // موقع
-                'M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8', // عملة/مال
-                'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z', // درع حماية
-                'M7 11V7a5 5 0 0 1 10 0v4', // قفل
-            ];
-        @endphp
-
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4" style="gap: var(--space-6);">
-            @forelse($questions as $index => $ques)
-            <div class="card text-center scroll-animate"
-                style="padding: var(--space-8); transition: transform 0.3s ease; border: 1px solid var(--color-border);">
-
-                <div style="width: 60px; height: 60px; background: var(--color-surface-hover); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-4);">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="{{ $icons[$index % count($icons)] }}"/>
-                        {{-- تمت إزالة الدائرة الثابتة هنا لضمان نظافة شكل الأيقونة --}}
-                    </svg>
-                </div>
-
-                <h4 style="font-size: var(--text-lg); font-weight: var(--font-bold); margin-bottom: var(--space-2); color: var(--color-text-main);">
-                    {{ app()->getLocale() == 'ar' ? $ques->question_ar : $ques->question_en }}
-                </h4>
-
-                <p class="text-muted" style="font-size: var(--text-sm); line-height: 1.6;">
-                    {{ app()->getLocale() == 'ar' ? $ques->answer_ar : $ques->answer_en }}
-                </p>
+            <div class="fe-trips-grid">
+                @foreach($latestTrips as $trip)
+                    @include('frontend.components.trip-card', ['trip' => $trip])
+                @endforeach
             </div>
-            @empty
-            <div class="col-span-full text-center py-10">
-                <p class="text-muted">{{ __('No results found currently') }}</p>
-            </div>
-            @endforelse
         </div>
+    </section>
+    @endif
+
+    {{-- ═══ WHY CHOOSE US ═══ --}}
+    <section class="fe-section fe-section-alt">
+        <div class="fe-container">
+            <div class="fe-section-header">
+                <span class="fe-section-subtitle">{{ __('Why Us') }}</span>
+                <h2 class="fe-section-title">{{ __('Why Choose Us') }}</h2>
+                <p class="fe-section-desc">{{ __('We provide exceptional travel experiences with unmatched service quality.') }}</p>
+            </div>
+
+            @php
+                $featureIcons = ['fas fa-globe-americas', 'fas fa-tag', 'fas fa-shield-alt', 'fas fa-headset'];
+            @endphp
+
+            <div class="fe-features-grid">
+                @forelse($questions as $index => $ques)
+                <div class="fe-feature-card fe-animate">
+                    <div class="fe-feature-icon">
+                        <i class="{{ $featureIcons[$index % count($featureIcons)] }}"></i>
+                    </div>
+                    <h4 class="fe-feature-title">{{ app()->getLocale() == 'ar' ? $ques->question_ar : $ques->question_en }}</h4>
+                    <p class="fe-feature-desc">{{ app()->getLocale() == 'ar' ? $ques->answer_ar : $ques->answer_en }}</p>
+                </div>
+                @empty
+                    @php
+                        $defaultFeatures = [
+                            ['icon' => 'fas fa-globe-americas', 'title' => __('Global Coverage'), 'desc' => __('Access hundreds of destinations worldwide with our extensive network.')],
+                            ['icon' => 'fas fa-tag', 'title' => __('Best Prices'), 'desc' => __('We guarantee the best prices for all our travel packages and services.')],
+                            ['icon' => 'fas fa-shield-alt', 'title' => __('Secure Booking'), 'desc' => __('Your bookings and payments are protected with top-level security.')],
+                            ['icon' => 'fas fa-headset', 'title' => __('24/7 Support'), 'desc' => __('Our support team is always available to help you anytime, anywhere.')],
+                        ];
+                    @endphp
+                    @foreach($defaultFeatures as $feat)
+                    <div class="fe-feature-card fe-animate">
+                        <div class="fe-feature-icon"><i class="{{ $feat['icon'] }}"></i></div>
+                        <h4 class="fe-feature-title">{{ $feat['title'] }}</h4>
+                        <p class="fe-feature-desc">{{ $feat['desc'] }}</p>
+                    </div>
+                    @endforeach
+                @endforelse
+            </div>
         </div>
     </section>
 
-    {{-- Newsletter --}}
-    <section class="section">
-        <div class="container">
-            <div class="newsletter scroll-animate">
-                <h2 class="newsletter-title">{{ __("Subscribe to Our Newsletter") }}</h2>
-                <p class="newsletter-desc">
-                    {{ __("Get exclusive deals, travel tips, and destination guides delivered to your inbox.") }}
-                </p>
-                <form class="newsletter-form">
-                    <input type="email" class="newsletter-input" placeholder="{{ __("Enter your email address") }}" required>
-                    <button type="submit" class="btn btn-primary btn-lg">{{ __("Subscribe") }}</button>
+    {{-- ═══ NEWSLETTER ═══ --}}
+    <section class="fe-section">
+        <div class="fe-container">
+            <div class="fe-newsletter">
+                <h2 class="fe-newsletter-title">{{ __('Subscribe to Our Newsletter') }}</h2>
+                <p class="fe-newsletter-desc">{{ __('Get exclusive deals, travel tips, and destination guides delivered to your inbox.') }}</p>
+                <form class="fe-newsletter-form">
+                    <input type="email" class="fe-newsletter-input" placeholder="{{ __('Enter your email address') }}" required>
+                    <button type="submit" class="fe-btn fe-btn-accent fe-btn-lg">{{ __('Subscribe') }}</button>
                 </form>
             </div>
         </div>
     </section>
 @endsection
-
-@push('styles')
-   <style>
-        .destination-card-content{
-          position: relative;
-        }
-   </style>
-@endpush
-
-
