@@ -122,7 +122,12 @@ class TripController extends Controller
         $query = Trip::query()->active();
 
         if ($request->has('search')) {
-            $query->where('title', 'like', '%' . $request->search . '%');
+            $search = $request->search;
+
+            $query->where(function ($q) use ($search) {
+                $q->where('title_ar', 'like', "%$search%")
+                ->orWhere('title_en', 'like', "%$search%");
+            });
         }
 
         if ($request->has('destination_id')) {
@@ -161,8 +166,8 @@ class TripController extends Controller
         $transformedData = $trips->getCollection()->map(function ($trip) use ($userFavoriteIds) {
             return [
                 'id' => $trip->id,
-                'title' => $trip->title, // Translatable if using Spatie Translatable
-                'description' => $trip->description,
+                'title' => app()->getLocale() == 'ar' ? $trip->title_ar : $trip->title_en,   // Translatable if using Spatie Translatable
+                'description' => app()->getLocale() == 'ar' ? $trip->description_ar : $trip->description_en,   // Translatable if using Spatie Translatable
                 'price' => $trip->price,
                 'price_before_discount' => $trip->price_before_discount,
                 'duration' => $trip->duration,
@@ -271,8 +276,8 @@ class TripController extends Controller
 
         $data = [
             'id' => $trip->id,
-            'title' => $trip->title,
-            'description' => $trip->description,
+            'title' => app()->getLocale() == 'ar' ? $trip->title_ar : $trip->title_en,
+            'description' => app()->getLocale() == 'ar' ? $trip->description_ar : $trip->description_en,
             'price' => $trip->price,
             'price_before_discount' => $trip->price_before_discount,
             'duration' => $trip->duration,
@@ -671,7 +676,7 @@ class TripController extends Controller
             if (!$trip) return null;
             return [
                 'id' => $trip->id,
-                'title' => $trip->title,
+                'title' => app()->getLocale() == 'ar' ? $trip->title_ar : $trip->title_en,
                 'price' => $trip->price,
                 'image' => $trip->image_url,
                 'to_country' => $trip->toCountry ? $trip->toCountry->name : null,
@@ -780,7 +785,7 @@ class TripController extends Controller
             'notes' => $booking->notes,
             'trip' => $booking->trip ? [
                 'id' => $booking->trip->id,
-                'title' => $booking->trip->title,
+                'title' => app()->getLocale() == 'ar' ? $booking->trip->title_ar : $booking->trip->title_en,
                 'base_price' => $booking->trip->price,
                 'base_capacity' => $booking->trip->base_capacity ?? 2,
                 'extra_passenger_price' => $booking->trip->extra_passenger_price ?? 0,
@@ -1054,7 +1059,9 @@ class TripController extends Controller
         Log::info("Booking #{$id} cancelled by user #{$user->id}");
 
         // Send cancellation notification
-        $tripTitle = $booking->trip ? $booking->trip->title : __('Trip');
+        $tripTitle = $booking->trip
+            ? $booking->trip->{app()->getLocale() == 'ar' ? 'title_ar' : 'title_en'}
+            : __('Trip');   
         app(NotificationService::class)->sendToUser(
             $user,
             Notification::TYPE_BOOKING_CANCELLED,
@@ -1163,8 +1170,8 @@ class TripController extends Controller
         $trips->getCollection()->transform(function ($trip) use ($userFavoriteIds) {
             return [
                 'id' => $trip->id,
-                'title' => $trip->title,
-                'description' => $trip->description,
+                'title' => app()->getLocale() == 'ar' ? $trip->title_ar : $trip->title_en,
+                'description' => app()->getLocale() == 'ar' ? $trip->description_ar : $trip->description_en,
                 'price' => $trip->price,
                 'price_before_discount' => $trip->price_before_discount,
                 'duration' => $trip->duration,

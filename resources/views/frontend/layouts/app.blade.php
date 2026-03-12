@@ -1,11 +1,16 @@
 @php $locale = app()->getLocale(); @endphp
+@php
+    $footerLogo = \App\Models\Setting::get('site_logo');
+    $siteName = \App\Models\Setting::get('site_name_' . app()->getLocale(), config('app.name'));
+    $siteDescription = \App\Models\Setting::get('site_description_' . app()->getLocale(), config('app.name'));
+@endphp
 <!DOCTYPE html>
 <html lang="{{ $locale }}" dir="{{ $locale == 'ar' ? 'rtl' : 'ltr' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', __('Tourism Platform')) - {{ __('Wejhtak') }}</title>
+    <title>@yield('title', __('Tourism Platform')) - {{ $siteName }}</title>
     <meta name="description" content="@yield('meta_description', __('Discover amazing travel experiences. Book tours, flights, and hotels with the best prices.'))">
 
     {{-- Google Fonts --}}
@@ -31,7 +36,7 @@
                 <div class="fe-logo-icon">
                     <i class="fas fa-plane"></i>
                 </div>
-                <span>{{ __('Wejhtak') }}</span>
+                <span>{{ $siteName }}</span>
             </a>
 
             {{-- Navigation --}}
@@ -101,6 +106,11 @@
     </main>
 
     {{-- ═══ FOOTER ═══ --}}
+     @php
+        $facebookUrl = \App\Models\Setting::get('facebook_url');
+        $twitterUrl = \App\Models\Setting::get('twitter_url' );
+        $instagramUrl = \App\Models\Setting::get('instagram_url');
+    @endphp
     <footer class="fe-footer">
         <div class="fe-container">
             <div class="fe-footer-grid">
@@ -110,13 +120,13 @@
                         <div class="fe-logo-icon">
                             <i class="fas fa-plane"></i>
                         </div>
-                        <span>{{ __('Wejhtak') }}</span>
+                        <span>{{ $siteName }}</span>
                     </a>
-                    <p>{{ __('Your trusted partner for unforgettable travel experiences. We offer the best tour packages, flight bookings, and hotel reservations at competitive prices.') }}</p>
+                    <p>{{ $siteDescription }}</p>
                     <div class="fe-footer-social">
-                        <a href="#"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#"><i class="fab fa-twitter"></i></a>
-                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="{{ $facebookUrl }}"><i class="fab fa-facebook-f"></i></a>
+                        <a href="{{ $twitterUrl }}"><i class="fab fa-twitter"></i></a>
+                        <a href="{{ $instagramUrl }}"><i class="fab fa-instagram"></i></a>
                         <a href="#"><i class="fab fa-whatsapp"></i></a>
                     </div>
                 </div>
@@ -145,18 +155,22 @@
                 </div>
 
                 {{-- Contact --}}
+                  @php
+                    $contactPhone = \App\Models\Setting::get('contact_phone');
+                    $contactEmail = \App\Models\Setting::get('contact_email');
+                @endphp
                 <div>
                     <h4 class="fe-footer-heading">{{ __('Contact Us') }}</h4>
                     <ul class="fe-footer-links">
-                        <li><i class="fas fa-envelope" style="margin-inline-end:8px;color:var(--accent)"></i> info@wejhtak.com</li>
-                        <li><i class="fas fa-phone" style="margin-inline-end:8px;color:var(--accent)"></i> +966 50 000 0000</li>
+                        <li><i class="fas fa-envelope" style="margin-inline-end:8px;color:var(--accent)"></i> {{$contactEmail}}</li>
+                        <li><i class="fas fa-phone" style="margin-inline-end:8px;color:var(--accent)"></i> {{$contactPhone}}</li>
                         <li><i class="fas fa-map-marker-alt" style="margin-inline-end:8px;color:var(--accent)"></i> {{ __('Saudi Arabia') }}</li>
                     </ul>
                 </div>
             </div>
 
             <div class="fe-footer-bottom">
-                <p>© {{ date('Y') }} {{ __('Wejhtak') }} - {{ __('All Rights Reserved') }}</p>
+                <p>© {{ date('Y') }} {{ $siteName }} - {{ __('All Rights Reserved') }}</p>
             </div>
         </div>
     </footer>

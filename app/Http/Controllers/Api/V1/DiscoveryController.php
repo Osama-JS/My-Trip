@@ -63,9 +63,9 @@ class DiscoveryController extends Controller
         $countries = Country::active()->get()->map(function ($country) {
             return [
                 'id' => $country->id,
-                'name' => $country->name_attribute,
-                'name_ar' => $country->nicename, // nicename is usually the localized one in this schema
-                'name_en' => $country->name,
+                'name' => app()->getLocale() == 'ar' ? $country->name : $country->nicename,
+                'name_ar' => $country->name,
+                'name_en' => $country->nicename,
                 'code' => $country->numcode,
                 'phone_code' => $country->phonecode,
                 'flag' => $country->flag_url,
@@ -139,12 +139,12 @@ class DiscoveryController extends Controller
         $cities = $query->get()->map(function ($city) {
             return [
                 'id' => $city->id,
-                'name' => $city->name_attribute,
-                'name_ar' => $city->title,
-                'name_en' => $city->title,
+                'name' => app()->getLocale() == 'ar' ? $city->title_ar : $city->title_en,
+                'name_ar' => $city->title_ar,
+                'name_en' => $city->title_en,
                 'country' => $city->country ? [
                     'id' => $city->country->id,
-                    'name' => $city->country->name_attribute,
+                    'name' => app()->getLocale() == 'ar' ? $city->country->name : $city->country->nicename,
                     'flag' => $city->country->flag_url,
                 ] : null,
             ];
@@ -270,12 +270,12 @@ class DiscoveryController extends Controller
         }])->get()->map(function ($country) {
             return [
                 'id' => $country->id,
-                'name' => $country->name_attribute,
+                'name' => app()->getLocale() == 'ar' ? $country->name : $country->nicename,
                 'flag' => $country->flag_url,
                 'cities' => $country->cities->map(function ($city) {
                     return [
                         'id' => $city->id,
-                        'name' => $city->name_attribute,
+                        'name' => app()->getLocale() == 'ar' ? $city->title_ar : $city->title_en,
                     ];
                 })
             ];
