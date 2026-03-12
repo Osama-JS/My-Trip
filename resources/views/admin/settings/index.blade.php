@@ -301,6 +301,16 @@
                             <i class="flaticon-381-smartphone"></i> {{ __('App Settings') }}
                         </button>
                     </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="our-values-tab" data-bs-toggle="tab" data-bs-target="#our-values" type="button" role="tab">
+                            <i class="flaticon-381-smartphone"></i> {{ __('Our Values') }}
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="our-mission-tab" data-bs-toggle="tab" data-bs-target="#our-mission" type="button" role="tab">
+                            <i class="flaticon-381-smartphone"></i> {{ __('Our Mission') }}
+                        </button>
+                    </li>
                 </ul>
 
                 <div class="card-body p-4">
@@ -484,6 +494,167 @@
                             </div>
                         </div>
 
+                         <!--Our Mission Tab -->
+                        <div class="tab-pane fade" id="our-mission" role="tabpanel">
+                            <div class="form-section-title">{{ __('Our Mission') }}</div>
+                            <div class="row">
+                                <div class="col-md-6 mb-4 form-group">
+                                    <label>{{ __('Mission Title (EN)') }}</label>
+                                    <input type="text" class="form-control" name="mission_title_en" value="{{ \App\Models\Setting::get('mission_title_en') }}" >
+                                    <small class="text-muted d-block mt-1">{{ __('Mission Title (EN)') }}</small>
+                                </div>
+                                <div class="col-md-6 mb-4 form-group">
+                                    <label>{{ __('Mission Title (AR)') }}</label>
+                                    <input type="text" class="form-control" name="mission_title_ar" value="{{ \App\Models\Setting::get('mission_title_ar') }}" >
+                                    <small class="text-muted d-block mt-1">{{ __('Mission Title (AR)') }}</small>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-4 form-group">
+                                    <label>{{ __('Mission Description (EN)') }}</label>
+                                    <textarea class="form-control" name="mission_desc_en" >{{ \App\Models\Setting::get('mission_desc_en') }}</textarea>
+                                </div>
+                                <div class="col-md-6 mb-4 form-group">
+                                    <label>{{ __('Mission Description (AR)') }}</label>
+                                    <textarea class="form-control" name="mission_desc_ar" >{{ \App\Models\Setting::get('mission_desc_ar') }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Our Values Tab -->
+                        <div class="tab-pane fade" id="our-values" role="tabpanel">
+                            <div class="form-section-title">{{ __('Our Values') }}</div>
+                            <div class="row">
+                                <div class="col-md-4 mb-4 form-group">
+                                    <label>{{ __('Value 1 Title (En)') }}</label>
+                                    <input type="text" class="form-control" name="value_1_title_en" value="{{ \App\Models\Setting::get('value_1_title_en') }}" placeholder="Value 1 Title">
+                                    <small class="text-muted d-block mt-1">{{ __('Value 1 Title') }}</small>
+                                </div>
+                                <div class="col-md-4 mb-4 form-group">
+                                    <label>{{ __('Value 1 Title (Ar)') }}</label>
+                                    <input type="text" class="form-control" name="value_1_title_ar" value="{{ \App\Models\Setting::get('value_1_title_ar') }}" placeholder="Value 1 Title">
+                                    <small class="text-muted d-block mt-1">{{ __('Value 1 Title') }}</small>
+                                </div>
+                                <div class="col-md-4 mb-4 form-group">
+                                    <label>{{ __('Value 1 Icon') }}</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" name="value_1_icon" value="{{ \App\Models\Setting::get('value_1_icon') }}" placeholder="Value 1 Icon">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-4 form-group">
+                                    <label>{{ __('Value 1 Description (En)') }}</label>
+                                    <div class="input-group">
+                                        <textarea name="value_1_desc_en" class="form-control">{{ \App\Models\Setting::get('value_1_desc_en') }}</textarea>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-4 form-group">
+                                    <label>{{ __('Value 1 Description (Ar)') }}</label>
+                                    <div class="input-group">
+                                        <textarea name="value_1_desc_ar" class="form-control">{{ \App\Models\Setting::get('value_1_desc_ar') }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4 mb-4 form-group">
+                                    <label>{{ __('Value 2 Title (En)') }}</label>
+                                    <input type="text" class="form-control" name="value_2_title_en" value="{{ \App\Models\Setting::get('value_2_title_en') }}" placeholder="Value 2 Title">
+                                    <small class="text-muted d-block mt-1">{{ __('Value 2 Title') }}</small>
+                                </div>
+                                <div class="col-md-4 mb-4 form-group">
+                                    <label>{{ __('Value 2 Title (Ar)') }}</label>
+                                    <input type="text" class="form-control" name="value_2_title_ar" value="{{ \App\Models\Setting::get('value_2_title_ar') }}" placeholder="Value 2 Title">
+                                    <small class="text-muted d-block mt-1">{{ __('Value 2 Title') }}</small>
+                                </div>
+                                <div class="col-md-4 mb-4 form-group">
+                                    <label>{{ __('Value 2 Icon') }}</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" name="value_2_icon" value="{{ \App\Models\Setting::get('value_2_icon') }}" placeholder="Value 2 Icon">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-4 form-group">
+                                    <label>{{ __('Value 2 Description (En)') }}</label>
+                                    <div class="input-group">
+                                        <textarea name="value_2_desc_en" class="form-control">{{ \App\Models\Setting::get('value_2_desc_en') }}</textarea>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-4 form-group">
+                                    <label>{{ __('Value 2 Description (Ar)') }}</label>
+                                    <div class="input-group">
+                                        <textarea name="value_2_desc_ar" class="form-control">{{ \App\Models\Setting::get('value_2_desc_ar') }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4 mb-4 form-group">
+                                    <label>{{ __('Value 3 Title (En)') }}</label>
+                                    <input type="text" class="form-control" name="value_3_title_en" value="{{ \App\Models\Setting::get('value_3_title_en') }}" placeholder="Value 3 Title">
+                                    <small class="text-muted d-block mt-1">{{ __('Value 3 Title') }}</small>
+                                </div>
+                                <div class="col-md-4 mb-4 form-group">
+                                    <label>{{ __('Value 3 Title (Ar)') }}</label>
+                                    <input type="text" class="form-control" name="value_3_title_ar" value="{{ \App\Models\Setting::get('value_3_title_ar') }}" placeholder="Value 3 Title">
+                                    <small class="text-muted d-block mt-1">{{ __('Value 3 Title') }}</small>
+                                </div>
+                                <div class="col-md-4 mb-4 form-group">
+                                    <label>{{ __('Value 3 Icon') }}</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fab fa-android text-success"></i></span>
+                                        <input type="text" class="form-control" name="value_3_icon" value="{{ \App\Models\Setting::get('value_3_icon') }}" placeholder="Value 3 Icon">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-4 form-group">
+                                    <label>{{ __('Value 3 Description (En)') }}</label>
+                                    <div class="input-group">
+                                        <textarea name="value_3_desc_en" class="form-control">{{ \App\Models\Setting::get('value_3_desc_en') }}</textarea>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-4 form-group">
+                                    <label>{{ __('Value 3 Description (Ar)') }}</label>
+                                    <div class="input-group">
+                                        <textarea name="value_3_desc_ar" class="form-control">{{ \App\Models\Setting::get('value_3_desc_ar') }}</textarea>
+                                    </div>  
+                                </div>
+                            </div>
+                             <div class="row">
+                                <div class="col-md-4 mb-4 form-group">
+                                    <label>{{ __('Value 4 Title (En)') }}</label>
+                                    <input type="text" class="form-control" name="value_4_title_en" value="{{ \App\Models\Setting::get('value_4_title_en') }}" placeholder="Value 4 Title">
+                                    <small class="text-muted d-block mt-1">{{ __('Value 4 Title') }}</small>
+                                </div>
+                                <div class="col-md-4 mb-4 form-group">
+                                    <label>{{ __('Value 4 Title (Ar)') }}</label>
+                                    <input type="text" class="form-control" name="value_4_title_ar" value="{{ \App\Models\Setting::get('value_4_title_ar') }}" placeholder="Value 4 Title">
+                                    <small class="text-muted d-block mt-1">{{ __('Value 4 Title') }}</small>
+                                </div>
+                                <div class="col-md-4 mb-4 form-group">
+                                    <label>{{ __('Value 4 Icon') }}</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" name="value_4_icon" value="{{ \App\Models\Setting::get('value_4_icon') }}" placeholder="Value 4 Icon">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-4 form-group">
+                                    <label>{{ __('Value 4 Description (En)') }}</label>
+                                    <div class="input-group">
+                                        <textarea name="value_4_desc_en" class="form-control">{{ \App\Models\Setting::get('value_4_desc_en') }}</textarea>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-4 form-group">
+                                    <label>{{ __('Value 4 Description (Ar)') }}</label>
+                                    <div class="input-group">
+                                        <textarea name="value_4_desc_ar" class="form-control">{{ \App\Models\Setting::get('value_4_desc_ar') }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

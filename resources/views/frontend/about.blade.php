@@ -33,22 +33,38 @@
             </div>
         </div>
     </div>
+     @php
+        $mission_title = \App\Models\Setting::get('mission_title_' . app()->getLocale(), config('app.name'));
+        $mission_desc = \App\Models\Setting::get('mission_desc_' . app()->getLocale(), config('app.name'));
+     @endphp
 
     {{-- Mission --}}
     <section class="fe-section">
         <div class="fe-container" style="max-width:800px">
             <div class="fe-section-header">
                 <span class="fe-section-subtitle">{{ __('Our Mission') }}</span>
-                <h2 class="fe-section-title">{{ __('Creating Unforgettable Travel Experiences') }}</h2>
+                <h2 class="fe-section-title">{{ $mission_title }}</h2>
             </div>
             <div style="text-align:center;color:var(--gray-500);line-height:2;font-size:1.05rem" class="fe-animate">
-                <p>{{ __('We believe that travel enriches lives and creates lasting memories. Our platform connects travelers with the best tour packages, flights, and hotels, making it easy to plan and book your dream vacation.') }}</p>
+                <p>{{ $mission_desc }}</p>
                 <br>
-                <p>{{ __('Founded with a passion for exploration, we work tirelessly to offer curated travel experiences at competitive prices. Our team of travel experts handpicks every package to ensure quality, safety, and unforgettable moments.') }}</p>
             </div>
         </div>
     </section>
-
+    @php
+        $value_1_title = \App\Models\Setting::get('value_1_title_' . app()->getLocale(), config('app.name'));
+        $value_1_desc = \App\Models\Setting::get('value_1_desc_' . app()->getLocale(), config('app.name'));
+        $value_2_title = \App\Models\Setting::get('value_2_title_' . app()->getLocale(), config('app.name'));
+        $value_2_desc = \App\Models\Setting::get('value_2_desc_' . app()->getLocale(), config('app.name'));
+        $value_3_title = \App\Models\Setting::get('value_3_title_' . app()->getLocale(), config('app.name'));
+        $value_3_desc = \App\Models\Setting::get('value_3_desc_' . app()->getLocale(), config('app.name'));
+        $value_4_title = \App\Models\Setting::get('value_4_title_' . app()->getLocale(), config('app.name'));
+        $value_4_desc = \App\Models\Setting::get('value_4_desc_' . app()->getLocale(), config('app.name'));
+        $value_1_icon = \App\Models\Setting::get('value_1_icon', config('app.name'));
+        $value_2_icon = \App\Models\Setting::get('value_2_icon', config('app.name'));
+        $value_3_icon = \App\Models\Setting::get('value_3_icon', config('app.name'));
+        $value_4_icon = \App\Models\Setting::get('value_4_icon', config('app.name'));
+     @endphp
     {{-- Values --}}
     <section class="fe-section fe-section-alt">
         <div class="fe-container">
@@ -58,24 +74,24 @@
             </div>
             <div class="fe-features-grid">
                 <div class="fe-feature-card fe-animate">
-                    <div class="fe-feature-icon"><i class="fas fa-heart"></i></div>
-                    <h4 class="fe-feature-title">{{ __('Passion') }}</h4>
-                    <p class="fe-feature-desc">{{ __('We are passionate about travel and dedicated to making your journey perfect.') }}</p>
+                    <div class="fe-feature-icon"><i class='{{ $value_1_icon}}'></i></div>
+                    <h4 class="fe-feature-title">{{ $value_1_title }}</h4>
+                    <p class="fe-feature-desc">{{ $value_1_desc }}</p>
                 </div>
                 <div class="fe-feature-card fe-animate">
-                    <div class="fe-feature-icon"><i class="fas fa-handshake"></i></div>
-                    <h4 class="fe-feature-title">{{ __('Trust') }}</h4>
-                    <p class="fe-feature-desc">{{ __('Transparency and honesty are the foundation of our relationships with clients.') }}</p>
+                    <div class="fe-feature-icon"><i class='{{ $value_2_icon}}'></i></div>
+                    <h4 class="fe-feature-title">{{ $value_2_title }}</h4>
+                    <p class="fe-feature-desc">{{ $value_2_desc }}</p>
                 </div>
                 <div class="fe-feature-card fe-animate">
-                    <div class="fe-feature-icon"><i class="fas fa-award"></i></div>
-                    <h4 class="fe-feature-title">{{ __('Quality') }}</h4>
-                    <p class="fe-feature-desc">{{ __('We carefully select every package and partner to ensure the highest standards.') }}</p>
+                    <div class="fe-feature-icon"><i class='{{ $value_3_icon}}'></i></div>
+                    <h4 class="fe-feature-title">{{ $value_3_title }}</h4>
+                    <p class="fe-feature-desc">{{ $value_3_desc }}</p>
                 </div>
                 <div class="fe-feature-card fe-animate">
-                    <div class="fe-feature-icon"><i class="fas fa-users"></i></div>
-                    <h4 class="fe-feature-title">{{ __('Customer First') }}</h4>
-                    <p class="fe-feature-desc">{{ __('Your satisfaction is our priority. We go above and beyond for every traveler.') }}</p>
+                    <div class="fe-feature-icon"><i class='{{ $value_4_icon}}'></i></div>
+                    <h4 class="fe-feature-title">{{ $value_4_title }}</h4>
+                    <p class="fe-feature-desc">{{ $value_4_desc }}</p>
                 </div>
             </div>
         </div>
