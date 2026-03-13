@@ -14,7 +14,7 @@
             "description": "Development Server"
         },
         {
-            "url": "https://flyvio.net/public",
+            "url": "https://flyvio.net",
             "description": "Production Server"
         }
     ],

@@ -15,7 +15,7 @@ use OpenApi\Attributes as OA;
     description: "Development Server"
 )]
 #[OA\Server(
-    url: "https://flyvio.net/public",
+    url: "https://flyvio.net",
     description: "Production Server"
 )]
 #[OA\SecurityScheme(
