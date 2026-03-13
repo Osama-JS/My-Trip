@@ -15,7 +15,7 @@ use OpenApi\Attributes as OA;
     description: "Development Server"
 )]
 #[OA\Server(
-    url: "https://blueviolet-hummingbird-437500.hostingersite.com/public",
+    url: "https://flyvio.net/public",
     description: "Production Server"
 )]
 #[OA\SecurityScheme(
