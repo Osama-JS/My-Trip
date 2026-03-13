@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\NotificationController as AdminNotificationContro
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\TripsController;
 use App\Http\Controllers\Admin\TripCategoryController;
+use App\Http\Controllers\FrontendController;
 
 // Customer Controllers
 use App\Http\Controllers\Customer\CustomerDashboardController;
@@ -21,6 +22,16 @@ use App\Http\Controllers\CompanyProfileController;
 
 
 use Illuminate\Support\Facades\Route;
+
+Route::get('/', [FrontendController::class, 'home'])->name('home');
+Route::get('/trips', [FrontendController::class, 'trips'])->name('trips.index');
+Route::get('/trips/{id}', [FrontendController::class, 'tripDetails'])->name('trips.show');
+Route::get('/flights', [FrontendController::class, 'flights'])->name('flights');
+Route::get('/hotels', [FrontendController::class, 'hotels'])->name('hotels');
+Route::get('/destinations', [FrontendController::class, 'destinations'])->name('destinations');
+Route::get('/about', [FrontendController::class, 'about'])->name('about');
+Route::get('/search', [FrontendController::class, 'search'])->name('search');
+Route::post('/book-trip', [FrontendController::class, 'bookTrip'])->name('book.trip')->middleware('auth');
 
 
 // =============================================================================
@@ -65,8 +76,21 @@ Route::get('lang/{locale}', function ($locale) {
     return redirect()->back();
 })->name('lang.switch');
 
+// =============================================================================
+// FRONTEND (PUBLIC) ROUTES
+// =============================================================================
+Route::get('/', [FrontendController::class, 'home'])->name('home');
+Route::get('/trips', [FrontendController::class, 'trips'])->name('trips.index');
+Route::get('/trips/{id}', [FrontendController::class, 'tripDetails'])->name('trips.show');
+Route::get('/flights', [FrontendController::class, 'flights'])->name('flights');
+Route::get('/hotels', [FrontendController::class, 'hotels'])->name('hotels');
+Route::get('/destinations', [FrontendController::class, 'destinations'])->name('destinations');
+Route::get('/about', [FrontendController::class, 'about'])->name('about');
+Route::get('/search', [FrontendController::class, 'search'])->name('search');
+Route::post('/book-trip', [FrontendController::class, 'bookTrip'])->name('book.trip')->middleware('auth');
+
 // Redirect root to login
-Route::get('/', function () {
+Route::get('/login', function () {
     if (auth()->check()) {
         if (auth()->user()->isAdmin()) {
             return redirect()->route('admin.dashboard');

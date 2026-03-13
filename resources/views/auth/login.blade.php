@@ -10,7 +10,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', __('Login')) - {{ config('app.name', 'My Trip') }}</title>
+    <title>@yield('title', __('Login')) - {{ config('app.name', 'Fly Vio') }}</title>
 
     <!-- Favicon -->
     <link rel="shortcut icon" type="image/png" href="{{ asset(\App\Models\Setting::get('site_favicon', 'images/favicon.png')) }}">

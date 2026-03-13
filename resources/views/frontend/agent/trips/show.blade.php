@@ -226,7 +226,7 @@
     {{-- ── Breadcrumb ── --}}
     <div style="margin-bottom: 20px;">
         <a href="{{ route('agent.trips.index') }}" style="color:#64748b; text-decoration:none; font-size:.88rem;">
-            <i class="fas fa-angle-right" style="margin-inline-end:6px;"></i>{{ __('My Trips') }}
+            <i class="fas fa-angle-right" style="margin-inline-end:6px;"></i>{{ __('Fly Vio') }}
         </a>
         <span style="margin: 0 8px; color:#cbd5e1;">/</span>
         <span style="font-size:.88rem; color:#1e293b; font-weight:700;">{{ $trip->title }}</span>

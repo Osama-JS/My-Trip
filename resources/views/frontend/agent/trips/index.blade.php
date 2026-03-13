@@ -1,7 +1,7 @@
 @extends('frontend.agent.layouts.agent-layout')
 
-@section('title', __('My Trips'))
-@section('page-title', __('My Trips'))
+@section('title', __('Fly Vio'))
+@section('page-title', __('Fly Vio'))
 
 @section('content')
 @push('styles')

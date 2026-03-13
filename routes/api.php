@@ -14,6 +14,40 @@ use App\Http\Controllers\Api\HotelController;
 |--------------------------------------------------------------------------
 */
 
+// Discovery Routes
+Route::prefix('v1')->group(function () {
+    Route::get('/countries', [\App\Http\Controllers\Api\V1\DiscoveryController::class, 'getCountries']);
+    Route::get('/cities', [\App\Http\Controllers\Api\V1\DiscoveryController::class, 'getCities']);
+    Route::get('/banners', [\App\Http\Controllers\Api\V1\DiscoveryController::class, 'getBanners']);
+    Route::get('/locations', [\App\Http\Controllers\Api\V1\DiscoveryController::class, 'getLocations']);
+    Route::get('/faqs', [\App\Http\Controllers\Api\V1\DiscoveryController::class, 'getFaqs']);
+    Route::get('/categories', [\App\Http\Controllers\Api\V1\DiscoveryController::class, 'getCategories']);
+
+    // Trips
+    Route::get('/trips/featured', [\App\Http\Controllers\Api\V1\TripController::class, 'featured']);
+    Route::get('/trips', [\App\Http\Controllers\Api\V1\TripController::class, 'index']);
+    Route::get('/trips/{id}', [\App\Http\Controllers\Api\V1\TripController::class, 'show']);
+    Route::post('/trips/book', [\App\Http\Controllers\Api\V1\TripController::class, 'book'])->middleware('auth:sanctum');
+
+    // My Bookings & Favorites
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/my-bookings', [\App\Http\Controllers\Api\V1\TripController::class, 'myBookings']);
+        Route::get('/bookings/{id}', [\App\Http\Controllers\Api\V1\TripController::class, 'bookingDetails']);
+        Route::get('/bookings/{id}/invoice', [\App\Http\Controllers\Api\V1\TripController::class, 'downloadInvoice']);
+        Route::get('/bookings/{id}/ticket', [\App\Http\Controllers\Api\V1\TripController::class, 'downloadTicket']);
+        Route::post('/bookings/{id}/cancel', [\App\Http\Controllers\Api\V1\TripController::class, 'cancelPendingBooking']);
+        Route::get('/favorites', [\App\Http\Controllers\Api\V1\TripController::class, 'getFavorites']);
+        Route::post('/trips/{id}/favorite', [\App\Http\Controllers\Api\V1\TripController::class, 'toggleFavorite']);
+
+        // Notifications
+        Route::get('/notifications', [\App\Http\Controllers\Api\NotificationController::class, 'index']);
+        Route::get('/notifications/unread-count', [\App\Http\Controllers\Api\NotificationController::class, 'unreadCount']);
+        Route::post('/notifications/{id}/read', [\App\Http\Controllers\Api\NotificationController::class, 'markAsRead']);
+        Route::post('/notifications/read-all', [\App\Http\Controllers\Api\NotificationController::class, 'markAllAsRead']);
+        Route::delete('/notifications/{id}', [\App\Http\Controllers\Api\NotificationController::class, 'destroy']);
+    });
+});
+
 // Public Routes
 Route::get('/app-settings', [AppSettingController::class, 'index']);
 Route::post('/register', [AuthController::class, 'register']);
