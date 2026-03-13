@@ -20,7 +20,12 @@ class DatabaseSeeder extends Seeder
             PermissionSeeder::class,
             RoleSeeder::class,
             AdminUserSeeder::class,
-            SettingSeeder::class
+            SettingSeeder::class,
+            CompanySeeder::class,
+            BannerSeeder::class,
+            LocationSeeder::class,
+            QuestionSeeder::class,
+
         ]);
     }
 }

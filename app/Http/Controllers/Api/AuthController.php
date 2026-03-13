@@ -63,8 +63,7 @@ class AuthController extends Controller
                         new OA\Property(property: "error", type: "boolean", example: false),
                         new OA\Property(property: "message", type: "string", example: "Registration successful. Please verify your email with the OTP sent."),
                         new OA\Property(property: "data", type: "object", properties: [
-                            new OA\Property(property: "access_token", type: "string", example: "1|abc..."),
-                            new OA\Property(property: "otp_code", type: "string", example: "123456")
+                            new OA\Property(property: "email", type: "string", example: "user@example.com")
                         ])
                     ]
                 )
@@ -117,14 +116,10 @@ class AuthController extends Controller
             'otp_expires_at' => Carbon::now()->addMinutes(10),
         ]);
 
-        // Send OTP via Email
         $this->mailService->sendVerificationOtp($user, $otp);
 
-        $token = $user->createToken('auth_token')->plainTextToken;
-
         return $this->apiResponse(false, __('Registration successful. Please verify your email with the OTP sent.'), [
-            'access_token' => $token,
-            'otp_code' => $otp
+            'email' => $user->email
         ], null, 200);
     }
 
@@ -134,7 +129,6 @@ class AuthController extends Controller
         operationId: "verifyOtp",
         description: "Verifies the customer account using the OTP code sent to their email.",
         tags: ["Authentication"],
-        security: [["bearerAuth" => []]],
         parameters: [
             new OA\Parameter(
                 name: "Accept-Language",
@@ -147,8 +141,9 @@ class AuthController extends Controller
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ["otp_code", "fcm_token", "device_type"],
+                required: ["email", "otp_code", "fcm_token", "device_type"],
                 properties: [
+                    new OA\Property(property: "email", type: "string", format: "email", example: "user@example.com"),
                     new OA\Property(property: "otp_code", type: "string", example: "123456"),
                     new OA\Property(property: "fcm_token", type: "string", example: "fcm_token_here..."),
                     new OA\Property(property: "device_type", type: "string", enum: ["android", "ios"], example: "android"),
@@ -195,6 +190,7 @@ class AuthController extends Controller
     public function verifyOtp(Request $request)
     {
         $validator = Validator::make($request->all(), [
+            'email' => 'required|email|exists:users,email',
             'otp_code' => 'required|string|size:6',
             'fcm_token' => 'required|string',
             'device_type' => 'required|string|in:android,ios',
@@ -204,7 +200,7 @@ class AuthController extends Controller
             return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
         }
 
-        $user = $request->user();
+        $user = User::where('email', $request->email)->first();
 
         if ($user->otp_code !== $request->otp_code || $user->otp_expires_at->isPast()) {
             return $this->apiResponse(true, __('Invalid or expired OTP code.'), null, null, 422);
@@ -245,6 +241,15 @@ class AuthController extends Controller
                 schema: new OA\Schema(type: "string", default: "en", enum: ["en", "ar"])
             )
         ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ["email"],
+                properties: [
+                    new OA\Property(property: "email", type: "string", format: "email", example: "user@example.com"),
+                ]
+            )
+        ),
         responses: [
             new OA\Response(
                 response: 200,
@@ -270,7 +275,15 @@ class AuthController extends Controller
     )]
     public function resendOtp(Request $request)
     {
-        $user = $request->user();
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email|exists:users,email',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+        }
+
+        $user = User::where('email', $request->email)->first();
 
         if ($user->email_verified_at) {
             return $this->apiResponse(true, __('Account is already verified.'), null, null, 403);
@@ -664,8 +677,7 @@ class AuthController extends Controller
                         new OA\Property(property: "error", type: "boolean", example: false),
                         new OA\Property(property: "message", type: "string", example: "Password reset code sent to your email."),
                         new OA\Property(property: "data", type: "object", properties: [
-                            new OA\Property(property: "access_token", type: "string", example: "1|abc..."),
-                            new OA\Property(property: "otp_code", type: "string", example: "123456")
+                            new OA\Property(property: "email", type: "string", example: "user@example.com")
                         ])
                     ]
                 )
@@ -691,12 +703,8 @@ class AuthController extends Controller
 
         $this->mailService->sendPasswordResetOtp($user, $otp);
 
-        $token = $user->createToken('auth_token')->plainTextToken;
-
         return $this->apiResponse(false, __('Password reset code sent to your email.'), [
-            'access_token' => $token,
-            'otp_code' => $otp
-
+            'email' => $user->email
         ]);
     }
 
@@ -705,7 +713,6 @@ class AuthController extends Controller
         summary: "Reset password using OTP",
         operationId: "resetPassword",
         description: "Resets the user's password using the OTP code sent to their email.",
-        tags: ["Authentication"],
         parameters: [
             new OA\Parameter(
                 name: "Accept-Language",
@@ -715,12 +722,12 @@ class AuthController extends Controller
                 schema: new OA\Schema(type: "string", default: "en", enum: ["en", "ar"])
             )
         ],
-        security: [["bearerAuth" => []]],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ["otp_code", "password", "password_confirmation"],
+                required: ["email", "otp_code", "password", "password_confirmation"],
                 properties: [
+                    new OA\Property(property: "email", type: "string", format: "email", example: "user@example.com"),
                     new OA\Property(property: "otp_code", type: "string", example: "123456"),
                     new OA\Property(property: "password", type: "string", format: "password", example: "NewSecret123"),
                     new OA\Property(property: "password_confirmation", type: "string", format: "password", example: "NewSecret123"),
@@ -753,6 +760,7 @@ class AuthController extends Controller
     public function resetPassword(Request $request)
     {
         $validator = Validator::make($request->all(), [
+            'email' => 'required|email|exists:users,email',
             'otp_code' => 'required|string|size:6',
             'password' => 'required|string|min:8|confirmed',
         ]);
@@ -761,7 +769,7 @@ class AuthController extends Controller
             return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
         }
 
-        $user = $request->user();
+        $user = User::where('email', $request->email)->first();
 
         if ($user->otp_code !== $request->otp_code || Carbon::now()->gt($user->otp_expires_at)) {
             return $this->apiResponse(true, __('Invalid or expired OTP code.'), null, null, 422);
@@ -772,8 +780,8 @@ class AuthController extends Controller
         $user->otp_expires_at = null;
         $user->save();
 
-        // Revoke the temporary token
-        $user->currentAccessToken()->delete();
+        // Optionally revoke all tokens
+        $user->tokens()->delete();
 
         return $this->apiResponse(false, __('Password has been reset successfully.'));
     }

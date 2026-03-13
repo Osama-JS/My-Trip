@@ -19,6 +19,9 @@ Route::get('/app-settings', [AppSettingController::class, 'index']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
+Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
+Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 Route::get('/payment/callback', [PaymentController::class, 'handleCallback'])->name('payment.callback');
 
 // Flight Routes
@@ -51,13 +54,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/hotels/cancel', [HotelController::class, 'cancel']);
     Route::post('/hotels/booking-details', [HotelController::class, 'getBookingDetails']);
 
-    Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
-    Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
     Route::get('/check-token', [AuthController::class, 'checkToken']);
     Route::get('/profile', [AuthController::class, 'profile']);
     Route::post('/profile/update', [AuthController::class, 'updateProfile']);
     Route::post('/profile/change-password', [AuthController::class, 'changePassword']);
-    Route::post('/reset-password', [AuthController::class, 'resetPassword']);
     Route::post('/update-fcm-token', [AuthController::class, 'updateFcmToken']);
 
     // Payment Routes

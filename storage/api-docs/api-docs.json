@@ -197,13 +197,9 @@
                                         },
                                         "data": {
                                             "properties": {
-                                                "access_token": {
+                                                "email": {
                                                     "type": "string",
-                                                    "example": "1|abc..."
-                                                },
-                                                "otp_code": {
-                                                    "type": "string",
-                                                    "example": "123456"
+                                                    "example": "user@example.com"
                                                 }
                                             },
                                             "type": "object"
@@ -270,11 +266,17 @@
                         "application/json": {
                             "schema": {
                                 "required": [
+                                    "email",
                                     "otp_code",
                                     "fcm_token",
                                     "device_type"
                                 ],
                                 "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "user@example.com"
+                                    },
                                     "otp_code": {
                                         "type": "string",
                                         "example": "123456"
@@ -388,12 +390,7 @@
                             }
                         }
                     }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
+                }
             }
         },
         "/api/resend-otp": {
@@ -420,6 +417,26 @@
                         }
                     }
                 ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "user@example.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "OTP resent successful",
@@ -1107,13 +1124,9 @@
                                         },
                                         "data": {
                                             "properties": {
-                                                "access_token": {
+                                                "email": {
                                                     "type": "string",
-                                                    "example": "1|abc..."
-                                                },
-                                                "otp_code": {
-                                                    "type": "string",
-                                                    "example": "123456"
+                                                    "example": "user@example.com"
                                                 }
                                             },
                                             "type": "object"
@@ -1129,9 +1142,6 @@
         },
         "/api/reset-password": {
             "post": {
-                "tags": [
-                    "Authentication"
-                ],
                 "summary": "Reset password using OTP",
                 "description": "Resets the user's password using the OTP code sent to their email.",
                 "operationId": "resetPassword",
@@ -1157,11 +1167,17 @@
                         "application/json": {
                             "schema": {
                                 "required": [
+                                    "email",
                                     "otp_code",
                                     "password",
                                     "password_confirmation"
                                 ],
                                 "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "user@example.com"
+                                    },
                                     "otp_code": {
                                         "type": "string",
                                         "example": "123456"
@@ -1223,12 +1239,7 @@
                             }
                         }
                     }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
+                }
             }
         },
         "/api/profile/change-password": {
