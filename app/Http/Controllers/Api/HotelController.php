@@ -92,10 +92,12 @@ class HotelController extends Controller
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ["hotelId", "sessionId"],
+                required: ["hotelId", "sessionId", "productId", "tokenId"],
                 properties: [
                     new OA\Property(property: "hotelId", type: "string", example: "H12345"),
-                    new OA\Property(property: "sessionId", type: "string", example: "sess-abc-123")
+                    new OA\Property(property: "sessionId", type: "string", example: "sess-abc-123"),
+                    new OA\Property(property: "productId", type: "string"),
+                    new OA\Property(property: "tokenId", type: "string")
                 ]
             )
         ),
@@ -133,10 +135,12 @@ class HotelController extends Controller
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ["rateBasisId", "sessionId"],
+                required: ["rateBasisId", "sessionId", "productId", "tokenId"],
                 properties: [
                     new OA\Property(property: "rateBasisId", type: "string", example: "RB123"),
-                    new OA\Property(property: "sessionId", type: "string", example: "sess-abc-123")
+                    new OA\Property(property: "sessionId", type: "string", example: "sess-abc-123"),
+                    new OA\Property(property: "productId", type: "string"),
+                    new OA\Property(property: "tokenId", type: "string")
                 ]
             )
         ),
@@ -175,10 +179,12 @@ class HotelController extends Controller
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ["rateBasisId", "sessionId", "customerEmail", "customerPhone", "paxDetails"],
+                required: ["rateBasisId", "sessionId", "productId", "tokenId", "customerEmail", "customerPhone", "paxDetails"],
                 properties: [
                     new OA\Property(property: "rateBasisId", type: "string", example: "RB123"),
                     new OA\Property(property: "sessionId", type: "string", example: "sess-abc-123"),
+                    new OA\Property(property: "productId", type: "string"),
+                    new OA\Property(property: "tokenId", type: "string"),
                     new OA\Property(property: "customerEmail", type: "string", format: "email", example: "guest@example.com"),
                     new OA\Property(property: "customerPhone", type: "string", example: "966500000000"),
                     new OA\Property(property: "paxDetails", type: "array", items: new OA\Items(type: "object"))
@@ -329,9 +335,12 @@ class HotelController extends Controller
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ["hotelId"],
+                required: ["hotelId", "sessionId", "productId", "tokenId"],
                 properties: [
-                    new OA\Property(property: "hotelId", type: "string")
+                    new OA\Property(property: "hotelId", type: "string"),
+                    new OA\Property(property: "sessionId", type: "string"),
+                    new OA\Property(property: "productId", type: "string"),
+                    new OA\Property(property: "tokenId", type: "string")
                 ]
             )
         ),
