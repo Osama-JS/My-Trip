@@ -18,9 +18,11 @@ class TripBookingController extends Controller
     {
         $stats = [
             'total' => TripBooking::count(),
-            'confirmed' => TripBooking::where('status', 'confirmed')->count(),
-            'pending' => TripBooking::where('status', 'pending')->count(),
-            'cancelled' => TripBooking::where('status', 'cancelled')->count(),
+            'awaiting_payment' => TripBooking::where('booking_state', TripBooking::STATE_AWAITING_PAYMENT)->count(),
+            'preparing' => TripBooking::where('booking_state', TripBooking::STATE_PREPARING)->count(),
+            'issuing_tickets' => TripBooking::where('booking_state', TripBooking::STATE_ISSUING_TICKETS)->count(),
+            'completed' => TripBooking::where('booking_state', TripBooking::STATE_COMPLETED)->count(),
+            'cancelled' => TripBooking::where('booking_state', TripBooking::STATE_CANCELLED)->count(),
         ];
         return view('admin.trip_bookings.index', compact('stats'));
     }
@@ -34,12 +36,17 @@ class TripBookingController extends Controller
             $bookings = TripBooking::with(['user', 'trip'])->latest()->get();
 
             $data = $bookings->map(function ($booking) {
-                $statusBadge = '<span class="badge badge-warning">' . __('Pending') . '</span>';
-                if ($booking->status == 'confirmed') {
-                    $statusBadge = '<span class="badge badge-success">' . __('Confirmed') . '</span>';
-                } elseif ($booking->status == 'cancelled') {
-                    $statusBadge = '<span class="badge badge-danger">' . __('Cancelled') . '</span>';
-                }
+                $stateMap = [
+                    TripBooking::STATE_AWAITING_PAYMENT => ['class' => 'warning', 'label' => __('Awaiting Payment')],
+                    TripBooking::STATE_PREPARING => ['class' => 'info', 'label' => __('Preparing')],
+                    TripBooking::STATE_ISSUING_TICKETS => ['class' => 'primary', 'label' => __('Issuing Tickets')],
+                    TripBooking::STATE_TICKETS_UPLOADED => ['class' => 'success', 'label' => __('Tickets Uploaded')],
+                    TripBooking::STATE_COMPLETED => ['class' => 'success', 'label' => __('Completed')],
+                    TripBooking::STATE_CANCELLED => ['class' => 'danger', 'label' => __('Cancelled')],
+                ];
+
+                $stateInfo = $stateMap[$booking->booking_state] ?? ['class' => 'secondary', 'label' => $booking->booking_state];
+                $statusBadge = '<span class="badge badge-' . $stateInfo['class'] . '">' . $stateInfo['label'] . '</span>';
 
                 return [
                     'id' => $booking->id,
@@ -69,20 +76,6 @@ class TripBookingController extends Controller
         // Status Buttons
         $statusBtns = '';
         if (auth()->user()->can('manage bookings')) {
-            if ($booking->status == 'pending') {
-                $statusBtns .= '<form action="' . route('admin.trip-bookings.update-status', $booking->id) . '" method="POST" class="d-inline confirm-action" data-confirm-message="' . __('Are you sure you want to confirm this booking?') . '">
-                    ' . csrf_field() . '
-                    <input type="hidden" name="status" value="confirmed">
-                    <button type="submit" class="btn btn-success btn-sm me-1" title="' . __('Confirm') . '"><i class="fas fa-check"></i></button>
-                </form>';
-
-                $statusBtns .= '<form action="' . route('admin.trip-bookings.update-status', $booking->id) . '" method="POST" class="d-inline confirm-action" data-confirm-message="' . __('Are you sure you want to cancel this booking?') . '">
-                ' . csrf_field() . '
-                <input type="hidden" name="status" value="cancelled">
-                <button type="submit" class="btn btn-danger btn-sm me-1" title="' . __('Cancel') . '"><i class="fas fa-times"></i></button>
-                </form>';
-            }
-
             $statusBtns .= '<form action="' . route('admin.trip-bookings.destroy', $booking->id) . '" method="POST" class="d-inline confirm-action" data-confirm-message="' . __('Are you sure you want to delete this booking?') . '">
                 ' . csrf_field() . '
                 ' . method_field('DELETE') . '
@@ -98,7 +91,7 @@ class TripBookingController extends Controller
      */
     public function show($id)
     {
-        $booking = TripBooking::with(['user', 'trip', 'passengers', 'payment', 'payments', 'bankTransfers'])->findOrFail($id);
+        $booking = TripBooking::with(['user', 'trip', 'passengers', 'payment', 'payments', 'bankTransfers', 'histories.user'])->findOrFail($id);
         $latestBankTransfer = $booking->bankTransfers->sortByDesc('created_at')->first();
         return view('admin.trip_bookings.show', compact('booking', 'latestBankTransfer'));
     }
@@ -113,15 +106,17 @@ class TripBookingController extends Controller
         $oldState = $booking->booking_state;
         $booking->update(['status' => $request->status]);
 
-        if ($request->status == 'cancelled') {
-            $booking->update(['booking_state' => TripBooking::STATE_CANCELLED]);
+        if ($request->status == 'cancelled' || $request->status == 'refunded') {
+             $newState = $request->status == 'cancelled' ? TripBooking::STATE_CANCELLED : $oldState;
+             $booking->update(['booking_state' => $newState]);
+             
             \App\Models\BookingHistory::create([
                 'trip_booking_id' => $booking->id,
                 'user_id' => auth()->id(),
-                'action' => 'booking_cancelled',
-                'description' => __('Booking was cancelled by admin.'),
+                'action' => 'booking_status_updated',
+                'description' => __('Booking status was updated to :status by admin.', ['status' => __($request->status)]),
                 'previous_state' => $oldState,
-                'new_state' => TripBooking::STATE_CANCELLED,
+                'new_state' => $booking->booking_state,
             ]);
         }
 
@@ -135,7 +130,7 @@ class TripBookingController extends Controller
     {
         $booking = TripBooking::findOrFail($id);
         $request->validate([
-            'booking_state' => 'required|in:received,preparing,confirmed,tickets_sent,cancelled'
+            'booking_state' => 'required|in:awaiting_payment,preparing,issuing_tickets,tickets_uploaded,completed,cancelled'
         ]);
 
         $oldState = $booking->booking_state;
@@ -152,8 +147,6 @@ class TripBookingController extends Controller
         ]);
 
         return redirect()->back()->with('success', __('Booking state updated successfully.'));
-    }
-
     /**
      * Remove the specified resource from storage.
      */

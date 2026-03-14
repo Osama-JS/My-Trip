@@ -16,13 +16,22 @@
     {{-- Google Fonts --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
 
     {{-- Font Awesome --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    {{-- Premium Frontend CSS --}}
+    <link rel="stylesheet" href="{{ asset('css/frontend/variables.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/frontend/app.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/frontend/components.css') }}">
+    @if(app()->getLocale() === 'ar')
+        <link rel="stylesheet" href="{{ asset('css/frontend/rtl.css') }}">
+    @endif
 
-    {{-- Frontend CSS --}}
+    {{-- Global Frontend CSS --}}
     <link rel="stylesheet" href="{{ asset('css/frontend.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
     @stack('styles')
 </head>

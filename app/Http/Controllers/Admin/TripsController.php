@@ -44,6 +44,7 @@ class TripsController extends Controller
     {
         $request->validate([
             'day_number' => 'required|integer',
+            'sort_order' => 'nullable|integer',
             'title' => 'required|string',
             'description' => 'nullable|string',
         ]);

@@ -83,8 +83,20 @@ class BankTransferController extends Controller
 
             // 2. Update Booking Status
             $booking = $transfer->booking;
+            $oldState = $booking->booking_state;
             $booking->update([
-                'status' => 'confirmed'
+                'status' => 'confirmed',
+                'booking_state' => \App\Models\TripBooking::STATE_PREPARING // Move to preparing after payment
+            ]);
+
+            // Create History for the state change
+            \App\Models\BookingHistory::create([
+                'trip_booking_id' => $booking->id,
+                'user_id' => auth()->id(),
+                'action' => 'payment_approved',
+                'description' => __('Booking state moved to Preparing after bank transfer approval.'),
+                'previous_state' => $oldState,
+                'new_state' => \App\Models\TripBooking::STATE_PREPARING,
             ]);
 
             // 3. Create Payment Record

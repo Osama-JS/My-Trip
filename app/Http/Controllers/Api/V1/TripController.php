@@ -166,13 +166,13 @@ class TripController extends Controller
         $transformedData = $trips->getCollection()->map(function ($trip) use ($userFavoriteIds) {
             return [
                 'id' => $trip->id,
-                'title' => app()->getLocale() == 'ar' ? $trip->title_ar : $trip->title_en,   // Translatable if using Spatie Translatable
-                'description' => app()->getLocale() == 'ar' ? $trip->description_ar : $trip->description_en,   // Translatable if using Spatie Translatable
+                'title' => app()->getLocale() == 'ar' ? $trip->title_ar : $trip->title_en,
+                'description' => app()->getLocale() == 'ar' ? $trip->description_ar : $trip->description_en,
                 'price' => $trip->price,
                 'price_before_discount' => $trip->price_before_discount,
                 'duration' => $trip->duration,
                 'tickets' => $trip->tickets,
-                'image' => $trip->image_url, // Accessor
+                'image' => $trip->image_url,
                 'to_country' => $trip->toCountry ? $trip->toCountry->name : null,
                 'to_city' => $trip->toCity ? $trip->toCity->name : null,
                 'is_active' => $trip->active,
@@ -286,7 +286,7 @@ class TripController extends Controller
             'company' => $trip->company ? [
                 'id' => $trip->company->id,
                 'name' => $trip->company->name,
-                'logo' => $trip->company->logo_url, // Assuming accessor exists
+                'logo' => $trip->company->logo_url,
             ] : null,
             'location' => [
                 'country' => $trip->toCountry ? $trip->toCountry->name : null,
@@ -297,7 +297,7 @@ class TripController extends Controller
             'images' => $trip->images->map(function ($img) {
                 return asset('storage/' . $img->image_path);
             }),
-            'itineraries' => $trip->itineraries->map(function ($itinerary) {
+            'itineraries' => $trip->itineraries->sortBy('sort_order')->values()->map(function ($itinerary) {
                 return [
                     'day' => $itinerary->day_number,
                     'title' => $itinerary->title,
@@ -403,10 +403,9 @@ class TripController extends Controller
              return $this->apiResponse(true, __('Not enough tickets available. Only :count left.', ['count' => $trip->tickets]), null, null, 422);
         }
 
-        // Create booking
-        $user = Auth::guard('sanctum')->user(); // Ensure using sanctum guard
+        $user = Auth::guard('sanctum')->user();
         if (!$user) {
-             return $this->apiResponse(true, 'Unauthenticated', null, null, 401);
+             return $this->apiResponse(true, __('Unauthenticated'), null, null, 401);
         }
 
         // Calculate dynamic price
@@ -426,7 +425,7 @@ class TripController extends Controller
             'trip_id' => $trip->id,
             'tickets_count' => $passengersCount,
             'total_price' => $totalPrice,
-            'status' => 'pending',
+            'booking_state' => TripBooking::STATE_AWAITING_PAYMENT, // Use new state
             'notes' => $request->notes,
             'booking_date' => now(),
         ]);
@@ -435,6 +434,15 @@ class TripController extends Controller
         foreach ($request->passengers as $passengerData) {
             $booking->passengers()->create($passengerData);
         }
+
+        // Add history
+        \App\Models\BookingHistory::create([
+            'trip_booking_id' => $booking->id,
+            'user_id' => $user->id,
+            'action' => 'booking_created',
+            'description' => __('Customer created a new booking.'),
+            'new_state' => TripBooking::STATE_AWAITING_PAYMENT,
+        ]);
 
         return $this->apiResponse(false, __('Booking created successfully'), $booking->load('passengers'));
     }
@@ -514,13 +522,37 @@ class TripController extends Controller
     {
         $user = Auth::guard('sanctum')->user();
         if (!$user) {
-            return $this->apiResponse(true, 'Unauthenticated', null, null, 401);
+            return $this->apiResponse(true, __('Unauthenticated'), null, null, 401);
         }
 
         $bookings = TripBooking::with(['trip.toCountry', 'trip.toCity'])
             ->where('user_id', $user->id)
             ->latest()
             ->paginate($request->per_page ?? 10);
+
+        // Transform results
+        $transformed = $bookings->getCollection()->map(function($booking) {
+            $trip = $booking->trip;
+            return [
+                'id' => $booking->id,
+                'trip_id' => $booking->trip_id,
+                'tickets_count' => $booking->tickets_count,
+                'total_price' => $booking->total_price,
+                'booking_state' => $booking->booking_state,
+                'booking_date' => $booking->booking_date,
+                'trip' => [
+                    'id' => $trip->id,
+                    'title' => app()->getLocale() == 'ar' ? $trip->title_ar : $trip->title_en,
+                    'image' => $trip->image_url,
+                    'location' => [
+                        'country' => $trip->toCountry ? $trip->toCountry->name : null,
+                        'city' => $trip->toCity ? $trip->toCity->name : null,
+                    ],
+                ]
+            ];
+        });
+
+        $bookings->setCollection($transformed);
 
         return $this->apiResponse(false, __('Bookings retrieved successful'), $bookings);
     }

@@ -37,8 +37,17 @@ class PaymentController extends Controller
         path: "/api/payment/methods",
         summary: "Get available payment methods",
         operationId: "getPaymentMethods",
-        description: "Returns a list of active payment gateways and their configuration for the UI.",
+        description: "Returns a list of active payment gateways. If 'type' is 'trip', bank_transfer is included.",
         tags: ["Payment"],
+        parameters: [
+            new OA\Parameter(
+                name: "type",
+                in: "query",
+                description: "Booking type: trip, hotel, flight",
+                required: false,
+                schema: new OA\Schema(type: "string", enum: ["trip", "hotel", "flight"])
+            )
+        ],
         responses: [
             new OA\Response(
                 response: 200,
@@ -60,7 +69,7 @@ class PaymentController extends Controller
             )
         ]
     )]
-    public function methods()
+    public function methods(Request $request)
     {
         $methods = [
             [
@@ -76,6 +85,12 @@ class PaymentController extends Controller
                 'icon' => asset('assets/img/payments/visa.png')
             ],
             [
+                'key' => 'apple_pay',
+                'name' => __('Apple Pay'),
+                'type' => 'digital_wallet',
+                'icon' => asset('assets/img/payments/apple-pay.png')
+            ],
+            [
                 'key' => 'tabby',
                 'name' => __('Tabby (Installments)'),
                 'type' => 'redirect',
@@ -86,14 +101,18 @@ class PaymentController extends Controller
                 'name' => __('Tamara'),
                 'type' => 'redirect',
                 'icon' => asset('assets/img/payments/tamara.png')
-            ],
-            [
-                'key' => 'apple_pay',
-                'name' => __('Apple Pay'),
-                'type' => 'digital_wallet',
-                'icon' => asset('assets/img/payments/apple-pay.png')
             ]
         ];
+
+        // Add Bank Transfer EXCLUSIVELY for Trips
+        if ($request->type === 'trip') {
+            $methods[] = [
+                'key' => 'bank_transfer',
+                'name' => __('Bank Transfer'),
+                'type' => 'manual',
+                'icon' => asset('assets/img/payments/bank-transfer.png')
+            ];
+        }
 
         return $this->apiResponse(false, __('Payment methods retrieved successfully.'), $methods);
     }
@@ -152,11 +171,41 @@ class PaymentController extends Controller
             new OA\Response(response: 500, description: "Payment Gateway Error")
         ]
     )]
+    /**
+     * Initiate Payment Checkout (Standard Flow or WebView Flow)
+     */
+    #[OA\Post(
+        path: "/api/payment/initiate",
+        summary: "Initiate payment checkout",
+        operationId: "initiatePayment",
+        description: "Initializes a payment session. If targeting a Trip, it can return a WebView URL and supports manual bank transfer initiation settings.",
+        tags: ["Payment"],
+        security: [["bearerAuth" => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ["amount", "payment_type"],
+                properties: [
+                    new OA\Property(property: "amount", type: "number", format: "float", example: 100.50),
+                    new OA\Property(property: "payment_type", type: "string", enum: ["mada", "visa_master", "apple_pay", "tabby", "tamara"], example: "visa_master"),
+                    new OA\Property(property: "booking_id", type: "integer", example: 1, description: "Required for Trip bookings"),
+                    new OA\Property(property: "booking_type", type: "string", enum: ["trip", "hotel", "flight"], example: "trip"),
+                    new OA\Property(property: "order_id", type: "string", example: "ORDER-12345"),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: "initialized"),
+            new OA\Response(response: 422, description: "Validation Error")
+        ]
+    )]
     public function initiate(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'amount' => 'required|numeric|min:1',
-            'payment_type' => 'required|string|in:mada,visa_master,apple_pay,tabby,stc_pay,tamara', // Added stc_pay if needed for hyperpay later, but focus on requested
+            'payment_type' => 'required|string|in:mada,visa_master,apple_pay,tabby,tamara,bank_transfer',
+            'booking_id' => 'required_if:booking_type,trip|exists:trip_bookings,id',
+            'booking_type' => 'required|string|in:trip,hotel,flight',
             'order_id' => 'nullable|string',
         ]);
 
@@ -164,10 +213,32 @@ class PaymentController extends Controller
             return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
         }
 
+        // RESTRICTION: Bank Transfer only for Trips
+        if ($request->payment_type === 'bank_transfer' && $request->booking_type !== 'trip') {
+            return $this->apiResponse(true, __('Bank transfer is only available for trip bookings.'), null, null, 403);
+        }
+
         try {
             $user = $request->user();
             $paymentType = $request->payment_type;
 
+            // If it's a Trip booking, use the WebView flow pattern from wjhtak-site if desired, 
+            // but here we'll keep the direct API support for hyperpay etc, and just enforce the restriction.
+            
+            // Handle Bank Transfer Initiation (just instructions/data if needed)
+            if ($paymentType === 'bank_transfer') {
+                 return $this->apiResponse(false, __('Bank transfer initiated. Please upload your receipt.'), [
+                     'action' => 'upload_receipt',
+                     'upload_url' => route('payment.bank-transfer.submit')
+                 ]);
+            }
+
+            // Handle Tabby
+            if ($paymentType === 'tabby') {
+                return $this->initiateTabby($request, $user);
+            }
+
+            // Handle Tamara
             // Handle Tabby
             if ($paymentType === 'tabby') {
                 return $this->initiateTabby($request, $user);
@@ -192,6 +263,8 @@ class PaymentController extends Controller
         $params = [];
         if ($request->order_id) {
             $params['merchantTransactionId'] = $request->order_id;
+        } elseif ($request->booking_id) {
+            $params['merchantTransactionId'] = strtoupper($request->booking_type) . '-' . $request->booking_id . '-' . time();
         }
 
         if ($user->email) {
@@ -205,6 +278,17 @@ class PaymentController extends Controller
         );
 
         if ($result && isset($result['id'])) {
+             // For Trips, if source is API, we might want to return the webview URL instead
+             if ($request->booking_type === 'trip') {
+                 $paymentUrl = route('payments.web.checkout', [
+                    'booking_id' => $request->booking_id,
+                    'method' => $request->payment_type,
+                    'source' => 'api'
+                 ]);
+                 return $this->apiResponse(false, __('Checkout link generated successfully.'), [
+                     'payment_url' => $paymentUrl
+                 ]);
+             }
             return $this->apiResponse(false, __('Checkout initialized successfully.'), $result);
         }
 
@@ -215,27 +299,34 @@ class PaymentController extends Controller
     {
         $data = [
             'amount' => $request->amount,
-            // 'currency' => 'SAR', // Service defaults to SAR
             'customer_name' => ($request->first_name && $request->last_name)
                                 ? $request->first_name . ' ' . $request->last_name
                                 : $user->name,
             'customer_email' => $request->email ?? $user->email,
-            'customer_phone' => $request->phone ?? $user->phone, // Ensure user model has phone or request has it
-            'order_id' => $request->order_id ?? uniqid('ORD-'),
+            'customer_phone' => $request->phone ?? $user->phone,
+            'order_id' => $request->order_id ?? (strtoupper($request->booking_type ?? 'OBJ') . '-' . ($request->booking_id ?? uniqid())),
             'callback_url' => route('payment.callback', ['gateway' => 'tabby']),
-            'items' => [], // Add logic to pass items if available
-            // Add other optional fields
+            'items' => [],
             'city' => $request->city,
             'address' => $request->address,
-            'zip' => $request->zip,
         ];
 
-        // Basic validation for Tabby requirements
         if (!$data['customer_email'] || !$data['customer_phone'] || !$data['customer_name']) {
              throw new \Exception('Missing required customer data for Tabby (name, email, phone).');
         }
 
         $result = $this->tabbyService->initiateCheckout($data);
+        
+        if ($request->booking_type === 'trip') {
+             $paymentUrl = route('payments.web.checkout', [
+                'booking_id' => $request->booking_id,
+                'method' => 'tabby',
+                'source' => 'api'
+             ]);
+             return $this->apiResponse(false, __('Tabby link generated.'), [
+                 'payment_url' => $paymentUrl
+             ]);
+        }
 
         return $this->apiResponse(false, __('Tabby checkout initialized.'), $result);
     }
@@ -248,10 +339,9 @@ class PaymentController extends Controller
             'customer_phone' => $request->phone ?? $user->phone,
             'first_name' => $request->first_name ?? explode(' ', $user->name)[0],
             'last_name' => $request->last_name ?? (explode(' ', $user->name)[1] ?? 'User'),
-            'order_id' => $request->order_id ?? uniqid('ORD-'),
+            'order_id' => $request->order_id ?? (strtoupper($request->booking_type ?? 'OBJ') . '-' . ($request->booking_id ?? uniqid())),
             'callback_url' => route('payment.callback', ['gateway' => 'tamara']),
-            'items' => [], // Add items logic
-             // Add other optional fields
+            'items' => [],
             'city' => $request->city,
             'address' => $request->address,
         ];
@@ -262,7 +352,92 @@ class PaymentController extends Controller
 
         $result = $this->tamaraService->initiateCheckout($data);
 
+        if ($request->booking_type === 'trip') {
+             $paymentUrl = route('payments.web.checkout', [
+                'booking_id' => $request->booking_id,
+                'method' => 'tamara',
+                'source' => 'api'
+             ]);
+             return $this->apiResponse(false, __('Tamara link generated.'), [
+                 'payment_url' => $paymentUrl
+             ]);
+        }
+
         return $this->apiResponse(false, __('Tamara checkout initialized.'), $result);
+    }
+
+    /**
+     * Submit Bank Transfer Receipt
+     */
+    #[OA\Post(
+        path: '/api/payment/bank-transfer',
+        summary: 'Submit bank transfer receipt',
+        tags: ['Payment'],
+        security: [["bearerAuth" => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'multipart/form-data',
+                schema: new OA\Schema(
+                    required: ['booking_id', 'receipt_image', 'sender_name'],
+                    properties: [
+                        new OA\Property(property: 'booking_id', type: 'integer'),
+                        new OA\Property(property: 'receipt_image', type: 'string', format: 'binary'),
+                        new OA\Property(property: 'sender_name', type: 'string'),
+                        new OA\Property(property: 'notes', type: 'string'),
+                    ]
+                )
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: "Success")
+        ]
+    )]
+    public function submitBankTransfer(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'booking_id' => 'required|exists:trip_bookings,id',
+            'receipt_image' => 'required|file|mimes:jpeg,png,jpg,pdf|max:5120',
+            'sender_name' => 'required|string|max:255',
+            'notes' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+        }
+
+        try {
+            $user = $request->user();
+            $booking = \App\Models\TripBooking::where('user_id', $user->id)->findOrFail($request->booking_id);
+
+            // Handle File Upload
+            $path = $request->file('receipt_image')->store('bank_transfers', 'public');
+
+            // Create record
+            $bankTransfer = \App\Models\BankTransfer::create([
+                'trip_booking_id' => $booking->id,
+                'user_id' => $user->id,
+                'sender_name' => $request->sender_name,
+                'receipt_image' => $path,
+                'notes' => $request->notes,
+                'status' => 'pending'
+            ]);
+
+            // Create History
+            \App\Models\BookingHistory::create([
+                'trip_booking_id' => $booking->id,
+                'user_id' => $user->id,
+                'action' => 'bank_transfer_submitted',
+                'description' => __('Customer submitted bank transfer receipt.'),
+                'new_state' => \App\Models\TripBooking::STATE_AWAITING_PAYMENT,
+            ]);
+
+            return $this->apiResponse(false, __('Bank transfer submitted successfully. It will be reviewed by admin soon.'), $bankTransfer);
+
+        } catch (\Exception $e) {
+            Log::error("Bank Transfer Error: " . $e->getMessage());
+            return $this->apiResponse(true, __('Failed to submit transfer: ') . $e->getMessage(), null, null, 500);
+        }
     }
 
     /**

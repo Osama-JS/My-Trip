@@ -15,6 +15,7 @@ class Company extends Model
         'email',
         'phone',
         'phone_code',
+        'commission_rate',
         'notes',
         'active',
     ];
