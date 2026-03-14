@@ -2938,7 +2938,7 @@
                     "Hotels"
                 ],
                 "summary": "البحث عن الفنادق (Search for hotels)",
-                "description": "البحث عن الفنادق المتاحة عبر Travelopro API مع دعم التصفية المتقدمة. (Search for hotel availability).",
+                "description": "البحث عن الفنادق المتاحة. يجب استخدامcityName و countryName من دالة /api/hotels/cities. (Search for hotels. Use cityName and countryName from /api/hotels/cities).",
                 "operationId": "searchHotels",
                 "requestBody": {
                     "required": true,
@@ -2953,36 +2953,44 @@
                                 ],
                                 "properties": {
                                     "cityName": {
+                                        "description": "اسم المدينة من دالة المدن (City name from cities API)",
                                         "type": "string",
                                         "example": "Dubai"
                                     },
                                     "countryName": {
+                                        "description": "اسم الدولة من دالة المدن (Country name from cities API)",
                                         "type": "string",
                                         "example": "United Arab Emirates"
                                     },
                                     "checkIn": {
+                                        "description": "تاريخ الدخول YYYY-MM-DD",
                                         "type": "string",
                                         "format": "date",
                                         "example": "2024-12-01"
                                     },
                                     "checkOut": {
+                                        "description": "تاريخ الخروج YYYY-MM-DD",
                                         "type": "string",
                                         "format": "date",
                                         "example": "2024-12-10"
                                     },
                                     "rooms": {
+                                        "description": "عدد الغرف",
                                         "type": "integer",
                                         "example": 1
                                     },
                                     "adults": {
+                                        "description": "عدد البالغين",
                                         "type": "integer",
                                         "example": 1
                                     },
                                     "childs": {
+                                        "description": "عدد الأطفال",
                                         "type": "integer",
                                         "example": 0
                                     },
                                     "childAge": {
+                                        "description": "أعمار الأطفال",
                                         "type": "array",
                                         "items": {
                                             "type": "integer"
@@ -2990,14 +2998,17 @@
                                         "example": []
                                     },
                                     "requiredCurrency": {
+                                        "description": "العملة (ISO 3 letters)",
                                         "type": "string",
                                         "example": "SAR"
                                     },
                                     "residentNationality": {
+                                        "description": "جنسية المقيم (ISO 2 letters)",
                                         "type": "string",
                                         "example": "SA"
                                     },
                                     "requiredLanguage": {
+                                        "description": "اللغة من دالة اللغات (Language code from languages API)",
                                         "type": "string",
                                         "example": "ARA"
                                     }
@@ -3009,7 +3020,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "تم استرجاع الفنادق بنجاح"
+                        "description": "تم استرجاع الفنادق بنجاح. لاحظ وجود sessionId و nextToken و moreResults في النتيجة."
                     }
                 }
             }
@@ -3020,6 +3031,7 @@
                     "Hotels"
                 ],
                 "summary": "جلب أسعار الغرف (Get room rates)",
+                "description": "جلب قائمة الغرف والأسعار لفندق معين. البيانات تأتي من نتيجة البحث للفندق المختار. (Get room rates for a selected hotel. Data comes from search results).",
                 "operationId": "getRoomRates",
                 "requestBody": {
                     "required": true,
@@ -3034,17 +3046,21 @@
                                 ],
                                 "properties": {
                                     "hotelId": {
+                                        "description": "معرف الفندق من نتيجة البحث (hotelId from search)",
                                         "type": "string",
                                         "example": "H12345"
                                     },
                                     "sessionId": {
+                                        "description": "معرف الجلسة من نتيجة البحث (sessionId from search)",
                                         "type": "string",
                                         "example": "sess-abc-123"
                                     },
                                     "productId": {
+                                        "description": "معرف المنتج من نتيجة البحث (productId from search)",
                                         "type": "string"
                                     },
                                     "tokenId": {
+                                        "description": "التوكن من نتيجة البحث (tokenId from search)",
                                         "type": "string"
                                     }
                                 },
@@ -3055,7 +3071,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "تم استرجاع أسعار الغرف بنجاح"
+                        "description": "تم استرجاع أسعار الغرف بنجاح. ابحث عن rateBasisId في النتيجة للمتابعة."
                     }
                 }
             }
@@ -3065,7 +3081,8 @@
                 "tags": [
                     "Hotels"
                 ],
-                "summary": "التحقق من السعر قبل الحجز (Check room rates)",
+                "summary": "التحقق من السعر والشروط (Check/Revalidate rates)",
+                "description": "التحقق من السعر النهائي وشروط الإلغاء قبل الحجز. (Revalidate rates and rules before booking).",
                 "operationId": "checkRoomRates",
                 "requestBody": {
                     "required": true,
@@ -3080,17 +3097,21 @@
                                 ],
                                 "properties": {
                                     "rateBasisId": {
+                                        "description": "معرف الغرفة من دالة room-rates",
                                         "type": "string",
                                         "example": "RB123"
                                     },
                                     "sessionId": {
+                                        "description": "معرف الجلسة",
                                         "type": "string",
                                         "example": "sess-abc-123"
                                     },
                                     "productId": {
+                                        "description": "معرف المنتج",
                                         "type": "string"
                                     },
                                     "tokenId": {
+                                        "description": "التوكن",
                                         "type": "string"
                                     }
                                 },
@@ -3101,7 +3122,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "تم التحقق من السعر بنجاح"
+                        "description": "تم التأكد من توفر السعر والشروط بنجاح."
                     }
                 }
             }
@@ -3111,7 +3132,8 @@
                 "tags": [
                     "Hotels"
                 ],
-                "summary": "حجز فندق (Book a hotel)",
+                "summary": "إتمام الحجز (Book a hotel)",
+                "description": "إنشاء حجز فندق حقيقي. يتطلب rateBasisId من دالة التحقق السابقة. (Create actual reservation. Requires rateBasisId from check-rates).",
                 "operationId": "bookHotel",
                 "requestBody": {
                     "required": true,
@@ -3129,6 +3151,7 @@
                                 ],
                                 "properties": {
                                     "rateBasisId": {
+                                        "description": "معرف الغرفة المؤكد من check-rates",
                                         "type": "string",
                                         "example": "RB123"
                                     },
@@ -3151,9 +3174,90 @@
                                         "type": "string",
                                         "example": "966500000000"
                                     },
+                                    "bookingNote": {
+                                        "description": "ملاحظات إضافية",
+                                        "type": "string",
+                                        "example": "Quiet room please"
+                                    },
+                                    "clientRef": {
+                                        "description": "مرجع خاص بنظامك (Unique Ref)",
+                                        "type": "string",
+                                        "example": "MYTRIP-789"
+                                    },
                                     "paxDetails": {
+                                        "description": "تفاصيل الركاب لكل غرفة",
                                         "type": "array",
                                         "items": {
+                                            "properties": {
+                                                "room_no": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "adult": {
+                                                    "properties": {
+                                                        "title": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string"
+                                                            },
+                                                            "example": [
+                                                                "Mr"
+                                                            ]
+                                                        },
+                                                        "firstName": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string"
+                                                            },
+                                                            "example": [
+                                                                "John"
+                                                            ]
+                                                        },
+                                                        "lastName": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string"
+                                                            },
+                                                            "example": [
+                                                                "Doe"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "child": {
+                                                    "properties": {
+                                                        "title": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string"
+                                                            },
+                                                            "example": [
+                                                                "Mr"
+                                                            ]
+                                                        },
+                                                        "firstName": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string"
+                                                            },
+                                                            "example": [
+                                                                "Boy"
+                                                            ]
+                                                        },
+                                                        "lastName": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string"
+                                                            },
+                                                            "example": [
+                                                                "Doe"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
                                             "type": "object"
                                         }
                                     }
@@ -3165,7 +3269,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "تم طلب الحجز بنجاح"
+                        "description": "تم طلب الحجز بنجاح. ابحث عن supplierConfirmationNum و referenceNum في النتيجة."
                     }
                 },
                 "security": [
@@ -3180,7 +3284,8 @@
                 "tags": [
                     "Hotels"
                 ],
-                "summary": "إلغاء حجز فندق (Cancel hotel booking)",
+                "summary": "إلغاء الحجز (Cancel Reservation)",
+                "description": "إلغاء حجز فندق موجود باستخدام أرقام المرجع. (Cancel a booking using reference numbers).",
                 "operationId": "cancelHotelBooking",
                 "requestBody": {
                     "required": true,
@@ -3188,17 +3293,19 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "supplierConfirmationNumber",
-                                    "referenceNumber"
+                                    "supplierConfirmationNum",
+                                    "referenceNum"
                                 ],
                                 "properties": {
-                                    "supplierConfirmationNumber": {
+                                    "supplierConfirmationNum": {
+                                        "description": "رقم تأكيد المورد من دالة الحجز",
                                         "type": "string",
                                         "example": "SUP123"
                                     },
-                                    "referenceNumber": {
+                                    "referenceNum": {
+                                        "description": "رقم مرجع الحجز من دالة الحجز",
                                         "type": "string",
-                                        "example": "REF456"
+                                        "example": "212"
                                     }
                                 },
                                 "type": "object"
@@ -3224,6 +3331,7 @@
                     "Hotels"
                 ],
                 "summary": "جلب المزيد من الفنادق (Pagination)",
+                "description": "يستخدم عندما يكون `moreResults` هو `true` في نتائج البحث أو الفلترة. (Use when `moreResults` is `true` in search/filter results).",
                 "operationId": "hotelNextPage",
                 "requestBody": {
                     "required": true,
@@ -3236,9 +3344,11 @@
                                 ],
                                 "properties": {
                                     "sessionId": {
+                                        "description": "معرف الجلسة من نتيجة البحث",
                                         "type": "string"
                                     },
                                     "nextToken": {
+                                        "description": "التوكن للصفحة التالية من نتيجة البحث",
                                         "type": "string"
                                     }
                                 },
@@ -3260,6 +3370,7 @@
                     "Hotels"
                 ],
                 "summary": "تصفية الفنادق (Filter hotels)",
+                "description": "تصفية نتائج البحث الحالية بناءً على الاسم، الأسعار، أو التقييم. (Filter search results by name, price, or stars).",
                 "operationId": "filterHotels",
                 "requestBody": {
                     "required": true,
@@ -3271,21 +3382,28 @@
                                 ],
                                 "properties": {
                                     "sessionId": {
+                                        "description": "معرف الجلسة الحالي",
                                         "type": "string"
                                     },
                                     "hotelName": {
+                                        "description": "جزء من اسم الفندق",
                                         "type": "string"
                                     },
                                     "minPrice": {
+                                        "description": "السعر الأدنى",
                                         "type": "number"
                                     },
                                     "maxPrice": {
+                                        "description": "السعر الأعلى",
                                         "type": "number"
                                     },
                                     "starRating": {
-                                        "type": "string"
+                                        "description": "النجوم مفصولة بفواصل (1,2,3,4,5)",
+                                        "type": "string",
+                                        "example": "4,5"
                                     },
                                     "requiredLanguage": {
+                                        "description": "لغة المحتوى",
                                         "type": "string",
                                         "example": "ARA"
                                     }
@@ -3307,7 +3425,8 @@
                 "tags": [
                     "Hotels"
                 ],
-                "summary": "جلب محتوى الفندق (Hotel content)",
+                "summary": "جلب محتوى الفندق (Hotel static content)",
+                "description": "جلب الصور، الأوصاف، والمرافق الخاصة بالفندق المختار. (Get hotel images, description, and facilities).",
                 "operationId": "getHotelContent",
                 "requestBody": {
                     "required": true,
@@ -3322,15 +3441,19 @@
                                 ],
                                 "properties": {
                                     "hotelId": {
+                                        "description": "معرف الفندق",
                                         "type": "string"
                                     },
                                     "sessionId": {
+                                        "description": "معرف الجلسة",
                                         "type": "string"
                                     },
                                     "productId": {
+                                        "description": "معرف المنتج المورد",
                                         "type": "string"
                                     },
                                     "tokenId": {
+                                        "description": "التوكن الخاص بالنتيجة",
                                         "type": "string"
                                     }
                                 },
@@ -3351,7 +3474,8 @@
                 "tags": [
                     "Hotels"
                 ],
-                "summary": "تفاصيل الحجز (Booking details)",
+                "summary": "تفاصيل الحجز (Get reservation details)",
+                "description": "جلب حالة وتفاصيل حجز فندق سابق. (Get status and details for an existing booking).",
                 "operationId": "getHotelBookingDetails",
                 "requestBody": {
                     "required": true,
@@ -3359,11 +3483,19 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "bookingReference"
+                                    "supplierConfirmationNum",
+                                    "referenceNum"
                                 ],
                                 "properties": {
-                                    "bookingReference": {
-                                        "type": "string"
+                                    "supplierConfirmationNum": {
+                                        "description": "رقم تأكيد المورد من دالة الحجز",
+                                        "type": "string",
+                                        "example": "SUP123"
+                                    },
+                                    "referenceNum": {
+                                        "description": "رقم مرجع الحجز من دالة الحجز",
+                                        "type": "string",
+                                        "example": "212"
                                     }
                                 },
                                 "type": "object"
@@ -3388,7 +3520,8 @@
                 "tags": [
                     "Hotels"
                 ],
-                "summary": "قائمة المدن (Cities list)",
+                "summary": "قائمة المدن المدعومة (Supported cities list)",
+                "description": "جلب قائمة المدن والبلدان المدعومة. يجب استخدام `city_name` و `country_name` الناتجة من هنا في دالة البحث.",
                 "operationId": "getHotelCities",
                 "responses": {
                     "200": {
@@ -3403,6 +3536,7 @@
                     "Hotels"
                 ],
                 "summary": "قائمة اللغات (Languages list)",
+                "description": "قائمة لغات المحتوى المدعومة. تستخدم أكواد اللغات الناتجة مثل (ARA, ENG) في دالة البحث والفلترة كـ `requiredLanguage`.",
                 "operationId": "getHotelLanguages",
                 "responses": {
                     "200": {
