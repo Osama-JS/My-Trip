@@ -10,11 +10,12 @@ trait PaymentLogTrait
     /**
      * Log a pending payment.
      */
-    protected function logPendingPayment($bookingId, $provider, $method, $transactionId, $amount, $details = null)
+    protected function logPendingPayment($payable, $provider, $method, $transactionId, $amount, $details = null)
     {
         try {
             Payment::create([
-                'trip_booking_id' => $bookingId,
+                'payable_id' => $payable->id,
+                'payable_type' => get_class($payable),
                 'user_id' => auth()->id(),
                 'payment_provider' => $provider,
                 'payment_method' => $method,

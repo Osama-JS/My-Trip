@@ -1,7 +1,3 @@
-<?php
-
-namespace App\Http\Controllers\Api;
-
 use App\Http\Controllers\Controller;
 use App\Services\HyperPayService;
 use App\Services\TabbyPaymentService;
@@ -11,6 +7,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use OpenApi\Attributes as OA;
+use App\Models\TripBooking;
+use App\Models\HotelBooking;
+use App\Models\Booking as FlightBooking;
 
 class PaymentController extends Controller
 {
@@ -117,6 +116,19 @@ class PaymentController extends Controller
         return $this->apiResponse(false, __('Payment methods retrieved successfully.'), $methods);
     }
 
+    protected function resolveBooking($id, $type)
+    {
+        switch ($type) {
+            case 'hotel':
+                return HotelBooking::with('user')->find($id);
+            case 'flight':
+                return FlightBooking::with('user')->find($id);
+            case 'trip':
+            default:
+                return TripBooking::with(['trip', 'user'])->find($id);
+        }
+    }
+
     /**
      * Initiate Payment Checkout
      */
@@ -204,7 +216,7 @@ class PaymentController extends Controller
         $validator = Validator::make($request->all(), [
             'amount' => 'required|numeric|min:1',
             'payment_type' => 'required|string|in:mada,visa_master,apple_pay,tabby,tamara,bank_transfer',
-            'booking_id' => 'required_if:booking_type,trip|exists:trip_bookings,id',
+            'booking_id' => 'required',
             'booking_type' => 'required|string|in:trip,hotel,flight',
             'order_id' => 'nullable|string',
         ]);
@@ -221,36 +233,33 @@ class PaymentController extends Controller
         try {
             $user = $request->user();
             $paymentType = $request->payment_type;
+            $booking = $this->resolveBooking($request->booking_id, $request->booking_type);
 
-            // If it's a Trip booking, use the WebView flow pattern from wjhtak-site if desired, 
-            // but here we'll keep the direct API support for hyperpay etc, and just enforce the restriction.
-            
-            // Handle Bank Transfer Initiation (just instructions/data if needed)
+            if (!$booking) {
+                return $this->apiResponse(true, __('Booking not found.'), null, null, 404);
+            }
+
+            // Consistent WebView URL return for all types if requested or default
+            $paymentUrl = route('payments.web.checkout', [
+                'booking_id' => $request->booking_id,
+                'method' => $paymentType,
+                'type' => $request->booking_type,
+                'source' => 'api'
+            ]);
+
+            // Handle Bank Transfer Initiation instructions
             if ($paymentType === 'bank_transfer') {
-                 return $this->apiResponse(false, __('Bank transfer initiated. Please upload your receipt.'), [
-                     'action' => 'upload_receipt',
-                     'upload_url' => route('payment.bank-transfer.submit')
+                 return $this->apiResponse(false, __('Bank transfer instructions generated.'), [
+                     'action' => 'webview',
+                     'payment_url' => $paymentUrl
                  ]);
             }
 
-            // Handle Tabby
-            if ($paymentType === 'tabby') {
-                return $this->initiateTabby($request, $user);
-            }
-
-            // Handle Tamara
-            // Handle Tabby
-            if ($paymentType === 'tabby') {
-                return $this->initiateTabby($request, $user);
-            }
-
-            // Handle Tamara
-            if ($paymentType === 'tamara') {
-                return $this->initiateTamara($request, $user);
-            }
-
-            // Handle HyperPay (Default)
-            return $this->initiateHyperPay($request, $user);
+            // Return the webview URL as the primary way to pay
+            return $this->apiResponse(false, __('Checkout initialized successfully.'), [
+                'action' => 'webview',
+                'payment_url' => $paymentUrl
+            ]);
 
         } catch (\Exception $e) {
             Log::error("Payment Initiation Error: " . $e->getMessage());
@@ -396,7 +405,8 @@ class PaymentController extends Controller
     public function submitBankTransfer(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'booking_id' => 'required|exists:trip_bookings,id',
+            'booking_id' => 'required',
+            'type' => 'required|string|in:trip', // STRICTLY Trip
             'receipt_image' => 'required|file|mimes:jpeg,png,jpg,pdf|max:5120',
             'sender_name' => 'required|string|max:255',
             'notes' => 'nullable|string',
@@ -408,7 +418,12 @@ class PaymentController extends Controller
 
         try {
             $user = $request->user();
-            $booking = \App\Models\TripBooking::where('user_id', $user->id)->findOrFail($request->booking_id);
+            
+            if ($request->type !== 'trip') {
+                 return $this->apiResponse(true, __('Bank transfer is only available for Trips.'), null, null, 403);
+            }
+
+            $booking = TripBooking::where('user_id', $user->id)->findOrFail($request->booking_id);
 
             // Handle File Upload
             $path = $request->file('receipt_image')->store('bank_transfers', 'public');
@@ -424,13 +439,15 @@ class PaymentController extends Controller
             ]);
 
             // Create History
-            \App\Models\BookingHistory::create([
-                'trip_booking_id' => $booking->id,
-                'user_id' => $user->id,
-                'action' => 'bank_transfer_submitted',
-                'description' => __('Customer submitted bank transfer receipt.'),
-                'new_state' => \App\Models\TripBooking::STATE_AWAITING_PAYMENT,
-            ]);
+            if (class_exists(\App\Models\BookingHistory::class)) {
+                \App\Models\BookingHistory::create([
+                    'trip_booking_id' => $booking->id,
+                    'user_id' => $user->id,
+                    'action' => 'bank_transfer_submitted',
+                    'description' => __('Customer submitted bank transfer receipt.'),
+                    'new_state' => TripBooking::STATE_AWAITING_PAYMENT,
+                ]);
+            }
 
             return $this->apiResponse(false, __('Bank transfer submitted successfully. It will be reviewed by admin soon.'), $bankTransfer);
 
@@ -544,10 +561,34 @@ class PaymentController extends Controller
     protected function updateBookingStatus($bookingRef)
     {
         if ($bookingRef) {
-            $booking = \App\Models\Booking::where('booking_reference', $bookingRef)->first();
+            // Determine type from reference if prefixed
+            $type = 'flight'; // Default legacy
+            $id = null;
+
+            if (str_contains($bookingRef, 'TRIP-')) {
+                $type = 'trip';
+                $id = str_replace('TRIP-', '', explode('-', $bookingRef)[0]);
+            } elseif (str_contains($bookingRef, 'HOTEL-')) {
+                $type = 'hotel';
+                // HOTEL-BOOKING-ID-TIME
+                $parts = explode('-', $bookingRef);
+                $id = $parts[2] ?? null;
+            } elseif (str_contains($bookingRef, 'FLIGHT-')) {
+                $type = 'flight';
+                $parts = explode('-', $bookingRef);
+                $id = $parts[2] ?? null;
+            }
+
+            if ($id) {
+                $booking = $this->resolveBooking($id, $type);
+            } else {
+                // Fallback search by reference
+                $booking = FlightBooking::where('booking_reference', $bookingRef)->first();
+            }
+
             if ($booking) {
                 $booking->update(['status' => 'paid', 'updated_at' => now()]);
-                Log::info("Booking {$bookingRef} marked as PAID via Payment Gateway");
+                Log::info("Booking {$bookingRef} of type {$type} marked as PAID via Payment Gateway");
             }
         }
     }

@@ -33,4 +33,12 @@ class Booking extends Model
     {
         return $this->hasMany(FlightApiLog::class);
     }
+
+    /**
+     * Get all of the booking's payments.
+     */
+    public function payments()
+    {
+        return $this->morphMany(Payment::class, 'payable');
+    }
 }

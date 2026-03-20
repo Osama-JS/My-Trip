@@ -14,9 +14,20 @@ use App\Models\TripRate;
 use App\Models\TripBooking;
 use App\Models\Company;
 use App\Models\User;
+use App\Models\Airport;
+use App\Services\TraveloproService;
+use App\Services\TraveloproHotelService;
 
 class FrontendController extends Controller
 {
+    protected $traveloproService;
+    protected $hotelService;
+
+    public function __construct(TraveloproService $traveloproService, TraveloproHotelService $hotelService)
+    {
+        $this->traveloproService = $traveloproService;
+        $this->hotelService = $hotelService;
+    }
     /**
      * Homepage
      */
@@ -107,7 +118,7 @@ class FrontendController extends Controller
         // Search by keyword
         if ($request->filled('q')) {
             $search = $request->q;
-            $query->where(function($q) use ($search) {
+            $query->where(function(\Illuminate\Database\Eloquent\Builder $q) use ($search) {
                 $q->where('title_ar', 'like', "%{$search}%")
                   ->orWhere('title_en', 'like', "%{$search}%")
                   ->orWhere('description_ar', 'like', "%{$search}%")
@@ -184,6 +195,294 @@ class FrontendController extends Controller
     }
 
     /**
+     * Hotel Search Results (AJAX)
+     */
+    public function hotelResults(Request $request)
+    {
+        $data = $request->all();
+        $results = $this->hotelService->search($data);
+
+        if ($request->ajax()) {
+            return view('frontend.hotels.results_partial', [
+                'results' => $results,
+                'searchParams' => $data
+            ]);
+        }
+
+        return view('frontend.hotels', [
+            'results' => $results,
+            'searchParams' => $data
+        ]);
+    }
+
+    /**
+     * Get Hotel Room Rates (AJAX)
+     */
+    public function hotelRoomRates(Request $request)
+    {
+        $data = $request->all();
+        $result = $this->hotelService->getRoomRates($data);
+        
+        $rawOptions = $result['roomRates']['perBookingRates'] ?? $result['roomRates']['RoomResults'] ?? [];
+        $options = [];
+        
+        foreach ($rawOptions as $opt) {
+            $options[] = [
+                'room_name' => $opt['roomType'] ?? $opt['room_type'] ?? __('Standard Room'),
+                'board_type' => $opt['boardType'] ?? $opt['board_type'] ?? __('Room Only'),
+                'net_price' => $opt['netPrice'] ?? $opt['net_price'] ?? 0,
+                'rate_basis_id' => $opt['rateBasisId'] ?? $opt['rate_basis_id'] ?? '',
+                'cancel_policy' => $opt['cancellationPolicy'] ?? $opt['cancellation_policy'] ?? null,
+            ];
+        }
+
+        $formatted = [
+            'options' => $options,
+            'currency' => $result['roomRates']['currency'] ?? $result['currency'] ?? 'SAR',
+            'hotel_name' => $request->get('hotelName', '')
+        ];
+
+        return view('frontend.hotels.room_rates_partial', [
+            'rooms' => $formatted,
+            'hotelDetails' => $data 
+        ]);
+    }
+
+    /**
+     * Hotel Revalidate (Check Rates)
+     */
+    public function hotelRevalidate(Request $request)
+    {
+        $data = $request->all();
+        $result = $this->hotelService->checkRoomRates($data);
+        
+        return response()->json($result);
+    }
+
+    /**
+     * Search Cities for Hotel Search (Select2)
+     */
+    public function searchHotelCities(Request $request)
+    {
+        $q = strtolower($request->get('q', ''));
+        $cities = $this->hotelService->getCities(['q' => $q]);
+        
+        $rawCities = $cities['cities'] ?? $cities['Cities'] ?? [];
+        $formatted = [];
+
+        foreach ($rawCities as $city) {
+            $cityName = $city['CityName'] ?? $city['city_name'] ?? '';
+            $countryName = $city['CountryName'] ?? $city['country_name'] ?? '';
+            
+            // Local filtering if API doesn't support 'q'
+            if ($q && !str_contains(strtolower($cityName), $q) && !str_contains(strtolower($countryName), $q)) {
+                continue;
+            }
+
+            $formatted[] = [
+                'id' => $cityName,
+                'text' => "{$cityName}, {$countryName}",
+                'city_name' => $cityName,
+                'country_name' => $countryName
+            ];
+
+            if (count($formatted) >= 20) break; // Limit results
+        }
+
+        return response()->json(['results' => $formatted]);
+    }
+
+    /**
+     * Hotel Booking Form
+     */
+    public function hotelBookingForm(Request $request)
+    {
+        return view('frontend.hotels.booking', [
+            'details' => $request->all()
+        ]);
+    }
+
+    /**
+     * Process Hotel Booking
+     */
+    public function processHotelBooking(Request $request)
+    {
+        $paxDetails = [];
+        $rooms = $request->get('rooms', 1);
+        
+        for ($i = 1; $i <= $rooms; $i++) {
+            $roomPax = [
+                'room_no' => $i,
+                'adult' => [
+                    'title' => $request->input("pax.{$i}.adult.title"),
+                    'firstName' => $request->input("pax.{$i}.adult.firstName"),
+                    'lastName' => $request->input("pax.{$i}.adult.lastName"),
+                ]
+            ];
+            
+            if ($request->has("pax.{$i}.child")) {
+                $roomPax['child'] = [
+                    'title' => $request->input("pax.{$i}.child.title"),
+                    'firstName' => $request->input("pax.{$i}.child.firstName"),
+                    'lastName' => $request->input("pax.{$i}.child.lastName"),
+                ];
+            }
+            $paxDetails[] = $roomPax;
+        }
+
+        $bookingData = [
+            'sessionId' => $request->get('sessionId'),
+            'productId' => $request->get('productId'),
+            'tokenId' => $request->get('tokenId'),
+            'rateBasisId' => $request->get('rateBasisId'),
+            'clientRef' => 'HTL-' . strtoupper(uniqid()),
+            'customerEmail' => $request->get('customerEmail'),
+            'customerPhone' => $request->get('customerPhone'),
+            'bookingNote' => 'Hotel Booking',
+            'paxDetails' => $paxDetails
+        ];
+
+        $result = $this->hotelService->book($bookingData);
+
+        if (isset($result['status']) && $result['status'] === 'error') {
+            return back()->with('error', $result['message'])->withInput();
+        }
+
+        try {
+            $hotelBooking = \App\Models\HotelBooking::create([
+                'user_id' => auth()->id(),
+                'hotel_name' => $request->get('hotelName', 'Hotel Booking'),
+                'hotel_id' => $request->get('hotelId', 'N/A'),
+                'city_name' => $request->get('cityName'),
+                'country_name' => $request->get('countryName'),
+                'check_in' => $request->get('checkIn'),
+                'check_out' => $request->get('checkOut'),
+                'rooms' => $rooms,
+                'adults' => $request->get('adults', 1),
+                'childs' => $request->get('childs', 0),
+                'total_price' => $request->get('total_amount', 0),
+                'currency' => $request->get('currency', 'SAR'),
+                'status' => 'pending',
+                'reference_num' => $result['referenceNum'] ?? null,
+                'supplier_confirmation_num' => $result['supplierConfirmationNum'] ?? null,
+                'session_id' => $request->get('sessionId'),
+                'product_id' => $request->get('productId'),
+                'token_id' => $request->get('tokenId'),
+                'pax_details' => $paxDetails,
+            ]);
+
+            return redirect()->route('payments.web.checkout', [
+                'booking_id' => $hotelBooking->id, 
+                'method' => 'visa_master', 
+                'type' => 'hotel'
+            ]);
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Local Hotel Save Error: ' . $e->getMessage());
+            return back()->with('error', __('Local save failed. Ref: ') . ($result['referenceNum'] ?? 'N/A'));
+        }
+    }
+
+    /**
+     * Flight Search Results
+     */
+    public function flightResults(Request $request)
+    {
+        // Prepare search request for Travelopro
+        $searchData = [
+            'journeyType' => $request->get('journeyType', 'OneWay'),
+            'class' => $request->get('class', 'Economy'),
+            'adults' => $request->get('adults', 1),
+            'childs' => $request->get('childs', 0),
+            'infants' => $request->get('infants', 0),
+            'OriginDestinationInfo' => [
+                [
+                    'departureDate' => $request->get('departDate'),
+                    'airportOriginCode' => $request->get('from'),
+                    'airportDestinationCode' => $request->get('to'),
+                ]
+            ]
+        ];
+
+        if ($request->get('journeyType') === 'Return') {
+             $searchData['OriginDestinationInfo'][0]['returnDate'] = $request->get('returnDate');
+        }
+
+        $results = $this->traveloproService->searchFlights($searchData);
+
+        // If AJAX request, return partial view only
+        if ($request->ajax() || $request->get('ajax') == '1') {
+            return view('frontend.flights.results_partial', [
+                'results' => $results,
+                'searchParams' => $request->all()
+            ]);
+        }
+
+        return view('frontend.flights.results', [
+            'results' => $results,
+            'searchParams' => $request->all()
+        ]);
+    }
+
+    /**
+     * Flight Revalidate & Details before booking
+     */
+    public function flightRevalidate(Request $request)
+    {
+        $data = $request->all();
+        $revalidate = $this->traveloproService->validateFare($data);
+        
+        return response()->json($revalidate);
+    }
+
+    /**
+     * Flight Booking Form
+     */
+    public function flightBookingForm(Request $request)
+    {
+        // Expecting flight details in session/request to show summary
+        return view('frontend.flights.booking', [
+            'details' => $request->all()
+        ]);
+    }
+
+    /**
+     * Process Flight Booking
+     */
+    public function processFlightBooking(Request $request)
+    {
+        // 1. Call Travelopro Create Booking
+        $result = $this->traveloproService->createBooking($request->all());
+
+        if (isset($result['status']) && $result['status'] === 'error') {
+            return back()->with('error', $result['message'])->withInput();
+        }
+
+        // 2. Persist in local DB (Booking model)
+        // Migration might be missing but we try to save if possible
+        try {
+            $booking = \App\Models\Booking::create([
+                'user_id' => auth()->id(),
+                'pnr_number' => $result['AirBookingResponse']['AirBookingResult']['Pnrs']['Pnr'] ?? 'PENDING',
+                'booking_reference' => 'FLIGHT-' . strtoupper(uniqid()),
+                'total_price' => $request->get('total_amount'), // From revalidate
+                'status' => 'pending',
+                'pax_count' => $request->get('adults', 1) + $request->get('childs', 0) + $request->get('infants', 0),
+                'origin' => $request->get('from'),
+                'destination' => $request->get('to'),
+                'departure_date' => $request->get('departDate'),
+            ]);
+
+            // Redirect to unified payment flow
+            return redirect()->route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'visa_master', 'type' => 'flight']);
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Local Flight Save Error: ' . $e->getMessage());
+            return back()->with('error', __('Booking saved on provider but failed locally. Contact support. Reference: ') . ($result['AirBookingResponse']['AirBookingResult']['Pnrs']['Pnr'] ?? 'N/A'));
+        }
+    }
+
+    /**
      * Destinations page
      */
     public function destinations()
@@ -226,7 +525,7 @@ class FrontendController extends Controller
         
         $trips = Trip::active()
             ->with(['images', 'toCountry', 'toCity', 'rates'])
-            ->where(function($q) use ($query) {
+            ->where(function(\Illuminate\Database\Eloquent\Builder $q) use ($query) {
                 $q->where('title_ar', 'like', "%{$query}%")
                   ->orWhere('title_en', 'like', "%{$query}%")
                   ->orWhere('description_ar', 'like', "%{$query}%")
@@ -272,5 +571,40 @@ class FrontendController extends Controller
 
         return redirect()->route('customer.bookings.show', $booking->id)
             ->with('success', __('Booking created successfully! Please proceed with payment.'));
+    }
+        /**
+     * Search Airports locally (for Select2)
+     */
+    public function searchAirports(Request $request)
+    {
+        $q = $request->get('q');
+        
+        $airports = Airport::where('airport_name', 'like', "%{$q}%")
+            ->orWhere('airport_code', 'like', "%{$q}%")
+            ->orWhere('city_name', 'like', "%{$q}%")
+            ->latest()
+            ->limit(20)
+            ->get(['airport_code as id', 'airport_name', 'city_name', 'airport_code']);
+
+        $formatted = $airports->map(function($item) {
+            return [
+                'id' => $item->id,
+                'airport_name' => $item->airport_name,
+                'city_name' => $item->city_name,
+                'airport_code' => $item->airport_code,
+                'text' => "{$item->airport_name} ({$item->airport_code}) - {$item->city_name}"
+            ];
+        });
+
+        return response()->json(['results' => $formatted]);
+    }
+
+    /**
+     * Sync Airports from Travelopro
+     */
+    public function syncAirports()
+    {
+        $result = $this->traveloproService->syncAirports();
+        return response()->json($result);
     }
 }

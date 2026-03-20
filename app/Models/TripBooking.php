@@ -62,7 +62,15 @@ class TripBooking extends Model
         return $this->hasMany(BookingPassenger::class);
     }
 
+    /**
+     * Get all of the booking's payments.
+     */
     public function payments()
+    {
+        return $this->morphMany(Payment::class, 'payable');
+    }
+
+    public function oldPayments()
     {
         return $this->hasMany(Payment::class, 'trip_booking_id');
     }
@@ -74,7 +82,7 @@ class TripBooking extends Model
 
     public function payment()
     {
-        return $this->hasOne(Payment::class, 'trip_booking_id')->latest();
+        return $this->morphOne(Payment::class, 'payable')->latest();
     }
 
 

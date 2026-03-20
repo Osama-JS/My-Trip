@@ -10,7 +10,9 @@ class Payment extends Model
     use HasFactory;
 
     protected $fillable = [
-        'trip_booking_id',
+        'trip_booking_id', // Keep for backward compatibility/during transition if needed
+        'payable_id',
+        'payable_type',
         'user_id',
         'payment_gateway',
         'payment_method',
@@ -24,7 +26,16 @@ class Payment extends Model
 
     protected $casts = [
         'raw_response' => 'array',
+        'amount' => 'decimal:2',
     ];
+
+    /**
+     * Get the parent payable model (TripBooking, HotelBooking, or Booking/FlightBooking).
+     */
+    public function payable()
+    {
+        return $this->morphTo();
+    }
 
     public function booking()
     {

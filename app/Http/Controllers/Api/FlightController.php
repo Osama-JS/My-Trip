@@ -470,7 +470,11 @@ class FlightController extends Controller
                 }
 
                 // Add Payment and Tracking details to response
-                $result['payment_url'] = route('payment.show', $booking->id);
+                $result['payment_url'] = route('payments.web.checkout', [
+                    'booking_id' => $booking->id,
+                    'method' => 'visa_master', // Default selection
+                    'type' => 'flight'
+                ]);
                 $result['payment_api_url'] = url('/api/payment/initiate');
                 $result['booking_id'] = $booking->id;
 

@@ -125,7 +125,7 @@ class TraveloproService
             Log::info('Travelopro Airport List Request');
 
             try {
-                $response = Http::timeout(60)->post($url, $payload);
+                $response = Http::timeout(60)->withoutVerifying()->post($url, $payload);
 
                 if ($response->successful()) {
                      return $response->json();
@@ -143,6 +143,67 @@ class TraveloproService
                 return [];
             }
         });
+    }
+
+    /**
+     * Sync airports to local database.
+     *
+     * @return array
+     */
+    public function syncAirports()
+    {
+        $airports = $this->getAirportList();
+        
+        if (isset($airports['Airports']['Airport'])) {
+            $list = $airports['Airports']['Airport'];
+            
+            foreach ($list as $item) {
+                \App\Models\Airport::updateOrCreate(
+                    ['airport_code' => $item['AirportCode']],
+                    [
+                        'airport_name' => $item['AirportName'],
+                        'city_code' => $item['CityCode'],
+                        'city_name' => $item['CityName'],
+                        'country_code' => $item['CountryCode'],
+                        'country_name' => $item['CountryName'],
+                    ]
+                );
+            }
+            
+            return [
+                'status' => 'success',
+                'count' => count($list),
+                'message' => 'Airports synced successfully from API'
+            ];
+        }
+
+        // Fallback: Seed basic airports if API is unreachable
+        $fallbackAirports = [
+            ['airport_code' => 'JED', 'airport_name' => 'King Abdulaziz International', 'city_code' => 'JED', 'city_name' => 'Jeddah', 'country_code' => 'SA', 'country_name' => 'Saudi Arabia'],
+            ['airport_code' => 'RUH', 'airport_name' => 'King Khalid International', 'city_code' => 'RUH', 'city_name' => 'Riyadh', 'country_code' => 'SA', 'country_name' => 'Saudi Arabia'],
+            ['airport_code' => 'DMM', 'airport_name' => 'King Fahd International', 'city_code' => 'DMM', 'city_name' => 'Dammam', 'country_code' => 'SA', 'country_name' => 'Saudi Arabia'],
+            ['airport_code' => 'MED', 'airport_name' => 'Prince Mohammad bin Abdulaziz', 'city_code' => 'MED', 'city_name' => 'Medina', 'country_code' => 'SA', 'country_name' => 'Saudi Arabia'],
+            ['airport_code' => 'DXB', 'airport_name' => 'Dubai International', 'city_code' => 'DXB', 'city_name' => 'Dubai', 'country_code' => 'AE', 'country_name' => 'United Arab Emirates'],
+            ['airport_code' => 'CAI', 'airport_name' => 'Cairo International', 'city_code' => 'CAI', 'city_name' => 'Cairo', 'country_code' => 'EG', 'country_name' => 'Egypt'],
+            ['airport_code' => 'LHR', 'airport_name' => 'Heathrow', 'city_code' => 'LHR', 'city_name' => 'London', 'country_code' => 'GB', 'country_name' => 'United Kingdom'],
+            ['airport_code' => 'CDG', 'airport_name' => 'Charles de Gaulle', 'city_code' => 'CDG', 'city_name' => 'Paris', 'country_code' => 'FR', 'country_name' => 'France'],
+            ['airport_code' => 'JFK', 'airport_name' => 'John F. Kennedy International', 'city_code' => 'NYC', 'city_name' => 'New York', 'country_code' => 'US', 'country_name' => 'United States'],
+            ['airport_code' => 'IST', 'airport_name' => 'Istanbul Airport', 'city_code' => 'IST', 'city_name' => 'Istanbul', 'country_code' => 'TR', 'country_name' => 'Turkey'],
+            ['airport_code' => 'AMM', 'airport_name' => 'Queen Alia International', 'city_code' => 'AMM', 'city_name' => 'Amman', 'country_code' => 'JO', 'country_name' => 'Jordan'],
+        ];
+
+        foreach ($fallbackAirports as $item) {
+            \App\Models\Airport::updateOrCreate(
+                ['airport_code' => $item['airport_code']],
+                $item
+            );
+        }
+
+        return [
+            'status' => 'warning',
+            'count' => count($fallbackAirports),
+            'message' => 'API timeout. Fallback popular airports seeded successfully.'
+        ];
     }
 
     /**

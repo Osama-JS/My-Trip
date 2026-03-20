@@ -191,6 +191,28 @@
                         </div>
                     </div>
 
+                    {{-- What's Included --}}
+                    @if($trip->tickets)
+                        <div style="margin-bottom: var(--space-8);">
+                            <h2 style="font-size: var(--text-xl); font-weight: var(--font-bold); margin-bottom: var(--space-4);">
+                                {{ __("What's Included") }}
+                            </h2>
+                            <div class="included-grid">
+                                @foreach(explode(',', $trip->tickets) as $item)
+                                    @if(trim($item))
+                                        <div class="included-item">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" stroke-width="2">
+                                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                                <polyline points="22 4 12 14.01 9 11.01"/>
+                                            </svg>
+                                            <span>{{ trim($item) }}</span>
+                                        </div>
+                                    @endif
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+
                     {{-- Trip Itinerary --}}
                     @if($trip->itineraries->count() > 0)
                         <div style="margin-bottom: var(--space-8);">
@@ -348,6 +370,14 @@
                                 <i class="fab fa-whatsapp me-2"></i> {{ __('Chat with us') }}
                             </a>
                         </div>
+
+                        {{-- App Download Trigger --}}
+                        <div class="booking-contact" style="border-top: none; padding-top: var(--space-4);">
+                            <button type="button" onclick="showDownloadModal()" class="btn btn-outline" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 12px; padding: 10px; border: 1px solid var(--color-border); background: var(--color-bg); cursor: pointer; transition: all 0.3s ease;">
+                                <i class="fas fa-mobile-alt" style="color: var(--color-primary); font-size: 1.2rem;"></i>
+                                <span style="font-weight: 600; color: var(--color-text);">{{ __('Get Our Mobile App') }}</span>
+                            </button>
+                        </div>
                     </div>
                 </aside>
             </div>
@@ -370,6 +400,48 @@
             </div>
         </section>
     @endif
+    {{-- Premium Download App Modal --}}
+    <div id="downloadAppModal" class="premium-download-modal">
+        <div class="modal-backdrop" onclick="closeDownloadModal()"></div>
+        <div class="modal-content-glass animate__animated animate__zoomIn">
+            <button class="modal-close-btn" onclick="closeDownloadModal()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <div class="modal-body-content">
+                <div class="modal-graphic">
+                    <div class="phone-illustration">
+                        <i class="fas fa-mobile-alt"></i>
+                        <div class="phone-screen-circles">
+                            <span></span><span></span><span></span>
+                        </div>
+                    </div>
+                </div>
+                <h2 class="modal-title-premium text-center">{{ __('Experience Wjhtak on Mobile') }}</h2>
+                <p class="modal-desc-premium text-center">{{ __('For a faster booking experience, real-time updates and exclusive mobile-only offers, download our app now.') }}</p>
+
+                <div class="store-buttons-container">
+                    <a href="#" class="store-btn apple-store">
+                        <div class="store-icon"><i class="fab fa-apple"></i></div>
+                        <div class="store-text">
+                            <span class="store-label">{{ __('Download on the') }}</span>
+                            <span class="store-name">App Store</span>
+                        </div>
+                    </a>
+                    <a href="#" class="store-btn google-play">
+                        <div class="store-icon"><i class="fab fa-google-play"></i></div>
+                        <div class="store-text">
+                            <span class="store-label">{{ __('Get it on') }}</span>
+                            <span class="store-name">Google Play</span>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="modal-footer-hint text-center">
+                    <p>{{ __('Already have the app?') }} <a href="#">{{ __('Open here') }}</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('styles')
@@ -506,6 +578,16 @@
         padding: var(--space-5);
         border-inline-start: 4px solid var(--color-primary);
         box-shadow: var(--shadow-sm);
+        transition: all 0.3s ease;
+    }
+
+    .itinerary-card:hover {
+        transform: translateX(4px);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    [dir="rtl"] .itinerary-card:hover {
+        transform: translateX(-4px);
     }
 
     .itinerary-day-badge {
@@ -567,6 +649,205 @@
     .book-btn:hover {
         transform: translateY(-3px);
         box-shadow: 0 10px 20px rgba(var(--color-primary-rgb), 0.2);
+    }
+
+    .book-btn:active {
+        transform: translateY(0);
+    }
+
+    /* What's Included Grid */
+    .included-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--space-3);
+    }
+
+    .included-item {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+        padding: var(--space-4);
+        background: linear-gradient(135deg, var(--color-surface) 0%, var(--color-surface-hover) 100%);
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--color-border);
+        transition: all 0.3s ease;
+    }
+
+    .included-item:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+        border-color: var(--color-primary);
+    }
+
+    /* Reviews Section */
+    .review-card {
+        background: var(--color-surface);
+        border-radius: var(--radius-xl);
+        padding: var(--space-6);
+        border: 1px solid var(--color-border);
+        transition: all 0.3s ease;
+    }
+
+    .review-card:hover {
+        box-shadow: var(--shadow-lg);
+        border-color: transparent;
+    }
+
+    .review-avatar {
+        width: 56px;
+        height: 56px;
+        background: var(--gradient-primary);
+        border-radius: var(--radius-full);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: var(--text-xl);
+        font-weight: var(--font-bold);
+        flex-shrink: 0;
+    }
+
+    .review-stars {
+        display: flex;
+        gap: 2px;
+    }
+
+    /* Premium Download Modal */
+    .premium-download-modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 10000;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .premium-download-modal.active {
+        display: flex;
+    }
+
+    .modal-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(10px);
+        animation: fadeIn 0.4s ease;
+    }
+
+    .modal-content-glass {
+        position: relative;
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(20px);
+        width: 100%;
+        max-width: 500px;
+        border-radius: 30px;
+        padding: 40px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        text-align: center;
+        z-index: 1;
+    }
+
+    .modal-close-btn {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: #f0f0f0;
+        border: none;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: #666;
+        transition: all 0.2s ease;
+    }
+
+    .modal-close-btn:hover {
+        background: #e0e0e0;
+        color: #000;
+        transform: rotate(90deg);
+    }
+
+    .modal-graphic {
+        margin-bottom: 25px;
+    }
+
+    .phone-illustration {
+        font-size: 80px;
+        color: var(--color-primary);
+        position: relative;
+        display: inline-block;
+    }
+
+    .phone-screen-circles span {
+        position: absolute;
+        border-radius: 50%;
+        background: var(--color-primary);
+        opacity: 0.1;
+        z-index: -1;
+    }
+
+    .phone-screen-circles span:nth-child(1) { width: 120px; height: 120px; top: -20px; left: -20px; animation: pulse 2s infinite; }
+    .phone-screen-circles span:nth-child(2) { width: 160px; height: 160px; top: -40px; left: -40px; animation: pulse 3s infinite; }
+
+    .modal-title-premium {
+        font-size: 24px;
+        font-weight: 800;
+        color: #1a1a1a;
+        margin-bottom: 12px;
+    }
+
+    .modal-desc-premium {
+        color: #666;
+        line-height: 1.6;
+        margin-bottom: 30px;
+    }
+
+    .store-buttons-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+
+    .store-btn {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #000;
+        color: white;
+        padding: 10px 15px;
+        border-radius: 12px;
+        text-decoration: none;
+        transition: transform 0.2s ease;
+        text-align: left;
+    }
+
+    .store-btn:hover {
+        transform: translateY(-3px);
+        color: white;
+    }
+
+    .store-icon { font-size: 24px; }
+    .store-label { display: block; font-size: 10px; opacity: 0.8; line-height: 1; }
+    .store-name { display: block; font-size: 14px; font-weight: 700; line-height: 1.2; }
+
+    .modal-footer-hint { font-size: 14px; color: #888; }
+    .modal-footer-hint a { color: var(--color-primary); font-weight: 600; text-decoration: none; }
+
+    @keyframes pulse {
+        0% { transform: scale(1); opacity: 0.1; }
+        50% { transform: scale(1.1); opacity: 0.15; }
+        100% { transform: scale(1); opacity: 0.1; }
+    }
+
+    @media (max-width: 480px) {
+        .store-buttons-container { grid-template-columns: 1fr; }
+        .modal-content-glass { padding: 30px 20px; }
     }
 
     @media (max-width: 991px) {
@@ -655,6 +936,16 @@
         .finally(() => {
             btn.disabled = false;
         });
+    }
+
+    function showDownloadModal() {
+        document.getElementById('downloadAppModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeDownloadModal() {
+        document.getElementById('downloadAppModal').classList.remove('active');
+        document.body.style.overflow = '';
     }
 </script>
 @endpush

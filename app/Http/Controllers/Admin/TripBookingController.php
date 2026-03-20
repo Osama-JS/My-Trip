@@ -18,11 +18,9 @@ class TripBookingController extends Controller
     {
         $stats = [
             'total' => TripBooking::count(),
-            'awaiting_payment' => TripBooking::where('booking_state', TripBooking::STATE_AWAITING_PAYMENT)->count(),
-            'preparing' => TripBooking::where('booking_state', TripBooking::STATE_PREPARING)->count(),
-            'issuing_tickets' => TripBooking::where('booking_state', TripBooking::STATE_ISSUING_TICKETS)->count(),
-            'completed' => TripBooking::where('booking_state', TripBooking::STATE_COMPLETED)->count(),
-            'cancelled' => TripBooking::where('booking_state', TripBooking::STATE_CANCELLED)->count(),
+            'confirmed' => TripBooking::where('status', 'confirmed')->count(),
+            'pending' => TripBooking::where('status', 'pending')->count(),
+            'cancelled' => TripBooking::where('status', 'cancelled')->count(),
         ];
         return view('admin.trip_bookings.index', compact('stats'));
     }
@@ -146,7 +144,9 @@ class TripBookingController extends Controller
             'new_state' => $newState,
         ]);
 
-        return redirect()->back()->with('success', __('Booking state updated successfully.'));
+
+    }
+
     /**
      * Remove the specified resource from storage.
      */

@@ -7,7 +7,7 @@ use App\Services\TraveloproHotelService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use OpenApi\Attributes as OA;
-use App\Models\Booking;
+use App\Models\HotelBooking;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 
@@ -234,12 +234,36 @@ class HotelController extends Controller
 
         $result = $this->hotelService->book($request->all());
 
-        if (isset($result['status']) && $result['status'] === 'error') {
-            return $this->apiResponse(true, $result['message'], $result['details'] ?? null, null, 500);
-        }
+        // Persist booking locally
+        try {
+            $hotelBooking = HotelBooking::create([
+                'user_id' => Auth::id(),
+                'hotel_name' => $result['hotel_name'] ?? ($request->hotelName ?? 'Hotel Reservation'),
+                'hotel_id' => $request->hotelId,
+                'check_in' => $request->checkIn ?? now(), // Should ideally come from previous steps/session
+                'check_out' => $request->checkOut ?? now(),
+                'total_price' => $result['total_price'] ?? 0,
+                'currency' => $result['currency'] ?? 'SAR',
+                'status' => 'pending',
+                'reference_num' => $result['reference_num'] ?? null,
+                'supplier_confirmation_num' => $result['supplierConfirmationNum'] ?? null,
+                'session_id' => $request->sessionId,
+                'product_id' => $request->productId,
+                'token_id' => $request->tokenId,
+                'pax_details' => $request->paxDetails,
+            ]);
 
-        // Logic for persisting booking could follow FlightController's model...
-        // For brevity, we return the supplier's result first.
+            $result['payment_url'] = route('payments.web.checkout', [
+                'booking_id' => $hotelBooking->id,
+                'method' => 'visa_master', // Default selection
+                'type' => 'hotel'
+            ]);
+            $result['payment_api_url'] = url('/api/payment/initiate');
+            $result['booking_id'] = $hotelBooking->id;
+
+        } catch (\Exception $e) {
+            Log::error('Failed to persist hotel booking: ' . $e->getMessage());
+        }
 
         return $this->apiResponse(false, __('Hotel booking initiated successfully.'), $result, null, 200);
     }

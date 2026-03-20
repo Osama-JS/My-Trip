@@ -22,16 +22,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     {{-- Premium Frontend CSS --}}
-    <link rel="stylesheet" href="{{ asset('css/frontend/variables.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/frontend/app.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/frontend/components.css') }}">
-    @if(app()->getLocale() === 'ar')
-        <link rel="stylesheet" href="{{ asset('css/frontend/rtl.css') }}">
-    @endif
-
-    {{-- Global Frontend CSS --}}
-    <link rel="stylesheet" href="{{ asset('css/frontend.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/frontend.css') }}?v={{ filemtime(public_path('css/frontend.css')) }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
     @stack('styles')
 </head>
@@ -185,6 +178,9 @@
     </footer>
 
     {{-- ═══ SCRIPTS ═══ --}}
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
         // Header scroll effect
         window.addEventListener('scroll', () => {

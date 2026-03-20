@@ -40,7 +40,7 @@
                 {{-- Hero Image --}}
                 <div class="fe-hero-image">
                     @php $heroBg = \App\Models\Setting::get('hero_bg'); @endphp
-                    <img src="{{ $heroBg ? asset($heroBg) : asset('images/hero-bg.jpg') }}" alt="{{ __('Travel with Wejhtak') }}" class="fe-hero-img-main">
+                    <img src="{{ $heroBg ? asset($heroBg) : 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=2000&auto=format&fit=crop' }}" alt="{{ __('Travel with Wejhtak') }}" class="fe-hero-img-main">
 
                     <div class="fe-hero-float-card card-1" style="bottom:30px;{{ app()->getLocale()=='ar' ? 'right:-20px' : 'left:-20px' }}">
                         <div class="icon-circle"><i class="fas fa-plane-departure"></i></div>
@@ -86,10 +86,7 @@
         </div>
     </section>
 
-    {{-- ═══ SEARCH BOX ═══ --}}
-    <section class="fe-container" style="position:relative;z-index:20">
-        @include('frontend.components.search-box', ['countries' => $countries ?? []])
-    </section>
+
 
     {{-- ═══ FEATURED TRIPS ═══ --}}
     <section class="fe-section">

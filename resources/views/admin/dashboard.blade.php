@@ -170,7 +170,7 @@
                 <h2 class="fw-bold text-primary mb-1">{{ $stats['companies_count'] }}</h2>
                 <p class="text-muted small mb-3">{{ __('Registered travel partners contributing to our catalog.') }}</p>
                 <div class="d-flex justify-content-center">
-                    <a href="{{ route('admin.trips_categories.index') }}" class="btn btn-primary btn-sm px-4 shadow-sm" style="background:#135846; border:none; border-radius: 8px;">
+                    <a href="{{ route('admin.trip-categories.index') }}" class="btn btn-primary btn-sm px-4 shadow-sm" style="background:#135846; border:none; border-radius: 8px;">
                         {{ __('Manage Categories') }}
                     </a>
                 </div>

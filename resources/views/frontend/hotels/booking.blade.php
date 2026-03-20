@@ -1,0 +1,210 @@
+@extends('frontend.layouts.app')
+
+@section('title', __('Complete Your Booking'))
+
+@section('content')
+<div class="fe-page-header fe-booking-header">
+    <div class="fe-container">
+        <h1>{{ __('Complete Your Booking') }}</h1>
+        <p>{{ __('Please enter the guest details exactly as they appear on their passports/IDs.') }}</p>
+    </div>
+</div>
+
+<div class="fe-container" style="margin-top: -40px; margin-bottom: 80px;">
+    <form action="{{ route('hotels.book.process') }}" method="POST" id="hotelBookingForm">
+        @csrf
+        {{-- Hidden Params from Search/Selection --}}
+        @foreach($details as $key => $value)
+            @if(!in_array($key, ['pax', '_token']))
+                <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+            @endif
+        @endforeach
+
+        <div class="fe-booking-grid">
+            {{-- Left Side: Passenger Forms --}}
+            <div class="fe-booking-main">
+                @php $rooms = $details['rooms'] ?? 1; @endphp
+                @for($i = 1; $i <= $rooms; $i++)
+                    <div class="fe-booking-card">
+                        <div class="fe-card-header">
+                            <i class="fas fa-bed"></i> 
+                            <h3>{{ __('Room') }} {{ $i }} - {{ $details['roomName'] ?? __('Standard Room') }}</h3>
+                        </div>
+                        <div class="fe-card-body">
+                            {{-- Adult 1 (Main Guest for this room) --}}
+                            <h4 class="fe-guest-title">{{ __('Adult') }} 1 ({{ __('Lead Guest') }})</h4>
+                            <div class="fe-form-row">
+                                <div class="fe-form-group">
+                                    <label class="fe-label">{{ __('Title') }}</label>
+                                    <select name="pax[{{ $i }}][adult][title]" class="fe-input" required>
+                                        <option value="Mr">{{ __('Mr.') }}</option>
+                                        <option value="Ms">{{ __('Ms.') }}</option>
+                                        <option value="Mrs">{{ __('Mrs.') }}</option>
+                                    </select>
+                                </div>
+                                <div class="fe-form-group">
+                                    <label class="fe-label">{{ __('First Name') }}</label>
+                                    <input type="text" name="pax[{{ $i }}][adult][firstName]" class="fe-input" placeholder="{{ __('First name') }}" required>
+                                </div>
+                                <div class="fe-form-group">
+                                    <label class="fe-label">{{ __('Last Name') }}</label>
+                                    <input type="text" name="pax[{{ $i }}][adult][lastName]" class="fe-input" placeholder="{{ __('Last name') }}" required>
+                                </div>
+                            </div>
+
+                            {{-- We can add more adults/children per room if needed, 
+                                but for this simplified flow, we collect the lead guest per room 
+                                and allow the total guest counts to be handled by the API.
+                            --}}
+                        </div>
+                    </div>
+                @endfor
+
+                <div class="fe-booking-card">
+                    <div class="fe-card-header">
+                        <i class="fas fa-envelope"></i>
+                        <h3>{{ __('Contact Details') }}</h3>
+                    </div>
+                    <div class="fe-card-body">
+                        <div class="fe-form-row">
+                            <div class="fe-form-group">
+                                <label class="fe-label">{{ __('Email Address') }}</label>
+                                <input type="email" name="customerEmail" class="fe-input" placeholder="{{ __('Your email for confirmation') }}" required value="{{ auth()->user()->email ?? '' }}">
+                            </div>
+                            <div class="fe-form-group">
+                                <label class="fe-label">{{ __('Phone Number') }}</label>
+                                <input type="tel" name="customerPhone" class="fe-input" placeholder="{{ __('Phone number') }}" required value="{{ auth()->user()->phone ?? '' }}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="fe-booking-action">
+                    <button type="submit" class="fe-btn fe-btn-primary fe-btn-lg fe-btn-block">
+                        <i class="fas fa-check-circle"></i> {{ __('Proceed to Payment') }}
+                    </button>
+                    <p class="fe-terms-fine">{{ __('By clicking "Proceed to Payment", you agree to the') }} <a href="#">{{ __('Terms & Conditions') }}</a> {{ __('and') }} <a href="#">{{ __('Booking Policy') }}</a>.</p>
+                </div>
+            </div>
+
+            {{-- Right Side: Summary --}}
+            <div class="fe-booking-sidebar">
+                <div class="fe-summary-card">
+                    <div class="fe-summary-header">
+                        <h3>{{ __('Booking Summary') }}</h3>
+                    </div>
+                    <div class="fe-summary-body">
+                        <div class="fe-summary-hotel">
+                            <h4 class="fe-hotel-name">{{ $details['hotelName'] ?? 'Hotel' }}</h4>
+                            <div class="fe-hotel-location">
+                                <i class="fas fa-map-marker-alt"></i> {{ $details['cityName'] ?? '' }}, {{ $details['countryName'] ?? '' }}
+                            </div>
+                        </div>
+                        
+                        <div class="fe-summary-details">
+                            <div class="fe-summary-item">
+                                <span class="label">{{ __('Check-in') }}</span>
+                                <span class="value">{{ $details['checkIn'] ?? '' }}</span>
+                            </div>
+                            <div class="fe-summary-item">
+                                <span class="label">{{ __('Check-out') }}</span>
+                                <span class="value">{{ $details['checkOut'] ?? '' }}</span>
+                            </div>
+                            <div class="fe-summary-item">
+                                <span class="label">{{ __('Guests') }}</span>
+                                <span class="value">{{ $details['adults'] ?? 1 }} {{ __('Adults') }}, {{ $details['childs'] ?? 0 }} {{ __('Children') }}</span>
+                            </div>
+                            <div class="fe-summary-item">
+                                <span class="label">{{ __('Duration') }}</span>
+                                <span class="value">
+                                    @if(isset($details['checkIn']) && isset($details['checkOut']))
+                                        @php 
+                                            $checkin = \Carbon\Carbon::parse($details['checkIn']);
+                                            $checkout = \Carbon\Carbon::parse($details['checkOut']);
+                                            $nights = $checkin->diffInDays($checkout);
+                                        @endphp
+                                        {{ $nights }} {{ __('Nights') }}
+                                    @endif
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="fe-summary-room">
+                            <div class="room-title">{{ $details['roomName'] ?? '' }}</div>
+                            <div class="room-meta"><i class="fas fa-utensils"></i> {{ $details['boardType'] ?? __('Room Only') }}</div>
+                        </div>
+
+                        <div class="fe-summary-total">
+                            <div class="total-label">{{ __('Total Price') }}</div>
+                            <div class="total-value">
+                                <span class="currency">{{ $details['currency'] ?? 'SAR' }}</span>
+                                <span class="amount">{{ number_format($details['total_amount'] ?? 0, 2) }}</span>
+                            </div>
+                            <p class="total-note">{{ __('Includes all taxes and fees') }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                @if(isset($details['cancelPolicy']))
+                <div class="fe-policy-card">
+                    <h4><i class="fas fa-info-circle"></i> {{ __('Cancellation Policy') }}</h4>
+                    <p>{{ $details['cancelPolicy'] }}</p>
+                </div>
+                @endif
+            </div>
+        </div>
+    </form>
+</div>
+@endsection
+
+@push('styles')
+<style>
+    .fe-booking-header { background: linear-gradient(135deg, var(--primary) 0%, #2c3e50 100%); padding: 80px 0 100px; color: white; text-align: center; }
+    .fe-booking-header h1 { color: white; margin-bottom: 10px; font-weight: 900; }
+
+    .fe-booking-grid { display: grid; grid-template-columns: 1fr 380px; gap: 30px; }
+    .fe-booking-card { background: white; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid var(--gray-100); margin-bottom: 30px; overflow: hidden; }
+    .fe-card-header { background: var(--gray-50); padding: 20px 24px; border-bottom: 1px solid var(--gray-100); display: flex; align-items: center; gap: 12px; }
+    .fe-card-header i { color: var(--primary); font-size: 1.2rem; }
+    .fe-card-header h3 { font-size: 1.15rem; font-weight: 800; margin: 0; color: var(--dark); }
+    .fe-card-body { padding: 30px; }
+
+    .fe-guest-title { font-size: 0.9rem; font-weight: 800; margin-bottom: 20px; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed var(--gray-200); padding-bottom: 10px; }
+    .fe-form-row { display: grid; grid-template-columns: 1fr 2fr 2fr; gap: 20px; margin-bottom: 20px; }
+    .fe-label { display: block; font-size: 0.85rem; font-weight: 700; color: var(--dark); margin-bottom: 8px; }
+    .fe-input { width: 100%; height: 50px; background: var(--gray-50); border: 1.5px solid var(--gray-100); border-radius: 12px; padding: 0 16px; font-weight: 600; transition: all 0.2s; }
+    .fe-input:focus { border-color: var(--primary); outline: none; background: white; box-shadow: 0 0 0 4px var(--primary-50); }
+
+    /* SUMMARY CARD */
+    .fe-summary-card { background: white; border-radius: 20px; box-shadow: 0 4px 25px rgba(0,0,0,0.08); border: 1px solid var(--gray-100); position: sticky; top: 100px; }
+    .fe-summary-header { padding: 24px; border-bottom: 1px solid var(--gray-100); background: var(--dark); color: white; border-radius: 20px 20px 0 0; }
+    .fe-summary-header h3 { margin: 0; font-size: 1.2rem; font-weight: 800; color: white; }
+    .fe-summary-body { padding: 24px; }
+    .fe-hotel-name { font-size: 1.3rem; font-weight: 900; color: var(--dark); margin-bottom: 6px; }
+    .fe-hotel-location { color: var(--gray-500); font-size: 0.85rem; margin-bottom: 20px; }
+    
+    .fe-summary-details { border-top: 1px solid var(--gray-100); border-bottom: 1px solid var(--gray-100); padding: 20px 0; margin-bottom: 20px; display: flex; flex-direction: column; gap: 12px; }
+    .fe-summary-item { display: flex; justify-content: space-between; font-size: 0.9rem; }
+    .fe-summary-item .label { color: var(--gray-500); font-weight: 600; }
+    .fe-summary-item .value { color: var(--dark); font-weight: 800; }
+
+    .fe-summary-room { background: var(--gray-50); padding: 15px; border-radius: 12px; margin-bottom: 24px; }
+    .room-title { font-weight: 800; font-size: 0.95rem; color: var(--primary); margin-bottom: 4px; }
+    .room-meta { font-size: 0.8rem; color: var(--gray-600); font-weight: 600; }
+
+    .fe-summary-total { text-align: center; background: var(--primary-50); padding: 24px; border-radius: 15px; }
+    .total-label { font-size: 0.85rem; font-weight: 800; color: var(--primary); text-transform: uppercase; margin-bottom: 8px; }
+    .total-value { color: var(--primary); }
+    .total-value .currency { font-size: 1.1rem; font-weight: 800; margin-inline-end: 4px; }
+    .total-value .amount { font-size: 2.2rem; font-weight: 900; }
+    .total-note { font-size: 0.75rem; color: var(--gray-500); margin-top: 8px; font-weight: 600; }
+
+    .fe-policy-card { background: #fffcf0; border: 1px solid #ffeeba; border-radius: 15px; padding: 20px; margin-top: 20px; }
+    .fe-policy-card h4 { font-size: 0.95rem; font-weight: 800; color: #856404; margin-bottom: 10px; }
+    .fe-policy-card p { font-size: 0.85rem; color: #856404; line-height: 1.5; margin: 0; }
+
+    .fe-booking-action { margin-top: 30px; text-align: center; }
+    .fe-terms-fine { font-size: 0.75rem; color: var(--gray-500); margin-top: 15px; }
+    .fe-terms-fine a { color: var(--primary); font-weight: 700; }
+</style>
+@endpush

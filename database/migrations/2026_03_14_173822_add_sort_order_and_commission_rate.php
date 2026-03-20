@@ -11,13 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('trip_itineraries', function (Blueprint $table) {
-            $table->integer('sort_order')->default(0)->after('day_number');
-        });
+        if (!Schema::hasColumn('trip_itineraries', 'sort_order')) {
+            Schema::table('trip_itineraries', function (Blueprint $table) {
+                $table->integer('sort_order')->default(0)->after('day_number');
+            });
+        }
 
-        Schema::table('companies', function (Blueprint $table) {
-            $table->decimal('commission_rate', 5, 2)->default(0.00)->after('logo');
-        });
+        if (!Schema::hasColumn('companies', 'commission_rate')) {
+            Schema::table('companies', function (Blueprint $table) {
+                $table->decimal('commission_rate', 5, 2)->default(0.00)->after('logo');
+            });
+        }
     }
 
     /**

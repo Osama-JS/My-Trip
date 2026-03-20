@@ -37,6 +37,16 @@
     --danger: #ef4444;
     --info: #3b82f6;
 
+    /* Theme Variables */
+    --color-surface: #ffffff;
+    --color-border: #e2e8f0;
+    --color-bg: #f8fafc;
+    --color-surface-hover: #f1f5f9;
+    --color-text: #0f172a;
+    --color-text-secondary: #475569;
+    --color-text-muted: #64748b;
+    --color-primary-rgb: 15, 76, 129;
+
     /* Typography */
     --font-ar: 'Cairo', sans-serif;
     --font-en: 'Inter', sans-serif;

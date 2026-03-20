@@ -26,8 +26,24 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [FrontendController::class, 'home'])->name('home');
 Route::get('/trips', [FrontendController::class, 'trips'])->name('trips.index');
 Route::get('/trips/{id}', [FrontendController::class, 'tripDetails'])->name('trips.show');
+// Flight Routes
 Route::get('/flights', [FrontendController::class, 'flights'])->name('flights');
+Route::get('/flights/results', [FrontendController::class, 'flightResults'])->name('flights.results');
+Route::get('/flights/revalidate', [FrontendController::class, 'flightRevalidate'])->name('flights.revalidate');
+Route::get('/flights/booking', [FrontendController::class, 'flightBookingForm'])->name('flights.booking.form');
+Route::post('/flights/book', [FrontendController::class, 'processFlightBooking'])->name('flights.book.process');
+Route::get('/airports/search', [FrontendController::class, 'searchAirports'])->name('airports.search');
+Route::get('/airports/sync', [FrontendController::class, 'syncAirports'])->name('airports.sync');
+
+// Hotel Routes
 Route::get('/hotels', [FrontendController::class, 'hotels'])->name('hotels');
+Route::get('/hotels/results', [FrontendController::class, 'hotelResults'])->name('hotels.results');
+Route::get('/hotels/room-rates', [FrontendController::class, 'hotelRoomRates'])->name('hotels.room_rates');
+Route::get('/hotels/revalidate', [FrontendController::class, 'hotelRevalidate'])->name('hotels.revalidate');
+Route::get('/hotels/booking', [FrontendController::class, 'hotelBookingForm'])->name('hotels.booking.form');
+Route::post('/hotels/book', [FrontendController::class, 'processHotelBooking'])->name('hotels.book.process');
+Route::get('/hotels/cities/search', [FrontendController::class, 'searchHotelCities'])->name('hotels.cities.search');
+
 Route::get('/destinations', [FrontendController::class, 'destinations'])->name('destinations');
 Route::get('/about', [FrontendController::class, 'about'])->name('about');
 Route::get('/search', [FrontendController::class, 'search'])->name('search');

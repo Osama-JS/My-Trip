@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\TripBooking;
+use App\Models\HotelBooking;
+use App\Models\Booking as FlightBooking;
 use App\Models\BankTransfer;
 use App\Services\HyperPayService;
 use App\Services\TabbyPaymentService;
@@ -39,7 +41,12 @@ class PaymentWebController extends Controller
     public function checkout(Request $request, $booking_id, $method)
     {
         try {
-            $booking = TripBooking::with(['trip', 'user'])->findOrFail($booking_id);
+            $type = $request->get('type', 'trip');
+            $booking = $this->resolveBooking($booking_id, $type);
+
+            if (!$booking) {
+                return redirect()->route('payments.web.failure', ['error' => 'Invalid booking type or ID']);
+            }
 
             // Basic validation
             if ($booking->status === 'confirmed') {
@@ -51,21 +58,30 @@ class PaymentWebController extends Controller
             // Prepare dynamic data for the view
             $data = [
                 'booking' => $booking,
-                'trip' => $booking->trip,
+                'booking_type' => $type,
                 'user' => $user,
                 'method' => $method,
-                'amount' => $booking->total_price,
+                'amount' => $type === 'flight' ? $booking->total_amount : $booking->total_price,
                 'source' => $request->source,
             ];
 
+            // Add specific details for the view
+            if ($type === 'trip') {
+                $data['title'] = $booking->trip->title ?? 'Trip Booking';
+            } elseif ($type === 'hotel') {
+                $data['title'] = $booking->hotel_name ?? 'Hotel Booking';
+            } elseif ($type === 'flight') {
+                $data['title'] = 'Flight Booking #' . $booking->booking_reference;
+            }
+
             // If HyperPay, we might need a checkout_id immediately to load the widget
             if (in_array($method, ['mada', 'visa_master', 'apple_pay'])) {
-                $checkoutResult = $this->prepareHyperPayCheckout($booking, $method, $request);
+                $checkoutResult = $this->prepareHyperPayCheckout($booking, $method, $request, $type);
                 $checkoutId = $checkoutResult['id'] ?? null;
                 $data['checkout_id'] = $checkoutId;
 
                 if ($checkoutId) {
-                    $this->logPendingPayment($booking->id, 'hyperpay', $method, $checkoutId, $booking->total_price, $checkoutResult);
+                    $this->logPendingPayment($booking, 'hyperpay', $method, $checkoutId, $data['amount'], $checkoutResult);
                 }
             }
 
@@ -77,32 +93,52 @@ class PaymentWebController extends Controller
         }
     }
 
+    protected function resolveBooking($id, $type)
+    {
+        switch ($type) {
+            case 'hotel':
+                return HotelBooking::with('user')->find($id);
+            case 'flight':
+                return FlightBooking::with('user')->find($id);
+            case 'trip':
+            default:
+                return TripBooking::with(['trip', 'user'])->find($id);
+        }
+    }
+
     /**
      * Handle Tamara/Tabby redirection initiation from the web page
      */
     public function initiateRedirect(Request $request)
     {
         $request->validate([
-            'booking_id' => 'required|exists:trip_bookings,id',
-            'method' => 'required|string|in:tamara',
+            'booking_id' => 'required',
+            'method' => 'required|string|in:tamara,tabby,tap',
+            'type' => 'nullable|string|in:trip,hotel,flight',
             'source' => 'nullable|string',
         ]);
 
         try {
-            $booking = TripBooking::with(['trip', 'user'])->findOrFail($request->booking_id);
+            $type = $request->get('type', 'trip');
+            $booking = $this->resolveBooking($request->booking_id, $type);
+            
+            if (!$booking) {
+                return response()->json(['error' => true, 'message' => 'Booking not found'], 404);
+            }
+
             $method = $request->method;
             $user = $booking->user;
 
             if ($method === 'tabby') {
-                return $this->initiateTabby($booking, $user, $request);
+                return $this->initiateTabby($booking, $user, $request, $type);
             }
 
             if ($method === 'tamara') {
-                return $this->initiateTamara($booking, $user, $request);
+                return $this->initiateTamara($booking, $user, $request, $type);
             }
 
             if ($method === 'tap') {
-                return $this->initiateTap($booking, $user, $request);
+                return $this->initiateTap($booking, $user, $request, $type);
             }
 
         } catch (\Exception $e) {
@@ -110,16 +146,17 @@ class PaymentWebController extends Controller
         }
     }
 
-    protected function prepareHyperPayCheckout($booking, $method, $request)
+    protected function prepareHyperPayCheckout($booking, $method, $request, $type)
     {
+        $amount = $type === 'flight' ? $booking->total_amount : $booking->total_price;
         $params = [
-            'merchantTransactionId' => 'BOOKING-' . $booking->id . '-' . time(),
+            'merchantTransactionId' => strtoupper($type) . '-BOOKING-' . $booking->id . '-' . time(),
         ];
 
         $customerParams = $this->hyperPayService->buildCustomerParams([
-            'email' => $booking->user->email,
-            'first_name' => $booking->user->first_name ?? $booking->user->full_name,
-            'last_name' => $booking->user->last_name ?? 'Guest',
+            'email' => $booking->user->email ?? $booking->contact_email,
+            'first_name' => $booking->user->first_name ?? $booking->user->full_name ?? 'Guest',
+            'last_name' => $booking->user->last_name ?? 'User',
             'street' => $booking->user->address ?? 'Saudi Arabia',
             'city' => $booking->user->city ?? 'Riyadh',
             'state' => $booking->user->state ?? 'Riyadh',
@@ -130,29 +167,36 @@ class PaymentWebController extends Controller
         $params = array_merge($params, $customerParams);
 
         return $this->hyperPayService->prepareCheckout(
-            $booking->total_price,
+            $amount,
             $method,
             $params
         );
     }
 
-    protected function initiateTabby($booking, $user, $request)
+    protected function initiateTabby($booking, $user, $request, $type)
     {
+        $amount = $type === 'flight' ? $booking->total_amount : $booking->total_price;
+        $title = 'Booking';
+        if ($type === 'trip') $title = $booking->trip->title ?? 'Trip';
+        elseif ($type === 'hotel') $title = $booking->hotel_name ?? 'Hotel';
+        elseif ($type === 'flight') $title = 'Flight #' . $booking->booking_reference;
+
         $data = [
-            'amount' => $booking->total_price,
-            'customer_name' => $user->full_name,
-            'customer_email' => $user->email,
-            'customer_phone' => $user->phone,
-            'order_id' => 'BOOKING-' . $booking->id . '-' . time(),
+            'amount' => $amount,
+            'customer_name' => $user->full_name ?? ($user->first_name . ' ' . $user->last_name),
+            'customer_email' => $user->email ?? $booking->contact_email,
+            'customer_phone' => $user->phone ?? $booking->contact_phone,
+            'order_id' => strtoupper($type) . '-BOOKING-' . $booking->id . '-' . time(),
             'callback_url' => route('payments.web.callback', [
                 'payment_type' => 'tabby',
-                'source' => $request->source
+                'source' => $request->source,
+                'type' => $type
             ]),
             'items' => [
                 [
-                    'title' => $booking->trip ? $booking->trip->title : 'Trip Booking',
+                    'title' => $title,
                     'quantity' => 1,
-                    'unit_price' => $booking->total_price,
+                    'unit_price' => $amount,
                 ]
             ],
             'city' => $user->city ?? 'Riyadh',
@@ -162,34 +206,41 @@ class PaymentWebController extends Controller
         $result = $this->tabbyService->initiateCheckout($data);
 
         if ($result['payment_id'] ?? null) {
-            $this->logPendingPayment($booking->id, 'tabby', 'installments', $result['payment_id'], $booking->total_price, $result);
+            $this->logPendingPayment($booking, 'tabby', 'installments', $result['payment_id'], $amount, $result);
         }
 
         return response()->json($result);
     }
 
-    protected function initiateTamara($booking, $user, $request)
+    protected function initiateTamara($booking, $user, $request, $type)
     {
+        $amount = $type === 'flight' ? $booking->total_amount : $booking->total_price;
+        $title = 'Booking';
+        if ($type === 'trip') $title = $booking->trip->title ?? 'Trip';
+        elseif ($type === 'hotel') $title = $booking->hotel_name ?? 'Hotel';
+        elseif ($type === 'flight') $title = 'Flight #' . $booking->booking_reference;
+
         $data = [
-            'amount' => $booking->total_price,
-            'customer_email' => $user->email,
-            'customer_phone' => $user->phone,
-            'first_name' => $user->first_name ?? $user->full_name,
+            'amount' => $amount,
+            'customer_email' => $user->email ?? $booking->contact_email,
+            'customer_phone' => $user->phone ?? $booking->contact_phone,
+            'first_name' => $user->first_name ?? $user->full_name ?? 'Guest',
             'last_name' => $user->last_name ?? 'User',
-            'order_id' => 'BOOKING-' . $booking->id . '-' . time(),
+            'order_id' => strtoupper($type) . '-BOOKING-' . $booking->id . '-' . time(),
             'callback_url' => route('payments.web.callback', [
                 'payment_type' => 'tamara',
-                'source' => $request->source
+                'source' => $request->source,
+                'type' => $type
             ]),
             'items' => [
                 [
-                    'name' => $booking->trip ? $booking->trip->title : 'Trip Booking',
+                    'name' => $title,
                     'quantity' => 1,
                     'total_amount' => [
-                        'amount' => $booking->total_price,
+                        'amount' => $amount,
                         'currency' => 'SAR'
                     ],
-                    'type' => 'Trip',
+                    'type' => ucfirst($type),
                     'reference_id' => (string) $booking->id
                 ]
             ],
@@ -200,33 +251,41 @@ class PaymentWebController extends Controller
         $result = $this->tamaraService->initiateCheckout($data);
 
         if ($result['order_id'] ?? null) {
-            $this->logPendingPayment($booking->id, 'tamara', 'installments', $result['order_id'], $booking->total_price, $result);
+            $this->logPendingPayment($booking, 'tamara', 'installments', $result['order_id'], $amount, $result);
         }
 
         return response()->json($result);
     }
 
-    protected function initiateTap($booking, $user, $request)
+    protected function initiateTap($booking, $user, $request, $type)
     {
+        $amount = $type === 'flight' ? $booking->total_amount : $booking->total_price;
+        $title = 'Booking';
+        if ($type === 'trip') $title = $booking->trip->title ?? 'Trip';
+        elseif ($type === 'hotel') $title = $booking->hotel_name ?? 'Hotel';
+        elseif ($type === 'flight') $title = 'Flight #' . $booking->booking_reference;
+
         $data = [
             'booking_id' => $booking->id,
-            'amount' => $booking->total_price,
-            'customer_email' => $user->email,
-            'customer_phone' => $user->phone,
-            'first_name' => $user->first_name ?? $user->full_name,
+            'booking_type' => $type,
+            'amount' => $amount,
+            'customer_email' => $user->email ?? $booking->contact_email,
+            'customer_phone' => $user->phone ?? $booking->contact_phone,
+            'first_name' => $user->first_name ?? $user->full_name ?? 'Guest',
             'last_name' => $user->last_name ?? 'User',
-            'order_id' => 'BOOKING-' . $booking->id . '-' . time(),
+            'order_id' => strtoupper($type) . '-BOOKING-' . $booking->id . '-' . time(),
             'callback_url' => route('payments.web.callback', [
                 'payment_type' => 'tap',
-                'source' => $request->source
+                'source' => $request->source,
+                'type' => $type
             ]),
-            'description' => 'Booking #' . $booking->id . ' - ' . ($booking->trip->title ?? 'Trip'),
+            'description' => 'Booking #' . $booking->id . ' - ' . $title,
         ];
 
         $result = $this->tapService->initiateCheckout($data);
 
         if ($result['id'] ?? null) {
-            $this->logPendingPayment($booking->id, 'tap', 'card', $result['id'], $booking->total_price, $result);
+            $this->logPendingPayment($booking, 'tap', 'card', $result['id'], $amount, $result);
         }
 
         return response()->json($result);
@@ -235,7 +294,8 @@ class PaymentWebController extends Controller
     public function submitBankTransfer(Request $request)
     {
         $request->validate([
-            'booking_id' => 'required|exists:trip_bookings,id',
+            'booking_id' => 'required',
+            'type' => 'required|string|in:trip', // STRICTLY Trip only
             'receipt_image' => 'required|file|mimes:jpeg,png,jpg,pdf|max:5120',
             'sender_name' => 'required|string|max:255',
             'receipt_number' => 'nullable|string|max:255',
@@ -243,6 +303,10 @@ class PaymentWebController extends Controller
         ]);
 
         try {
+            if ($request->type !== 'trip') {
+                return response()->json(['error' => true, 'message' => __('Bank transfer is only available for Trips.')], 403);
+            }
+
             $booking = TripBooking::with('user')->findOrFail($request->booking_id);
 
             // Check if already paid or under review
@@ -264,14 +328,16 @@ class PaymentWebController extends Controller
                 'status' => 'pending'
             ]);
 
-            \App\Models\BookingHistory::create([
-                'trip_booking_id' => $booking->id,
-                'user_id' => $booking->user_id,
-                'action' => 'bank_transfer_submitted',
-                'description' => __('Bank transfer receipt uploaded and pending review.'),
-                'previous_state' => null,
-                'new_state' => \App\Models\TripBooking::STATE_RECEIVED,
-            ]);
+            if (class_exists(\App\Models\BookingHistory::class)) {
+                \App\Models\BookingHistory::create([
+                    'trip_booking_id' => $booking->id,
+                    'user_id' => $booking->user_id,
+                    'action' => 'bank_transfer_submitted',
+                    'description' => __('Bank transfer receipt uploaded and pending review.'),
+                    'previous_state' => null,
+                    'new_state' => \App\Models\TripBooking::STATE_RECEIVED,
+                ]);
+            }
 
             return response()->json([
                 'error' => false,
