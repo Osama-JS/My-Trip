@@ -17,6 +17,13 @@ use Carbon\Carbon;
 
 class RegisteredUserController extends Controller
 {
+    protected $mailService;
+
+    public function __construct(MailService $mailService)
+    {
+        $this->mailService = $mailService;
+    }
+
     /**
      * Display the registration view.
      */

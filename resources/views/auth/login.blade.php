@@ -156,14 +156,14 @@
         }
 
         .form-control:focus {
-            border-color: #fa1600;
-            box-shadow: 0 0 0 4px rgba(250, 22, 0, 0.05);
+            border-color: #0f4c81;
+            box-shadow: 0 0 0 4px rgba(15, 76, 129, 0.05);
             background: #fff;
         }
 
         .btn-primary {
-            background-color: #fa1600;
-            border-color: #fa1600;
+            background-color: #0f4c81;
+            border-color: #0f4c81;
             height: 55px;
             border-radius: 12px;
             font-size: 1.1rem;
@@ -177,10 +177,10 @@
         }
 
         .btn-primary:hover {
-            background-color: #d41300;
-            border-color: #d41300;
+            background-color: #0a3560;
+            border-color: #0a3560;
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(250, 22, 0, 0.2);
+            box-shadow: 0 10px 20px rgba(15, 76, 129, 0.2);
         }
 
         /* Language Switcher */
@@ -202,8 +202,8 @@
 
         .lang-switch-btn:hover {
             background: #f8f9fa;
-            color: #fa1600;
-            border-color: #fa1600;
+            color: #0f4c81;
+            border-color: #0f4c81;
             transform: translateY(-2px);
             box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         }

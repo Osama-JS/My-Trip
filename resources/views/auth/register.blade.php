@@ -1,294 +1,362 @@
-@extends('frontend.layouts.app')
+<!DOCTYPE html>
+@php
+    $locale = session('locale', app()->getLocale());
+    $dir = $locale == 'ar' ? 'rtl' : 'ltr';
+@endphp
+<html lang="{{ str_replace('_', '-', $locale) }}" dir="{{ $dir }}">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
-@section('title', __('إنشاء حساب جديد') )
+    <title>{{ __('Register') }} - {{ config('app.name', 'Fly Vio') }}</title>
 
-@push('styles')
-<style>
-/* ─── Auth Page Styles ─── */
-.auth-page-wrapper {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 80px var(--space-4);
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    font-family: 'Tajawal', sans-serif !important;
-}
+    <!-- Favicon -->
+    <link rel="shortcut icon" type="image/png" href="{{ asset(\App\Models\Setting::get('site_favicon', 'images/favicon.png')) }}">
 
-.auth-card * {
-    font-family: 'Tajawal', sans-serif !important;
-}
+    <!-- Global Scripts -->
+    <script src="{{ asset('vendor/jquery/jquery.min.js') }}"></script>
 
-.auth-card {
-    background: #fff;
-    border-radius: 20px;
-    box-shadow: 0 20px 60px rgba(0,0,0,.12);
-    width: 100%;
-    max-width: 560px;
-    padding: var(--space-10) var(--space-8);
-    animation: fadeInUp .4s ease;
-}
+    <!-- CSS Assets -->
+    <link href="{{ asset('vendor/bootstrap-select/dist/css/bootstrap-select.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('vendor/animate/animate.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('icons/font-awesome/css/all.min.css') }}" rel="stylesheet">
 
-@keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
+    <!-- Tailwind / Vite -->
+    @vite(['resources/css/app.css'])
 
-.auth-card .auth-logo {
-    text-align: center;
-    margin-bottom: var(--space-6);
-}
+    <style>
+        body, html {
+            height: 100%;
+            overflow-x: hidden;
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
 
-.auth-card .auth-logo img {
-    height: 60px;
-    object-fit: contain;
-}
+        .register-split-screen {
+            min-height: 100vh;
+            display: flex;
+            flex-wrap: wrap;
+            width: 100%;
+        }
 
-.auth-title {
-    font-size: 1.6rem;
-    font-weight: 700;
-    text-align: center;
-    color: var(--text-primary, #1a2537);
-    margin-bottom: .3rem;
-}
+        /* Left Side (Banner) */
+        .register-banner {
+            flex: 0 0 50%;
+            max-width: 50%;
+            background-image: url('https://images.pexels.com/photos/2108845/pexels-photo-2108845.jpeg'); /* Travel-themed image */
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            padding: 4rem;
+            color: white;
+        }
 
-.auth-subtitle {
-    text-align: center;
-    color: var(--text-muted, #6b7280);
-    font-size: .9rem;
-    margin-bottom: var(--space-6);
-}
+        .register-banner::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to right, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.2) 100%);
+            z-index: 1;
+        }
 
-.auth-input-group {
-    margin-bottom: var(--space-4);
-}
+        /* RTL specific gradient */
+        [dir="rtl"] .register-banner::after {
+            background: linear-gradient(to left, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.2) 100%);
+        }
 
-.auth-input-group label {
-    display: block;
-    font-weight: 600;
-    font-size: .85rem;
-    margin-bottom: .4rem;
-    color: var(--text-secondary, #374151);
-}
+        .banner-content {
+            position: relative;
+            z-index: 2;
+            max-width: 600px;
+            animation: fadeInUp 1s ease;
+        }
 
-.auth-input-group .input-wrap {
-    position: relative;
-}
+        .banner-content h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 10px rgba(0,0,0,0.3);
+            line-height: 1.2;
+        }
 
-.auth-input-group .input-wrap i {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #9ca3af;
-    font-size: .9rem;
-}
+        .banner-content p {
+            font-size: 1.25rem;
+            opacity: 0.95;
+            text-shadow: 1px 1px 5px rgba(0,0,0,0.3);
+            font-weight: 300;
+        }
 
-html[dir="ltr"] .auth-input-group .input-wrap i { left: 14px; }
-html[dir="rtl"] .auth-input-group .input-wrap i { right: 14px; }
+        /* Right Side (Form) */
+        .register-form-container {
+            flex: 0 0 50%;
+            max-width: 50%;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 2rem;
+            position: relative;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.05);
+            z-index: 10;
+        }
 
-.auth-input-group input {
-    width: 100%;
-    border: 1.5px solid #e5e7eb;
-    border-radius: 10px;
-    padding: 11px 16px 11px 40px;
-    font-size: .9rem;
-    outline: none;
-    transition: border .2s;
-    background: #fafafa;
-}
+        /* In RTL, box shadow should be on the RIGHT side */
+        [dir="rtl"] .register-form-container {
+            box-shadow: 10px 0 30px rgba(0,0,0,0.05);
+        }
 
-html[dir="rtl"] .auth-input-group input { padding: 11px 40px 11px 16px; }
+        .register-content {
+            width: 100%;
+            max-width: 600px;
+            padding: 1rem;
+        }
 
-.auth-input-group input:focus {
-    border-color: var(--accent-color, #e8532e);
-    background: #fff;
-    box-shadow: 0 0 0 3px rgba(232,83,46,.1);
-}
+        .brand-logo {
+            margin-bottom: 2rem;
+            display: block;
+        }
 
-.auth-input-group .error-msg {
-    color: #ef4444;
-    font-size: .8rem;
-    margin-top: .3rem;
-}
+        .brand-logo img {
+            max-height: 50px;
+        }
 
-.auth-row-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-4);
-}
+        .welcome-text h3 {
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+        }
 
-.btn-auth-submit {
-    width: 100%;
-    padding: 13px;
-    background: var(--accent-color, #e8532e);
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    font-size: 1rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background .2s, transform .1s;
-    margin-top: var(--space-2);
-    letter-spacing: .02em;
-}
+        .welcome-text p {
+            color: #777;
+            margin-bottom: 2rem;
+        }
 
-.btn-auth-submit:hover { background: #d04525; }
-.btn-auth-submit:active { transform: scale(.99); }
+        .form-control {
+            height: 50px;
+            border-radius: 12px;
+            border: 1px solid #eee;
+            background: #fcfcfc;
+            padding: 0 1.25rem;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
 
-.auth-footer-link {
-    text-align: center;
-    margin-top: var(--space-5);
-    font-size: .9rem;
-    color: var(--text-muted, #6b7280);
-}
+        .form-control:focus {
+            border-color: #0f4c81;
+            box-shadow: 0 0 0 4px rgba(15, 76, 129, 0.05);
+            background: #fff;
+        }
 
-.auth-footer-link a {
-    color: var(--accent-color, #e8532e);
-    font-weight: 600;
-    text-decoration: none;
-}
+        .btn-primary {
+            background-color: #0f4c81;
+            border-color: #0f4c81;
+            height: 55px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 1rem;
+        }
 
-.auth-footer-link a:hover { text-decoration: underline; }
+        .btn-primary:hover {
+            background-color: #0a3560;
+            border-color: #0a3560;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(15, 76, 129, 0.2);
+        }
 
-.alert-auth {
-    border-radius: 10px;
-    padding: 12px 16px;
-    margin-bottom: var(--space-4);
-    font-size: .88rem;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
+        .row-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
 
-.alert-auth-error {
-    background: #fef2f2;
-    border: 1px solid #fca5a5;
-    color: #b91c1c;
-}
-</style>
-@endpush
+        /* Language Switcher */
+        .lang-switch-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            border-radius: 30px;
+            border: 1px solid #e0e0e0;
+            background: white;
+            color: #666;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+            text-decoration: none;
+            margin-top: 15px;
+        }
 
-@section('content')
-<div class="auth-page-wrapper">
-    <div class="auth-card">
+        .lang-switch-btn:hover {
+            background: #f8f9fa;
+            color: #0f4c81;
+            border-color: #0f4c81;
+            transform: translateY(-2px);
+        }
 
-        {{-- Logo --}}
-        <div class="auth-logo">
-            <a href="{{ url('/') }}">
-                <img src="{{ asset(\App\Models\Setting::get('site_logo', 'images/logo-full.png')) }}" alt="{{ config('app.name') }}">
-            </a>
+        /* Responsive */
+        @media (max-width: 1100px) {
+            .register-banner {
+                display: none;
+            }
+            .register-form-container {
+                flex: 0 0 100%;
+                max-width: 100%;
+                box-shadow: none;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .row-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="register-split-screen">
+
+    <!-- Banner Side -->
+    <div class="register-banner">
+        <div class="banner-content">
+            <h1>{{ __('Join the World\'s') }} <br> {{ __('Elite Travelers') }}</h1>
+            <p>{{ __('Create your account and discover premium tour packages, easy flights and seamless hotel bookings across the globe.') }}</p>
         </div>
+    </div>
 
-        <h2 class="auth-title">{{ __('إنشاء حساب جديد') }}</h2>
-        <p class="auth-subtitle">{{ __('انضم إلينا وابدأ رحلتك الآن') }}</p>
+    <!-- Form Side -->
+    <div class="register-form-container">
 
-        {{-- Errors --}}
-        @if ($errors->any())
-            <div class="alert-auth alert-auth-error">
-                <i class="fas fa-exclamation-circle"></i>
-                {{ $errors->first() }}
+        <div class="register-content">
+            <div class="brand-logo">
+                <img src="{{ asset(\App\Models\Setting::get('site_logo', 'images/logo-full.png')) }}" alt="Logo">
             </div>
-        @endif
 
-        {{-- Unverified Account Alert --}}
-        @if (session('unverified_email'))
-            <div class="alert alert-warning mb-4" style="border-radius: 12px; padding: 15px; border: 1px solid #ffeeba; background: #fff3cd; color: #856404; font-size: .9rem;">
-                <div class="d-flex align-items-center gap-2 mb-2">
-                    <i class="fas fa-info-circle"></i>
-                    <strong>{{ __('هذا البريد مسجل مسبقاً ولكنه غير مفعل.') }}</strong>
-                </div>
-                <p class="mb-3">{{ __('هل تريد إرسال كود التحقق لتفعيل الحساب؟') }}</p>
-                <form method="POST" action="{{ route('auth.resend-otp') }}">
-                    @csrf
-                    <input type="hidden" name="email" value="{{ session('unverified_email') }}">
-                    <button type="submit" class="btn btn-sm" style="background: #856404; color: #fff; border-radius: 8px; font-weight: 600;">
-                        {{ __('إرسال كود التحقق') }}
-                    </button>
-                </form>
+            <div class="welcome-text">
+                <h3>{{ __('Create an Account') }}</h3>
+                <p>{{ __('Start your journey with us today.') }}</p>
             </div>
-        @endif
 
-        <form method="POST" action="{{ route('register') }}">
-            @csrf
-
-            {{-- Name row --}}
-            <div class="auth-row-2">
-                <div class="auth-input-group">
-                    <label>{{ __('الاسم الأول') }}</label>
-                    <div class="input-wrap">
-                        <i class="fas fa-user"></i>
-                        <input type="text" name="first_name" value="{{ old('first_name') }}" required autofocus placeholder="{{ __('أحمد') }}">
+            {{-- Unverified Account Alert --}}
+            @if (session('unverified_email'))
+                <div class="alert alert-warning mb-4" style="border-radius: 12px; padding: 15px; border: 1px solid #ffeeba; background: #fff3cd; color: #856404; font-size: .9rem;">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>{{ __('This email is already registered but not verified.') }}</strong>
                     </div>
-                    @error('first_name')
-                        <div class="error-msg">{{ $message }}</div>
+                    <p class="mb-3">{{ __('Would you like to resend the verification code?') }}</p>
+                    <form method="POST" action="{{ route('auth.resend-otp') }}">
+                        @csrf
+                        <input type="hidden" name="email" value="{{ session('unverified_email') }}">
+                        <button type="submit" class="btn btn-sm" style="background: #856404; color: #fff; border-radius: 8px; font-weight: 600;">
+                            {{ __('Resend Code') }}
+                        </button>
+                    </form>
+                </div>
+            @endif
+
+            <form method="POST" action="{{ route('register') }}">
+                @csrf
+
+                <div class="row-grid">
+                    <div class="mb-3">
+                        <label class="mb-2 font-weight-bold text-muted small" style="text-transform:uppercase; letter-spacing:1px">{{ __('First Name') }}</label>
+                        <input type="text" name="first_name" class="form-control" value="{{ old('first_name') }}" required autofocus placeholder="{{ __('First Name') }}">
+                        @error('first_name')
+                            <span class="text-danger small mt-1 d-block">{{ $message }}</span>
+                        @enderror
+                    </div>
+                    <div class="mb-3">
+                        <label class="mb-2 font-weight-bold text-muted small" style="text-transform:uppercase; letter-spacing:1px">{{ __('Last Name') }}</label>
+                        <input type="text" name="last_name" class="form-control" value="{{ old('last_name') }}" required placeholder="{{ __('Last Name') }}">
+                        @error('last_name')
+                            <span class="text-danger small mt-1 d-block">{{ $message }}</span>
+                        @enderror
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="mb-2 font-weight-bold text-muted small" style="text-transform:uppercase; letter-spacing:1px">{{ __('Email Address') }}</label>
+                    <input type="email" name="email" class="form-control" value="{{ old('email') }}" required placeholder="name@example.com">
+                    @error('email')
+                        <span class="text-danger small mt-1 d-block">{{ $message }}</span>
                     @enderror
                 </div>
-                <div class="auth-input-group">
-                    <label>{{ __('الاسم الأخير') }}</label>
-                    <div class="input-wrap">
-                        <i class="fas fa-user"></i>
-                        <input type="text" name="last_name" value="{{ old('last_name') }}" required placeholder="{{ __('محمد') }}">
-                    </div>
-                    @error('last_name')
-                        <div class="error-msg">{{ $message }}</div>
+
+                <div class="mb-3">
+                    <label class="mb-2 font-weight-bold text-muted small" style="text-transform:uppercase; letter-spacing:1px">{{ __('Phone Number') }}</label>
+                    <input type="tel" name="phone" class="form-control" value="{{ old('phone') }}" required placeholder="+966 5x xxx xxxx">
+                    @error('phone')
+                        <span class="text-danger small mt-1 d-block">{{ $message }}</span>
                     @enderror
                 </div>
-            </div>
 
-            {{-- Email --}}
-            <div class="auth-input-group">
-                <label>{{ __('البريد الإلكتروني') }}</label>
-                <div class="input-wrap">
-                    <i class="fas fa-envelope"></i>
-                    <input type="email" name="email" value="{{ old('email') }}" required placeholder="name@example.com">
-                </div>
-                @error('email')
-                    <div class="error-msg">{{ $message }}</div>
-                @enderror
-            </div>
-
-            {{-- Phone --}}
-            <div class="auth-input-group">
-                <label>{{ __('رقم الهاتف') }}</label>
-                <div class="input-wrap">
-                    <i class="fas fa-phone"></i>
-                    <input type="tel" name="phone" value="{{ old('phone') }}" required placeholder="+966 5x xxx xxxx">
-                </div>
-                @error('phone')
-                    <div class="error-msg">{{ $message }}</div>
-                @enderror
-            </div>
-
-            {{-- Password row --}}
-            <div class="auth-row-2">
-                <div class="auth-input-group">
-                    <label>{{ __('كلمة المرور') }}</label>
-                    <div class="input-wrap">
-                        <i class="fas fa-lock"></i>
-                        <input type="password" name="password" required placeholder="••••••••" minlength="8">
+                <div class="row-grid">
+                    <div class="mb-3">
+                        <label class="mb-2 font-weight-bold text-muted small" style="text-transform:uppercase; letter-spacing:1px">{{ __('Password') }}</label>
+                        <input type="password" name="password" class="form-control" required placeholder="••••••••" minlength="8">
+                        @error('password')
+                            <span class="text-danger small mt-1 d-block">{{ $message }}</span>
+                        @enderror
                     </div>
-                    @error('password')
-                        <div class="error-msg">{{ $message }}</div>
-                    @enderror
-                </div>
-                <div class="auth-input-group">
-                    <label>{{ __('تأكيد كلمة المرور') }}</label>
-                    <div class="input-wrap">
-                        <i class="fas fa-lock"></i>
-                        <input type="password" name="password_confirmation" required placeholder="••••••••" minlength="8">
+                    <div class="mb-3">
+                        <label class="mb-2 font-weight-bold text-muted small" style="text-transform:uppercase; letter-spacing:1px">{{ __('Confirm Password') }}</label>
+                        <input type="password" name="password_confirmation" class="form-control" required placeholder="••••••••" minlength="8">
                     </div>
                 </div>
+
+                <button type="submit" class="btn btn-primary">
+                    {{ __('Create Account') }} <i class="fas fa-arrow-{{ app()->isLocale('ar') ? 'left' : 'right' }} ms-2"></i>
+                </button>
+
+                <div class="text-center mt-4">
+                    <div class="text-muted small">
+                        {{ __('Already have an account?') }}
+                        <a href="{{ route('login') }}" class="text-danger font-weight-bold ml-1">{{ __('Sign In') }}</a>
+                    </div>
+
+                    @if($locale == 'ar')
+                        <a href="{{ route('lang.switch', 'en') }}" class="lang-switch-btn">
+                            <i class="fa fa-globe"></i> English
+                        </a>
+                    @else
+                        <a href="{{ route('lang.switch', 'ar') }}" class="lang-switch-btn">
+                            <i class="fa fa-globe"></i> العربية
+                        </a>
+                    @endif
+                </div>
+
+            </form>
+
+            <div class="mt-5 text-center text-muted small">
+                &copy; {{ date('Y') }} {{ config('app.name') }}. {{ __('All rights reserved.') }}
             </div>
-
-            <button type="submit" class="btn-auth-submit">
-                {{ __('إنشاء الحساب') }} <i class="fas fa-arrow-{{ app()->isLocale('ar') ? 'left' : 'right' }} ms-2"></i>
-            </button>
-        </form>
-
-        <div class="auth-footer-link">
-            {{ __('لديك حساب بالفعل؟') }}
-            <a href="{{ route('login') }}">{{ __('تسجيل الدخول') }}</a>
         </div>
     </div>
 </div>
-@endsection
+
+<script src="{{ asset('vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+
+</body>
+</html>
