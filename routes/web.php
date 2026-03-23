@@ -139,6 +139,7 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     // User Management
     Route::get('users/data', [UserController::class, 'getData'])->name('users.data');
     Route::post('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
+    Route::post('users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.reset-password');
     Route::resource('users', UserController::class);
 
     // Subscribers
@@ -349,6 +350,9 @@ Route::middleware(['auth', 'isCustomer'])->prefix('customer')->name('customer.')
 
     // Bookings
     Route::get('/bookings', [CustomerBookingController::class, 'index'])->name('bookings.index');
+    Route::get('/bookings/trips', [CustomerBookingController::class, 'trips'])->name('bookings.trips');
+    Route::get('/bookings/flights', [CustomerBookingController::class, 'flights'])->name('bookings.flights');
+    Route::get('/bookings/hotels', [CustomerBookingController::class, 'hotels'])->name('bookings.hotels');
     Route::get('/bookings/create/{trip_id}', [CustomerBookingController::class, 'create'])->name('bookings.create');
     Route::get('/bookings/{id}', [CustomerBookingController::class, 'show'])->name('bookings.show');
     Route::post('/bookings', [CustomerBookingController::class, 'store'])->name('bookings.store');

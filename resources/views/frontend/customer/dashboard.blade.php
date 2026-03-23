@@ -5,7 +5,17 @@
 
 @section('content')
 
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
+/* ─── Global Font for Dashboard ─── */
+body, .cdash-wrapper, .welcome-banner, .stat-card, .dash-section, .quick-link {
+    font-family: 'Tajawal', sans-serif !important;
+}
+/* Exception for icons to prevent breaking */
+i, .fas, .far, .fab, .fa {
+    font-family: "Font Awesome 5 Free", "Font Awesome 5 Brands" !important;
+}
+
 /* ─── Stats Cards ─── */
 
 :root {

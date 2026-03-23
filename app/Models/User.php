@@ -136,11 +136,51 @@ class User extends Authenticatable
      * Check if user is customer
      */
     /**
-     * Get user bookings
+     * Get user trip bookings
+     */
+    public function tripBookings()
+    {
+        return $this->hasMany(TripBooking::class);
+    }
+
+    /**
+     * Get user flight bookings
+     */
+    public function flightBookings()
+    {
+        return $this->hasMany(Booking::class);
+    }
+
+    /**
+     * Get user hotel bookings
+     */
+    public function hotelBookings()
+    {
+        return $this->hasMany(HotelBooking::class);
+    }
+
+    /**
+     * Get user bookings (Legacy/Trip)
      */
     public function bookings()
     {
-        return $this->hasMany(TripBooking::class);
+        return $this->tripBookings();
+    }
+
+    /**
+     * Get user notifications
+     */
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class)->latest();
+    }
+
+    /**
+     * Get unread notifications
+     */
+    public function unreadNotifications()
+    {
+        return $this->hasMany(Notification::class)->where('is_read', false)->latest();
     }
 
     public function trips()

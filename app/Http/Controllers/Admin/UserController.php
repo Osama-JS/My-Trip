@@ -214,23 +214,47 @@ class UserController extends Controller
         return response()->json([
             'data' => $users->map(function($user) {
                 $statusBadge = $user->status === 'active'
-                    ? '<span class="badge badge-success">Active</span>'
-                    : '<span class="badge badge-danger">Inactive</span>';
+                    ? '<span class="badge badge-success">'.__('Active').'</span>'
+                    : '<span class="badge badge-danger">'.__('Inactive').'</span>';
 
                 return [
+                    'id' => $user->id,
                     'photo' => '<img src="' . $user->profile_photo_url . '" class="rounded-circle" width="40" alt="">',
-                    'name' => $user->full_name,
+                    'name' => '<strong>' . $user->full_name . '</strong><br><small class="text-muted">' . $user->email . '</small>',
                     'email' => $user->email,
                     'phone' => ($user->country_code ? $user->country_code . ' ' : '') . ($user->phone ?? '---'),
                     'status' => $statusBadge,
                     'joined' => $user->created_at->format('Y-m-d'),
                     'actions' => '
                         <div class="d-flex">
-                            <button onclick="viewSubscriber(' . $user->id . ')" class="btn btn-info shadow btn-xs sharp me-1"><i class="fa fa-eye"></i></button>
-                            <a href="' . route('admin.users.activity', $user->id) . '" class="btn btn-primary shadow btn-xs sharp"><i class="fa fa-chart-line"></i></a>
+                            <button onclick="viewSubscriber(' . $user->id . ')" class="btn btn-info shadow btn-xs sharp me-1" title="'.__('View').'"><i class="fa fa-eye"></i></button>
+                            <button onclick="editSubscriber(' . $user->id . ')" class="btn btn-primary shadow btn-xs sharp me-1" title="'.__('Edit').'"><i class="fas fa-pencil-alt"></i></button>
+                            <button onclick="toggleSubscriberStatus(' . $user->id . ')" class="btn btn-warning shadow btn-xs sharp me-1" title="'.__('Toggle Status').'"><i class="fas fa-ban"></i></button>
+                            <button onclick="resetSubscriberPassword(' . $user->id . ')" class="btn btn-dark shadow btn-xs sharp me-1" title="'.__('Reset Password').'"><i class="fa fa-key"></i></button>
+                            <a href="' . route('admin.users.activity', $user->id) . '" class="btn btn-secondary shadow btn-xs sharp me-1" title="'.__('Activity').'"><i class="fa fa-chart-line"></i></a>
+                            <button onclick="deleteSubscriber(' . $user->id . ')" class="btn btn-danger shadow btn-xs sharp" title="'.__('Delete').'"><i class="fa fa-trash"></i></button>
                         </div>'
                 ];
             })
+        ]);
+    }
+
+    /**
+     * Reset user password
+     */
+    public function resetPassword(Request $request, User $user)
+    {
+        $request->validate([
+            'password' => 'required|min:8|confirmed',
+        ]);
+
+        $user->update([
+            'password' => Hash::make($request->password)
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => __('Password reset successfully')
         ]);
     }
 }

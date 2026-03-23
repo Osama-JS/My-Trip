@@ -5,174 +5,239 @@
 
 @push('styles')
 <style>
-.notif-card {
-    background: #fff;
-    border-radius: 14px;
-    box-shadow: 0 2px 10px rgba(0,0,0,.06);
-    overflow: hidden;
-}
+    .notif-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    .notif-card {
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+        overflow: hidden;
+        border: 1px solid #f1f5f9;
+        margin-bottom: 30px;
+    }
+    .notif-header {
+        padding: 24px 30px;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #fafbfc;
+    }
+    .notif-header h3 {
+        margin: 0;
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #1e293b;
+    }
+    .btn-mark-all {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--primary-blue, #2563eb);
+        background: rgba(37, 99, 235, 0.08);
+        border: none;
+        padding: 10px 18px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .btn-mark-all:hover {
+        background: rgba(37, 99, 235, 0.15);
+        transform: translateY(-1px);
+    }
+    .notif-item {
+        display: flex;
+        gap: 20px;
+        padding: 24px 30px;
+        border-bottom: 1px solid #f8fafc;
+        transition: all 0.2s;
+        text-decoration: none;
+        color: inherit;
+        position: relative;
+    }
+    .notif-item:last-child { border-bottom: none; }
+    .notif-item:hover { background: #fcfdfe; }
+    .notif-item.unread { background: #fcf8f7; }
+    .notif-item.unread::before {
+        content: '';
+        position: absolute;
+        inset-inline-start: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: #e8532e;
+    }
+    .notif-icon-box {
+        width: 54px;
+        height: 54px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+    .icon-booking { background: #e0f2fe; color: #0369a1; }
+    .icon-payment { background: #dcfce7; color: #15803d; }
+    .icon-cancel { background: #fee2e2; color: #b91c1c; }
+    .icon-general { background: #f1f5f9; color: #475569; }
 
-.notif-header {
-    padding: 18px 22px;
-    border-bottom: 1px solid #f3f4f6;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
+    .notif-body { flex: 1; min-width: 0; }
+    .notif-meta {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 6px;
+    }
+    .notif-type-tag {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 4px 10px;
+        border-radius: 6px;
+        background: rgba(0,0,0,0.05);
+        color: #64748b;
+    }
+    .notif-time {
+        font-size: 0.8rem;
+        color: #94a3b8;
+    }
+    .notif-title {
+        font-weight: 700;
+        font-size: 1.05rem;
+        color: #111827;
+        margin-bottom: 6px;
+    }
+    .notif-content-text {
+        font-size: 0.95rem;
+        color: #64748b;
+        line-height: 1.6;
+    }
+    .notif-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+    }
+    .btn-read-toggle {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        background: #fff;
+        color: #94a3b8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+    .btn-read-toggle:hover {
+        border-color: #2563eb;
+        color: #2563eb;
+        background: #f0f7ff;
+    }
 
-.notif-header h3 {
-    margin: 0;
-    font-size: 1rem;
-    font-weight: 700;
-    color: #111827;
-}
+    .empty-notif {
+        padding: 80px 40px;
+        text-align: center;
+    }
+    .empty-notif i {
+        font-size: 5rem;
+        color: #f1f5f9;
+        margin-bottom: 24px;
+        display: block;
+    }
+    .empty-notif h4 {
+        font-weight: 800;
+        color: #1e293b;
+        margin-bottom: 8px;
+    }
+    .empty-notif p {
+        color: #94a3b8;
+    }
 
-.notif-item {
-    display: flex;
-    gap: 16px;
-    padding: 18px 22px;
-    border-bottom: 1px solid #f9fafb;
-    transition: background .15s;
-    text-decoration: none;
-    color: inherit;
-    position: relative;
-}
-
-.notif-item:last-child { border-bottom: none; }
-.notif-item:hover { background: #fafafa; }
-.notif-item.unread { background: #fdfaf9; }
-.notif-item.unread::before {
-    content: '';
-    position: absolute;
-    inset-inline-start: 0;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    background: var(--accent-color, #0f172a);
-}
-
-.notif-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    background: #f1f5f9;
-    color: #475569;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.1rem;
-    flex-shrink: 0;
-}
-
-.unread .notif-icon {
-    background: #fdf2f0;
-    color: var(--accent-color, #0f172a);
-}
-
-.notif-content { flex: 1; min-width: 0; }
-
-.notif-title {
-    font-weight: 700;
-    font-size: .9rem;
-    color: #111827;
-    margin-bottom: 4px;
-}
-
-.notif-text {
-    font-size: .83rem;
-    color: #64748b;
-    line-height: 1.5;
-}
-
-.notif-time {
-    font-size: .75rem;
-    color: #94a3b8;
-    margin-top: 8px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.btn-read-all {
-    font-size: .8rem;
-    font-weight: 600;
-    color: var(--accent-color, #0f172a);
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    padding: 0;
-}
-
-.btn-read-all:hover { text-decoration: underline; }
-
-.empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: #94a3b8;
-}
-
-.empty-state i { font-size: 3rem; margin-bottom: 16px; opacity: .5; }
+    /* Dark Mode Overrides */
+    body.dark-mode .notif-card { background: #1e293b; border-color: #334155; }
+    body.dark-mode .notif-header { background: #243049; border-color: #334155; }
+    body.dark-mode .notif-header h3 { color: #f8fafc; }
+    body.dark-mode .notif-item { border-color: #334155; }
+    body.dark-mode .notif-item:hover { background: #26344d; }
+    body.dark-mode .notif-item.unread { background: #2d2a29; }
+    body.dark-mode .notif-title { color: #f8fafc; }
+    body.dark-mode .notif-content-text { color: #cbd5e1; }
 </style>
 @endpush
 
 @section('content')
-<div class="notif-card">
-    <div class="notif-header">
-        <h3>{{ __('All Notifications') }}</h3>
-        @if(auth()->user()->unreadNotifications->count() > 0)
-            <form action="{{ route('customer.notifications.read-all') }}" method="POST">
-                @csrf
-                <button type="submit" class="btn-read-all">
-                    <i class="fas fa-check-double"></i> {{ __('Mark all as read') }}
-                </button>
-            </form>
-        @endif
-    </div>
-
-    @forelse($notifications as $notif)
-        @php
-            $isUnread = $notif->unread();
-            $data = $notif->data;
-            $icon = 'fa-bell';
-
-            // Custom icons based on type/content if needed
-            if (isset($data['type'])) {
-                if ($data['type'] === 'booking') $icon = 'fa-ticket-alt';
-                if ($data['type'] === 'payment') $icon = 'fa-credit-card';
-            }
-        @endphp
-        <div class="notif-item {{ $isUnread ? 'unread' : '' }}">
-            <div class="notif-icon">
-                <i class="fas {{ $icon }}"></i>
-            </div>
-            <div class="notif-content">
-                <div class="notif-title">{{ $data['title'] ?? __('New Notification') }}</div>
-                <div class="notif-text">{{ $data['message'] ?? $data['body'] ?? '' }}</div>
-                <div class="notif-time">
-                    <i class="far fa-clock"></i> {{ $notif->created_at->diffForHumans() }}
-                </div>
-            </div>
-            @if($isUnread)
-                <form action="{{ route('customer.notifications.read', $notif->id) }}" method="POST">
+<div class="notif-container">
+    <div class="notif-card">
+        <div class="notif-header">
+            <h3>{{ __('All Notifications') }}</h3>
+            @if(auth()->user()->unreadNotifications()->count() > 0)
+                <form action="{{ route('customer.notifications.read-all') }}" method="POST">
                     @csrf
-                    <button type="submit" class="btn-read-all" title="{{ __('Mark as read') }}" style="color:#94a3b8">
-                        <i class="fas fa-check"></i>
+                    <button type="submit" class="btn-mark-all">
+                        <i class="fas fa-check-double"></i> {{ __('Mark all as read') }}
                     </button>
                 </form>
             @endif
         </div>
-    @empty
-        <div class="empty-state">
-            <i class="fas fa-bell-slash"></i>
-            <p>{{ __('No notifications at the moment.') }}</p>
+
+        <div class="notif-list-body">
+            @forelse($notifications as $notif)
+                @php
+                    $isUnread = $notif->unread();
+                    $iconClass = 'icon-general';
+                    $icon = 'fa-bell';
+                    
+                    if ($notif->type === 'booking_confirmed') { $iconClass = 'icon-booking'; $icon = 'fa-check-circle'; }
+                    elseif ($notif->type === 'booking_cancelled') { $iconClass = 'icon-cancel'; $icon = 'fa-times-circle'; }
+                    elseif ($notif->type === 'payment_success') { $iconClass = 'icon-payment'; $icon = 'fa-credit-card'; }
+                    elseif ($notif->type === 'payment_failed') { $iconClass = 'icon-cancel'; $icon = 'fa-exclamation-triangle'; }
+                @endphp
+                <div class="notif-item {{ $isUnread ? 'unread' : '' }}">
+                    <div class="notif-icon-box {{ $iconClass }}">
+                        <i class="fas {{ $icon }}"></i>
+                    </div>
+                    <div class="notif-body">
+                        <div class="notif-meta">
+                            <span class="notif-type-tag">{{ __($notif->type) }}</span>
+                            <span class="notif-time">{{ $notif->created_at->diffForHumans() }}</span>
+                        </div>
+                        <div class="notif-title">{{ $notif->title }}</div>
+                        <div class="notif-content-text">{{ $notif->content }}</div>
+                    </div>
+                    @if($isUnread)
+                        <div class="notif-actions">
+                            <form action="{{ route('customer.notifications.read', $notif->id) }}" method="POST">
+                                @csrf
+                                <button type="submit" class="btn-read-toggle" title="{{ __('Mark as read') }}">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </form>
+                        </div>
+                    @endif
+                </div>
+            @empty
+                <div class="empty-notif">
+                    <i class="fas fa-bell-slash"></i>
+                    <h4>{{ __('No Notifications Yet') }}</h4>
+                    <p>{{ __('When you receive updates about your bookings, they will appear here.') }}</p>
+                </div>
+            @endforelse
         </div>
-    @endforelse
-</div>
-
-@if($notifications->hasPages())
-    <div style="margin-top: 20px; display: flex; justify-content: center;">
-        {{ $notifications->links() }}
     </div>
-@endif
 
+    @if($notifications->hasPages())
+        <div class="d-flex justify-content-center">
+            {{ $notifications->links() }}
+        </div>
+    @endif
+</div>
 @endsection

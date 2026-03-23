@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             BannerSeeder::class,
             LocationSeeder::class,
             QuestionSeeder::class,
+            TourPackageSeeder::class,
 
         ]);
     }

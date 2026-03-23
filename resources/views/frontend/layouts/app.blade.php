@@ -184,11 +184,45 @@
     <script>
         // Header scroll effect
         window.addEventListener('scroll', () => {
-            document.getElementById('feHeader').classList.toggle('scrolled', window.scrollY > 50);
+            const header = document.getElementById('feHeader');
+            if(header) header.classList.toggle('scrolled', window.scrollY > 50);
         });
+
+        // Favorite Toggle (Global)
+        function toggleFavorite(btn) {
+            const tripId = btn.dataset.tripId;
+            const icon = btn.querySelector('i');
+            
+            btn.disabled = true;
+            
+            fetch(`{{ url('customer/favorites') }}/${tripId}/toggle`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'added') {
+                    btn.classList.add('active');
+                    if(icon) icon.className = 'fas fa-heart';
+                    // Optional: toaster notification
+                } else {
+                    btn.classList.remove('active');
+                    if(icon) icon.className = 'far fa-heart';
+                }
+            })
+            .catch(err => console.error('Favorite toggle failed:', err))
+            .finally(() => {
+                btn.disabled = false;
+            });
+        }
 
         // Scroll animations
         const animateElements = document.querySelectorAll('.fe-animate');
+// ... rest of the script
         const observer = new IntersectionObserver((entries) => {
             entries.forEach((entry, index) => {
                 if (entry.isIntersecting) {

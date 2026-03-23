@@ -454,19 +454,20 @@
 .filter-tag a { color: inherit; margin-inline-start: 4px; }
 .filter-tag-clear { background: var(--gray-100); color: var(--gray-500); }
 
-/* ══ TRIPS GRID ══ */
-.fe-trips-grid-v2 {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-6);
-}
-@media (max-width: 1200px) { .fe-trips-grid-v2 { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 640px) { .fe-trips-grid-v2 { grid-template-columns: 1fr; } }
-
-/* List View */
+/* List View Support */
 .fe-trips-grid-v2.list-view { display: flex; flex-direction: column; gap: var(--space-4); }
-.fe-trips-grid-v2.list-view .fe-trip-card { display: grid; grid-template-columns: 280px 1fr; }
-@media (max-width: 768px) { .fe-trips-grid-v2.list-view .fe-trip-card { grid-template-columns: 1fr; } }
+
+.fe-trips-grid-v2.list-view .fe-trip-card { 
+    display: grid; 
+    grid-template-columns: 320px 1fr; 
+    min-height: 280px;
+}
+.fe-trips-grid-v2.list-view .fe-trip-card-image { height: 100%; }
+.fe-trips-grid-v2.list-view .fe-trip-card-body { padding: var(--space-8); }
+
+@media (max-width: 768px) { 
+    .fe-trips-grid-v2.list-view .fe-trip-card { grid-template-columns: 1fr; } 
+}
 
 /* Empty State */
 .trips-empty-state {

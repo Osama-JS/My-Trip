@@ -104,4 +104,20 @@ class Notification extends Model
             default                        => 'general',
         };
     }
+
+    /**
+     * Check if the notification is unread.
+     */
+    public function unread(): bool
+    {
+        return !$this->is_read;
+    }
+
+    /**
+     * Mark the notification as read.
+     */
+    public function markAsRead(): bool
+    {
+        return $this->update(['is_read' => true]);
+    }
 }

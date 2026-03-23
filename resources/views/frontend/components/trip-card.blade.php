@@ -1,4 +1,3 @@
-{{-- Trip Card Component --}}
 @php
     $locale = app()->getLocale();
     $title = $locale == 'ar' ? $trip->title_ar : $trip->title_en;
@@ -12,84 +11,89 @@
     $discount = $hasDiscount ? round((1 - $trip->price / $trip->price_before_discount) * 100) : 0;
 @endphp
 
-<article class="trip-card">
-    {{-- Image --}}
-    <div class="trip-card-image">
-        <img src="{{ $trip->image_url }}" alt="{{ $title }}" loading="lazy">
+<article class="fe-trip-card">
+    {{-- Image Container --}}
+    <div class="fe-trip-card-image">
+        <a href="{{ route('trips.show', $trip->id) }}">
+            <img src="{{ $trip->image_url }}" 
+                 alt="{{ $title }}" 
+                 loading="lazy" 
+                 onerror="this.onerror=null;this.src='{{ asset('images/trip-placeholder.png') }}';">
+        </a>
 
-        {{-- Discount Badge --}}
-        @if($hasDiscount)
-            <span class="trip-card-badge">{{ $discount }}% {{ __('Off') }}</span>
-        @elseif($trip->is_featured)
-            <span class="trip-card-badge featured-badge">{{ __('Featured') }}</span>
-        @endif
+        {{-- Badges --}}
+        <div class="fe-trip-card-badges">
+            @if($hasDiscount)
+                <span class="fe-badge-discount">
+                    <i class="fas fa-percentage"></i> {{ $discount }}% {{ __('Off') }}
+                </span>
+            @endif
+            @if($trip->is_featured)
+                <span class="fe-badge-featured">
+                    <i class="fas fa-star"></i> {{ __('Featured') }}
+                </span>
+            @endif
+        </div>
 
-        {{-- Favorite Button --}}
+        {{-- Favorite --}}
         @auth
-            <button class="trip-card-favorite {{ auth()->user()->favorites()->where('trip_id', $trip->id)->exists() ? 'active' : '' }}" 
+            <button class="fe-card-fav {{ auth()->user()->favorites()->where('trip_id', $trip->id)->exists() ? 'active' : '' }}" 
                     data-trip-id="{{ $trip->id }}" 
-                    onclick="event.preventDefault(); toggleFavorite(this)">
+                    onclick="event.preventDefault(); if(typeof toggleFavorite === 'function') toggleFavorite(this)"
+                    title="{{ __('Add to Favorites') }}">
                 <i class="fas fa-heart"></i>
             </button>
         @else
-            <a href="{{ route('login') }}" class="trip-card-favorite">
+            <a href="{{ route('login') }}" class="fe-card-fav" title="{{ __('Login to Favorite') }}">
                 <i class="far fa-heart"></i>
             </a>
         @endauth
 
-        {{-- Rating Overlay --}}
+        {{-- Rating --}}
         @if($avgRating > 0)
-            <div class="trip-card-overlay">
-                <div class="trip-card-rating">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                    </svg>
-                    <span>{{ number_format($avgRating, 1) }}</span>
-                </div>
+            <div class="fe-card-rating">
+                <i class="fas fa-star"></i>
+                <span>{{ number_format($avgRating, 1) }}</span>
             </div>
         @endif
     </div>
 
     {{-- Content --}}
-    <div class="trip-card-content">
-        {{-- Location --}}
-        <div class="trip-card-location">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
-                <circle cx="12" cy="10" r="3"/>
-            </svg>
-            <span>
-                {{ $fromCountry }} → {{ $toCountry }} {{ $city ? '- ' . $city : '' }}
-            </span>
+    <div class="fe-trip-card-body">
+        <div class="fe-card-location">
+            <i class="fas fa-map-marker-alt"></i>
+            <span>{{ $toCountry }} {{ $city ? '• ' . $city : '' }}</span>
         </div>
 
-        {{-- Title --}}
-        <h3 class="trip-card-title">
-            <a href="{{ route('trips.show', $trip->id) }}">{{ Str::limit($title, 45) }}</a>
+        <h3 class="fe-card-title">
+            <a href="{{ route('trips.show', $trip->id) }}">{{ Str::limit($title, 50) }}</a>
         </h3>
 
-        {{-- Meta & Price --}}
-        <div class="trip-card-meta">
-            {{-- Duration --}}
-            @if($trip->duration)
-                <div class="trip-card-meta-item">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                    </svg>
-                    <span>{{ $trip->duration }} {{ __('Days') }}</span>
-                </div>
-            @endif
-
-            {{-- Price --}}
-            <div class="trip-card-price">
-                @if($hasDiscount)
-                    <span class="trip-card-price-old">{{ number_format($trip->price_before_discount) }} <small>{{ __('SAR') }}</small></span>
-                @endif
-                <span class="trip-card-price-current">
-                    {{ number_format($trip->price) }} <span class="currency-label">{{ __('SAR') }}</span>
-                    <span class="trip-card-price-unit">/ {{ __('person') }}</span>
-                </span>
+        <div class="fe-card-info">
+            <div class="fe-info-item">
+                <i class="far fa-clock"></i>
+                <span>{{ $trip->duration }} {{ __('Days') }}</span>
             </div>
+            <div class="fe-info-item">
+                <i class="far fa-calendar-alt"></i>
+                <span>{{ __('Flexible') }}</span>
+            </div>
+        </div>
+
+        {{-- Footer/Price --}}
+        <div class="fe-card-footer">
+            <div class="fe-card-price">
+                @if($hasDiscount)
+                    <span class="old-price">{{ number_format($trip->price_before_discount) }} <small>{{ __('SAR') }}</small></span>
+                @endif
+                <div class="current-price">
+                    <strong>{{ number_format($trip->price) }}</strong>
+                    <span class="unit">{{ __('SAR') }}</span>
+                </div>
+            </div>
+            <a href="{{ route('trips.show', $trip->id) }}" class="fe-btn-details">
+                <i class="fas fa-arrow-right"></i>
+            </a>
         </div>
     </div>
 </article>

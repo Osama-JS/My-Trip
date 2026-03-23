@@ -22,39 +22,59 @@ class BookingController extends Controller
     }
 
     /**
-     * List all bookings for the authenticated customer.
+     * List all bookings for the authenticated customer (Redirects to trips by default).
      */
     public function index(Request $request)
     {
-        $userId = Auth::id();
+        return redirect()->route('customer.bookings.trips');
+    }
+
+    /**
+     * List Trip Bookings
+     */
+    public function trips(Request $request)
+    {
         $status = $request->get('status');
-
-        $tripQuery = TripBooking::with(['trip.images'])->where('user_id', $userId);
-        $flightQuery = Booking::where('user_id', $userId);
-
+        $query = \App\Models\TripBooking::with(['trip.images'])->where('user_id', Auth::id());
+        
         if ($status && in_array($status, ['pending', 'confirmed', 'cancelled'])) {
-            $tripQuery->where('status', $status);
-            $flightQuery->where('status', $status);
+            $query->where('status', $status);
         }
 
-        $trips = $tripQuery->get()->map(function($item) {
-            $item->booking_type = 'trip';
-            return $item;
-        });
+        $bookings = $query->latest()->paginate(10);
+        return view('frontend.customer.bookings.trips', compact('bookings'));
+    }
 
-        $flights = $flightQuery->get()->map(function($item) {
-            $item->booking_type = 'flight';
-            return $item;
-        });
+    /**
+     * List Flight Bookings
+     */
+    public function flights(Request $request)
+    {
+        $status = $request->get('status');
+        $query = \App\Models\Booking::where('user_id', Auth::id());
+        
+        if ($status && in_array($status, ['pending', 'confirmed', 'cancelled'])) {
+            $query->where('status', $status);
+        }
 
-        // Merge and sort by created_at descending
-        $bookings = $trips->merge($flights)->sortByDesc('created_at');
+        $bookings = $query->latest()->paginate(10);
+        return view('frontend.customer.bookings.flights', compact('bookings'));
+    }
 
-        // Manual pagination if needed, but for now we pass the collection
-        // Actually, let's just paginate if the user has many. 
-        // For simplicity in this demo, we use the collection.
+    /**
+     * List Hotel Bookings
+     */
+    public function hotels(Request $request)
+    {
+        $status = $request->get('status');
+        $query = \App\Models\HotelBooking::where('user_id', Auth::id());
+        
+        if ($status && in_array($status, ['pending', 'confirmed', 'cancelled'])) {
+            $query->where('status', $status);
+        }
 
-        return view('frontend.customer.bookings.index', compact('bookings'));
+        $bookings = $query->latest()->paginate(10);
+        return view('frontend.customer.bookings.hotels', compact('bookings'));
     }
 
     /**
@@ -70,6 +90,13 @@ class BookingController extends Controller
                 ->findOrFail($id);
 
             return view('frontend.customer.bookings.flights_show', compact('booking'));
+        }
+
+        if ($type === 'hotel') {
+            $booking = \App\Models\HotelBooking::where('user_id', Auth::id())
+                ->findOrFail($id);
+
+            return view('frontend.customer.bookings.hotels_show', compact('booking'));
         }
 
         $booking = TripBooking::with(['trip.images', 'trip.toCountry', 'trip.toCity', 'passengers', 'payments', 'bankTransfers', 'histories' => function($q) {

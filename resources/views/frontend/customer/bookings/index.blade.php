@@ -200,122 +200,211 @@
 
 @section('content')
 
-{{-- Filter Bar --}}
-<div class="filter-bar">
-    <a href="{{ route('customer.bookings.index') }}" class="filter-btn {{ !request('status') ? 'active' : '' }}">
-        {{ __('All') }}
-    </a>
-    <a href="{{ route('customer.bookings.index', ['status' => 'pending']) }}" class="filter-btn {{ request('status') === 'pending' ? 'active' : '' }}">
-        <i class="fas fa-clock"></i> {{ __('Pending') }}
-    </a>
-    <a href="{{ route('customer.bookings.index', ['status' => 'confirmed']) }}" class="filter-btn {{ request('status') === 'confirmed' ? 'active' : '' }}">
-        <i class="fas fa-check-circle"></i> {{ __('Confirmed') }}
-    </a>
-    <a href="{{ route('customer.bookings.index', ['status' => 'cancelled']) }}" class="filter-btn {{ request('status') === 'cancelled' ? 'active' : '' }}">
-        <i class="fas fa-times-circle"></i> {{ __('Cancelled') }}
-    </a>
+@section('content')
+
+{{-- Filter & Tabs Bar --}}
+<div class="d-flex justify-content-between align-items-center flex-wrap mb-4 gap-3">
+    <ul class="nav nav-pills custom-tabs" id="bookingTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="trips-tab" data-bs-toggle="pill" data-bs-target="#trips" type="button" role="tab">
+                <i class="fas fa-map-marked-alt me-2"></i>{{ __('Trips') }}
+                <span class="badge bg-light text-dark ms-2">{{ $tripBookings->total() }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="flights-tab" data-bs-toggle="pill" data-bs-target="#flights" type="button" role="tab">
+                <i class="fas fa-plane me-2"></i>{{ __('Flights') }}
+                <span class="badge bg-light text-dark ms-2">{{ $flightBookings->total() }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="hotels-tab" data-bs-toggle="pill" data-bs-target="#hotels" type="button" role="tab">
+                <i class="fas fa-hotel me-2"></i>{{ __('Hotels') }}
+                <span class="badge bg-light text-dark ms-2">{{ $hotelBookings->total() }}</span>
+            </button>
+        </li>
+    </ul>
+
+    <div class="filter-bar mb-0">
+        <a href="{{ route('customer.bookings.index') }}" class="filter-btn {{ !request('status') ? 'active' : '' }}">
+            {{ __('All Status') }}
+        </a>
+        <a href="{{ route('customer.bookings.index', ['status' => 'pending']) }}" class="filter-btn {{ request('status') === 'pending' ? 'active' : '' }}">
+            <i class="fas fa-clock"></i> {{ __('Pending') }}
+        </a>
+        <a href="{{ route('customer.bookings.index', ['status' => 'confirmed']) }}" class="filter-btn {{ request('status') === 'confirmed' ? 'active' : '' }}">
+            <i class="fas fa-check-circle"></i> {{ __('Confirmed') }}
+        </a>
+    </div>
 </div>
 
-{{-- Bookings --}}
-@forelse($bookings as $booking)
-    @php
-        $isFlight = ($booking->booking_type === 'flight');
-        $trip = !$isFlight ? $booking->trip : null;
-        $image = !$isFlight ? $trip?->images?->first() : null;
-    @endphp
-    <div class="booking-card">
-        <div class="booking-card-body">
-            {{-- Image --}}
-            @if($isFlight)
-                <div class="booking-img-placeholder" style="background: linear-gradient(135deg, #e0f2fe, #bae6fd); color: #0369a1;">
-                    <i class="fas fa-plane"></i>
-                </div>
-            @elseif($image)
-                <img src="{{ asset('storage/' . $image->image_path) }}" class="booking-img" alt="">
-            @else
-                <div class="booking-img-placeholder"><i class="fas fa-map-marked-alt"></i></div>
-            @endif
-
-            {{-- Details --}}
-            <div class="booking-details">
-                <div class="booking-trip-name">
-                    @if($isFlight)
-                        {{ $booking->origin }} <i class="fas fa-long-arrow-alt-right" style="font-size: 0.8rem; margin: 0 4px;"></i> {{ $booking->destination }}
-                        <span class="badge badge-xs light badge-info" style="margin-inline-start: 8px;">{{ __('Flight') }}</span>
+<div class="tab-content" id="bookingTabsContent">
+    {{-- 1. Trips Tab --}}
+    <div class="tab-pane fade show active" id="trips" role="tabpanel">
+        @forelse($tripBookings as $booking)
+            @php
+                $trip = $booking->trip;
+                $image = $trip?->images?->first();
+            @endphp
+            <div class="booking-card">
+                <div class="booking-card-body">
+                    @if($image)
+                        <img src="{{ asset('storage/' . $image->image_path) }}" class="booking-img" alt="">
                     @else
-                        {{ $trip?->title ?? __('Trip') }}
+                        <div class="booking-img-placeholder"><i class="fas fa-map-marked-alt"></i></div>
                     @endif
+
+                    <div class="booking-details">
+                        <div class="booking-trip-name">{{ $trip?->title ?? __('Trip') }}</div>
+                        <div class="booking-meta-row">
+                            @if($trip?->toCountry)
+                                <span><i class="fas fa-globe"></i> {{ $trip->toCountry->name }}</span>
+                            @endif
+                            <span><i class="fas fa-users"></i> {{ $booking->tickets_count }} {{ __('Passenger(s)') }}</span>
+                            <span><i class="fas fa-calendar"></i> {{ $booking->created_at->format('d/m/Y') }}</span>
+                        </div>
+                    </div>
+
+                    <div class="booking-right">
+                        <div class="booking-price">{{ number_format($booking->total_price, 0) }} {{ __('SAR') }}</div>
+                        <span class="status-badge status-{{ $booking->status }}">
+                            {{ __($booking->status) }}
+                        </span>
+                    </div>
                 </div>
-                <div class="booking-meta-row">
-                    @if(!$isFlight && $trip?->toCountry)
-                        <span><i class="fas fa-globe"></i> {{ $trip->toCountry->name }}</span>
-                    @elseif($isFlight)
-                         <span><i class="fas fa-ticket-alt"></i> {{ $booking->pnr_number }}</span>
-                    @endif
-                    
-                    @if(!$isFlight)
-                        <span><i class="fas fa-users"></i> {{ $booking->tickets_count }} {{ $booking->tickets_count > 1 ? __('Passengers') : __('Passenger') }}</span>
-                    @else
-                        <span><i class="fas fa-calendar-alt"></i> {{ $booking->departure_date }}</span>
-                    @endif
-                    
-                    <span><i class="fas fa-calendar"></i> {{ $booking->created_at->format('d/m/Y') }}</span>
+                <div class="booking-card-footer">
+                    <div class="booking-date-info">{{ __('Booking No') }}: #{{ $booking->id }}</div>
+                    <div class="booking-actions">
+                        <a href="{{ route('customer.bookings.show', ['id' => $booking->id, 'type' => 'trip']) }}" class="btn-sm btn-outline">
+                            <i class="fas fa-eye"></i> {{ __('Details') }}
+                        </a>
+                        @if($booking->status === 'pending')
+                            <a href="{{ route('customer.payments.checkout', $booking->id) }}" class="btn-sm btn-accent">
+                                <i class="fas fa-credit-card"></i> {{ __('Payment') }}
+                            </a>
+                        @endif
+                    </div>
                 </div>
             </div>
-
-            {{-- Right side --}}
-            <div class="booking-right">
-                <div class="booking-price">{{ number_format($isFlight ? $booking->total_price : $booking->total_price, 0) }} {{ __('SAR') }}</div>
-                <span class="status-badge status-{{ $booking->status }}">
-                    @if($booking->status === 'pending')
-                        <i class="fas fa-clock"></i> {{ __('Pending') }}
-                    @elseif($booking->status === 'confirmed')
-                        <i class="fas fa-check-circle"></i> {{ __('Confirmed') }}
-                    @else
-                        <i class="fas fa-times-circle"></i> {{ __('Cancelled') }}
-                    @endif
-                </span>
+        @empty
+            <div class="empty-state">
+                <div class="empty-icon"><i class="fas fa-map-marked-alt"></i></div>
+                <h3>{{ __('No trip bookings found') }}</h3>
             </div>
-        </div>
+        @endforelse
+        <div class="mt-3">{{ $tripBookings->appends(request()->query())->links() }}</div>
+    </div>
 
-        <div class="booking-card-footer">
-            <div class="booking-date-info">
-                {{ __('Booking No') }}: #{{ $booking->booking_reference ?? $booking->id }} · {{ $booking->created_at->format('d/m/Y H:i') }}
+    {{-- 2. Flights Tab --}}
+    <div class="tab-pane fade" id="flights" role="tabpanel">
+        @forelse($flightBookings as $booking)
+            <div class="booking-card">
+                <div class="booking-card-body">
+                    <div class="booking-img-placeholder" style="background: #e0f2fe; color: #0369a1;"><i class="fas fa-plane"></i></div>
+                    <div class="booking-details">
+                        <div class="booking-trip-name">{{ $booking->booking_reference }}</div>
+                        <div class="booking-meta-row">
+                            <span><i class="fas fa-ticket-alt"></i> {{ __('Ref') }}: {{ $booking->booking_reference }}</span>
+                            <span><i class="fas fa-calendar"></i> {{ $booking->created_at->format('d/m/Y') }}</span>
+                        </div>
+                    </div>
+                    <div class="booking-right">
+                        <div class="booking-price">{{ number_format($booking->total_amount, 0) }} {{ $booking->currency }}</div>
+                        <span class="status-badge status-{{ $booking->status }}">{{ __($booking->status) }}</span>
+                    </div>
+                </div>
+                <div class="booking-card-footer">
+                    <div class="booking-date-info">{{ __('Flight Booking') }}</div>
+                    <div class="booking-actions">
+                        <a href="{{ route('customer.bookings.show', ['id' => $booking->id, 'type' => 'flight']) }}" class="btn-sm btn-outline">
+                            <i class="fas fa-eye"></i> {{ __('Details') }}
+                        </a>
+                    </div>
+                </div>
             </div>
-            <div class="booking-actions">
-                <a href="{{ route('customer.bookings.show', ['id' => $booking->id, 'type' => $booking->booking_type]) }}" class="btn-sm btn-outline">
-                    <i class="fas fa-eye"></i> {{ __('Details') }}
-                </a>
-                @if($booking->status === 'pending')
-                    @php
-                        $checkoutRoute = $isFlight 
-                            ? route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'visa_master', 'type' => 'flight'])
-                            : route('customer.payments.checkout', $booking->id);
-                    @endphp
-                    <a href="{{ $checkoutRoute }}" class="btn-sm btn-accent">
-                        <i class="fas fa-credit-card"></i> {{ __('Complete Payment') }}
-                    </a>
-                @elseif($booking->status === 'confirmed' && !$isFlight)
-                    <a href="{{ route('customer.bookings.invoice', $booking->id) }}" class="btn-sm btn-outline">
-                        <i class="fas fa-file-pdf"></i> {{ __('Invoice') }}
-                    </a>
-                @endif
+        @empty
+            <div class="empty-state">
+                <div class="empty-icon"><i class="fas fa-plane"></i></div>
+                <h3>{{ __('No flight bookings found') }}</h3>
             </div>
-        </div>
+        @endforelse
+        <div class="mt-3">{{ $flightBookings->appends(request()->query())->links() }}</div>
     </div>
-@empty
-    <div class="empty-state">
-        <div class="empty-icon"><i class="fas fa-ticket-alt"></i></div>
-        <h3>{{ __('No bookings found') }}</h3>
-        <p>{{ __('You have not made any bookings yet. Start exploring available trips!') }}</p>
-    </div>
-@endforelse
 
-{{-- Pagination --}}
-@if($bookings->hasPages())
-    <div style="margin-top: 20px; display: flex; justify-content: center;">
-        {{ $bookings->links() }}
+    {{-- 3. Hotels Tab --}}
+    <div class="tab-pane fade" id="hotels" role="tabpanel">
+        @forelse($hotelBookings as $booking)
+            <div class="booking-card">
+                <div class="booking-card-body">
+                    <div class="booking-img-placeholder" style="background: #fef3c7; color: #92400e;"><i class="fas fa-hotel"></i></div>
+                    <div class="booking-details">
+                        <div class="booking-trip-name">{{ $booking->hotel_name }}</div>
+                        <div class="booking-meta-row">
+                            <span><i class="fas fa-map-marker-alt"></i> {{ $booking->city_name }}, {{ $booking->country_name }}</span>
+                            <span><i class="fas fa-calendar-check"></i> {{ $booking->check_in->format('d/m/Y') }} - {{ $booking->check_out->format('d/m/Y') }}</span>
+                            <span><i class="fas fa-user-friends"></i> {{ $booking->adults }} {{ __('Adults') }}</span>
+                        </div>
+                    </div>
+                    <div class="booking-right">
+                        <div class="booking-price">{{ number_format($booking->total_price, 0) }} {{ $booking->currency }}</div>
+                        <span class="status-badge status-{{ $booking->status }}">{{ __($booking->status) }}</span>
+                    </div>
+                </div>
+                <div class="booking-card-footer">
+                    <div class="booking-date-info">{{ __('Hotel Booking') }}: #{{ $booking->reference_num }}</div>
+                    <div class="booking-actions">
+                        <a href="{{ route('customer.bookings.show', ['id' => $booking->id, 'type' => 'hotel']) }}" class="btn-sm btn-outline">
+                            <i class="fas fa-eye"></i> {{ __('Details') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        @empty
+            <div class="empty-state">
+                <div class="empty-icon"><i class="fas fa-hotel"></i></div>
+                <h3>{{ __('No hotel bookings found') }}</h3>
+            </div>
+        @endforelse
+        <div class="mt-3">{{ $hotelBookings->appends(request()->query())->links() }}</div>
     </div>
-@endif
+</div>
+
+<style>
+.custom-tabs { gap: 10px; }
+.custom-tabs .nav-link {
+    border-radius: 12px;
+    padding: 10px 20px;
+    font-weight: 700;
+    color: #475569;
+    background: #f1f5f9;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+.custom-tabs .nav-link.active {
+    background: #fff;
+    color: #e8532e;
+    border-color: #e8532e;
+    box-shadow: 0 4px 12px rgba(232, 83, 46, 0.1);
+}
+.custom-tabs .nav-link:hover:not(.active) {
+    background: #e2e8f0;
+}
+</style>
 
 @endsection
+
+@push('scripts')
+<script>
+$(document).ready(function() {
+    // Keep active tab on page refresh
+    let activeTab = localStorage.getItem('activeBookingTab');
+    if (activeTab) {
+        $('#' + activeTab).tab('show');
+    }
+
+    $('button[data-bs-toggle="pill"]').on('shown.bs.tab', function (e) {
+        localStorage.setItem('activeBookingTab', e.target.id);
+    });
+});
+</script>
+@endpush

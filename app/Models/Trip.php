@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Trip;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class Trip extends Model
 {
@@ -132,10 +133,13 @@ class Trip extends Model
     public function getImageUrlAttribute()
     {
         $image = $this->images()->first();
-        if ($image) {
+        if ($image && $image->image_path) {
+            if (Str::startsWith($image->image_path, ['http://', 'https://'])) {
+                return $image->image_path;
+            }
             return asset('storage/' . $image->image_path);
         }
-        return asset('images/default-placeholder.svg');
+        return asset('images/trip-placeholder.png');
     }
 
     /**
