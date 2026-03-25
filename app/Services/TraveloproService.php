@@ -156,24 +156,35 @@ class TraveloproService
         
         if (isset($airports['Airports']['Airport'])) {
             $list = $airports['Airports']['Airport'];
-            
+            $data = [];
+
             foreach ($list as $item) {
-                \App\Models\Airport::updateOrCreate(
-                    ['airport_code' => $item['AirportCode']],
-                    [
-                        'airport_name' => $item['AirportName'],
-                        'city_code' => $item['CityCode'],
-                        'city_name' => $item['CityName'],
-                        'country_code' => $item['CountryCode'],
-                        'country_name' => $item['CountryName'],
-                    ]
-                );
+                $data[] = [
+                    'airport_code' => $item['AirportCode'],
+                    'airport_name' => $item['AirportName'],
+                    'city_code' => $item['CityCode'],
+                    'city_name' => $item['CityName'],
+                    'country_code' => $item['CountryCode'],
+                    'country_name' => $item['CountryName'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+
+                // Chunking to avoid massive single insert if list is huge
+                if (count($data) >= 500) {
+                    \App\Models\Airport::upsert($data, ['airport_code'], ['airport_name', 'city_code', 'city_name', 'country_code', 'country_name', 'updated_at']);
+                    $data = [];
+                }
+            }
+
+            if (!empty($data)) {
+                \App\Models\Airport::upsert($data, ['airport_code'], ['airport_name', 'city_code', 'city_name', 'country_code', 'country_name', 'updated_at']);
             }
             
             return [
                 'status' => 'success',
                 'count' => count($list),
-                'message' => 'Airports synced successfully from API'
+                'message' => 'Airports synced successfully from API using bulk upsert'
             ];
         }
 
@@ -192,12 +203,7 @@ class TraveloproService
             ['airport_code' => 'AMM', 'airport_name' => 'Queen Alia International', 'city_code' => 'AMM', 'city_name' => 'Amman', 'country_code' => 'JO', 'country_name' => 'Jordan'],
         ];
 
-        foreach ($fallbackAirports as $item) {
-            \App\Models\Airport::updateOrCreate(
-                ['airport_code' => $item['airport_code']],
-                $item
-            );
-        }
+        \App\Models\Airport::upsert($fallbackAirports, ['airport_code'], ['airport_name', 'city_code', 'city_name', 'country_code', 'country_name']);
 
         return [
             'status' => 'warning',
