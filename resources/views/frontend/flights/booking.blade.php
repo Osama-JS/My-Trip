@@ -3,219 +3,297 @@
 @section('title', __('Complete Your Booking'))
 
 @section('content')
-    {{-- Page Header --}}
-    <section class="page-header" style="position: relative; padding-top: calc(var(--space-24) + 60px); padding-bottom: var(--space-10); background: var(--color-primary); overflow: hidden;">
-        <div style="position: absolute; inset: 0; background: var(--gradient-primary); z-index: 0;"></div>
-        <div class="container" style="position: relative; z-index: 1;">
-            <div class="text-center" style="color: white !important;">
-                <h1 style="font-size: var(--text-4xl); font-weight: var(--font-bold); margin-bottom: var(--space-4); color: white !important;">
-                    {{ __('Complete Your Booking') }}
-                </h1>
-                <p style="font-size: var(--text-lg); opacity: 0.9; color: white !important;">
-                    {{ __('Please provide passenger details to finalize your flight reservation.') }}
-                </p>
-            </div>
-        </div>
-    </section>
+<div class="fe-page-header fe-booking-header">
+    <div class="fe-container">
+        <h1>{{ __('Complete Your Booking') }}</h1>
+        <p>{{ __('Please enter the passenger details exactly as they appear on their passports/IDs.') }}</p>
+    </div>
+</div>
 
-    <section class="section">
-        <div class="container">
-            <div class="booking-layout">
-                {{-- Main Form --}}
-                <div class="booking-main">
-                    <div class="card" style="padding: var(--space-8);">
-                        <h2 style="font-size: var(--text-2xl); font-weight: 800; margin-bottom: var(--space-6);">
-                            <i class="fas fa-users" style="color: var(--color-primary); margin-inline-end: 12px;"></i>{{ __('Passenger Information') }}
-                        </h2>
+<div class="fe-container" style="margin-top: -40px; margin-bottom: 80px;">
+    <form action="{{ route('flights.book.process') }}" method="POST" id="flightBookingForm">
+        @csrf
+        <input type="hidden" name="flight_session_id" value="{{ $details['session_id'] ?? '' }}">
+        <input type="hidden" name="fare_source_code" value="{{ $details['fare_source_code'] ?? '' }}">
+        <input type="hidden" name="total_amount" value="{{ $details['total_amount'] ?? 0 }}">
+        <input type="hidden" name="from" value="{{ $details['from'] ?? '' }}">
+        <input type="hidden" name="to" value="{{ $details['to'] ?? '' }}">
+        <input type="hidden" name="departDate" value="{{ $details['departDate'] ?? '' }}">
+        
+        @php
+            $adultCount = (int)(is_array($details['adults'] ?? 1) ? reset($details['adults']) : ($details['adults'] ?? 1));
+            $childCount = (int)(is_array($details['childs'] ?? 0) ? reset($details['childs']) : ($details['childs'] ?? 0));
+            $infantCount = (int)(is_array($details['infants'] ?? 0) ? reset($details['infants']) : ($details['infants'] ?? 0));
+            $totalPax = $adultCount + $childCount + $infantCount;
+        @endphp
+        
+        <input type="hidden" name="adults" value="{{ $adultCount }}">
+        <input type="hidden" name="childs" value="{{ $childCount }}">
+        <input type="hidden" name="infants" value="{{ $infantCount }}">
 
-                        <form action="{{ route('flights.book.process') }}" method="POST" id="flightBookingForm">
-                            @csrf
-                            <input type="hidden" name="flight_session_id" value="{{ $details['session_id'] ?? '' }}">
-                            <input type="hidden" name="fare_source_code" value="{{ $details['fare_source_code'] ?? '' }}">
-                            <input type="hidden" name="total_amount" value="{{ $details['total_amount'] ?? 0 }}">
-                            <input type="hidden" name="from" value="{{ $details['from'] ?? '' }}">
-                            <input type="hidden" name="to" value="{{ $details['to'] ?? '' }}">
-                            <input type="hidden" name="departDate" value="{{ $details['departDate'] ?? '' }}">
-@php
-    $adultCount = is_array($details['adults'] ?? 1) ? reset($details['adults']) : ($details['adults'] ?? 1);
-    $childCount = is_array($details['childs'] ?? 0) ? reset($details['childs']) : ($details['childs'] ?? 0);
-    $infantCount = is_array($details['infants'] ?? 0) ? reset($details['infants']) : ($details['infants'] ?? 0);
-    $totalPax = $adultCount + $childCount + $infantCount;
-@endphp
-                            <input type="hidden" name="adults" value="{{ $adultCount }}">
-                            <input type="hidden" name="childs" value="{{ $childCount }}">
-                            <input type="hidden" name="infants" value="{{ $infantCount }}">
-
-                            {{-- Contact Information --}}
-                            <div class="form-section">
-                                <h3 class="section-title">{{ __('Contact Details') }}</h3>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div class="form-group">
-                                        <label class="form-label">{{ __('Email Address') }}</label>
-                                        <input type="email" name="customerEmail" class="form-input" required value="{{ auth()->user()->email ?? '' }}">
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">{{ __('Phone Number') }}</label>
-                                        <input type="text" name="customerPhone" class="form-input" required value="{{ auth()->user()->phone ?? '' }}" placeholder="+966xxxxxxxxx">
-                                    </div>
-                                </div>
+        <div class="fe-booking-grid">
+            {{-- Main Form Content --}}
+            <div class="fe-booking-main">
+                
+                {{-- Contact Information --}}
+                <div class="fe-booking-card">
+                    <div class="fe-card-header">
+                        <i class="fas fa-envelope"></i>
+                        <h3>{{ __('Contact Details') }}</h3>
+                    </div>
+                    <div class="fe-card-body">
+                        <div class="fe-form-row two-cols">
+                            <div class="fe-form-group">
+                                <label class="fe-label">{{ __('Email Address') }}</label>
+                                <input type="email" name="customerEmail" class="fe-input" required value="{{ auth()->user()->email ?? '' }}" placeholder="email@example.com">
                             </div>
-
-                            <hr style="margin: var(--space-8) 0; border: 0; border-top: 1px solid var(--color-border);">
-
-                            {{-- Dynamic Passengers --}}
-                            <div id="pax-container">
-                                @php $paxIndex = 0; @endphp
-
-                                {{-- Adults --}}
-                                @for($i = 0; $i < $adultCount; $i++)
-                                    @include('frontend.flights.partials.pax-fields', ['type' => 'adult', 'index' => $paxIndex++, 'num' => $i + 1])
-                                @endfor
-
-                                {{-- Children --}}
-                                @for($i = 0; $i < $childCount; $i++)
-                                    @include('frontend.flights.partials.pax-fields', ['type' => 'child', 'index' => $paxIndex++, 'num' => $i + 1])
-                                @endfor
-
-                                {{-- Infants --}}
-                                @for($i = 0; $i < $infantCount; $i++)
-                                    @include('frontend.flights.partials.pax-fields', ['type' => 'infant', 'index' => $paxIndex++, 'num' => $i + 1])
-                                @endfor
+                            <div class="fe-form-group">
+                                <label class="fe-label">{{ __('Phone Number') }}</label>
+                                <input type="tel" name="customerPhone" class="fe-input" required value="{{ auth()->user()->phone ?? '' }}" placeholder="+966xxxxxxxxx">
                             </div>
-
-                            <div style="margin-top: var(--space-10);">
-                                <button type="submit" class="btn btn-primary btn-lg w-full">
-                                    <i class="fas fa-check-circle"></i> {{ __('Proceed to Payment') }}
-                                </button>
-                                <p style="text-align: center; font-size: 0.875rem; color: var(--color-text-muted); margin-top: var(--space-4);">
-                                    {{ __('By clicking "Proceed to Payment", you agree to our Terms and Conditions.') }}
-                                </p>
-                            </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
 
-                {{-- Summary Sidebar --}}
-                <aside class="booking-sidebar">
-                    <div class="card" style="padding: var(--space-6); position: sticky; top: 100px;">
-                        <h3 style="font-size: var(--text-lg); font-weight: 700; margin-bottom: var(--space-4);">{{ __('Booking Summary') }}</h3>
-                        
-                        <div class="summary-flight-info">
-                            <div class="summary-route">
-                                <span>{{ $details['from'] ?? '' }}</span>
-                                <i class="fas fa-plane"></i>
-                                <span>{{ $details['to'] ?? '' }}</span>
+                {{-- Passengers List --}}
+                <div id="pax-container">
+                    @php $paxIndex = 0; @endphp
+
+                    {{-- Adults --}}
+                    @for($i = 0; $i < $adultCount; $i++)
+                        @include('frontend.flights.partials.pax-fields', ['type' => 'adult', 'index' => $paxIndex++, 'num' => $i + 1, 'countries' => $countries])
+                    @endfor
+
+                    {{-- Children --}}
+                    @for($i = 0; $i < $childCount; $i++)
+                        @include('frontend.flights.partials.pax-fields', ['type' => 'child', 'index' => $paxIndex++, 'num' => $i + 1, 'countries' => $countries])
+                    @endfor
+
+                    {{-- Infants --}}
+                    @for($i = 0; $i < $infantCount; $i++)
+                        @include('frontend.flights.partials.pax-fields', ['type' => 'infant', 'index' => $paxIndex++, 'num' => $i + 1, 'countries' => $countries])
+                    @endfor
+                </div>
+
+                <div class="fe-booking-action">
+                    <button type="submit" class="fe-btn fe-btn-primary fe-btn-lg fe-btn-block">
+                        <i class="fas fa-check-circle"></i> {{ __('Complete Reservation') }}
+                    </button>
+                    <p class="fe-terms-fine">
+                        {{ __('By clicking "Complete Reservation", you agree to our') }} 
+                        <a href="#">{{ __('Terms and Conditions') }}</a> {{ __('and') }} 
+                        <a href="#">{{ __('Privacy Policy') }}</a>.
+                    </p>
+                </div>
+            </div>
+
+            {{-- Sidebar Summary --}}
+            <aside class="fe-booking-sidebar">
+                <div class="fe-summary-card">
+                    <div class="fe-summary-header">
+                        <h3>{{ __('Flight Summary') }}</h3>
+                    </div>
+                    <div class="fe-summary-body">
+                        <div class="fe-summary-flight">
+                            <div class="summary-route-visual">
+                                <div class="city">
+                                    <span class="code">{{ $details['from'] ?? '---' }}</span>
+                                </div>
+                                <div class="path">
+                                    <span class="line"></span>
+                                    <i class="fas fa-plane"></i>
+                                    <span class="line"></span>
+                                </div>
+                                <div class="city">
+                                    <span class="code">{{ $details['to'] ?? '---' }}</span>
+                                </div>
                             </div>
-                            <div class="summary-date">
-                                <i class="far fa-calendar-alt"></i> {{ $details['departDate'] ?? '' }}
-                            </div>
-                            <div class="summary-pax">
-                                <i class="fas fa-users"></i> 
-                                {{ $totalPax }} {{ __('Travelers') }}
+                            
+                            <div class="fe-summary-details" style="border:none; padding:15px 0 0;">
+                                <div class="fe-summary-item">
+                                    <span class="label"><i class="far fa-calendar-alt"></i> {{ __('Departure') }}</span>
+                                    <span class="value">{{ $details['departDate'] ?? '' }}</span>
+                                </div>
+                                <div class="fe-summary-item">
+                                    <span class="label"><i class="fas fa-users"></i> {{ __('Travelers') }}</span>
+                                    <span class="value">{{ $totalPax }} {{ __('Person(s)') }}</span>
+                                </div>
+                                <div class="fe-summary-item">
+                                    <span class="label"><i class="fas fa-couch"></i> {{ __('Class') }}</span>
+                                    <span class="value">{{ $details['class'] ?? 'Economy' }}</span>
+                                </div>
                             </div>
                         </div>
 
-                        <hr style="margin: var(--space-4) 0; border: 0; border-top: 1px solid var(--color-border);">
-
-                        <div class="summary-price">
-                            <div class="price-row">
-                                <span>{{ __('Base Fare') }}</span>
-                                <span>{{ number_format(floatval($details['total_amount'] ?? 0), 2) }} {{ __('SAR') }}</span>
+                        <div class="fe-summary-total" style="margin-top: 20px;">
+                            <div class="total-label">{{ __('Total Amount') }}</div>
+                            <div class="total-value">
+                                <span class="currency">SAR</span>
+                                <span class="amount">{{ number_format(floatval($details['total_amount'] ?? 0), 2) }}</span>
                             </div>
-                            <div class="price-row total">
-                                <span>{{ __('Total Amount') }}</span>
-                                <span>{{ number_format(floatval($details['total_amount'] ?? 0), 2) }} {{ __('SAR') }}</span>
-                            </div>
-                        </div>
-
-                        <div style="margin-top: var(--space-6); padding: var(--space-4); background: var(--color-bg-alt); border-radius: 8px;">
-                            <p style="font-size: 0.75rem; color: var(--color-text-muted); margin: 0;">
-                                <i class="fas fa-shield-alt" style="color: #10b981; margin-inline-end: 4px;"></i>
-                                {{ __('Secure payment encrypted by SSL') }}
-                            </p>
+                            <p class="total-note">{{ __('Includes all taxes and surcharges') }}</p>
                         </div>
                     </div>
-                </aside>
-            </div>
+                </div>
+
+                <div class="fe-policy-card" style="background: #f0f7ff; border-color: #bee3f8;">
+                    <h4 style="color: #2b6cb0;"><i class="fas fa-shield-alt"></i> {{ __('Trusted Booking') }}</h4>
+                    <p style="color: #2c5282; font-size: 0.8rem;">{{ __('Your payment information is processed securely. We use industry-standard encryption to protect your data.') }}</p>
+                </div>
+            </aside>
         </div>
-    </section>
+    </form>
+</div>
 @endsection
 
 @push('styles')
 <style>
-    .booking-layout {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: var(--space-8);
-    }
-    @media (min-width: 1024px) {
-        .booking-layout {
-            grid-template-columns: 1fr 340px;
-        }
+    .fe-booking-header { background: linear-gradient(135deg, var(--primary) 0%, #1a3a5a 100%); padding: 80px 0 100px; color: white; text-align: center; }
+    .fe-booking-header h1 { color: white; margin-bottom: 10px; font-weight: 900; font-size: 2.5rem; }
+    .fe-booking-header p { opacity: 0.9; font-size: 1.1rem; color: white; }
+
+    .fe-booking-grid { display: grid; grid-template-columns: 1fr 380px; gap: 30px; align-items: start; }
+    @media (max-width: 1024px) {
+        .fe-booking-grid { grid-template-columns: 1fr; }
+        .fe-booking-sidebar { order: -1; }
     }
 
-    .section-title {
-        font-size: 1.125rem;
-        font-weight: 700;
-        margin-bottom: var(--space-4);
-        display: block;
+    .fe-booking-card { background: white; border-radius: 20px; box-shadow: 0 4px 25px rgba(0,0,0,0.05); border: 1px solid var(--gray-100); margin-bottom: 25px; overflow: hidden; }
+    .fe-card-header { background: var(--gray-50); padding: 18px 24px; border-bottom: 1px solid var(--gray-100); display: flex; align-items: center; gap: 12px; }
+    .fe-card-header i { color: var(--primary); font-size: 1.1rem; }
+    .fe-card-header h3 { font-size: 1.1rem; font-weight: 800; margin: 0; color: var(--dark); }
+    .fe-card-body { padding: 25px; }
+
+    .fe-form-row { display: grid; gap: 20px; margin-bottom: 15px; }
+    .fe-form-row.two-cols { grid-template-columns: 1fr 1fr; }
+    .fe-form-row.three-cols { grid-template-columns: 1fr 2fr 2fr; }
+    @media (max-width: 768px) {
+        .fe-form-row.two-cols, .fe-form-row.three-cols { grid-template-columns: 1fr; }
     }
 
-    .pax-card {
-        background: var(--color-bg-alt);
-        border: 1px solid var(--color-border);
-        border-radius: 12px;
-        padding: var(--space-6);
-        margin-bottom: var(--space-6);
-    }
-    .pax-badge {
-        display: inline-block;
-        padding: 4px 12px;
-        background: var(--color-primary);
-        color: white;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        margin-bottom: var(--space-4);
-    }
+    .fe-label { display: block; font-size: 0.85rem; font-weight: 700; color: var(--dark-600); margin-bottom: 8px; }
+    .fe-input { width: 100%; height: 48px; background: var(--gray-50); border: 1.5px solid var(--gray-100); border-radius: 12px; padding: 0 16px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; }
+    .fe-input:focus { border-color: var(--primary); outline: none; background: white; box-shadow: 0 0 0 4px var(--primary-50); }
 
-    .summary-flight-info {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-    .summary-route {
+    .fe-guest-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px dashed var(--gray-200); }
+    .fe-guest-badge { background: var(--primary); color: white; padding: 2px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
+    .fe-guest-name { font-weight: 800; color: var(--dark); font-size: 0.95rem; }
+
+    /* Summary Card Styling */
+    .fe-summary-card { background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 1px solid var(--gray-100); position: sticky; top: 100px; }
+    .fe-summary-header { padding: 20px 24px; background: var(--dark); color: white; border-radius: 20px 20px 0 0; }
+    .fe-summary-header h3 { margin: 0; font-size: 1.1rem; font-weight: 800; color: white; }
+    .fe-summary-body { padding: 24px; }
+    
+    .summary-route-visual { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-bottom: 10px; }
+    .summary-route-visual .city { flex: 1; text-align: center; }
+    .summary-route-visual .code { font-size: 1.8rem; font-weight: 900; color: var(--dark); display: block; }
+    .summary-route-visual .path { flex: 2; display: flex; align-items: center; gap: 10px; color: var(--primary); opacity: 0.6; }
+    .summary-route-visual .line { flex: 1; height: 1px; background: currentColor; }
+    
+    .fe-summary-details { display: flex; flex-direction: column; gap: 10px; }
+    .fe-summary-item { display: flex; justify-content: space-between; font-size: 0.85rem; }
+    .fe-summary-item .label { color: var(--gray-500); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .fe-summary-item .value { color: var(--dark); font-weight: 800; }
+
+    .fe-summary-total { background: var(--primary-50); padding: 20px; border-radius: 15px; text-align: center; }
+    .total-label { font-size: 0.75rem; font-weight: 800; color: var(--primary); text-transform: uppercase; margin-bottom: 5px; }
+    .total-value { color: var(--primary); }
+    .total-value .currency { font-size: 1rem; font-weight: 800; margin-inline-end: 4px; }
+    .total-value .amount { font-size: 2rem; font-weight: 900; }
+    .total-note { font-size: 0.7rem; color: var(--gray-500); margin-top: 5px; font-weight: 600; }
+
+    .fe-policy-card { background: #fffcf0; border: 1px solid #ffeeba; border-radius: 15px; padding: 18px; margin-top: 20px; }
+    .fe-policy-card h4 { font-size: 0.9rem; font-weight: 800; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+    .fe-policy-card p { font-size: 0.8rem; margin: 0; line-height: 1.5; }
+
+    .fe-booking-action { margin-top: 30px; }
+    .fe-terms-fine { font-size: 0.75rem; color: var(--gray-500); margin-top: 15px; text-align: center; }
+    .fe-terms-fine a { color: var(--primary); font-weight: 700; text-decoration: underline; }
+
+    /* Select2 Premium Styling */
+    .select2-container--default .select2-selection--single {
+        height: 48px !important;
+        background-color: var(--gray-50) !important;
+        border: 1.5px solid var(--gray-100) !important;
+        border-radius: 12px !important;
         display: flex;
         align-items: center;
-        gap: 12px;
-        font-weight: 800;
-        font-size: 1.125rem;
+        transition: all 0.2s;
     }
-    .summary-route i { color: var(--color-primary); font-size: 0.875rem; }
-    .summary-date, .summary-pax {
-        font-size: 0.875rem;
-        color: var(--color-text-muted);
-        display: flex;
-        align-items: center;
-        gap: 8px;
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        padding-inline-start: 16px !important;
+        font-weight: 600;
+        color: var(--dark);
+        font-size: 0.95rem;
     }
-
-    .summary-price {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 46px !important;
+        inset-inline-end: 10px !important;
     }
-    .price-row {
-        display: flex;
-        justify-content: space-between;
-        font-size: 0.875rem;
+    .select2-container--default.select2-container--focus .select2-selection--single {
+        border-color: var(--primary) !important;
+        background-color: white !important;
+        box-shadow: 0 0 0 4px var(--primary-50) !important;
     }
-    .price-row.total {
-        font-size: 1.25rem;
-        font-weight: 900;
-        color: var(--color-primary);
-        margin-top: 8px;
+    .select2-dropdown {
+        border: 1px solid var(--gray-200) !important;
+        border-radius: 12px !important;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+        overflow: hidden;
+        z-index: 1060;
+    }
+    .select2-results__option {
+        padding: 10px 16px !important;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background-color: var(--primary) !important;
     }
 </style>
+@endpush
+@push('scripts')
+<script>
+$(document).ready(function() {
+    // Initialize Select2 for Countries
+    $('.fe-select2').select2({
+        dir: '{{ app()->getLocale() == "ar" ? "rtl" : "ltr" }}',
+        placeholder: '{{ __("Select Country") }}',
+        allowClear: true,
+        width: '100%'
+    });
+
+    // Initialize Flatpickr for Birthday - Adult (> 12y)
+    flatpickr(".dob-picker-adult", {
+        dateFormat: "Y-m-d",
+        maxDate: new Date().setFullYear(new Date().getFullYear() - 12),
+        defaultDate: new Date().setFullYear(new Date().getFullYear() - 30),
+        locale: "{{ app()->getLocale() }}",
+    });
+
+    // Initialize Flatpickr for Birthday - Child (2y to 12y)
+    flatpickr(".dob-picker-child", {
+        dateFormat: "Y-m-d",
+        minDate: new Date().setFullYear(new Date().getFullYear() - 12),
+        maxDate: new Date().setFullYear(new Date().getFullYear() - 2),
+        locale: "{{ app()->getLocale() }}",
+    });
+
+    // Initialize Flatpickr for Birthday - Infant (< 2y)
+    flatpickr(".dob-picker-infant", {
+        dateFormat: "Y-m-d",
+        minDate: new Date().setFullYear(new Date().getFullYear() - 2),
+        maxDate: "today",
+        locale: "{{ app()->getLocale() }}",
+    });
+
+    // Initialize Flatpickr for Passport Expiry (Future only)
+    flatpickr(".expiry-picker", {
+        dateFormat: "Y-m-d",
+        minDate: "today",
+        locale: "{{ app()->getLocale() }}",
+    });
+});
+</script>
 @endpush

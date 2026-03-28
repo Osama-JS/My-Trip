@@ -300,7 +300,24 @@
             </div>
 
             @if(in_array($method, ['mada', 'visa_master', 'apple_pay']))
-                @if(isset($checkout_id))
+                @if(isset($sim_mode) && $sim_mode)
+                    {{-- LOCAL SIMULATION MODE --}}
+                    <div style="background: rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.4); border-radius:16px; padding:20px; text-align:center;">
+                        <div style="font-size:2rem; margin-bottom:10px;">🧪</div>
+                        <p style="font-weight:700; color:#f59e0b; margin-bottom:5px;">وضع المحاكاة — بيئة التطوير</p>
+                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:20px;">
+                            لا يمكن الاتصال بـ HyperPay من البيئة المحلية.<br>
+                            المرجع التجريبي: <code style="color:#f59e0b;">{{ $sim_ref ?? 'SIM-LOCAL' }}</code>
+                        </p>
+                        <a href="{{ route('payments.web.success', ['booking_id' => $booking->id, 'transaction_id' => $sim_ref ?? 'SIM', 'source' => 'simulation']) }}"
+                           class="btn-redirect" style="background:linear-gradient(135deg,#10b981,#059669);">
+                            ✅ محاكاة نجاح الدفع (للاختبار فقط)
+                        </a>
+                        <p style="font-size:0.75rem; color:var(--text-muted); margin-top:15px;">
+                            ⚠️ هذا الزر لن يظهر في بيئة الإنتاج
+                        </p>
+                    </div>
+                @elseif(isset($checkout_id))
                     <script src="https://{{ config('hyperpay.test_mode', true) ? 'eu-test.oppwa.com' : 'oppwa.com' }}/v1/paymentWidgets.js?checkoutId={{ $checkout_id }}"></script>
                     <form action="{{ route('payments.web.callback', ['payment_type' => $method, 'source' => $source]) }}" class="paymentWidgets" data-brands="{{ $method === 'mada' ? 'MADA' : ($method === 'apple_pay' ? 'APPLEPAY' : 'VISA MASTER') }}"></form>
                 @else

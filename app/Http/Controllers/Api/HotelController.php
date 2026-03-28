@@ -519,4 +519,24 @@ class HotelController extends Controller
 
         return $this->apiResponse(false, __('Hotel booking cancelled successfully.'), $result, null, 200);
     }
+
+    public function getCancelCharge(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'supplierConfirmationNum' => 'required|string',
+            'referenceNum' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+        }
+
+        $result = $this->hotelService->getCancelCharge($request->all());
+
+        if (isset($result['status']) && $result['status'] === 'error') {
+            return $this->apiResponse(true, $result['message'], $result['details'] ?? null, null, 500);
+        }
+
+        return $this->apiResponse(false, __('Cancellation charge retrieved successfully.'), $result, null, 200);
+    }
 }

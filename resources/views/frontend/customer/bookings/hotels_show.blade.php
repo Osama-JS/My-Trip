@@ -125,16 +125,86 @@
                     <h5 class="card-title fs-16">{{ __('Need Help?') }}</h5>
                 </div>
                 <div class="card-body pt-0">
-                    <p class="text-muted small">{{ __('For any modifications or cancellations, please contact our 24/7 support team.') }}</p>
-                    <a href="#" class="btn btn-outline-primary btn-sm w-100">
-                        <i class="fas fa-headset me-2"></i> {{ __('Contact Support') }}
-                    </a>
+                    <p class="text-muted small">{{ __('For any modifications, please contact our 24/7 support team.') }}</p>
+                    @if($booking->status !== 'cancelled')
+                        <button type="button" class="btn btn-danger btn-sm w-100 mb-2" id="btn-cancel-hotel" data-id="{{ $booking->id }}">
+                            <i class="fas fa-times-circle me-2"></i> {{ __('Cancel Booking') }}
+                        </button>
+                    @endif
+
+                    <form action="{{ route('customer.bookings.hotels.sync-status', $booking->id) }}" method="POST">
+                        @csrf
+                        <button type="submit" class="btn btn-light btn-sm w-100">
+                            <i class="fas fa-sync-alt me-2"></i> {{ __('Refresh Status') }}
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<form id="form-cancel-hotel" action="{{ route('customer.bookings.hotels.cancel', $booking->id) }}" method="POST" style="display: none;">
+    @csrf
+</form>
+
 @endsection
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    $(document).ready(function() {
+        $('#btn-cancel-hotel').on('click', function() {
+            const bookingId = $(this).data('id');
+            const cancelUrl = "{{ route('customer.bookings.hotels.cancel-charge', ':id') }}".replace(':id', bookingId);
+
+            Swal.fire({
+                title: "{{ __('Checking Cancellation Fees...') }}",
+                text: "{{ __('Please wait while we calculate the supplier charges.') }}",
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            $.ajax({
+                url: cancelUrl,
+                method: 'GET',
+                success: function(response) {
+                    let feeText = "{{ __('There are no cancellation fees at this time.') }}";
+                    let feeAmount = 0;
+                    
+                    // Travelopro v6 usually returns cancellation charge in 'charge' or 'amount'
+                    if (response.charge > 0 || (response.details && response.details.charge > 0)) {
+                        feeAmount = response.charge || response.details.charge;
+                        feeText = "{{ __('Cancellation fee will be :amount :currency') }}".replace(':amount', feeAmount).replace(':currency', response.currency || 'SAR');
+                    }
+
+                    Swal.fire({
+                        title: "{{ __('Are you sure?') }}",
+                        html: `<p>{{ __('Do you really want to cancel this booking?') }}</p><div class="alert alert-warning"><strong>${feeText}</strong></div>`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: "{{ __('Yes, Cancel it!') }}",
+                        cancelButtonText: "{{ __('No, Keep it') }}"
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            $('#form-cancel-hotel').submit();
+                        }
+                    });
+                },
+                error: function() {
+                    Swal.fire({
+                        title: "{{ __('Error') }}",
+                        text: "{{ __('Could not retrieve cancellation fees. Please try again or contact support.') }}",
+                        icon: 'error'
+                    });
+                }
+            });
+        });
+    });
+</script>
+@endpush
 
 @push('styles')
 <style>

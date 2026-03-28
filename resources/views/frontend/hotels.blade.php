@@ -100,14 +100,55 @@
     </div>
 
     {{-- Results Section --}}
-    <div class="fe-results-section" id="hotelResults" style="min-height:400px;margin-top:var(--space-8)">
-        <div class="fe-container">
-            <div class="fe-empty-state" style="padding:100px 0">
-                <div class="fe-empty-icon" style="background:var(--primary-50);color:var(--primary);width:100px;height:100px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto var(--space-6)">
-                    <i class="fas fa-hotel" style="font-size:3rem"></i>
+    <div class="fe-container" style="margin-top:var(--space-8)">
+        <div class="fe-hotels-layout" style="display: grid; grid-template-columns: 280px 1fr; gap: 30px; align-items: start;">
+            {{-- Sidebar Filter --}}
+            <aside class="fe-sidebar" id="hotelFilterSidebar" style="display: none; position: sticky; top: 100px;">
+                <div class="fe-filter-card" style="background: white; border-radius: 15px; border: 1px solid var(--gray-100); padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                        <h4 style="margin: 0; font-weight: 800; font-size: 1.1rem;">{{ __('Filters') }}</h4>
+                        <button id="resetFilters" style="background: none; border: none; color: var(--primary); font-size: 0.8rem; font-weight: 700; cursor: pointer;">{{ __('Reset all') }}</button>
+                    </div>
+
+                    {{-- Rating Filter --}}
+                    <div class="fe-filter-group" style="margin-bottom: 30px;">
+                        <label style="display: block; font-weight: 800; font-size: 0.9rem; margin-bottom: 15px; text-transform: uppercase; color: var(--gray-500);">{{ __('Star Rating') }}</label>
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            @for($i = 5; $i >= 1; $i--)
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="checkbox" class="rating-filter" value="{{ $i }}" style="width: 18px; height: 18px; accent-color: var(--primary);">
+                                <div style="color: #ffc107; font-size: 1.1rem;">
+                                    @for($j = 1; $j <= $i; $j++) <i class="fas fa-star"></i> @endfor
+                                    @for($j = $i + 1; $j <= 5; $j++) <i class="far fa-star" style="color: #e2e8f0;"></i> @endfor
+                                </div>
+                            </label>
+                            @endfor
+                        </div>
+                    </div>
+
+                    {{-- Price Filter --}}
+                    <div class="fe-filter-group">
+                        <label style="display: block; font-weight: 800; font-size: 0.9rem; margin-bottom: 15px; text-transform: uppercase; color: var(--gray-500);">{{ __('Price Range') }}</label>
+                        <div style="padding: 0 10px;">
+                            <input type="range" id="priceRange" min="0" max="10000" step="100" value="10000" style="width: 100%; accent-color: var(--primary);">
+                            <div style="display: flex; justify-content: space-between; margin-top: 10px; font-weight: 700; font-size: 0.85rem;">
+                                <span>{{ __('Up to') }}</span>
+                                <span id="priceValue" style="color: var(--primary);">10,000 SAR</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <h3>{{ __('Ready to find your perfect stay?') }}</h3>
-                <p>{{ __('Enter your destination and dates above to explore thousands of hotels.') }}</p>
+            </aside>
+
+            {{-- Main Results Area --}}
+            <div id="hotelResults" style="min-height:400px; width: 100%;">
+                <div class="fe-empty-state" style="padding:100px 0; text-align: center;">
+                    <div class="fe-empty-icon" style="background:var(--primary-50);color:var(--primary);width:100px;height:100px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto var(--space-6)">
+                        <i class="fas fa-hotel" style="font-size:3rem"></i>
+                    </div>
+                    <h3>{{ __('Ready to find your perfect stay?') }}</h3>
+                    <p>{{ __('Enter your destination and dates above to explore thousands of hotels.') }}</p>
+                </div>
             </div>
         </div>
     </div>
@@ -225,8 +266,41 @@
     .fe-pax-counter button:hover { background: var(--primary); color: white; border-color: var(--primary); }
     .fe-pax-counter input { width: 30px; text-align: center; border: none; font-weight: 800; font-size: 1rem; background: transparent; }
 
-    /* ═══ HOTEL CARDS ═══ */
-    .fe-hotels-list { display: flex; flex-direction: column; gap: 24px; padding: 20px 0; }
+    /* ═══ VIEW SWITCHER ═══ */
+    .fe-results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--gray-100); }
+    .fe-count-num { font-size: 1.2rem; font-weight: 900; color: var(--primary); }
+    .fe-count-label { font-size: 0.9rem; color: var(--gray-500); font-weight: 700; margin-inline-start: 4px; }
+    
+    .fe-view-switcher { display: flex; background: var(--gray-50); padding: 4px; border-radius: 12px; border: 1px solid var(--gray-100); }
+    .fe-view-btn { width: 40px; height: 40px; border: none; background: transparent; color: var(--gray-400); border-radius: 10px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+    .fe-view-btn:hover { color: var(--primary); background: white; }
+    .fe-view-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(15, 76, 129, 0.2); }
+
+    /* ═══ HOTELS LAYOUT ═══ */
+    .fe-hotels-layout { margin-top: 40px; margin-bottom: 60px; }
+    
+    /* SIDEBAR */
+    .fe-sidebar { height: fit-content; }
+    .fe-filter-card { border: 1px solid var(--gray-100); transition: all 0.3s ease; }
+    .fe-filter-card:hover { box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+    
+    /* PAGINATION */
+    .pagi-btn {
+        width: 44px; height: 44px; border-radius: 12px; border: 1.5px solid var(--gray-100);
+        background: white; color: var(--dark); cursor: pointer; display: flex;
+        align-items: center; justify-content: center; font-weight: 800; transition: all 0.2s;
+    }
+    .pagi-btn:hover:not(.disabled) { border-color: var(--primary); color: var(--primary); background: var(--primary-50); }
+    .pagi-btn.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 15px rgba(15, 76, 129, 0.2); }
+    .pagi-btn.disabled { opacity: 0.5; cursor: not-allowed; background: var(--gray-50); }
+
+    @media (max-width: 1024px) {
+        .fe-hotels-layout { grid-template-columns: 1fr !important; }
+        .fe-sidebar { position: static !important; margin-bottom: 30px; }
+    }
+
+    /* ═══ HOTEL CARDS (LIST VIEW) ═══ */
+    .fe-hotels-list { display: flex; flex-direction: column; gap: 24px; padding: 10px 0; transition: all 0.3s ease; }
     .fe-hotel-card {
         background: white; border-radius: 20px; overflow: hidden; display: flex;
         box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid var(--gray-100); transition: all 0.3s ease;
@@ -247,13 +321,26 @@
     .fe-amenity-pill { background: var(--gray-50); color: var(--gray-600); padding: 5px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; }
     .fe-amenity-pill i { color: var(--primary); margin-inline-end: 4px; }
 
-    .fe-hotel-price-action { width: 200px; border-inline-start: 1px solid var(--gray-100); padding-inline-start: 30px; display: flex; flex-direction: column; justify-content: center; }
+    .fe-hotel-price-action { width: 220px; border-inline-start: 1px solid var(--gray-100); padding-inline-start: 30px; display: flex; flex-direction: column; justify-content: center; }
     .fe-hotel-price { margin-bottom: 20px; text-align: center; }
     .fe-price-label { font-size: 0.75rem; color: var(--gray-500); font-weight: 700; text-transform: uppercase; }
     .fe-price-value { color: var(--primary); margin: 5px 0; }
     .fe-price-value .currency { font-size: 0.9rem; font-weight: 700; margin-inline-end: 4px; }
     .fe-price-value .amount { font-size: 1.8rem; font-weight: 900; }
     .fe-price-sub { font-size: 0.7rem; color: var(--gray-400); font-weight: 700; display: block; }
+
+    /* ═══ GRID VIEW MODIFIER ═══ */
+    .fe-hotels-list.fe-grid-view {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 30px;
+    }
+    .fe-grid-view .fe-hotel-card { flex-direction: column; }
+    .fe-grid-view .fe-hotel-image-wrapper { width: 100%; height: 200px; }
+    .fe-grid-view .fe-hotel-content { flex-direction: column; gap: 20px; padding: 20px; }
+    .fe-grid-view .fe-hotel-price-action { width: 100%; border-inline-start: none; border-top: 1px solid var(--gray-100); padding-inline-start: 0; padding-top: 20px; }
+    .fe-grid-view .fe-hotel-name { font-size: 1.2rem; }
+    .fe-grid-view .fe-hotel-amenities { display: none; }
 
     /* ROOMS PARTIAL */
     .fe-hotel-rooms-expand { background: var(--gray-50); border-top: 1px solid var(--gray-100); padding: 24px; display: none; }
@@ -393,18 +480,190 @@ $(document).ready(function() {
             url: '{{ route("hotels.results") }}',
             data: formData,
             success: function(html) {
-                resultsDiv.html('<div class="fe-container">' + html + '</div>');
+                $('#hotelResults').html(html);
+                $('#hotelFilterSidebar').fadeIn();
+                
+                // Initialize Filtering System
+                initHotelFilters();
             },
             error: function() {
-                resultsDiv.html(`
-                    <div class="fe-container">
-                        <div class="fe-no-results">
-                            <i class="fas fa-exclamation-circle fa-3x" style="color:var(--danger)"></i>
-                            <h3>{{ __('Search failed') }}</h3>
-                            <p>{{ __('There was an error connecting to the hotel network. Please try again.') }}</p>
-                        </div>
+                $('#hotelFilterSidebar').hide();
+                $('#hotelResults').html(`
+                    <div class="fe-no-results">
+                        <i class="fas fa-exclamation-circle fa-3x" style="color:var(--danger)"></i>
+                        <h3>{{ __('Search failed') }}</h3>
+                        <p>{{ __('There was an error connecting to the hotel network. Please try again.') }}</p>
                     </div>
                 `);
+            }
+        });
+    });
+
+    // ═══ FILTERING & INTERNAL PAGINATION LOGIC ═══
+    let currentPage = 1;
+    const pageSize = 10;
+
+    function initHotelFilters() {
+        currentPage = 1;
+        applyFiltersAndPagination();
+
+        // Bind Price Range
+        $('#priceRange').on('input', function() {
+            $('#priceValue').text(new Intl.NumberFormat().format($(this).val()) + ' SAR');
+            currentPage = 1;
+            applyFiltersAndPagination();
+        });
+
+        // Bind Star Ratings
+        $('.rating-filter').on('change', function() {
+            currentPage = 1;
+            applyFiltersAndPagination();
+        });
+
+        // Bind Reset
+        $('#resetFilters').click(function() {
+            $('.rating-filter').prop('checked', false);
+            $('#priceRange').val(10000);
+            $('#priceValue').text('10,000 SAR');
+            currentPage = 1;
+            applyFiltersAndPagination();
+        });
+    }
+
+    function applyFiltersAndPagination() {
+        const maxPrice = parseFloat($('#priceRange').val());
+        const selectedRatings = $('.rating-filter:checked').map(function() { return parseInt($(this).val()); }).get();
+        
+        const allCards = $('.fe-hotel-card');
+        let visibleCards = [];
+
+        // 1. Filtering Logic
+        allCards.each(function() {
+            const card = $(this);
+            const price = parseFloat(card.data('price'));
+            const rating = parseInt(card.data('rating'));
+
+            let show = true;
+            if (price > maxPrice) show = false;
+            if (selectedRatings.length > 0 && !selectedRatings.includes(rating)) show = false;
+
+            if (show) {
+                visibleCards.push(card);
+            } else {
+                card.hide();
+                card.next('.fe-hotel-rooms-expand').hide(); // Hide expanded rooms if hotel is hidden
+            }
+        });
+
+        // 2. Pagination Logic
+        const totalVisible = visibleCards.length;
+        const totalPages = Math.ceil(totalVisible / pageSize);
+        if (currentPage > totalPages) currentPage = Math.max(1, totalPages);
+
+        const startIndex = (currentPage - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+
+        // Hide all first, then show only current page
+        allCards.hide(); 
+        visibleCards.forEach((card, index) => {
+            if (index >= startIndex && index < endIndex) {
+                card.show();
+            } else {
+                card.hide();
+            }
+        });
+
+        // 3. Update UI
+        $('.fe-count-num').text(totalVisible);
+        renderPaginationUI(totalPages);
+        
+        // Handle Empty Results after filter
+        if (totalVisible === 0) {
+            if (!$('#noFilteredResults').length) {
+                $('.fe-hotels-list').after('<div id="noFilteredResults" style="text-align:center;padding:40px;color:var(--gray-500);font-weight:700;">{{ __("No hotels match your filters.") }}</div>');
+            }
+        } else {
+            $('#noFilteredResults').remove();
+        }
+    }
+
+    // 4.1 VIEW SWITCHER LOGIC
+    $(document).on('click', '.fe-view-btn', function() {
+        const btn = $(this);
+        const view = btn.data('view');
+        $('.fe-view-btn').removeClass('active');
+        btn.addClass('active');
+        if (view === 'grid') {
+            $('.fe-hotels-list').addClass('fe-grid-view');
+        } else {
+            $('.fe-hotels-list').removeClass('fe-grid-view');
+        }
+    });
+
+    function renderPaginationUI(totalPages) {
+        $('#internalPagination').remove();
+        if (totalPages <= 1) return;
+
+        let html = `<div id="internalPagination" style="display: flex; justify-content: center; gap: 8px; margin-top: 40px; padding: 20px 0;">`;
+        
+        // Prev Button
+        html += `<button class="pagi-btn ${currentPage === 1 ? 'disabled' : ''}" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}><i class="fas fa-chevron-left"></i></button>`;
+
+        // Page Numbers
+        for (let i = 1; i <= totalPages; i++) {
+            if (totalPages > 5 && i > 2 && i < totalPages - 1 && Math.abs(i - currentPage) > 1) {
+                if (i === 3 || i === totalPages - 2) html += `<span style="padding: 10px; color: var(--gray-400);">...</span>`;
+                continue;
+            }
+            html += `<button class="pagi-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+        }
+
+        // Next Button
+        html += `<button class="pagi-btn ${currentPage === totalPages ? 'disabled' : ''}" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}><i class="fas fa-chevron-right"></i></button>`;
+        
+        html += `</div>`;
+        
+        // Append after list or before load more
+        if ($('.fe-load-more-container').length) {
+            $('.fe-load-more-container').before(html);
+        } else {
+            $('.fe-hotels-list').after(html);
+        }
+    }
+
+    // Global helper for pagination buttons
+    window.changePage = function(page) {
+        currentPage = page;
+        applyFiltersAndPagination();
+        $('html, body').animate({ scrollTop: $('#hotelResults').offset().top - 100 }, 300);
+    };
+
+    // 4.2 LOAD MORE (API INTEGRATION)
+    $(document).on('click', '#loadMoreHotels', function() {
+        const btn = $(this);
+        const nextToken = btn.data('next-token');
+        const sessionId = btn.data('session-id');
+        const hotelsList = $('.fe-hotels-list');
+
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> {{ __("Loading More...") }}');
+
+        $.ajax({
+            url: '{{ route("hotels.load_more") }}',
+            data: { nextToken: nextToken, sessionId: sessionId },
+            success: function(res) {
+                btn.closest('.fe-load-more-container').remove();
+                if (res.html) {
+                    const newContent = $(res.html);
+                    const newHotels = newContent.find('.fe-hotel-card');
+                    hotelsList.append(newHotels);
+                    hotelsList.after(newContent.find('.fe-load-more-container'));
+                    
+                    // Re-apply filters to newly added hotels
+                    applyFiltersAndPagination();
+                }
+            },
+            error: function() {
+                btn.prop('disabled', false).html('{{ __("Failed. Try again") }}');
             }
         });
     });

@@ -4,7 +4,6 @@
 @section('page-title', __('Platform Settings'))
 
 @push('styles')
-<link href="{{ asset('vendor/dropzone/dist/min/dropzone.min.css') }}" rel="stylesheet">
 <style>
     /* Premium Settings Card */
     .settings-card {
@@ -131,47 +130,78 @@
         background-color: #fff;
     }
 
-    .input-group-text {
-        background-color: #f8f9fa;
-        border-color: #e0e0e0;
-        border-radius: 12px;
-        color: #666;
+    /* Premium Image Upload Component */
+    .image-upload-wrapper {
+        position: relative;
+        background: #f8fafc;
+        border: 2px dashed #e2e8f0;
+        border-radius: 20px;
+        padding: 2.5rem;
+        text-align: center;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
-
-    /* Dropzone Custom Styles */
-    .dropzone {
-        border: 2px dashed #e0e0e0;
+    .image-upload-wrapper:hover {
+        border-color: #fa1600;
+        background: #fff;
+        transform: translateY(-4px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.05);
+    }
+    .image-preview-container {
+        width: 100%;
+        max-width: 280px;
+        height: 160px;
+        margin: 0 auto 1.5rem;
         border-radius: 16px;
-        background: #fafafa;
-        min-height: 150px;
-        padding: 20px;
+        background: #fff;
+        box-shadow: 0 8px 15px rgba(0,0,0,0.06);
         display: flex;
         align-items: center;
         justify-content: center;
+        overflow: hidden;
+        position: relative;
+        border: 1px solid #eee;
+    }
+    .image-preview-container img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+    .image-upload-controls {
+        display: flex;
         flex-direction: column;
-        transition: all 0.3s ease;
+        gap: 12px;
+        align-items: center;
     }
-    .dropzone .dz-message {
+    .upload-btn-label {
+        background: #fa1600;
+        color: white;
+        padding: 10px 24px;
+        border-radius: 100px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 4px 12px rgba(250, 22, 0, 0.2);
+        transition: all 0.2s;
         margin: 0;
-        text-align: center;
     }
-    .dropzone .dz-message .bx {
-        font-size: 40px;
-        color: #fa1600;
-        margin-bottom: 10px;
-        display: block;
+    .upload-btn-label:hover {
+        background: #d41300;
+        transform: scale(1.05);
     }
-    .dropzone .dz-message span {
-        font-size: 14px;
-        color: #777;
+    .upload-info-text {
+        font-size: 0.75rem;
+        color: #94a3b8;
         font-weight: 500;
     }
-    .dropzone:hover, .dropzone.dz-drag-hover {
-        border-color: #fa1600;
-        background: rgba(250, 22, 0, 0.02);
-    }
-    .dropzone .dz-preview .dz-image {
-        border-radius: 12px;
+    .file-input-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        overflow: hidden;
     }
 
     /* Save Button */
@@ -381,11 +411,16 @@
                                 <div class="col-md-6 mb-4">
                                     <div class="form-group">
                                         <label>{{ __('Platform Logo') }}</label>
-                                        <div class="dropzone" id="logo-dropzone">
-                                            <div class="dz-message" data-dz-message>
-                                                <i class="fa fa-cloud-upload" style="font-size: 3rem; color: #fa1600; margin-bottom: 10px;"></i>
-                                                <span>{{ __('Drop logo here or click to upload') }}</span>
-                                                <div class="text-muted small mt-2">{{ __('Recommended: 180x60px (PNG, JPG)') }}</div>
+                                        <div class="image-upload-wrapper">
+                                            <div class="image-preview-container">
+                                                <img id="logo-preview" src="{{ \App\Models\Setting::get('site_logo') ? asset(\App\Models\Setting::get('site_logo')) : 'https://placehold.co/180x60/f8fafc/94a3b8?text=No+Logo' }}" alt="Logo">
+                                            </div>
+                                            <div class="image-upload-controls">
+                                                <label for="site_logo_input" class="upload-btn-label">
+                                                    <i class="fa fa-camera"></i> {{ __('Change Logo') }}
+                                                </label>
+                                                <input type="file" id="site_logo_input" name="site_logo" class="file-input-hidden" data-preview="#logo-preview" accept="image/*">
+                                                <span class="upload-info-text">{{ __('PNG or JPG preferred (Max 2MB)') }}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -393,11 +428,16 @@
                                 <div class="col-md-6 mb-4">
                                     <div class="form-group">
                                         <label>{{ __('Favicon Icon') }}</label>
-                                        <div class="dropzone" id="favicon-dropzone">
-                                            <div class="dz-message" data-dz-message>
-                                                <i class="fa fa-cloud-upload" style="font-size: 3rem; color: #333; margin-bottom: 10px;"></i>
-                                                <span>{{ __('Drop favicon here or click to upload') }}</span>
-                                                <div class="text-muted small mt-2">{{ __('Recommended: 32x32px or 64x64px') }}</div>
+                                        <div class="image-upload-wrapper">
+                                            <div class="image-preview-container" style="max-width: 120px; height: 120px;">
+                                                <img id="favicon-preview" src="{{ \App\Models\Setting::get('site_favicon') ? asset(\App\Models\Setting::get('site_favicon')) : 'https://placehold.co/64x64/f8fafc/94a3b8?text=Favicon' }}" alt="Favicon">
+                                            </div>
+                                            <div class="image-upload-controls">
+                                                <label for="site_favicon_input" class="upload-btn-label" style="background: #334155;">
+                                                    <i class="fa fa-image"></i> {{ __('Change Favicon') }}
+                                                </label>
+                                                <input type="file" id="site_favicon_input" name="site_favicon" class="file-input-hidden" data-preview="#favicon-preview" accept="image/*">
+                                                <span class="upload-info-text">{{ __('Recommended: 32x32px or 64x64px') }}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -671,67 +711,27 @@
 @endsection
 
 @section('scripts')
-<script src="{{ asset('vendor/dropzone/dist/min/dropzone.min.js') }}"></script>
 <script>
-    Dropzone.autoDiscover = false;
-
     $(document).ready(function() {
-        // Initialize Dropzone for Logo
-        let logoDropzone = new Dropzone("#logo-dropzone", {
-            url: "/dummy-url", // Not used for auto-process
-            autoProcessQueue: false,
-            uploadMultiple: false,
-            maxFiles: 1,
-            maxFilesize: 2, // MB
-            acceptedFiles: 'image/*',
-            addRemoveLinks: true,
-            dictRemoveFile: "{{ __('Remove') }}"
+        // Live Preview for File Inputs
+        $('.file-input-hidden').on('change', function() {
+            const input = this;
+            const previewSelector = $(this).data('preview');
+            
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    $(previewSelector).attr('src', e.target.result);
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
         });
-
-        // Preload existing logo if available
-        @if(\App\Models\Setting::get('site_logo'))
-        let logoMock = { name: "current_logo.png", size: 12345, type: 'image/png' };
-        logoDropzone.emit("addedfile", logoMock);
-        logoDropzone.emit("thumbnail", logoMock, "{{ asset(\App\Models\Setting::get('site_logo')) }}");
-        logoDropzone.emit("complete", logoMock);
-        logoDropzone.files.push(logoMock);
-        @endif
-
-        // Initialize Dropzone for Favicon
-        let faviconDropzone = new Dropzone("#favicon-dropzone", {
-            url: "/dummy-url",
-            autoProcessQueue: false,
-            uploadMultiple: false,
-            maxFiles: 1,
-            maxFilesize: 1, // MB
-            acceptedFiles: 'image/*', // simplified
-            addRemoveLinks: true,
-            dictRemoveFile: "{{ __('Remove') }}"
-        });
-
-        // Preload existing favicon
-        @if(\App\Models\Setting::get('site_favicon'))
-        let faviconMock = { name: "current_favicon.png", size: 1234, type: 'image/png' };
-        faviconDropzone.emit("addedfile", faviconMock);
-        faviconDropzone.emit("thumbnail", faviconMock, "{{ asset(\App\Models\Setting::get('site_favicon')) }}");
-        faviconDropzone.emit("complete", faviconMock);
-        faviconDropzone.files.push(faviconMock);
-        @endif
-
 
         $('#settings-form').on('submit', function(e) {
             e.preventDefault();
 
             var form = $(this);
             var formData = new FormData(this);
-
-            // Append Dropzone files to formData
-            if (logoDropzone.files.length > 0 && logoDropzone.files[0] instanceof File) {
-                formData.append('site_logo', logoDropzone.files[0]);
-            }
-            if (faviconDropzone.files.length > 0 && faviconDropzone.files[0] instanceof File) {
-                formData.append('site_favicon', faviconDropzone.files[0]);
-            }
 
             Swal.fire({
                 title: "{{ __('Are you sure?') }}",

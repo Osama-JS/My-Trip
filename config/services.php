@@ -55,4 +55,10 @@ return [
         'base_url' => env('TAMARA_API_URL', 'https://api.tamara.co'),
     ],
 
+    'tap' => [
+        'secret_key' => env('TAP_SECRET_KEY'),
+        'public_key' => env('TAP_PUBLIC_KEY'),
+        'base_url' => env('TAP_BASE_URL', 'https://api.tap.company/v2'),
+    ],
+
 ];

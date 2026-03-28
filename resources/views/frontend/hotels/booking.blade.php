@@ -135,7 +135,7 @@
                         </div>
 
                         <div class="fe-summary-total">
-                            <div class="total-label">{{ __('Total Price') }}</div>
+                            <div class="total-label">{{ __('Total for :n Nights', ['n' => $nights ?? 1]) }}</div>
                             <div class="total-value">
                                 <span class="currency">{{ $details['currency'] ?? 'SAR' }}</span>
                                 <span class="amount">{{ number_format($details['total_amount'] ?? 0, 2) }}</span>

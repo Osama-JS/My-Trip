@@ -10,6 +10,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\TripsController;
 use App\Http\Controllers\Admin\TripCategoryController;
 use App\Http\Controllers\FrontendController;
+use App\Http\Controllers\Web\PaymentWebController;
 
 // Customer Controllers
 use App\Http\Controllers\Customer\CustomerDashboardController;
@@ -32,16 +33,20 @@ Route::get('/flights/results', [FrontendController::class, 'flightResults'])->na
 Route::get('/flights/revalidate', [FrontendController::class, 'flightRevalidate'])->name('flights.revalidate');
 Route::get('/flights/booking', [FrontendController::class, 'flightBookingForm'])->name('flights.booking.form');
 Route::post('/flights/book', [FrontendController::class, 'processFlightBooking'])->name('flights.book.process');
+Route::get('/flights/payment/{booking_id}', [FrontendController::class, 'flightSelectPayment'])->name('flights.payment.select')->middleware('auth');
 Route::get('/airports/search', [FrontendController::class, 'searchAirports'])->name('airports.search');
 Route::get('/airports/sync', [FrontendController::class, 'syncAirports'])->name('airports.sync');
 
 // Hotel Routes
 Route::get('/hotels', [FrontendController::class, 'hotels'])->name('hotels');
 Route::get('/hotels/results', [FrontendController::class, 'hotelResults'])->name('hotels.results');
+Route::get('/hotels/load-more', [FrontendController::class, 'hotelLoadMore'])->name('hotels.load_more');
 Route::get('/hotels/room-rates', [FrontendController::class, 'hotelRoomRates'])->name('hotels.room_rates');
+Route::get('/hotels/detail/{hotelId}', [FrontendController::class, 'hotelDetails'])->name('hotels.details');
 Route::get('/hotels/revalidate', [FrontendController::class, 'hotelRevalidate'])->name('hotels.revalidate');
-Route::get('/hotels/booking', [FrontendController::class, 'hotelBookingForm'])->name('hotels.booking.form');
-Route::post('/hotels/book', [FrontendController::class, 'processHotelBooking'])->name('hotels.book.process');
+Route::get('/hotels/booking', [FrontendController::class, 'hotelBookingForm'])->name('hotels.booking.form')->middleware('auth');
+Route::post('/hotels/book', [FrontendController::class, 'processHotelBooking'])->name('hotels.book.process')->middleware('auth');
+Route::get('/hotels/payment/{booking_id}', [FrontendController::class, 'hotelSelectPayment'])->name('hotels.payment.select')->middleware('auth');
 Route::get('/hotels/cities/search', [FrontendController::class, 'searchHotelCities'])->name('hotels.cities.search');
 
 Route::get('/destinations', [FrontendController::class, 'destinations'])->name('destinations');
@@ -357,6 +362,9 @@ Route::middleware(['auth', 'isCustomer'])->prefix('customer')->name('customer.')
     Route::get('/bookings/{id}', [CustomerBookingController::class, 'show'])->name('bookings.show');
     Route::post('/bookings', [CustomerBookingController::class, 'store'])->name('bookings.store');
     Route::post('/bookings/{id}/cancel', [CustomerBookingController::class, 'cancel'])->name('bookings.cancel');
+    Route::get('/bookings/hotels/{id}/cancel-charge', [CustomerBookingController::class, 'cancelHotelCharge'])->name('bookings.hotels.cancel-charge');
+    Route::post('/bookings/hotels/{id}/cancel', [CustomerBookingController::class, 'cancelHotel'])->name('bookings.hotels.cancel');
+    Route::post('/bookings/hotels/{id}/sync-status', [CustomerBookingController::class, 'syncHotelBookingStatus'])->name('bookings.hotels.sync-status');
     Route::get('/bookings/{id}/invoice', [CustomerBookingController::class, 'downloadInvoice'])->name('bookings.invoice');
 
     // Favorites

@@ -29,6 +29,8 @@ class HotelBooking extends Model
         'product_id',
         'token_id',
         'pax_details',
+        'room_name',
+        'board_type',
     ];
 
     protected $casts = [

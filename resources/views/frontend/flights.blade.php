@@ -147,6 +147,7 @@
         </div>
     </section>
 
+    <div class="fe-container">
         {{-- Results Area --}}
         <div id="flightResults" class="fe-results-section">
             <div class="fe-empty-state">
@@ -156,7 +157,9 @@
                 <p style="color:var(--gray-400);font-size:1.1rem">{{ __('Enter your travel details above to search for available flights.') }}</p>
             </div>
         </div>
+    </div>
 
+    <div class="fe-container">
         {{-- How it works --}}
         <div id="howItWorks" style="padding:var(--space-10) 0 var(--space-16)">
             <h2 style="text-align:center;font-size:1.5rem;font-weight:800;margin-bottom:var(--space-8)">{{ __('How Flight Booking Works') }}</h2>

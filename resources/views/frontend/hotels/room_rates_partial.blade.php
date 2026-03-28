@@ -18,7 +18,8 @@
                             <span class="currency">{{ $rooms['currency'] ?? 'SAR' }}</span>
                             <span class="amount">{{ number_format($option['net_price'] ?? 0, 2) }}</span>
                         </div>
-                        <p class="fe-price-note">{{ __('Total for 1 room') }}</p>
+                        <p class="fe-price-note">{{ __('Total for 1 room, :n nights', ['n' => $nights ?? 1]) }}</p>
+                        <p class="fe-price-avg" style="font-size: 0.75rem; color: #64748b; margin-top: -5px;">{{ __('Avg :p / night', ['p' => number_format(($option['net_price'] ?? 0) / ($nights ?? 1), 2)]) }}</p>
                     </div>
                     <div class="fe-room-action">
                         <button class="fe-btn fe-btn-primary book-room-btn" 

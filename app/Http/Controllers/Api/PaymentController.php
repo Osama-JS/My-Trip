@@ -18,15 +18,18 @@ class PaymentController extends Controller
     protected $hyperPayService;
     protected $tabbyService;
     protected $tamaraService;
+    protected $tapService;
 
     public function __construct(
         HyperPayService $hyperPayService,
         TabbyPaymentService $tabbyService,
-        TamaraPaymentService $tamaraService
+        TamaraPaymentService $tamaraService,
+        \App\Services\TapPaymentService $tapService
     ) {
         $this->hyperPayService = $hyperPayService;
         $this->tabbyService = $tabbyService;
         $this->tamaraService = $tamaraService;
+        $this->tapService = $tapService;
     }
 
     /**
@@ -100,6 +103,12 @@ class PaymentController extends Controller
                 'name' => __('Tamara'),
                 'type' => 'redirect',
                 'icon' => asset('assets/img/payments/tamara.png')
+            ],
+            [
+                'key' => 'tap',
+                'name' => __('Tap Payment'),
+                'type' => 'redirect',
+                'icon' => asset('assets/img/payments/tap.png')
             ]
         ];
 
@@ -489,9 +498,9 @@ class PaymentController extends Controller
     public function verify(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'payment_type' => 'required|string|in:mada,visa_master,apple_pay,tabby,tamara',
+            'payment_type' => 'required|string|in:mada,visa_master,apple_pay,tabby,tamara,tap',
             'checkout_id' => 'required_if:payment_type,mada,visa_master,apple_pay', // HyperPay
-            'payment_id' => 'required_if:payment_type,tabby,tamara', // Tabby/Tamara ID
+            'payment_id' => 'required_if:payment_type,tabby,tamara,tap', // Tabby/Tamara/Tap ID
         ]);
 
         if ($validator->fails()) {
@@ -525,6 +534,20 @@ class PaymentController extends Controller
                      $this->updateBookingStatus($bookingRef);
 
                      return $this->apiResponse(false, __('Payment successful.'), $result);
+                }
+                return $this->apiResponse(true, __('Payment failed or pending.'), $result, null, 400);
+            }
+
+            if ($type === 'tap') {
+                $result = $this->tapService->verifyPayment($request->payment_id);
+                $status = strtoupper($result['status'] ?? 'UNKNOWN');
+
+                if ($status == 'CAPTURED' || $status == 'AUTHORIZED') {
+                    // Tap returns metadata.order_id
+                    $bookingRef = $result['metadata']['order_id'] ?? null;
+                    $this->updateBookingStatus($bookingRef);
+
+                    return $this->apiResponse(false, __('Payment successful.'), $result);
                 }
                 return $this->apiResponse(true, __('Payment failed or pending.'), $result, null, 400);
             }

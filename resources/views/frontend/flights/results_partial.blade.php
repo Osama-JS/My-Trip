@@ -1,9 +1,14 @@
 {{-- Flight Results Partial - loaded via AJAX into fe-results-section --}}
 @php
-    $itineraries = $results['AirSearchResponse']['AirSearchResult']['FareItineraries']['FareItinerary'] ?? [];
-    if (!empty($itineraries) && !is_array(reset($itineraries))) {
+    // The Travelopro response for this specific version/search returns 
+    // FareItineraries as a sequential array where each item contains a 'FareItinerary' key.
+    $itineraries = $results['AirSearchResponse']['AirSearchResult']['FareItineraries'] ?? [];
+    
+    // Normalize to array of itineraries
+    if (!empty($itineraries) && !isset($itineraries[0])) {
         $itineraries = [$itineraries];
     }
+
     $sessionId = $results['AirSearchResponse']['AirSearchResult']['SessionId'] ?? '';
 @endphp
 
@@ -43,11 +48,14 @@
     <div id="flightResultsList">
         @foreach($itineraries as $index => $itin)
             @php
-                $fareInfo = $itin['AirItineraryFareInfo'];
+                // Handle nested structure: each item is usually ['FareItinerary' => [...]]
+                $itineraryData = $itin['FareItinerary'] ?? $itin;
+                
+                $fareInfo = $itineraryData['AirItineraryFareInfo'];
                 $price = floatval($fareInfo['ItinTotalFares']['TotalFare']['Amount']);
                 $currency = $fareInfo['ItinTotalFares']['TotalFare']['CurrencyCode'];
-                $validatingCarrier = $itin['ValidatingAirlineCode'];
-                $options = $itin['OriginDestinationOptions'];
+                $validatingCarrier = $itineraryData['ValidatingAirlineCode'];
+                $options = $itineraryData['OriginDestinationOptions'];
                 if (isset($options['OriginDestinationOption'])) {
                     $options = [$options];
                 }

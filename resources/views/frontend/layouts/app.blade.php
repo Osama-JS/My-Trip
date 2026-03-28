@@ -13,6 +13,9 @@
     <title>@yield('title', __('Tourism Platform')) - {{ $siteName }}</title>
     <meta name="description" content="@yield('meta_description', __('Discover amazing travel experiences. Book tours, flights, and hotels with the best prices.'))">
 
+    <!-- Favicon -->
+    <link rel="shortcut icon" type="image/png" href="{{ asset(\App\Models\Setting::get('site_favicon', 'images/favicon.png')) }}">
+
     {{-- Google Fonts --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,7 +39,11 @@
             {{-- Logo --}}
             <a href="{{ route('home') }}" class="fe-logo">
                 <div class="fe-logo-icon">
-                    <i class="fas fa-plane"></i>
+                    @if($footerLogo)
+                        <img src="{{ asset($footerLogo) }}" alt="{{ $siteName }}" style="height: 32px; width: auto; object-fit: contain;">
+                    @else
+                        <i class="fas fa-plane"></i>
+                    @endif
                 </div>
                 <span>{{ $siteName }}</span>
             </a>
@@ -120,7 +127,11 @@
                 <div class="fe-footer-brand">
                     <a href="{{ route('home') }}" class="fe-logo">
                         <div class="fe-logo-icon">
-                            <i class="fas fa-plane"></i>
+                            @if($footerLogo)
+                                <img src="{{ asset($footerLogo) }}" alt="{{ $siteName }}" style="height: 32px; width: auto; object-fit: contain;">
+                            @else
+                                <i class="fas fa-plane"></i>
+                            @endif
                         </div>
                         <span>{{ $siteName }}</span>
                     </a>

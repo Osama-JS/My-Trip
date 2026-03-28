@@ -216,6 +216,111 @@ class FrontendController extends Controller
     }
 
     /**
+     * Load More Hotels (Pagination AJAX)
+     */
+    public function hotelLoadMore(Request $request)
+    {
+        $data = $request->all();
+        $results = $this->hotelService->nextToken($data);
+
+        return response()->json([
+            'html' => view('frontend.hotels.results_partial', [
+                'results' => $results,
+                'searchParams' => $data
+            ])->render(),
+            'nextToken' => $results['nextToken'] ?? null,
+            'hasMore' => isset($results['moreResults']) && $results['moreResults']
+        ]);
+    }
+
+    /**
+     * Get Hotel Details Page.
+     * Uses session-cached hotel data + tokenId to fetch room rates.
+     */
+    public function hotelDetails(Request $request, $hotelId)
+    {
+        $data = $request->all();
+        $data['hotelId'] = $hotelId;
+
+        $locale   = app()->getLocale();
+        $langCode = ($locale === 'ar') ? 'ARA' : 'ENG';
+
+        // 1. Hotel descriptive data from session (saved during search)
+        $hotelMap         = session('hotel_search_results', []);
+        $hotelFromSession = $hotelMap[$hotelId] ?? null;
+
+        // 2. Build room-rates payload using tokenId/productId/sessionId from session
+        $tokenId   = $hotelFromSession['tokenId']   ?? $data['tokenId']   ?? null;
+        $productId = $hotelFromSession['productId'] ?? $data['productId'] ?? null;
+        $sessionId = $hotelFromSession['sessionId'] ?? session('hotel_search_session_id') ?? null;
+
+        $roomPayload = [
+            'hotelId'          => $hotelId,
+            'tokenId'          => $tokenId,
+            'productId'        => $productId,
+            'sessionId'        => $sessionId,
+            'checkIn'          => $data['checkIn']  ?? null,
+            'checkOut'         => $data['checkOut'] ?? null,
+            'adults'           => $data['adults']   ?? 1,
+            'childs'           => $data['childs']   ?? 0,
+            'requiredLanguage' => $langCode,
+            'requiredCurrency' => 'SAR',
+        ];
+
+        \Illuminate\Support\Facades\Log::info('Hotel Details - fetching room rates', $roomPayload);
+        $roomsResult = $this->hotelService->getRoomRates($roomPayload);
+
+        // 3. Fetch full hotel metadata (images, full description, amenities)
+        $contentResult = $this->hotelService->getHotelContent($roomPayload);
+        
+        // Merge contentResult into hotel object
+        $hotelDetails = $contentResult['hotelDetails'] ?? $contentResult['hotel'] ?? [];
+        if ($hotelFromSession) {
+            $hotelFromSession = array_merge($hotelFromSession, $hotelDetails);
+            
+            // Map 'images' or 'hotelImages' from API to normalized key if needed
+            if (!empty($hotelDetails['hotelImages'])) {
+                $hotelFromSession['hotelImages'] = $hotelDetails['hotelImages'];
+            } elseif (!empty($hotelDetails['images'])) {
+                // Normalize images array
+                $imgs = [];
+                foreach ($hotelDetails['images'] as $img) {
+                    $imgs [] = ['url' => is_array($img) ? ($img['url'] ?? $img['Image'] ?? '') : $img];
+                }
+                $hotelFromSession['hotelImages'] = $imgs;
+            }
+
+            // Fallback: Merge roomImages from roomResults if they exist and are unique
+            $roomResults = $roomsResult['roomRates']['perBookingRates'] ?? $roomsResult['roomRates']['RoomResults'] ?? [];
+            foreach ($roomResults as $room) {
+                if (!empty($room['roomImages'])) {
+                    foreach ($room['roomImages'] as $rImg) {
+                        $url = is_array($rImg) ? ($rImg['url'] ?? $rImg['Image'] ?? '') : $rImg;
+                        if ($url && !collect($hotelFromSession['hotelImages'] ?? [])->contains('url', $url)) {
+                            $hotelFromSession['hotelImages'][] = ['url' => $url];
+                        }
+                    }
+                }
+            }
+        }
+
+        \Illuminate\Support\Facades\Log::info('Hotel Details - Room Rates full response', [
+            'response' => $roomsResult,
+        ]);
+
+        $checkIn = \Carbon\Carbon::parse($request->get('checkIn', now()));
+        $checkOut = \Carbon\Carbon::parse($request->get('checkOut', now()->addDay()));
+        $nights = max(1, $checkIn->diffInDays($checkOut));
+
+        return view('frontend.hotels.show', [
+            'hotel'        => $hotelFromSession ?? [],
+            'rooms'        => $roomsResult,
+            'searchParams' => $data,
+            'nights'       => $nights
+        ]);
+    }
+
+    /**
      * Get Hotel Room Rates (AJAX)
      */
     public function hotelRoomRates(Request $request)
@@ -242,9 +347,14 @@ class FrontendController extends Controller
             'hotel_name' => $request->get('hotelName', '')
         ];
 
+        $checkIn = \Carbon\Carbon::parse($request->get('checkIn', now()));
+        $checkOut = \Carbon\Carbon::parse($request->get('checkOut', now()->addDay()));
+        $nights = max(1, $checkIn->diffInDays($checkOut));
+
         return view('frontend.hotels.room_rates_partial', [
             'rooms' => $formatted,
-            'hotelDetails' => $data 
+            'hotelDetails' => $data,
+            'nights' => $nights
         ]);
     }
 
@@ -264,30 +374,29 @@ class FrontendController extends Controller
      */
     public function searchHotelCities(Request $request)
     {
-        $q = strtolower($request->get('q', ''));
-        $cities = $this->hotelService->getCities(['q' => $q]);
+        $q = $request->get('q', '');
         
-        $rawCities = $cities['cities'] ?? $cities['Cities'] ?? [];
-        $formatted = [];
-
-        foreach ($rawCities as $city) {
-            $cityName = $city['CityName'] ?? $city['city_name'] ?? '';
-            $countryName = $city['CountryName'] ?? $city['country_name'] ?? '';
+        $cities = \App\Models\HotelCity::where('is_active', true)
+            ->where(function($query) use ($q) {
+                $query->where('city_name_en', 'like', "%{$q}%")
+                      ->orWhere('city_name_ar', 'like', "%{$q}%")
+                      ->orWhere('country_name_en', 'like', "%{$q}%")
+                      ->orWhere('country_name_ar', 'like', "%{$q}%");
+            })
+            ->limit(20)
+            ->get();
             
-            // Local filtering if API doesn't support 'q'
-            if ($q && !str_contains(strtolower($cityName), $q) && !str_contains(strtolower($countryName), $q)) {
-                continue;
-            }
-
-            $formatted[] = [
-                'id' => $cityName,
-                'text' => "{$cityName}, {$countryName}",
-                'city_name' => $cityName,
-                'country_name' => $countryName
+        $formatted = $cities->map(function ($city) {
+            $name = app()->getLocale() == 'ar' && $city->city_name_ar ? $city->city_name_ar : $city->city_name_en;
+            $country = app()->getLocale() == 'ar' && $city->country_name_ar ? $city->country_name_ar : $city->country_name_en;
+            
+            return [
+                'id' => $city->city_name_en, // Value sent to search
+                'text' => "{$name}, {$country}",
+                'city_name' => $city->city_name_en,
+                'country_name' => $city->country_name_en
             ];
-
-            if (count($formatted) >= 20) break; // Limit results
-        }
+        });
 
         return response()->json(['results' => $formatted]);
     }
@@ -297,9 +406,25 @@ class FrontendController extends Controller
      */
     public function hotelBookingForm(Request $request)
     {
-        return view('frontend.hotels.booking', [
-            'details' => $request->all()
-        ]);
+        $details = $request->all();
+
+        // Enrich with session data if hotel info is missing from URL params
+        $hotelId = $details['hotelId'] ?? null;
+        if ($hotelId) {
+            $hotelMap  = session('hotel_search_results', []);
+            $sessionH  = $hotelMap[$hotelId] ?? null;
+
+            if ($sessionH) {
+                $details['hotelName']   = $details['hotelName']   ?? $sessionH['name']    ?? $sessionH['hotelName'] ?? 'Hotel';
+                $details['cityName']    = $details['cityName']    ?? $sessionH['city']    ?? $sessionH['address']   ?? '';
+                $details['countryName'] = $details['countryName'] ?? $sessionH['country'] ?? '';
+                $details['tokenId']     = $details['tokenId']     ?? $sessionH['tokenId']   ?? null;
+                $details['productId']   = $details['productId']   ?? $sessionH['productId'] ?? null;
+                $details['sessionId']   = $details['sessionId']   ?? $sessionH['sessionId'] ?? session('hotel_search_session_id');
+            }
+        }
+
+        return view('frontend.hotels.booking', ['details' => $details]);
     }
 
     /**
@@ -309,19 +434,22 @@ class FrontendController extends Controller
     {
         $paxDetails = [];
         $rooms = $request->get('rooms', 1);
-        
         for ($i = 1; $i <= $rooms; $i++) {
             $roomPax = [
                 'room_no' => $i,
-                'adult' => [
-                    'title' => $request->input("pax.{$i}.adult.title"),
-                    'firstName' => $request->input("pax.{$i}.adult.firstName"),
-                    'lastName' => $request->input("pax.{$i}.adult.lastName"),
+                'pax' => [
+                    [
+                        'type' => 'AD', // Standard Adult type
+                        'title' => $request->input("pax.{$i}.adult.title", 'Mr'),
+                        'firstName' => $request->input("pax.{$i}.adult.firstName", 'Guest'),
+                        'lastName' => $request->input("pax.{$i}.adult.lastName", 'Name'),
+                    ]
                 ]
             ];
             
             if ($request->has("pax.{$i}.child")) {
-                $roomPax['child'] = [
+                $roomPax['pax'][] = [
+                    'type' => 'CH',
                     'title' => $request->input("pax.{$i}.child.title"),
                     'firstName' => $request->input("pax.{$i}.child.firstName"),
                     'lastName' => $request->input("pax.{$i}.child.lastName"),
@@ -369,18 +497,29 @@ class FrontendController extends Controller
                 'product_id' => $request->get('productId'),
                 'token_id' => $request->get('tokenId'),
                 'pax_details' => $paxDetails,
+                'room_name' => $request->get('roomName'),
+                'board_type' => $request->get('boardType'),
             ]);
 
-            return redirect()->route('payments.web.checkout', [
-                'booking_id' => $hotelBooking->id, 
-                'method' => 'visa_master', 
-                'type' => 'hotel'
-            ]);
+            // Redirect to payment method selection (not directly to checkout)
+            return redirect()->route('hotels.payment.select', ['booking_id' => $hotelBooking->id]);
 
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Local Hotel Save Error: ' . $e->getMessage());
             return back()->with('error', __('Local save failed. Ref: ') . ($result['referenceNum'] ?? 'N/A'));
         }
+    }
+
+    /**
+     * Hotel Payment Method Selection Page
+     */
+    public function hotelSelectPayment(Request $request, $booking_id)
+    {
+        $booking = \App\Models\HotelBooking::where('id', $booking_id)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
+
+        return view('frontend.hotels.payment_select', compact('booking'));
     }
 
     /**
@@ -392,9 +531,9 @@ class FrontendController extends Controller
         $searchData = [
             'journeyType' => $request->get('journeyType', 'OneWay'),
             'class' => $request->get('class', 'Economy'),
-            'adults' => $request->get('adults', 1),
-            'childs' => $request->get('childs', 0),
-            'infants' => $request->get('infants', 0),
+            'adults' => (int)$request->get('adults', 1),
+            'childs' => (int)$request->get('childs', 0),
+            'infants' => (int)$request->get('infants', 0),
             'OriginDestinationInfo' => [
                 [
                     'departureDate' => $request->get('departDate'),
@@ -409,6 +548,12 @@ class FrontendController extends Controller
         }
 
         $results = $this->traveloproService->searchFlights($searchData);
+
+        $itineraries = $results['AirSearchResponse']['AirSearchResult']['FareItineraries'] ?? [];
+        // If it's a single object instead of array, wrap it
+        if (!empty($itineraries) && !isset($itineraries[0])) {
+            $itineraries = [$itineraries];
+        }
 
         // If AJAX request, return partial view only
         if ($request->ajax() || $request->get('ajax') == '1') {
@@ -440,9 +585,11 @@ class FrontendController extends Controller
      */
     public function flightBookingForm(Request $request)
     {
+        $countries = \App\Models\Country::all();
         // Expecting flight details in session/request to show summary
         return view('frontend.flights.booking', [
-            'details' => $request->all()
+            'details' => $request->all(),
+            'countries' => $countries
         ]);
     }
 
@@ -459,27 +606,55 @@ class FrontendController extends Controller
         }
 
         // 2. Persist in local DB (Booking model)
-        // Migration might be missing but we try to save if possible
         try {
             $booking = \App\Models\Booking::create([
                 'user_id' => auth()->id(),
-                'pnr_number' => $result['AirBookingResponse']['AirBookingResult']['Pnrs']['Pnr'] ?? 'PENDING',
                 'booking_reference' => 'FLIGHT-' . strtoupper(uniqid()),
-                'total_price' => $request->get('total_amount'), // From revalidate
+                'supplier_session_id' => $result['AirBookingResponse']['AirBookingResult']['SessionId'] ?? ($request->get('flight_session_id') ?? 'N/A'),
                 'status' => 'pending',
-                'pax_count' => $request->get('adults', 1) + $request->get('childs', 0) + $request->get('infants', 0),
+                'total_amount' => $request->get('total_amount'),
+                'currency' => 'SAR',
+                'contact_email' => $request->get('customerEmail'),
+                'contact_phone' => $request->get('customerPhone'),
+                'pnr_created_at' => now(),
+            ]);
+
+            // 3. Save Flight Specific Details
+            \App\Models\FlightBooking::create([
+                'user_id' => auth()->id(),
+                'booking_id' => $booking->id,
                 'origin' => $request->get('from'),
                 'destination' => $request->get('to'),
                 'departure_date' => $request->get('departDate'),
+                'return_date' => $request->get('returnDate'),
+                'adults' => (int)$request->get('adults', 1),
+                'childs' => (int)$request->get('childs', 0),
+                'infants' => (int)$request->get('infants', 0),
+                'flight_class' => $request->get('class', 'Economy'),
+                'itinerary_data' => $result['AirBookingResponse']['AirBookingResult'] ?? null,
+                'total_amount' => $request->get('total_amount'),
+                'currency' => 'SAR',
             ]);
 
-            // Redirect to unified payment flow
-            return redirect()->route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'visa_master', 'type' => 'flight']);
+            // 4. Redirect to flight-specific payment selection page
+            return redirect()->route('flights.payment.select', ['booking_id' => $booking->id]);
 
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Local Flight Save Error: ' . $e->getMessage());
             return back()->with('error', __('Booking saved on provider but failed locally. Contact support. Reference: ') . ($result['AirBookingResponse']['AirBookingResult']['Pnrs']['Pnr'] ?? 'N/A'));
         }
+    }
+
+    /**
+     * Flight-specific Payment Selection Page
+     */
+    public function flightSelectPayment(Request $request, $booking_id)
+    {
+        $booking = \App\Models\FlightBooking::with('user')->where('booking_id', $booking_id)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
+
+        return view('frontend.flights.payment_select', compact('booking'));
     }
 
     /**
@@ -584,11 +759,11 @@ class FrontendController extends Controller
             ->orWhere('city_name', 'like', "%{$q}%")
             ->latest()
             ->limit(20)
-            ->get(['airport_code as id', 'airport_name', 'city_name', 'airport_code']);
+            ->get();
 
         $formatted = $airports->map(function($item) {
             return [
-                'id' => $item->id,
+                'id' => $item->airport_code,
                 'airport_name' => $item->airport_name,
                 'city_name' => $item->city_name,
                 'airport_code' => $item->airport_code,

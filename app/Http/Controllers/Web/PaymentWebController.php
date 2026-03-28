@@ -76,12 +76,21 @@ class PaymentWebController extends Controller
 
             // If HyperPay, we might need a checkout_id immediately to load the widget
             if (in_array($method, ['mada', 'visa_master', 'apple_pay'])) {
-                $checkoutResult = $this->prepareHyperPayCheckout($booking, $method, $request, $type);
-                $checkoutId = $checkoutResult['id'] ?? null;
-                $data['checkout_id'] = $checkoutId;
+                // Simulation mode for local dev (XAMPP cannot reach oppwa.com)
+                if (config('app.env') === 'local' || env('PAYMENT_SIMULATION', false)) {
+                    $fakeId = 'SIM-' . strtoupper(uniqid());
+                    $data['checkout_id']  = null;           // No real widget
+                    $data['sim_mode']     = true;
+                    $data['sim_ref']      = $fakeId;
+                    Log::info("Payment Simulation Mode — skipping HyperPay. Ref: {$fakeId}");
+                } else {
+                    $checkoutResult = $this->prepareHyperPayCheckout($booking, $method, $request, $type);
+                    $checkoutId = $checkoutResult['id'] ?? null;
+                    $data['checkout_id'] = $checkoutId;
 
-                if ($checkoutId) {
-                    $this->logPendingPayment($booking, 'hyperpay', $method, $checkoutId, $data['amount'], $checkoutResult);
+                    if ($checkoutId) {
+                        $this->logPendingPayment($booking, 'hyperpay', $method, $checkoutId, $data['amount'], $checkoutResult);
+                    }
                 }
             }
 
@@ -128,6 +137,22 @@ class PaymentWebController extends Controller
 
             $method = $request->method;
             $user = $booking->user;
+
+            // Simulation mode for local dev (XAMPP cannot reach payment APIs)
+            if (config('app.env') === 'local' || env('PAYMENT_SIMULATION', false)) {
+                $fakeRef = 'SIM-' . strtoupper($method) . '-' . strtoupper(uniqid());
+                Log::info("Payment {$method} Simulation Mode — Ref: {$fakeRef}");
+                
+                return response()->json([
+                    'checkout_url' => route('payments.web.success', [
+                        'booking_id' => $booking->id,
+                        'transaction_id' => $fakeRef,
+                        'source' => 'simulation'
+                    ]),
+                    'id' => $fakeRef,
+                    'status' => 'initiated'
+                ]);
+            }
 
             if ($method === 'tabby') {
                 return $this->initiateTabby($booking, $user, $request, $type);

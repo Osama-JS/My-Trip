@@ -38,9 +38,9 @@ class TraveloproService
             'journeyType' => $data['journeyType'],
             'OriginDestinationInfo' => $this->formatItinerary($data['OriginDestinationInfo']),
             'class' => $data['class'] ?? 'Economy',
-            'adults' => $data['adults'] ?? 1,
-            'childs' => $data['childs'] ?? 0,
-            'infants' => $data['infants'] ?? 0,
+            'adults' => (int)($data['adults'] ?? 1),
+            'childs' => (int)($data['childs'] ?? 0),
+            'infants' => (int)($data['infants'] ?? 0),
             // Optional fields included even if null/default
             'airlineCode' => $data['airlineCode'] ?? '',
             'directFlight' => $data['directFlight'] ?? 'false',
@@ -99,8 +99,8 @@ class TraveloproService
             return [
                 'departureDate' => $segment['departureDate'],
                 'returnDate' => $segment['returnDate'] ?? '', // Required for Return journeyType
-                'airportOriginCode' => $segment['airportOriginCode'],
-                'airportDestinationCode' => $segment['airportDestinationCode'],
+                'airportOriginCode' => (string)($segment['airportOriginCode'] ?? ''),
+                'airportDestinationCode' => (string)($segment['airportDestinationCode'] ?? ''),
             ];
         }, $itineraries);
     }

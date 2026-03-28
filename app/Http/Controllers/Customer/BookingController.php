@@ -190,6 +190,87 @@ class BookingController extends Controller
     }
 
     /**
+     * Get Hotel Cancellation Charge before actual cancellation.
+     */
+    public function cancelHotelCharge($id, \App\Services\TraveloproHotelService $hotelService)
+    {
+        $booking = \App\Models\HotelBooking::where('user_id', Auth::id())->findOrFail($id);
+
+        if ($booking->status === 'cancelled') {
+            return response()->json(['status' => 'error', 'message' => __('هذا الحجز ملغى بالفعل.')]);
+        }
+
+        $result = $hotelService->getCancelCharge([
+            'supplierConfirmationNum' => $booking->supplier_confirmation_num,
+            'referenceNum' => $booking->reference_num,
+            'sessionId' => $booking->session_id,
+            'productId' => $booking->product_id,
+            'tokenId' => $booking->token_id,
+        ]);
+
+        return response()->json($result);
+    }
+
+    /**
+     * Finalize Hotel Cancellation.
+     */
+    public function cancelHotel(Request $request, $id, \App\Services\TraveloproHotelService $hotelService)
+    {
+        $booking = \App\Models\HotelBooking::where('user_id', Auth::id())->findOrFail($id);
+
+        if ($booking->status === 'cancelled') {
+            return back()->with('error', __('هذا الحجز ملغى بالفعل.'));
+        }
+
+        $result = $hotelService->cancel([
+            'supplierConfirmationNum' => $booking->supplier_confirmation_num,
+            'referenceNum' => $booking->reference_num,
+            'sessionId' => $booking->session_id,
+            'productId' => $booking->product_id,
+            'tokenId' => $booking->token_id,
+        ]);
+
+        if (isset($result['status']) && $result['status'] === 'success') {
+            $booking->update(['status' => 'cancelled']);
+            return redirect()->route('customer.bookings.hotels')
+                ->with('success', __('تم إلغاء حجز الفندق بنجاح.'));
+        }
+
+        $msg = $result['message'] ?? __('تعذر إلغاء الحجز حالياً. يرجى التواصل مع الدعم.');
+        return back()->with('error', $msg);
+    }
+
+    /**
+     * Sync/Refresh Hotel Booking Status from Provider.
+     */
+    public function syncHotelBookingStatus($id, \App\Services\TraveloproHotelService $hotelService)
+    {
+        $booking = \App\Models\HotelBooking::where('user_id', Auth::id())->findOrFail($id);
+
+        $result = $hotelService->getBookingDetails([
+            'supplierConfirmationNum' => $booking->supplier_confirmation_num,
+            'referenceNum' => $booking->reference_num,
+            'sessionId' => $booking->session_id,
+            'productId' => $booking->product_id,
+            'tokenId' => $booking->token_id,
+        ]);
+
+        if (isset($result['status']) && $result['status'] === 'success' && isset($result['bookingDetails'])) {
+            $apiStatus = strtolower($result['bookingDetails']['status'] ?? $booking->status);
+            
+            // Map API status to local status if needed (e.g. 'CONFIRMED' -> 'confirmed')
+            if ($apiStatus !== $booking->status) {
+                $booking->update(['status' => $apiStatus]);
+                return back()->with('success', __('تم تحديث حالة الحجز بنجاح. الحالة الحالية: :status', ['status' => __($apiStatus)]));
+            }
+            
+            return back()->with('info', __('حالة الحجز محدثة بالفعل.'));
+        }
+
+        return back()->with('error', __('تعذر جلب تفاصيل الحجز من المزود حالياً.'));
+    }
+
+    /**
      * Download invoice PDF.
      */
     public function downloadInvoice($id)
