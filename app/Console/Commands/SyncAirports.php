@@ -27,12 +27,13 @@ class SyncAirports extends Command
     {
         $this->info('Starting airport synchronization...');
         
-        $result = $service->syncAirports();
+        // Pass true to force bypass cache
+        $result = $service->syncAirports(true);
         
         if ($result['status'] === 'success') {
             $this->info("Successfully synced {$result['count']} airports.");
         } elseif ($result['status'] === 'warning') {
-            $this->warn($result['message']);
+            $this->warn($result['message'] . " Seeded " . ($result['count'] ?? 0) . " fallback airports.");
         } else {
             $this->error($result['message']);
         }

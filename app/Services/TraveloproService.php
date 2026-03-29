@@ -110,22 +110,32 @@ class TraveloproService
      *
      * @return array
      */
-    public function getAirportList()
+    public function getAirportList($force = false)
     {
-        return cache()->remember('travelopro_airports', 60 * 24, function () {
+        $cacheKey = 'travelopro_airports';
+        
+        if ($force) {
+            cache()->forget($cacheKey);
+        }
+
+        return cache()->remember($cacheKey, 60 * 24, function () {
             $payload = [
                 'user_id' => $this->userId,
                 'user_password' => $this->password,
                 'access' => $this->access,
-                'ip_address' => request()->ip(),
+                'ip_address' => request()->ip() ?? '127.0.0.1',
             ];
 
             $url = str_replace('availability', 'airport_list', $this->url);
 
-            Log::info('Travelopro Airport List Request');
+            Log::info('Travelopro Airport List Request', ['url' => $url]);
 
             try {
-                $response = Http::timeout(60)->withoutVerifying()->post($url, $payload);
+                // Increased timeouts and added SSL verification bypass more explicitly
+                $response = Http::withoutVerifying()
+                    ->connectTimeout(60)
+                    ->timeout(120)
+                    ->post($url, $payload);
 
                 if ($response->successful()) {
                      return $response->json();
@@ -150,27 +160,35 @@ class TraveloproService
      *
      * @return array
      */
-    public function syncAirports()
+    public function syncAirports($force = false)
     {
-        $airports = $this->getAirportList();
+        $airports = $this->getAirportList($force);
         
-        if (isset($airports['Airports']['Airport'])) {
+        // Handle both flat array and nested structure
+        $list = [];
+        if (isset($airports[0]['AirportCode'])) {
+            $list = $airports;
+        } elseif (isset($airports['Airports']['Airport'])) {
             $list = $airports['Airports']['Airport'];
+        }
+
+        if (!empty($list)) {
             $data = [];
 
             foreach ($list as $item) {
+                // Adaptive mapping with length protection for codes
                 $data[] = [
-                    'airport_code' => $item['AirportCode'],
-                    'airport_name' => $item['AirportName'],
-                    'city_code' => $item['CityCode'],
-                    'city_name' => $item['CityName'],
-                    'country_code' => $item['CountryCode'],
-                    'country_name' => $item['CountryName'],
+                    'airport_code' => substr($item['AirportCode'] ?? $item['airport_code'] ?? 'UNK', 0, 10),
+                    'airport_name' => $item['AirportName'] ?? $item['airport_name'] ?? null,
+                    'city_code' => substr($item['CityCode'] ?? $item['City'] ?? $item['city_code'] ?? 'UNK', 0, 10),
+                    'city_name' => $item['CityName'] ?? $item['City'] ?? $item['city_name'] ?? null,
+                    'country_code' => substr($item['CountryCode'] ?? $item['Country'] ?? $item['country_code'] ?? 'UNK', 0, 10),
+                    'country_name' => $item['CountryName'] ?? $item['Country'] ?? $item['country_name'] ?? null,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
 
-                // Chunking to avoid massive single insert if list is huge
+                // Chunking to avoid massive single insert
                 if (count($data) >= 500) {
                     \App\Models\Airport::upsert($data, ['airport_code'], ['airport_name', 'city_code', 'city_name', 'country_code', 'country_name', 'updated_at']);
                     $data = [];
@@ -184,7 +202,7 @@ class TraveloproService
             return [
                 'status' => 'success',
                 'count' => count($list),
-                'message' => 'Airports synced successfully from API using bulk upsert'
+                'message' => 'Airports synced successfully from API'
             ];
         }
 
