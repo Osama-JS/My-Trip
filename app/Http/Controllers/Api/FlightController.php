@@ -134,7 +134,7 @@ class FlightController extends Controller
         path: "/api/flights/airports",
         summary: "Get list of airports",
         operationId: "getAirports",
-        description: "Retrieve a list of supported airports from Travelopro.",
+        description: "Retrieve a list of supported airports from local database.",
         tags: ["Flights"],
         parameters: [
             new OA\Parameter(
@@ -143,6 +143,13 @@ class FlightController extends Controller
                 description: "The language of the response (ar, en)",
                 required: false,
                 schema: new OA\Schema(type: "string", default: "en", enum: ["en", "ar"])
+            ),
+            new OA\Parameter(
+                name: "q",
+                in: "query",
+                description: "Search keyword for airport name, code, or city",
+                required: false,
+                schema: new OA\Schema(type: "string")
             )
         ],
         responses: [
@@ -166,9 +173,30 @@ class FlightController extends Controller
             )
         ]
     )]
-    public function getAirports()
+    public function getAirports(Request $request)
     {
-        $airports = $this->traveloproService->getAirportList();
+        $q = $request->get('q');
+        
+        $query = \App\Models\Airport::query();
+
+        if ($q) {
+            $query->where('airport_name', 'like', "%{$q}%")
+                ->orWhere('airport_code', 'like', "%{$q}%")
+                ->orWhere('city_name', 'like', "%{$q}%");
+        }
+
+        $airports = $query->latest()
+            ->limit(50)
+            ->get()
+            ->map(function ($airport) {
+                return [
+                    'AirportCode' => $airport->airport_code,
+                    'AirportName' => $airport->airport_name,
+                    'City' => $airport->city_name,
+                    'Country' => $airport->country_name,
+                ];
+            });
+
         return $this->apiResponse(false, __('Airports retrieved successfully.'), $airports, null, 200);
     }
 

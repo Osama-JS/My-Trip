@@ -10,15 +10,15 @@ use Illuminate\Support\Facades\Log;
 class InvoiceService
 {
     /**
-     * Generate invoice for a booking
+     * Generate voucher for a hotel booking
      *
-     * @param TripBooking $booking
+     * @param \App\Models\HotelBooking $booking
      * @return string|false Path to the generated PDF
      */
-    public function generateInvoice(TripBooking $booking)
+    public function generateHotelVoucher(\App\Models\HotelBooking $booking)
     {
         try {
-            $booking->load(['user', 'trip.toCountry', 'trip.toCity', 'passengers']);
+            $booking->load(['user']);
 
             $mpdf = new Mpdf([
                 'mode' => 'utf-8',
@@ -32,17 +32,17 @@ class InvoiceService
             // Set RTL for Arabic support
             $mpdf->SetDirectionality('rtl');
 
-            $html = view('invoices.trip_booking', compact('booking'))->render();
+            $html = view('invoices.hotel_voucher', compact('booking'))->render();
             $mpdf->WriteHTML($html);
 
-            $fileName = 'invoice_' . $booking->id . '_' . time() . '.pdf';
+            $fileName = 'voucher_' . $booking->id . '_' . time() . '.pdf';
             $filePath = 'invoices/' . $fileName;
 
             Storage::disk('public')->put($filePath, $mpdf->Output('', 'S'));
 
             return $filePath;
         } catch (\Exception $e) {
-            Log::error('Invoice Generation Failed: ' . $e->getMessage());
+            Log::error('Hotel Voucher Generation Failed: ' . $e->getMessage());
             return false;
         }
     }

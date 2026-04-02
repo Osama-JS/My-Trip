@@ -103,6 +103,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // User Bookings
     Route::get('/user/bookings', [App\Http\Controllers\Api\UserBookingController::class, 'index']);
     Route::get('/user/bookings/{reference}', [App\Http\Controllers\Api\UserBookingController::class, 'show']);
+    
+    // User Hotel Bookings
+    Route::get('/user/hotel-bookings', [App\Http\Controllers\Api\UserBookingController::class, 'hotelBookings']);
+    Route::get('/user/hotel-bookings/{id}', [App\Http\Controllers\Api\UserBookingController::class, 'hotelBookingDetails']);
 
     Route::post('/logout', [AuthController::class, 'logout']);
 });

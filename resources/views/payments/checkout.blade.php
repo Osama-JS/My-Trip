@@ -309,7 +309,7 @@
                             لا يمكن الاتصال بـ HyperPay من البيئة المحلية.<br>
                             المرجع التجريبي: <code style="color:#f59e0b;">{{ $sim_ref ?? 'SIM-LOCAL' }}</code>
                         </p>
-                        <a href="{{ route('payments.web.success', ['booking_id' => $booking->id, 'transaction_id' => $sim_ref ?? 'SIM', 'source' => 'simulation']) }}"
+                        <a href="{{ route('payments.web.success', ['booking_id' => $booking->id, 'transaction_id' => $sim_ref ?? 'SIM', 'source' => 'simulation', 'type' => $booking_type]) }}"
                            class="btn-redirect" style="background:linear-gradient(135deg,#10b981,#059669);">
                             ✅ محاكاة نجاح الدفع (للاختبار فقط)
                         </a>

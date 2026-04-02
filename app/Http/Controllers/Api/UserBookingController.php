@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
+use App\Models\HotelBooking;
 use App\Services\TraveloproService;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
@@ -132,5 +133,140 @@ class UserBookingController extends Controller
                 'live_details' => $liveDetails
             ]
         ]);
+    }
+
+    #[OA\Get(
+        path: "/api/user/hotel-bookings",
+        summary: "حجوزات الفنادق للمستخدم (User Hotel Bookings)",
+        operationId: "getUserHotelBookings",
+        description: "عرض قائمة حجوزات الفنادق للمستخدم الحالي. (Get current user's hotel bookings).",
+        tags: ["User"],
+        security: [["bearerAuth" => []]],
+        parameters: [
+            new OA\Parameter(name: "Accept-Language", in: "header", required: false, schema: new OA\Schema(type: "string", default: "en")),
+            new OA\Parameter(name: "per_page", in: "query", required: false, schema: new OA\Schema(type: "integer", default: 10)),
+            new OA\Parameter(name: "page", in: "query", required: false, schema: new OA\Schema(type: "integer", default: 1))
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "Success",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "error", type: "boolean", example: false),
+                        new OA\Property(property: "message", type: "string", example: "Hotel bookings retrieved successfully."),
+                        new OA\Property(property: "data", type: "array", items: new OA\Items(
+                            properties: [
+                                new OA\Property(property: "id", type: "integer"),
+                                new OA\Property(property: "hotel_name", type: "string"),
+                                new OA\Property(property: "city", type: "string"),
+                                new OA\Property(property: "country", type: "string"),
+                                new OA\Property(property: "check_in", type: "string", format: "date"),
+                                new OA\Property(property: "check_out", type: "string", format: "date"),
+                                new OA\Property(property: "status", type: "string"),
+                                new OA\Property(property: "total_price", type: "number"),
+                                new OA\Property(property: "currency", type: "string"),
+                                new OA\Property(property: "reference_num", type: "string"),
+                            ]
+                        ))
+                    ]
+                )
+            )
+        ]
+    )]
+    public function hotelBookings(Request $request)
+    {
+        $perPage = $request->input('per_page', 10);
+        $bookings = HotelBooking::where('user_id', $request->user()->id)
+            ->latest()
+            ->paginate($perPage);
+
+        $data = $bookings->getCollection()->transform(function ($booking) {
+            return [
+                'id' => $booking->id,
+                'hotel_name' => $booking->hotel_name,
+                'city' => $booking->city_name,
+                'country' => $booking->country_name,
+                'check_in' => $booking->check_in->format('Y-m-d'),
+                'check_out' => $booking->check_out->format('Y-m-d'),
+                'status' => $booking->status,
+                'total_price' => $booking->total_price,
+                'currency' => $booking->currency,
+                'reference_num' => $booking->reference_num ?? $booking->id,
+            ];
+        });
+
+        return $this->apiResponse(
+            false,
+            __('Hotel bookings retrieved successfully.'),
+            $data,
+            $this->formatPagination($bookings)
+        );
+    }
+
+    #[OA\Get(
+        path: "/api/user/hotel-bookings/{id}",
+        summary: "تفاصيل حجز الفندق (User Hotel Booking Details)",
+        operationId: "getUserHotelBookingDetails",
+        description: "عرض التفاصيل الكاملة لحجز فندق معين. (Get specific hotel booking details).",
+        tags: ["User"],
+        security: [["bearerAuth" => []]],
+        parameters: [
+            new OA\Parameter(name: "Accept-Language", in: "header", required: false, schema: new OA\Schema(type: "string", default: "en")),
+            new OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "integer"))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: "Success")
+        ]
+    )]
+    public function hotelBookingDetails(Request $request, $id)
+    {
+        $booking = HotelBooking::where('user_id', $request->user()->id)
+            ->where('id', $id)
+            ->firstOrFail();
+
+        // Calculate nights
+        $nights = $booking->check_in->diffInDays($booking->check_out);
+
+        $data = [
+            'hero' => [
+                'hotel_name' => $booking->hotel_name,
+                'location' => [
+                    'city' => $booking->city_name,
+                    'country' => $booking->country_name,
+                ],
+                'status' => $booking->status,
+                'reference_num' => $booking->reference_num ?? $booking->id,
+                'supplier_confirmation_num' => $booking->supplier_confirmation_num,
+            ],
+            'stay' => [
+                'check_in' => $booking->check_in->format('D, d M Y'),
+                'check_out' => $booking->check_out->format('D, d M Y'),
+                'nights' => $nights,
+            ],
+            'accommodation' => [
+                'room_name' => $booking->room_name ?? 'N/A',
+                'board_type' => $booking->board_type ?? 'N/A',
+                'guests' => [
+                    'adults' => $booking->adults,
+                    'childs' => $booking->childs,
+                ],
+                'rooms_count' => $booking->rooms,
+            ],
+            'guests' => $booking->pax_details,
+            'payment' => [
+                'total_price' => $booking->total_price,
+                'currency' => $booking->currency,
+                'method' => $booking->payment_method ?? 'N/A',
+            ],
+            'timeline' => [
+                'created_at' => $booking->created_at->format('d M Y, H:i'),
+                'payment_verified' => in_array($booking->status, ['paid', 'confirmed']),
+                'finalized' => $booking->status === 'confirmed',
+            ],
+            'voucher_url' => $booking->status === 'confirmed' ? route('customer.bookings.hotels.voucher', $booking->id) : null,
+        ];
+
+        return $this->apiResponse(false, __('Hotel booking details retrieved successfully.'), $data);
     }
 }

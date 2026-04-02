@@ -462,21 +462,70 @@ class HotelController extends Controller
         path: "/api/hotels/cities",
         summary: "قائمة المدن المدعومة (Supported cities list)",
         operationId: "getHotelCities",
-        description: "جلب قائمة المدن والبلدان المدعومة. يجب استخدام `city_name` و `country_name` الناتجة من هنا في دالة البحث.",
+        description: "جلب قائمة المدن والبلدان المدعومة من قاعدة البيانات المحلية. يجب استخدام `city_name` و `country_name` الناتجة في دالة البحث.",
         tags: ["Hotels"],
+        parameters: [
+            new OA\Parameter(
+                name: "Accept-Language",
+                in: "header",
+                description: "The language of the response (ar, en)",
+                required: false,
+                schema: new OA\Schema(type: "string", default: "en", enum: ["en", "ar"])
+            ),
+            new OA\Parameter(
+                name: "q",
+                in: "query",
+                description: "Search keyword for city or country name",
+                required: false,
+                schema: new OA\Schema(type: "string")
+            )
+        ],
         responses: [
-            new OA\Response(response: 200, description: "تم استرجاع قائمة المدن بنجاح")
+            new OA\Response(
+                response: 200,
+                description: "تم استرجاع قائمة المدن بنجاح",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "error", type: "boolean", example: false),
+                        new OA\Property(property: "message", type: "string", example: "Cities retrieved successfully."),
+                        new OA\Property(property: "data", type: "array", items: new OA\Items(
+                            properties: [
+                                new OA\Property(property: "city_name", type: "string", example: "Dubai"),
+                                new OA\Property(property: "country_name", type: "string", example: "United Arab Emirates"),
+                                new OA\Property(property: "display_name", type: "string", example: "دبي, الإمارات العربية المتحدة")
+                            ]
+                        ))
+                    ]
+                )
+            )
         ]
     )]
     public function getCities(Request $request)
     {
-        $result = $this->hotelService->getCities($request->all());
+        $q = $request->get('q', '');
+        
+        $cities = \App\Models\HotelCity::where('is_active', true)
+            ->when($q, function($query) use ($q) {
+                $query->where('city_name_en', 'like', "%{$q}%")
+                      ->orWhere('city_name_ar', 'like', "%{$q}%")
+                      ->orWhere('country_name_en', 'like', "%{$q}%")
+                      ->orWhere('country_name_ar', 'like', "%{$q}%");
+            })
+            ->limit(50)
+            ->get();
+            
+        $formatted = $cities->map(function ($city) {
+            $name = app()->getLocale() == 'ar' && $city->city_name_ar ? $city->city_name_ar : $city->city_name_en;
+            $country = app()->getLocale() == 'ar' && $city->country_name_ar ? $city->country_name_ar : $city->country_name_en;
+            
+            return [
+                'city_name' => $city->city_name_en, // Value expected by API for searching
+                'country_name' => $city->country_name_en, // Value expected by API for searching
+                'display_name' => "{$name}, {$country}",
+            ];
+        });
 
-        if (isset($result['status']) && $result['status'] === 'error') {
-            return $this->apiResponse(true, $result['message'], $result['details'] ?? null, null, 500);
-        }
-
-        return $this->apiResponse(false, __('Cities retrieved successfully.'), $result, null, 200);
+        return $this->apiResponse(false, __('Cities retrieved successfully.'), $formatted, null, 200);
     }
 
     #[OA\Get(

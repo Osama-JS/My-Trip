@@ -364,8 +364,9 @@ Route::middleware(['auth', 'isCustomer'])->prefix('customer')->name('customer.')
     Route::post('/bookings/{id}/cancel', [CustomerBookingController::class, 'cancel'])->name('bookings.cancel');
     Route::get('/bookings/hotels/{id}/cancel-charge', [CustomerBookingController::class, 'cancelHotelCharge'])->name('bookings.hotels.cancel-charge');
     Route::post('/bookings/hotels/{id}/cancel', [CustomerBookingController::class, 'cancelHotel'])->name('bookings.hotels.cancel');
-    Route::post('/bookings/hotels/{id}/sync-status', [CustomerBookingController::class, 'syncHotelBookingStatus'])->name('bookings.hotels.sync-status');
+    Route::post('/bookings/{id}/sync-status', [CustomerBookingController::class, 'syncHotelBookingStatus'])->name('bookings.hotels.sync-status');
     Route::get('/bookings/{id}/invoice', [CustomerBookingController::class, 'downloadInvoice'])->name('bookings.invoice');
+    Route::get('/bookings/hotels/{id}/voucher', [CustomerBookingController::class, 'downloadHotelVoucher'])->name('bookings.hotels.voucher');
 
     // Favorites
     Route::get('/favorites', [FavoriteController::class, 'index'])->name('favorites.index');

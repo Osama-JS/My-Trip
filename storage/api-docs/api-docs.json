@@ -1605,7 +1605,7 @@
                     "Flights"
                 ],
                 "summary": "Get list of airports",
-                "description": "Retrieve a list of supported airports from Travelopro.",
+                "description": "Retrieve a list of supported airports from local database.",
                 "operationId": "getAirports",
                 "parameters": [
                     {
@@ -1620,6 +1620,15 @@
                                 "en",
                                 "ar"
                             ]
+                        }
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "Search keyword for airport name, code, or city",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 ],
@@ -3521,11 +3530,73 @@
                     "Hotels"
                 ],
                 "summary": "قائمة المدن المدعومة (Supported cities list)",
-                "description": "جلب قائمة المدن والبلدان المدعومة. يجب استخدام `city_name` و `country_name` الناتجة من هنا في دالة البحث.",
+                "description": "جلب قائمة المدن والبلدان المدعومة من قاعدة البيانات المحلية. يجب استخدام `city_name` و `country_name` الناتجة في دالة البحث.",
                 "operationId": "getHotelCities",
+                "parameters": [
+                    {
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "description": "The language of the response (ar, en)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "en",
+                            "enum": [
+                                "en",
+                                "ar"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "Search keyword for city or country name",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "تم استرجاع قائمة المدن بنجاح"
+                        "description": "تم استرجاع قائمة المدن بنجاح",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Cities retrieved successfully."
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "city_name": {
+                                                        "type": "string",
+                                                        "example": "Dubai"
+                                                    },
+                                                    "country_name": {
+                                                        "type": "string",
+                                                        "example": "United Arab Emirates"
+                                                    },
+                                                    "display_name": {
+                                                        "type": "string",
+                                                        "example": "دبي, الإمارات العربية المتحدة"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -3926,8 +3997,24 @@
                     "Payment"
                 ],
                 "summary": "Get available payment methods",
-                "description": "Returns a list of active payment gateways and their configuration for the UI.",
+                "description": "Returns a list of active payment gateways. If 'type' is 'trip', bank_transfer is included.",
                 "operationId": "getPaymentMethods",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Booking type: trip, hotel, flight",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "trip",
+                                "hotel",
+                                "flight"
+                            ]
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success",
@@ -3981,25 +4068,9 @@
                 "tags": [
                     "Payment"
                 ],
-                "summary": "Initiate payment checkout (HyperPay, Tabby, Tamara)",
-                "description": "Initializes a payment session. For HyperPay, returns a Checkout ID. For Tabby/Tamara, returns a redirect URL.",
+                "summary": "Initiate payment checkout",
+                "description": "Initializes a payment session. If targeting a Trip, it can return a WebView URL and supports manual bank transfer initiation settings.",
                 "operationId": "initiatePayment",
-                "parameters": [
-                    {
-                        "name": "Accept-Language",
-                        "in": "header",
-                        "description": "The language of the response (ar, en)",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "default": "en",
-                            "enum": [
-                                "en",
-                                "ar"
-                            ]
-                        }
-                    }
-                ],
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -4026,37 +4097,23 @@
                                         ],
                                         "example": "visa_master"
                                     },
+                                    "booking_id": {
+                                        "description": "Required for Trip bookings",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "booking_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "trip",
+                                            "hotel",
+                                            "flight"
+                                        ],
+                                        "example": "trip"
+                                    },
                                     "order_id": {
                                         "type": "string",
                                         "example": "ORDER-12345"
-                                    },
-                                    "first_name": {
-                                        "type": "string",
-                                        "example": "John"
-                                    },
-                                    "last_name": {
-                                        "type": "string",
-                                        "example": "Doe"
-                                    },
-                                    "phone": {
-                                        "type": "string",
-                                        "example": "966500000000"
-                                    },
-                                    "email": {
-                                        "type": "string",
-                                        "example": "john@example.com"
-                                    },
-                                    "city": {
-                                        "type": "string",
-                                        "example": "Riyadh"
-                                    },
-                                    "address": {
-                                        "type": "string",
-                                        "example": "123 Main St"
-                                    },
-                                    "callback_url": {
-                                        "type": "string",
-                                        "example": "https://mysite.com/payment/callback"
                                     }
                                 },
                                 "type": "object"
@@ -4066,33 +4123,60 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Checkout initialized successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Checkout initialized successfully."
-                                        },
-                                        "data": {
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "initialized"
                     },
                     "422": {
                         "description": "Validation Error"
-                    },
-                    "500": {
-                        "description": "Payment Gateway Error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/payment/bank-transfer": {
+            "post": {
+                "tags": [
+                    "Payment"
+                ],
+                "summary": "Submit bank transfer receipt",
+                "description": "Submit Bank Transfer Receipt",
+                "operationId": "0109769e93f34c72ed46e641cdce98ee",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "booking_id",
+                                    "receipt_image",
+                                    "sender_name"
+                                ],
+                                "properties": {
+                                    "booking_id": {
+                                        "type": "integer"
+                                    },
+                                    "receipt_image": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "sender_name": {
+                                        "type": "string"
+                                    },
+                                    "notes": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success"
                     }
                 },
                 "security": [
@@ -4334,6 +4418,151 @@
                         "required": true,
                         "schema": {
                             "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/user/hotel-bookings": {
+            "get": {
+                "tags": [
+                    "User"
+                ],
+                "summary": "حجوزات الفنادق للمستخدم (User Hotel Bookings)",
+                "description": "عرض قائمة حجوزات الفنادق للمستخدم الحالي. (Get current user's hotel bookings).",
+                "operationId": "getUserHotelBookings",
+                "parameters": [
+                    {
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "en"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Hotel bookings retrieved successfully."
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "hotel_name": {
+                                                        "type": "string"
+                                                    },
+                                                    "city": {
+                                                        "type": "string"
+                                                    },
+                                                    "country": {
+                                                        "type": "string"
+                                                    },
+                                                    "check_in": {
+                                                        "type": "string",
+                                                        "format": "date"
+                                                    },
+                                                    "check_out": {
+                                                        "type": "string",
+                                                        "format": "date"
+                                                    },
+                                                    "status": {
+                                                        "type": "string"
+                                                    },
+                                                    "total_price": {
+                                                        "type": "number"
+                                                    },
+                                                    "currency": {
+                                                        "type": "string"
+                                                    },
+                                                    "reference_num": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/user/hotel-bookings/{id}": {
+            "get": {
+                "tags": [
+                    "User"
+                ],
+                "summary": "تفاصيل حجز الفندق (User Hotel Booking Details)",
+                "description": "عرض التفاصيل الكاملة لحجز فندق معين. (Get specific hotel booking details).",
+                "operationId": "getUserHotelBookingDetails",
+                "parameters": [
+                    {
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "en"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
                         }
                     }
                 ],

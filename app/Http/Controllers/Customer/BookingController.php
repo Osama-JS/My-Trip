@@ -4,16 +4,20 @@ namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
 use App\Models\TripBooking;
+use App\Models\HotelBooking;
 use App\Models\Trip;
 use App\Models\Booking;
 use App\Models\BookingPassenger;
 use App\Services\InvoiceService;
+use App\Traits\HotelBookingFinalizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class BookingController extends Controller
 {
+    use HotelBookingFinalizer;
     protected InvoiceService $invoiceService;
 
     public function __construct(InvoiceService $invoiceService)
@@ -247,6 +251,27 @@ class BookingController extends Controller
     {
         $booking = \App\Models\HotelBooking::where('user_id', Auth::id())->findOrFail($id);
 
+        // AGGRESSIVE SYNC: If not confirmed, always try to finalize with supplier
+        if (empty($booking->supplier_confirmation_num)) {
+            Log::info("Sync Status calling finalizer for booking {$id}");
+            $finalized = $this->finalizeHotelSupplierBooking($booking);
+            if ($finalized) {
+                if (request()->ajax()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => __('Booking finalized and confirmed successfully.'),
+                        'status' => 'confirmed'
+                    ]);
+                }
+                return back()->with('success', __('Booking finalized and confirmed successfully.'));
+            }
+        }
+
+        // If still no confirmation num, we can't sync with API
+        if (empty($booking->supplier_confirmation_num)) {
+             return back()->with('info', __('الحجز بانتظار الدفع أو التأكيد.'));
+        }
+
         $result = $hotelService->getBookingDetails([
             'supplierConfirmationNum' => $booking->supplier_confirmation_num,
             'referenceNum' => $booking->reference_num,
@@ -258,7 +283,6 @@ class BookingController extends Controller
         if (isset($result['status']) && $result['status'] === 'success' && isset($result['bookingDetails'])) {
             $apiStatus = strtolower($result['bookingDetails']['status'] ?? $booking->status);
             
-            // Map API status to local status if needed (e.g. 'CONFIRMED' -> 'confirmed')
             if ($apiStatus !== $booking->status) {
                 $booking->update(['status' => $apiStatus]);
                 return back()->with('success', __('تم تحديث حالة الحجز بنجاح. الحالة الحالية: :status', ['status' => __($apiStatus)]));
@@ -296,5 +320,33 @@ class BookingController extends Controller
 
         $filePath = Storage::disk('public')->path($invoicePath);
         return response()->download($filePath, 'invoice-' . $booking->id . '.pdf');
+    }
+
+    /**
+     * Download hotel voucher PDF.
+     */
+    public function downloadHotelVoucher($id)
+    {
+        $booking = \App\Models\HotelBooking::where('user_id', Auth::id())
+            ->where('status', 'confirmed')
+            ->findOrFail($id);
+
+        if ($booking->invoice_path && Storage::disk('public')->exists($booking->invoice_path)) {
+            $filePath = Storage::disk('public')->path($booking->invoice_path);
+            return response()->download($filePath, 'voucher-' . $booking->id . '.pdf');
+        }
+
+        // Generate on demand if missing
+        $voucherPath = $this->invoiceService->generateHotelVoucher($booking);
+
+        if (!$voucherPath) {
+            return back()->with('error', __('تعذّر توليد القسيمة. الرجاء المحاولة لاحقاً.'));
+        }
+
+        // Save generated path
+        $booking->update(['invoice_path' => $voucherPath]);
+
+        $filePath = Storage::disk('public')->path($voucherPath);
+        return response()->download($filePath, 'voucher-' . $booking->id . '.pdf');
     }
 }

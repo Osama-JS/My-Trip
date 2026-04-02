@@ -31,6 +31,9 @@ class HotelBooking extends Model
         'pax_details',
         'room_name',
         'board_type',
+        'rate_basis_id',
+        'payment_method',
+        'invoice_path',
     ];
 
     protected $casts = [

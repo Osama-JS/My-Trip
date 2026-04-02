@@ -10,13 +10,14 @@ use App\Models\BankTransfer;
 use App\Services\HyperPayService;
 use App\Services\TabbyPaymentService;
 use App\Services\TamaraPaymentService;
+use App\Traits\HotelBookingFinalizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Traits\PaymentLogTrait;
 
 class PaymentWebController extends Controller
 {
-   use PaymentLogTrait;
+   use PaymentLogTrait, HotelBookingFinalizer;
 
     protected $hyperPayService;
     protected $tabbyService;
@@ -147,7 +148,8 @@ class PaymentWebController extends Controller
                     'checkout_url' => route('payments.web.success', [
                         'booking_id' => $booking->id,
                         'transaction_id' => $fakeRef,
-                        'source' => 'simulation'
+                        'source' => 'simulation',
+                        'type' => $type
                     ]),
                     'id' => $fakeRef,
                     'status' => 'initiated'
@@ -376,10 +378,42 @@ class PaymentWebController extends Controller
 
     public function success(Request $request)
     {
+        Log::info("Payment Success Page Hit", $request->all());
+        $booking = null;
+        if ($request->booking_id) {
+            $type = $request->get('type');
+            if (!$type) {
+                // Try to guess from ID if missing (fallback)
+                $type = $request->get('booking_type', 'trip');
+            }
+            $booking = $this->resolveBooking($request->booking_id, $type);
+            
+            // If simulated success, update status and finalize supplier booking
+            if ($request->source === 'simulation' || config('app.env') === 'local') {
+                if ($booking && in_array($booking->status, ['pending', 'paid'])) {
+                    Log::info("Processing simulated success for {$type} Booking ID: {$booking->id}");
+                    
+                    if ($type === 'hotel') {
+                        // If supplier ref already captured pre-payment → confirm directly
+                        if (!empty($booking->supplier_confirmation_num)) {
+                            $booking->update(['status' => 'confirmed']);
+                        } else {
+                            $booking->update(['status' => 'paid']);
+                        }
+                        $this->finalizeHotelSupplierBooking($booking);
+                    } else {
+                        $booking->update(['status' => 'paid']);
+                    }
+                }
+            }
+        }
+
         return view('payments.success', [
+            'booking' => $booking,
             'booking_id' => $request->booking_id,
             'transaction_id' => $request->transaction_id,
-            'source' => $request->source
+            'source' => $request->source,
+            'booking_type' => $request->get('type', 'trip'),
         ]);
     }
 

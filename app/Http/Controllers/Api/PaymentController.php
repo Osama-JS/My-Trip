@@ -1,3 +1,7 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
 use App\Http\Controllers\Controller;
 use App\Services\HyperPayService;
 use App\Services\TabbyPaymentService;
@@ -10,9 +14,11 @@ use OpenApi\Attributes as OA;
 use App\Models\TripBooking;
 use App\Models\HotelBooking;
 use App\Models\Booking as FlightBooking;
+use App\Traits\HotelBookingFinalizer;
 
 class PaymentController extends Controller
 {
+    use HotelBookingFinalizer;
     use ApiResponseTrait;
 
     protected $hyperPayService;
@@ -141,57 +147,7 @@ class PaymentController extends Controller
     /**
      * Initiate Payment Checkout
      */
-    #[OA\Post(
-        path: "/api/payment/initiate",
-        summary: "Initiate payment checkout (HyperPay, Tabby, Tamara)",
-        operationId: "initiatePayment",
-        description: "Initializes a payment session. For HyperPay, returns a Checkout ID. For Tabby/Tamara, returns a redirect URL.",
-        tags: ["Payment"],
-        security: [["bearerAuth" => []]],
-        parameters: [
-            new OA\Parameter(
-                name: "Accept-Language",
-                in: "header",
-                description: "The language of the response (ar, en)",
-                required: false,
-                schema: new OA\Schema(type: "string", default: "en", enum: ["en", "ar"])
-            )
-        ],
-        requestBody: new OA\RequestBody(
-            required: true,
-            content: new OA\JsonContent(
-                required: ["amount", "payment_type"],
-                properties: [
-                    new OA\Property(property: "amount", type: "number", format: "float", example: 100.50),
-                    new OA\Property(property: "payment_type", type: "string", enum: ["mada", "visa_master", "apple_pay", "tabby", "tamara"], example: "visa_master"),
-                    new OA\Property(property: "order_id", type: "string", example: "ORDER-12345"),
-                    // Additional fields for Tabby/Tamara
-                    new OA\Property(property: "first_name", type: "string", example: "John"),
-                    new OA\Property(property: "last_name", type: "string", example: "Doe"),
-                    new OA\Property(property: "phone", type: "string", example: "966500000000"),
-                    new OA\Property(property: "email", type: "string", example: "john@example.com"),
-                    new OA\Property(property: "city", type: "string", example: "Riyadh"),
-                    new OA\Property(property: "address", type: "string", example: "123 Main St"),
-                    new OA\Property(property: "callback_url", type: "string", example: "https://mysite.com/payment/callback"),
-                ]
-            )
-        ),
-        responses: [
-            new OA\Response(
-                response: 200,
-                description: "Checkout initialized successfully",
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: "error", type: "boolean", example: false),
-                        new OA\Property(property: "message", type: "string", example: "Checkout initialized successfully."),
-                        new OA\Property(property: "data", type: "object")
-                    ]
-                )
-            ),
-            new OA\Response(response: 422, description: "Validation Error"),
-            new OA\Response(response: 500, description: "Payment Gateway Error")
-        ]
-    )]
+
     /**
      * Initiate Payment Checkout (Standard Flow or WebView Flow)
      */
@@ -610,11 +566,23 @@ class PaymentController extends Controller
             }
 
             if ($booking) {
-                $booking->update(['status' => 'paid', 'updated_at' => now()]);
-                Log::info("Booking {$bookingRef} of type {$type} marked as PAID via Payment Gateway");
+                // If hotel and we ALREADY have a supplier confirmation, mark it as 'confirmed' directly
+                if ($type === 'hotel' && !empty($booking->supplier_confirmation_num)) {
+                    $booking->update(['status' => 'confirmed', 'updated_at' => now()]);
+                    Log::info("Booking {$bookingRef} of type {$type} marked as CONFIRMED directly via Payment Gateway (Pre-booked)");
+                } else {
+                    $booking->update(['status' => 'paid', 'updated_at' => now()]);
+                    Log::info("Booking {$bookingRef} of type {$type} marked as PAID via Payment Gateway");
+                }
+
+                // Execute final Travelopro booking if it's a hotel and still pending supplier confirmation
+                if ($type === 'hotel' && empty($booking->supplier_confirmation_num)) {
+                    $this->finalizeHotelSupplierBooking($booking);
+                }
             }
         }
     }
+
 
     /**
      * Centralized callback handler that provides a server-side landing page

@@ -200,8 +200,6 @@
 
 @section('content')
 
-@section('content')
-
 {{-- Filter & Tabs Bar --}}
 <div class="d-flex justify-content-between align-items-center flex-wrap mb-4 gap-3">
     <ul class="nav nav-pills custom-tabs" id="bookingTabs" role="tablist">
@@ -351,7 +349,7 @@
                     </div>
                 </div>
                 <div class="booking-card-footer">
-                    <div class="booking-date-info">{{ __('Hotel Booking') }}: #{{ $booking->reference_num }}</div>
+                    <div class="booking-date-info">{{ __('Hotel Booking') }}: #{{ $booking->reference_num ?? $booking->id }}</div>
                     <div class="booking-actions">
                         <a href="{{ route('customer.bookings.show', ['id' => $booking->id, 'type' => 'hotel']) }}" class="btn-sm btn-outline">
                             <i class="fas fa-eye"></i> {{ __('Details') }}

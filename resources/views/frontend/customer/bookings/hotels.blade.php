@@ -68,6 +68,11 @@
                     <a href="{{ route('customer.bookings.show', ['id' => $booking->id, 'type' => 'hotel']) }}" class="btn-sm btn-outline">
                         <i class="fas fa-eye"></i> {{ __('Details') }}
                     </a>
+                    @if($booking->status === 'confirmed')
+                        <a href="{{ route('customer.bookings.hotels.voucher', ['id' => $booking->id]) }}" class="btn-sm btn-outline" style="border-color: #10b981; color: #10b981;">
+                            <i class="fas fa-file-pdf"></i> {{ __('Download Voucher') }}
+                        </a>
+                    @endif
                 </div>
             </div>
         </div>

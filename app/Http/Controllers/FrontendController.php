@@ -440,9 +440,9 @@ class FrontendController extends Controller
                 'pax' => [
                     [
                         'type' => 'AD', // Standard Adult type
-                        'title' => $request->input("pax.{$i}.adult.title", 'Mr'),
-                        'firstName' => $request->input("pax.{$i}.adult.firstName", 'Guest'),
-                        'lastName' => $request->input("pax.{$i}.adult.lastName", 'Name'),
+                        'Title' => $request->input("pax.{$i}.adult.title", 'Mr'),
+                        'FirstName' => $request->input("pax.{$i}.adult.firstName", 'Guest'),
+                        'LastName' => $request->input("pax.{$i}.adult.lastName", 'Name'),
                     ]
                 ]
             ];
@@ -450,63 +450,83 @@ class FrontendController extends Controller
             if ($request->has("pax.{$i}.child")) {
                 $roomPax['pax'][] = [
                     'type' => 'CH',
-                    'title' => $request->input("pax.{$i}.child.title"),
-                    'firstName' => $request->input("pax.{$i}.child.firstName"),
-                    'lastName' => $request->input("pax.{$i}.child.lastName"),
+                    'Title' => $request->input("pax.{$i}.child.title"),
+                    'FirstName' => $request->input("pax.{$i}.child.firstName"),
+                    'LastName' => $request->input("pax.{$i}.child.lastName"),
                 ];
             }
             $paxDetails[] = $roomPax;
         }
 
+        $referenceNum = 'HTL-' . strtoupper(uniqid());
+
         $bookingData = [
-            'sessionId' => $request->get('sessionId'),
-            'productId' => $request->get('productId'),
-            'tokenId' => $request->get('tokenId'),
-            'rateBasisId' => $request->get('rateBasisId'),
-            'clientRef' => 'HTL-' . strtoupper(uniqid()),
-            'customerEmail' => $request->get('customerEmail'),
-            'customerPhone' => $request->get('customerPhone'),
-            'bookingNote' => 'Hotel Booking',
-            'paxDetails' => $paxDetails
+            'sessionId'    => $request->get('sessionId'),
+            'productId'    => $request->get('productId'),
+            'tokenId'      => $request->get('tokenId'),
+            'rateBasisId'  => $request->get('rateBasisId'),
+            'clientRef'    => $referenceNum,
+            'customerEmail' => $request->get('customerEmail', auth()->user()->email ?? 'guest@example.com'),
+            'customerPhone' => $request->get('customerPhone', auth()->user()->phone ?? '0000000000'),
+            'bookingNote'  => 'Hotel Booking - ' . $request->get('hotelName'),
+            'paxDetails'   => $paxDetails,
         ];
 
-        $result = $this->hotelService->book($bookingData);
+        // ── STEP 1: Call hotel_book BEFORE payment while session is still fresh ──
+        $supplierResult = null;
+        $supplierConfirmationNum = null;
+        $initialStatus = 'pending';
 
-        if (isset($result['status']) && $result['status'] === 'error') {
-            return back()->with('error', $result['message'])->withInput();
+        try {
+            $hotelService = app(\App\Services\TraveloproHotelService::class);
+            $supplierResult = $hotelService->book($bookingData);
+
+            if (isset($supplierResult['referenceNum']) || isset($supplierResult['supplierConfirmationNum'])) {
+                // Supplier accepted the pre-booking
+                $supplierConfirmationNum = $supplierResult['supplierConfirmationNum'] ?? $supplierResult['referenceNum'] ?? null;
+                $initialStatus = 'pending'; // Still pending payment — not yet paid
+                \Illuminate\Support\Facades\Log::info('Supplier pre-booking successful', ['ref' => $supplierConfirmationNum]);
+            } else {
+                // Log the supplier error but do NOT block the user — continue to collect payment
+                $errMsg = $supplierResult['status']['error'] ?? $supplierResult['message'] ?? 'Unknown supplier error';
+                \Illuminate\Support\Facades\Log::warning("Supplier pre-booking failed (will retry after payment): {$errMsg}", ['result' => $supplierResult]);
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Supplier book call exception: ' . $e->getMessage());
         }
 
         try {
             $hotelBooking = \App\Models\HotelBooking::create([
-                'user_id' => auth()->id(),
-                'hotel_name' => $request->get('hotelName', 'Hotel Booking'),
-                'hotel_id' => $request->get('hotelId', 'N/A'),
-                'city_name' => $request->get('cityName'),
+                'user_id'   => auth()->id(),
+                'hotel_name'  => $request->get('hotelName', 'Hotel Booking'),
+                'hotel_id'    => $request->get('hotelId', 'N/A'),
+                'city_name'   => $request->get('cityName'),
                 'country_name' => $request->get('countryName'),
-                'check_in' => $request->get('checkIn'),
-                'check_out' => $request->get('checkOut'),
-                'rooms' => $rooms,
-                'adults' => $request->get('adults', 1),
-                'childs' => $request->get('childs', 0),
+                'check_in'    => $request->get('checkIn'),
+                'check_out'   => $request->get('checkOut'),
+                'rooms'       => $rooms,
+                'adults'      => $request->get('adults', 1),
+                'childs'      => $request->get('childs', 0),
                 'total_price' => $request->get('total_amount', 0),
-                'currency' => $request->get('currency', 'SAR'),
-                'status' => 'pending',
-                'reference_num' => $result['referenceNum'] ?? null,
-                'supplier_confirmation_num' => $result['supplierConfirmationNum'] ?? null,
-                'session_id' => $request->get('sessionId'),
-                'product_id' => $request->get('productId'),
-                'token_id' => $request->get('tokenId'),
+                'currency'    => $request->get('currency', 'SAR'),
+                'status'      => $initialStatus,
+                'reference_num' => $referenceNum,
+                'supplier_confirmation_num' => $supplierConfirmationNum,
+                'session_id'  => $request->get('sessionId'),
+                'product_id'  => $request->get('productId'),
+                'token_id'    => $request->get('tokenId'),
+                'rate_basis_id' => $request->get('rateBasisId'),
                 'pax_details' => $paxDetails,
-                'room_name' => $request->get('roomName'),
-                'board_type' => $request->get('boardType'),
+                'room_name'   => $request->get('roomName'),
+                'board_type'  => $request->get('boardType'),
             ]);
 
-            // Redirect to payment method selection (not directly to checkout)
+            // Redirect to payment
             return redirect()->route('hotels.payment.select', ['booking_id' => $hotelBooking->id]);
 
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Local Hotel Save Error: ' . $e->getMessage());
-            return back()->with('error', __('Local save failed. Ref: ') . ($result['referenceNum'] ?? 'N/A'));
+            return back()->with('error', __('Local save failed. Please try again.'));
         }
     }
 
