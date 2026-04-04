@@ -48,31 +48,68 @@
                 <span>{{ $siteName }}</span>
             </a>
 
-            {{-- Navigation --}}
+            {{-- Navigation (Becomes Mobile Drawer) --}}
+            <div class="fe-nav-overlay" id="feNavOverlay" onclick="document.getElementById('feNav').classList.remove('open'); document.getElementById('feNavOverlay').classList.remove('active'); document.body.style.overflow='';"></div>
             <nav class="fe-nav" id="feNav">
-                <a href="{{ route('home') }}" class="{{ request()->routeIs('home') ? 'active' : '' }}">
-                    <i class="fas fa-home"></i> {{ __('Home') }}
-                </a>
-                <a href="{{ route('trips.index') }}" class="{{ request()->routeIs('trips.*') ? 'active' : '' }}">
-                    <i class="fas fa-suitcase-rolling"></i> {{ __('Tour Packages') }}
-                </a>
-                <a href="{{ route('flights') }}" class="{{ request()->routeIs('flights') ? 'active' : '' }}">
-                    <i class="fas fa-plane-departure"></i> {{ __('Flights') }}
-                </a>
-                <a href="{{ route('hotels') }}" class="{{ request()->routeIs('hotels') ? 'active' : '' }}">
-                    <i class="fas fa-hotel"></i> {{ __('Hotels') }}
-                </a>
-                <a href="{{ route('destinations') }}" class="{{ request()->routeIs('destinations') ? 'active' : '' }}">
-                    <i class="fas fa-map-marked-alt"></i> {{ __('Destinations') }}
-                </a>
-                <a href="{{ route('about') }}" class="{{ request()->routeIs('about') ? 'active' : '' }}">
-                    <i class="fas fa-info-circle"></i> {{ __('About Us') }}
-                </a>
+                <div class="fe-nav-header-mobile">
+                    <div class="fe-logo">
+                        <div class="fe-logo-icon">
+                            @if($footerLogo)
+                                <img src="{{ asset($footerLogo) }}" alt="{{ $siteName }}" style="height: 32px; width: auto; object-fit: contain;">
+                            @else
+                                <i class="fas fa-plane"></i>
+                            @endif
+                        </div>
+                        <span>{{ $siteName }}</span>
+                    </div>
+                    <button class="fe-nav-close" onclick="document.getElementById('feNav').classList.remove('open'); document.getElementById('feNavOverlay').classList.remove('active'); document.body.style.overflow='';">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="fe-nav-links">
+                    <a href="{{ route('home') }}" class="{{ request()->routeIs('home') ? 'active' : '' }}">
+                        <i class="fas fa-home"></i> {{ __('Home') }}
+                    </a>
+                    <a href="{{ route('trips.index') }}" class="{{ request()->routeIs('trips.*') ? 'active' : '' }}">
+                        <i class="fas fa-suitcase-rolling"></i> {{ __('Tour Packages') }}
+                    </a>
+                    <a href="{{ route('flights') }}" class="{{ request()->routeIs('flights') ? 'active' : '' }}">
+                        <i class="fas fa-plane-departure"></i> {{ __('Flights') }}
+                    </a>
+                    <a href="{{ route('hotels') }}" class="{{ request()->routeIs('hotels') ? 'active' : '' }}">
+                        <i class="fas fa-hotel"></i> {{ __('Hotels') }}
+                    </a>
+                    <a href="{{ route('destinations') }}" class="{{ request()->routeIs('destinations') ? 'active' : '' }}">
+                        <i class="fas fa-map-marked-alt"></i> {{ __('Destinations') }}
+                    </a>
+                    <a href="{{ route('about') }}" class="{{ request()->routeIs('about') ? 'active' : '' }}">
+                        <i class="fas fa-info-circle"></i> {{ __('About Us') }}
+                    </a>
+                </div>
+
+                {{-- Mobile Auth & Lang inside Drawer --}}
+                <div class="fe-nav-bottom-mobile">
+                    @auth
+                        <a href="{{ auth()->user()->isAdmin() ? route('admin.dashboard') : route('customer.dashboard') }}" class="fe-btn fe-btn-primary w-full" style="justify-content: center;">
+                            <i class="fas fa-user"></i> {{ __('Dashboard') }}
+                        </a>
+                    @else
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <a href="{{ route('login') }}" class="fe-btn fe-btn-outline" style="justify-content: center; padding: 10px;">
+                                {{ __('Login') }}
+                            </a>
+                            <a href="{{ route('register') }}" class="fe-btn fe-btn-primary" style="justify-content: center; padding: 10px;">
+                                {{ __('Register') }}
+                            </a>
+                        </div>
+                    @endauth
+                </div>
             </nav>
 
-            {{-- Actions --}}
+            {{-- Actions (Desktop only for Auth, Mobile for Toggle and Lang) --}}
             <div class="fe-header-actions">
-                {{-- Language Switch --}}
+                {{-- Language Switch (Global) --}}
                 @if($locale == 'ar')
                     <a href="{{ route('lang.switch', 'en') }}" class="fe-lang-switch">
                         <i class="fas fa-globe"></i> EN
@@ -83,21 +120,23 @@
                     </a>
                 @endif
 
-                @auth
-                    <a href="{{ auth()->user()->isAdmin() ? route('admin.dashboard') : route('customer.dashboard') }}" class="fe-btn fe-btn-primary fe-btn-sm">
-                        <i class="fas fa-user"></i> {{ __('Dashboard') }}
-                    </a>
-                @else
-                    <a href="{{ route('login') }}" class="fe-btn fe-btn-outline fe-btn-sm">
-                        {{ __('Login') }}
-                    </a>
-                    <a href="{{ route('register') }}" class="fe-btn fe-btn-primary fe-btn-sm">
-                        {{ __('Register') }}
-                    </a>
-                @endauth
+                <div class="fe-desktop-actions">
+                    @auth
+                        <a href="{{ auth()->user()->isAdmin() ? route('admin.dashboard') : route('customer.dashboard') }}" class="fe-btn fe-btn-primary fe-btn-sm">
+                            <i class="fas fa-user"></i> {{ __('Dashboard') }}
+                        </a>
+                    @else
+                        <a href="{{ route('login') }}" class="fe-btn fe-btn-outline fe-btn-sm">
+                            {{ __('Login') }}
+                        </a>
+                        <a href="{{ route('register') }}" class="fe-btn fe-btn-primary fe-btn-sm">
+                            {{ __('Register') }}
+                        </a>
+                    @endauth
+                </div>
 
-                {{-- Mobile menu --}}
-                <button class="fe-menu-toggle" onclick="document.getElementById('feNav').classList.toggle('open')">
+                {{-- Mobile menu Toggle --}}
+                <button class="fe-menu-toggle" onclick="document.getElementById('feNav').classList.add('open'); document.getElementById('feNavOverlay').classList.add('active'); document.body.style.overflow='hidden';">
                     <i class="fas fa-bars" style="font-size:1.2rem"></i>
                 </button>
             </div>

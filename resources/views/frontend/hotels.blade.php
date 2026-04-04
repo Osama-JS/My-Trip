@@ -101,18 +101,34 @@
 
     {{-- Results Section --}}
     <div class="fe-container" style="margin-top:var(--space-8)">
+        {{-- Mobile Filter Bar --}}
+        <div class="hotels-mobile-bar" id="hotelsMobileBar" style="display:none;">
+            <p class="text-muted" style="font-size:0.9rem; margin:0;">
+                <span id="mobileHotelCount">0</span> {{ __('hotels found') }}
+            </p>
+            <button id="hotelFiltersToggle" class="fe-btn fe-btn-primary fe-btn-sm">
+                <i class="fas fa-sliders-h"></i> {{ __('Filters') }}
+            </button>
+        </div>
+
         <div class="fe-hotels-layout" style="display: grid; grid-template-columns: 280px 1fr; gap: 30px; align-items: start;">
             {{-- Sidebar Filter --}}
             <aside class="fe-sidebar" id="hotelFilterSidebar" style="display: none; position: sticky; top: 100px;">
-                <div class="fe-filter-card" style="background: white; border-radius: 15px; border: 1px solid var(--gray-100); padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-                        <h4 style="margin: 0; font-weight: 800; font-size: 1.1rem;">{{ __('Filters') }}</h4>
-                        <button id="resetFilters" style="background: none; border: none; color: var(--primary); font-size: 0.8rem; font-weight: 700; cursor: pointer;">{{ __('Reset all') }}</button>
+                {{-- Sidebar Close Button (mobile) --}}
+                <div class="hotel-sidebar-header">
+                    <h4>{{ __('Filters') }}</h4>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <button id="resetFilters" class="fe-filter-reset-btn">{{ __('Reset all') }}</button>
+                        <button id="closeHotelSidebar" class="filters-close-btn" aria-label="Close">
+                            <i class="fas fa-times"></i>
+                        </button>
                     </div>
+                </div>
+                <div class="fe-filter-card" style="background: white; border-radius: 15px; border: 1px solid var(--gray-100); padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
 
                     {{-- Rating Filter --}}
                     <div class="fe-filter-group" style="margin-bottom: 30px;">
-                        <label style="display: block; font-weight: 800; font-size: 0.9rem; margin-bottom: 15px; text-transform: uppercase; color: var(--gray-500);">{{ __('Star Rating') }}</label>
+                        <label class="fe-filter-section-label">{{ __('Star Rating') }}</label>
                         <div style="display: flex; flex-direction: column; gap: 10px;">
                             @for($i = 5; $i >= 1; $i--)
                             <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
@@ -128,7 +144,7 @@
 
                     {{-- Price Filter --}}
                     <div class="fe-filter-group">
-                        <label style="display: block; font-weight: 800; font-size: 0.9rem; margin-bottom: 15px; text-transform: uppercase; color: var(--gray-500);">{{ __('Price Range') }}</label>
+                        <label class="fe-filter-section-label">{{ __('Price Range') }}</label>
                         <div style="padding: 0 10px;">
                             <input type="range" id="priceRange" min="0" max="10000" step="100" value="10000" style="width: 100%; accent-color: var(--primary);">
                             <div style="display: flex; justify-content: space-between; margin-top: 10px; font-weight: 700; font-size: 0.85rem;">
@@ -137,8 +153,12 @@
                             </div>
                         </div>
                     </div>
+
+                    <button class="fe-btn fe-btn-primary" style="width:100%;margin-top:20px;" id="applyHotelFilters">{{ __('Apply Filters') }}</button>
                 </div>
             </aside>
+            {{-- Overlay --}}
+            <div id="hotelFiltersOverlay" class="filters-overlay"></div>
 
             {{-- Main Results Area --}}
             <div id="hotelResults" style="min-height:400px; width: 100%;">
@@ -190,6 +210,10 @@
     }
     .fe-hotels-hero h1 { color: white; font-size: 3rem; font-weight: 900; }
     .fe-hotels-hero p { color: rgba(255,255,255,0.85); font-size: 1.1rem; }
+    @media (max-width: 768px) {
+        .fe-hotels-hero { padding: 80px 0 100px; }
+        .fe-hotels-hero h1 { font-size: 2rem; }
+    }
 
     /* ═══ PREMIUM SEARCH CARD ═══ */
     .fe-search-card-premium {
@@ -204,6 +228,31 @@
         grid-template-columns: 1.5fr 1.2fr 1.2fr auto;
         gap: 20px;
         align-items: flex-end;
+    }
+    /* Tablet */
+    @media (max-width: 1024px) {
+        .fe-search-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .fe-search-action {
+            grid-column: 1 / -1;
+        }
+        .fe-search-action .fe-btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+    /* Mobile */
+    @media (max-width: 600px) {
+        .fe-search-card-premium {
+            padding: 20px 16px;
+            border-radius: var(--radius-xl);
+        }
+        .fe-search-grid {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
     }
     .fe-search-label {
         display: block;
@@ -227,7 +276,7 @@
     }
     .fe-search-input:focus { border-color: var(--primary); outline: none; background: white; }
 
-    /* PAX POPOVER (Simliar to flights) */
+    /* PAX POPOVER */
     .fe-pax-input-wrapper {
         height: 54px;
         background: var(--gray-50);
@@ -253,6 +302,18 @@
         z-index: 1200;
         border: 1px solid var(--gray-100);
     }
+    @media (max-width: 600px) {
+        .fe-pax-popover {
+            position: fixed;
+            inset-inline-start: 16px;
+            inset-inline-end: 16px;
+            right: auto;
+            width: auto;
+            top: auto;
+            bottom: 16px;
+            border-radius: var(--radius-xl);
+        }
+    }
     .fe-pax-popover.active { display: block; }
     .fe-pax-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     .fe-pax-label strong { display: block; font-size: 1rem; color: var(--dark); }
@@ -266,8 +327,65 @@
     .fe-pax-counter button:hover { background: var(--primary); color: white; border-color: var(--primary); }
     .fe-pax-counter input { width: 30px; text-align: center; border: none; font-weight: 800; font-size: 1rem; background: transparent; }
 
+    /* ═══ MOBILE FILTER BAR ═══ */
+    .hotels-mobile-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 0 16px;
+        border-bottom: 1px solid var(--gray-100);
+        margin-bottom: 16px;
+    }
+
+    /* ═══ HOTEL SIDEBAR HEADER ═══ */
+    .hotel-sidebar-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 25px;
+        border-bottom: 1px solid var(--gray-100);
+        background: white;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    .hotel-sidebar-header h4 { margin: 0; font-weight: 800; font-size: 1.1rem; }
+    .fe-filter-reset-btn {
+        background: none; border: none;
+        color: var(--primary); font-size: 0.8rem; font-weight: 700; cursor: pointer;
+    }
+    .fe-filter-section-label {
+        display: block; font-weight: 800; font-size: 0.9rem;
+        margin-bottom: 15px; text-transform: uppercase; color: var(--gray-500);
+    }
+    /* Close btn shared style */
+    .filters-close-btn {
+        background: var(--gray-100);
+        border: none;
+        border-radius: 50%;
+        width: 32px; height: 32px;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer;
+        color: var(--gray-500);
+        flex-shrink: 0;
+        transition: all 0.2s;
+    }
+    .filters-close-btn:hover { background: var(--danger); color: white; }
+    /* Overlay shared style */
+    .filters-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 2999;
+        backdrop-filter: blur(3px);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    .filters-overlay.active { display: block; opacity: 1; }
+
     /* ═══ VIEW SWITCHER ═══ */
-    .fe-results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--gray-100); }
+    .fe-results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--gray-100); flex-wrap: wrap; gap: 12px;}
     .fe-count-num { font-size: 1.2rem; font-weight: 900; color: var(--primary); }
     .fe-count-label { font-size: 0.9rem; color: var(--gray-500); font-weight: 700; margin-inline-start: 4px; }
     
@@ -278,12 +396,53 @@
 
     /* ═══ HOTELS LAYOUT ═══ */
     .fe-hotels-layout { margin-top: 40px; margin-bottom: 60px; }
+    @media (max-width: 1023px) {
+        .fe-hotels-layout { grid-template-columns: 1fr !important; margin-top: 0; }
+    }
     
     /* SIDEBAR */
     .fe-sidebar { height: fit-content; }
     .fe-filter-card { border: 1px solid var(--gray-100); transition: all 0.3s ease; }
     .fe-filter-card:hover { box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
-    
+
+    /* Mobile Sidebar Drawer */
+    @media (max-width: 1023px) {
+        .fe-sidebar {
+            position: fixed !important;
+            top: 0 !important;
+            inset-inline-start: 0;
+            width: min(340px, 90vw);
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 3000;
+            transform: translateX(-110%);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            background: var(--gray-50);
+            display: block !important;
+            padding: 0;
+        }
+        [dir="rtl"] .fe-sidebar {
+            inset-inline-start: auto;
+            inset-inline-end: 0;
+            transform: translateX(110%);
+        }
+        .fe-sidebar.open { transform: translateX(0); }
+        .fe-filter-card {
+            border-radius: 0;
+            border: none;
+            box-shadow: none;
+            margin: 0;
+            padding-bottom: 20px;
+        }
+        #closeHotelSidebar { display: flex; }
+    }
+    @media (min-width: 1024px) {
+        #closeHotelSidebar { display: none; }
+        .hotel-sidebar-header { display: none; }
+        #hotelFiltersOverlay { display: none !important; }
+        .hotels-mobile-bar { display: none !important; }
+    }
+
     /* PAGINATION */
     .pagi-btn {
         width: 44px; height: 44px; border-radius: 12px; border: 1.5px solid var(--gray-100);
@@ -294,11 +453,6 @@
     .pagi-btn.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 15px rgba(15, 76, 129, 0.2); }
     .pagi-btn.disabled { opacity: 0.5; cursor: not-allowed; background: var(--gray-50); }
 
-    @media (max-width: 1024px) {
-        .fe-hotels-layout { grid-template-columns: 1fr !important; }
-        .fe-sidebar { position: static !important; margin-bottom: 30px; }
-    }
-
     /* ═══ HOTEL CARDS (LIST VIEW) ═══ */
     .fe-hotels-list { display: flex; flex-direction: column; gap: 24px; padding: 10px 0; transition: all 0.3s ease; }
     .fe-hotel-card {
@@ -306,22 +460,22 @@
         box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid var(--gray-100); transition: all 0.3s ease;
     }
     .fe-hotel-card:hover { transform: translateY(-5px); box-shadow: 0 12px 30px rgba(0,0,0,0.1); }
-    .fe-hotel-image-wrapper { width: 300px; height: 260px; position: relative; flex-shrink: 0; }
+    .fe-hotel-image-wrapper { width: 280px; height: 240px; position: relative; flex-shrink: 0; }
     .fe-hotel-image { width: 100%; height: 100%; object-fit: cover; }
     .fe-hotel-badge {
         position: absolute; top: 15px; left: 15px; background: rgba(0,0,0,0.5);
         backdrop-filter: blur(5px); color: #ffc107; padding: 4px 10px; border-radius: 10px; font-size: 0.75rem;
     }
-    .fe-hotel-content { flex: 1; padding: 24px; display: flex; justify-content: space-between; gap: 30px; }
-    .fe-hotel-info { flex: 1; }
-    .fe-hotel-name { font-size: 1.4rem; font-weight: 800; color: var(--dark); margin-bottom: 8px; }
+    .fe-hotel-content { flex: 1; padding: 24px; display: flex; justify-content: space-between; gap: 30px; min-width: 0; }
+    .fe-hotel-info { flex: 1; min-width: 0; }
+    .fe-hotel-name { font-size: 1.3rem; font-weight: 800; color: var(--dark); margin-bottom: 8px; }
     .fe-hotel-location { color: var(--gray-500); font-size: 0.9rem; margin-bottom: 20px; display: flex; gap: 8px; align-items: flex-start; }
-    .fe-hotel-location i { color: var(--primary); margin-top: 3px; }
+    .fe-hotel-location i { color: var(--primary); margin-top: 3px; flex-shrink: 0; }
     .fe-hotel-amenities { display: flex; gap: 10px; flex-wrap: wrap; }
     .fe-amenity-pill { background: var(--gray-50); color: var(--gray-600); padding: 5px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; }
     .fe-amenity-pill i { color: var(--primary); margin-inline-end: 4px; }
 
-    .fe-hotel-price-action { width: 220px; border-inline-start: 1px solid var(--gray-100); padding-inline-start: 30px; display: flex; flex-direction: column; justify-content: center; }
+    .fe-hotel-price-action { width: 200px; border-inline-start: 1px solid var(--gray-100); padding-inline-start: 24px; display: flex; flex-direction: column; justify-content: center; flex-shrink: 0; }
     .fe-hotel-price { margin-bottom: 20px; text-align: center; }
     .fe-price-label { font-size: 0.75rem; color: var(--gray-500); font-weight: 700; text-transform: uppercase; }
     .fe-price-value { color: var(--primary); margin: 5px 0; }
@@ -329,11 +483,23 @@
     .fe-price-value .amount { font-size: 1.8rem; font-weight: 900; }
     .fe-price-sub { font-size: 0.7rem; color: var(--gray-400); font-weight: 700; display: block; }
 
+    /* Mobile card adaptation */
+    @media (max-width: 768px) {
+        .fe-hotel-card { flex-direction: column; }
+        .fe-hotel-image-wrapper { width: 100%; height: 200px; }
+        .fe-hotel-content { flex-direction: column; gap: 0; padding: 16px; }
+        .fe-hotel-price-action { width: 100%; border-inline-start: none; border-top: 1px solid var(--gray-100); padding-inline-start: 0; padding-top: 16px; margin-top: 16px; flex-direction: row; justify-content: space-between; align-items: center; }
+        .fe-hotel-price { margin-bottom: 0; text-align: start; }
+        .fe-hotel-amenities { display: none; }
+        .fe-hotel-name { font-size: 1.1rem; }
+        .fe-hotel-card:hover { transform: none; }
+    }
+
     /* ═══ GRID VIEW MODIFIER ═══ */
     .fe-hotels-list.fe-grid-view {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-        gap: 30px;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 24px;
     }
     .fe-grid-view .fe-hotel-card { flex-direction: column; }
     .fe-grid-view .fe-hotel-image-wrapper { width: 100%; height: 200px; }
@@ -341,17 +507,28 @@
     .fe-grid-view .fe-hotel-price-action { width: 100%; border-inline-start: none; border-top: 1px solid var(--gray-100); padding-inline-start: 0; padding-top: 20px; }
     .fe-grid-view .fe-hotel-name { font-size: 1.2rem; }
     .fe-grid-view .fe-hotel-amenities { display: none; }
+    @media (max-width: 480px) {
+        .fe-hotels-list.fe-grid-view { grid-template-columns: 1fr; }
+    }
 
     /* ROOMS PARTIAL */
     .fe-hotel-rooms-expand { background: var(--gray-50); border-top: 1px solid var(--gray-100); padding: 24px; display: none; }
     .fe-room-row { background: white; border-radius: 12px; padding: 16px; display: grid; grid-template-columns: 1fr auto auto; gap: 24px; align-items: center; margin-bottom: 12px; border: 1px solid var(--gray-100); }
+    @media (max-width: 600px) {
+        .fe-room-row { grid-template-columns: 1fr; gap: 12px; }
+        .fe-hotel-rooms-expand { padding: 16px; }
+    }
     .fe-room-name { font-weight: 800; color: var(--dark); font-size: 1rem; }
     .fe-room-meta { margin-top: 4px; display: flex; gap: 15px; font-size: 0.8rem; color: var(--gray-500); }
     .fe-meta-item i { color: var(--primary); margin-inline-end: 4px; }
 
     /* SKELETONS */
     .fe-hotel-skeleton { background: white; border-radius: 20px; overflow: hidden; display: flex; margin-bottom: 24px; }
-    .fe-skel-img { width: 300px; height: 260px; background: var(--skeleton-bg); animation: pulse 1.5s infinite; }
+    .fe-skel-img { width: 280px; height: 240px; background: var(--skeleton-bg); animation: pulse 1.5s infinite; }
+    @media (max-width: 768px) {
+        .fe-hotel-skeleton { flex-direction: column; }
+        .fe-skel-img { width: 100%; height: 180px; }
+    }
     .fe-skel-body { flex: 1; padding: 24px; }
     .fe-skel-line { height: 16px; background: var(--skeleton-bg); border-radius: 4px; margin-bottom: 12px; animation: pulse 1.5s infinite; }
     @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
@@ -481,13 +658,22 @@ $(document).ready(function() {
             data: formData,
             success: function(html) {
                 $('#hotelResults').html(html);
-                $('#hotelFilterSidebar').fadeIn();
-                
+                // Show sidebar on desktop only (drawer on mobile)
+                if (window.innerWidth >= 1024) {
+                    $('#hotelFilterSidebar').show();
+                } else {
+                    // Show the mobile filter bar
+                    $('#hotelsMobileBar').show();
+                    // Update count
+                    const hotelCount = $(html).find('.fe-hotel-card').length;
+                    $('#mobileHotelCount').text(hotelCount || $('.fe-hotel-card').length);
+                }
                 // Initialize Filtering System
                 initHotelFilters();
             },
             error: function() {
                 $('#hotelFilterSidebar').hide();
+                $('#hotelsMobileBar').hide();
                 $('#hotelResults').html(`
                     <div class="fe-no-results">
                         <i class="fas fa-exclamation-circle fa-3x" style="color:var(--danger)"></i>
@@ -753,6 +939,41 @@ $(document).ready(function() {
                 alert('{{ __("Verification failed. Please try again.") }}');
             }
         });
+    });
+
+    // ═══ MOBILE HOTEL FILTERS DRAWER ═══
+    const hotelFiltersToggle = document.getElementById('hotelFiltersToggle');
+    const hotelFilterSidebar = document.getElementById('hotelFilterSidebar');
+    const hotelFiltersOverlay = document.getElementById('hotelFiltersOverlay');
+    const closeHotelSidebar = document.getElementById('closeHotelSidebar');
+    const applyHotelFilters = document.getElementById('applyHotelFilters');
+
+    function openHotelSidebar() {
+        hotelFilterSidebar.classList.add('open');
+        hotelFiltersOverlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeHotelSidebarFn() {
+        hotelFilterSidebar.classList.remove('open');
+        hotelFiltersOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    if (hotelFiltersToggle) hotelFiltersToggle.addEventListener('click', openHotelSidebar);
+    if (closeHotelSidebar)  closeHotelSidebar.addEventListener('click', closeHotelSidebarFn);
+    if (hotelFiltersOverlay) hotelFiltersOverlay.addEventListener('click', closeHotelSidebarFn);
+    if (applyHotelFilters)  applyHotelFilters.addEventListener('click', closeHotelSidebarFn);
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') closeHotelSidebarFn();
+    });
+
+    // Resize handler: show/hide sidebar based on screen size
+    window.addEventListener('resize', () => {
+        if (window.innerWidth >= 1024) {
+            hotelFiltersOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
     });
 });
 </script>

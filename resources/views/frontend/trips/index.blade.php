@@ -37,10 +37,13 @@
                 <p class="text-muted" style="font-size:0.9rem;">
                     {{ __('Showing') }} <strong>{{ $trips->count() }}</strong> {{ __('out of') }} <strong>{{ $trips->total() }}</strong> {{ __('trips') }}
                 </p>
-                <button id="filtersToggle" class="fe-btn fe-btn-outline fe-btn-sm">
+                <button id="filtersToggle" class="fe-btn fe-btn-primary fe-btn-sm">
                     <i class="fas fa-sliders-h"></i> {{ __('Filters') }}
+                    <span class="filters-count-badge" id="filtersCountBadge" style="display:none;"></span>
                 </button>
             </div>
+            {{-- Overlay --}}
+            <div id="filtersOverlay" class="filters-overlay"></div>
 
             <div class="trips-grid-wrapper-v2">
 
@@ -48,9 +51,14 @@
                 <aside id="filtersSidebar">
                     <div class="filters-header">
                         <h3><i class="fas fa-sliders-h" style="margin-inline-end:8px;color:var(--primary)"></i>{{ __('Filters') }}</h3>
-                        @if(request()->anyFilled(['q', 'category', 'destination', 'min_price', 'max_price', 'sort']))
-                            <a href="{{ route('trips.index') }}" class="filters-reset-link">{{ __('Reset All') }}</a>
-                        @endif
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            @if(request()->anyFilled(['q', 'category', 'destination', 'min_price', 'max_price', 'sort']))
+                                <a href="{{ route('trips.index') }}" class="filters-reset-link">{{ __('Reset All') }}</a>
+                            @endif
+                            <button id="closeSidebar" class="filters-close-btn" aria-label="Close">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
                     </div>
                     <form action="{{ route('trips.index') }}" method="GET" class="filters-form">
 
@@ -319,6 +327,7 @@
     align-items: center;
     justify-content: space-between;
     padding: var(--space-3) 0;
+    position: relative;
 }
 @media (min-width: 1024px) {
     .trips-mobile-bar { display: none; }
@@ -332,7 +341,27 @@
 }
 @media (min-width: 1024px) {
     .trips-grid-wrapper-v2 { grid-template-columns: 280px 1fr; }
-    #filtersSidebar { display: block !important; }
+    #filtersSidebar { 
+        display: block !important; 
+        transform: none !important;
+        position: sticky;
+    }
+    .filters-close-btn { display: none !important; }
+    .filters-overlay { display: none !important; }
+}
+/* Badge on filter button */
+.filters-count-badge {
+    background: var(--accent);
+    color: white;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-inline-start: 4px;
 }
 
 /* ══ SIDEBAR ══ */
@@ -346,7 +375,63 @@
     position: sticky;
     top: 90px;
     height: fit-content;
+    /* Mobile drawer base */
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
+/* Mobile drawer styles */
+@media (max-width: 1023px) {
+    #filtersSidebar {
+        position: fixed;
+        top: 0;
+        inset-inline-start: 0;
+        width: min(340px, 90vw);
+        height: 100vh;
+        overflow-y: auto;
+        border-radius: 0;
+        z-index: 3000;
+        transform: translateX(-110%);
+        display: block !important; /* always in DOM, controlled by transform */
+        box-shadow: var(--shadow-2xl);
+        padding-top: calc(var(--space-6) + env(safe-area-inset-top));
+    }
+    [dir="rtl"] #filtersSidebar {
+        inset-inline-start: auto;
+        inset-inline-end: 0;
+        transform: translateX(110%);
+    }
+    #filtersSidebar.open {
+        transform: translateX(0);
+    }
+}
+.filters-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 2999;
+    backdrop-filter: blur(3px);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.filters-overlay.active {
+    display: block;
+    opacity: 1;
+}
+.filters-close-btn {
+    background: var(--gray-100);
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--gray-500);
+    flex-shrink: 0;
+    transition: all 0.2s;
+}
+.filters-close-btn:hover { background: var(--danger); color: white; }
 .filters-header {
     display: flex;
     align-items: center;
@@ -414,8 +499,29 @@
     align-items: center;
     justify-content: space-between;
     margin-bottom: var(--space-4);
+    flex-wrap: wrap;
+    gap: var(--space-2);
 }
 @media (max-width: 1023px) { .trips-results-bar { display: none; } }
+
+/* ══ MOBILE FILTER INPUT IMPROVEMENTS ══ */
+@media (max-width: 1023px) {
+    .filter-input-wrap {
+        padding: var(--space-3) var(--space-3);
+    }
+    .filter-input {
+        font-size: 1rem;
+        padding: 4px 0;
+    }
+    .filter-group {
+        margin-bottom: var(--space-6);
+    }
+    .filters-form .fe-btn {
+        padding: 14px;
+        font-size: 1rem;
+        border-radius: var(--radius-lg);
+    }
+}
 .trips-view-toggle { display: flex; gap: var(--space-2); }
 .view-btn {
     width: 36px; height: 36px;
@@ -466,7 +572,9 @@
 .fe-trips-grid-v2.list-view .fe-trip-card-body { padding: var(--space-8); }
 
 @media (max-width: 768px) { 
-    .fe-trips-grid-v2.list-view .fe-trip-card { grid-template-columns: 1fr; } 
+    .fe-trips-grid-v2.list-view .fe-trip-card { grid-template-columns: 1fr; }
+    .fe-trips-grid-v2 { grid-template-columns: 1fr !important; }
+    .fe-trips-grid-v2.list-view .fe-trip-card-body { padding: var(--space-4); }
 }
 
 /* Empty State */
@@ -539,15 +647,41 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Mobile Filters Toggle
-    const toggle = document.getElementById('filtersToggle');
-    const sidebar = document.getElementById('filtersSidebar');
-    if (toggle && sidebar) {
-        toggle.addEventListener('click', () => {
-            const isHidden = sidebar.style.display === 'none' || sidebar.style.display === '';
-            sidebar.style.display = isHidden ? 'block' : 'none';
-        });
+    // Mobile Filters Drawer
+    const toggle   = document.getElementById('filtersToggle');
+    const sidebar  = document.getElementById('filtersSidebar');
+    const overlay  = document.getElementById('filtersOverlay');
+    const closeBtn = document.getElementById('closeSidebar');
+
+    function openSidebar() {
+        sidebar.classList.add('open');
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
     }
+    function closeSidebar() {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    if (toggle)   toggle.addEventListener('click', openSidebar);
+    if (closeBtn) closeBtn.addEventListener('click', closeSidebar);
+    if (overlay)  overlay.addEventListener('click', closeSidebar);
+
+    // Count active filters for badge
+    const filledFilters = ['q','category','destination','min_price','max_price'].filter(
+        k => new URLSearchParams(location.search).get(k)
+    ).length;
+    const badge = document.getElementById('filtersCountBadge');
+    if (badge && filledFilters > 0) {
+        badge.textContent = filledFilters;
+        badge.style.display = 'inline-flex';
+    }
+
+    // Close sidebar on Escape key
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') closeSidebar();
+    });
 });
 </script>
 @endpush

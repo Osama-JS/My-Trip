@@ -141,7 +141,7 @@ ul, ol { list-style: none; }
     position: fixed;
     top: 0;
     inset-inline: 0;
-    z-index: 1000;
+    z-index: 4000;
     background: rgba(255,255,255,0.95);
     backdrop-filter: blur(20px);
     border-bottom: 1px solid rgba(0,0,0,0.06);
@@ -180,9 +180,14 @@ ul, ol { list-style: none; }
     font-size: 1.2rem;
 }
 
-.fe-nav { display: flex; align-items: center; gap: var(--space-1); }
+.fe-nav-overlay, .fe-nav-header-mobile, .fe-nav-bottom-mobile {
+    display: none;
+}
 
-.fe-nav a {
+.fe-nav { display: flex; align-items: center; gap: var(--space-1); }
+.fe-nav-links { display: flex; align-items: center; gap: var(--space-1); }
+
+.fe-nav-links a {
     display: flex;
     align-items: center;
     gap: var(--space-2);
@@ -195,7 +200,7 @@ ul, ol { list-style: none; }
     position: relative;
 }
 
-.fe-nav a:hover, .fe-nav a.active {
+.fe-nav-links a:hover, .fe-nav-links a.active {
     color: var(--primary);
     background: var(--primary-50);
 }
@@ -2013,17 +2018,121 @@ ul, ol { list-style: none; }
     .fe-result-card { flex-direction: column; text-align: center; }
     .fe-search-tabs { overflow-x: auto; }
 
-    /* Mobile nav */
+    /* Mobile nav drawer */
+    .fe-nav {
+        position: fixed;
+        top: 0;
+        inset-inline-start: 0;
+        width: min(320px, 85vw);
+        height: 100vh;
+        background: white;
+        z-index: 3000;
+        flex-direction: column;
+        display: flex;
+        transform: translateX(-110%);
+        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 0 50px rgba(0,0,0,0.1);
+        overflow-y: auto;
+    }
+    [dir="rtl"] .fe-nav {
+        inset-inline-start: auto;
+        inset-inline-end: 0;
+        transform: translateX(110%);
+    }
+    
     .fe-nav.open {
+        transform: translateX(0);
+    }
+    
+    .fe-nav-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(4px);
+        z-index: 2999;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.4s ease;
+        display: block; /* It's blocked but opacity 0 */
+    }
+    
+    .fe-nav-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .fe-nav-header-mobile {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px;
+        border-bottom: 1px solid var(--gray-100);
+    }
+    
+    .fe-nav-close {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: none;
+        background: var(--gray-100);
+        color: var(--gray-600);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .fe-nav-close:hover {
+        background: var(--danger);
+        color: white;
+    }
+
+    .fe-nav-links {
         display: flex;
         flex-direction: column;
-        position: absolute;
-        top: 72px;
-        inset-inline: 0;
-        background: white;
-        box-shadow: var(--shadow-xl);
-        padding: var(--space-4);
-        border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+        padding: 20px;
+        gap: 10px;
+        flex: 1; /* push bottom area down if short */
+    }
+
+    .fe-nav-links a {
+        padding: 12px 16px;
+        font-size: 1.05rem;
+        border-radius: var(--radius-lg);
+        width: 100%;
+        background: transparent;
+    }
+    
+    .fe-nav-links a.active {
+        background: var(--primary-50);
+        color: var(--primary);
+    }
+
+    .fe-nav-bottom-mobile {
+        display: flex;
+        flex-direction: column;
+        padding: 20px;
+        gap: 15px;
+        border-top: 1px solid var(--gray-100);
+        margin-top: auto;
+    }
+
+    .fe-desktop-actions {
+        display: none;
+    }
+    
+    .fe-mobile-lang {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px;
+        border-radius: var(--radius-lg);
+        background: var(--gray-100);
+        color: var(--dark);
+        font-weight: 700;
+        font-size: 1rem;
     }
 }
 
