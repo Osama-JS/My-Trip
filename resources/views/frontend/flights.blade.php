@@ -766,10 +766,14 @@
             position: relative;
             display: flex;
             align-items: center;
+            min-width: 0; /* Prevent grid column blowout */
+            overflow: hidden;
         }
 
         .fe-input-sub {
             width: 100%;
+            min-width: 0;
+            overflow: hidden;
         }
 
         .fe-input-sub label {
@@ -796,6 +800,8 @@
             display: flex;
             align-items: center;
             gap: 16px;
+            min-width: 0;
+            overflow: hidden;
         }
 
         .fe-swap-btn {
@@ -996,9 +1002,15 @@
 
         .select2-selection__rendered {
             padding-left: 0 !important;
+            padding-right: 0 !important;
             font-size: 1.1rem !important;
             font-weight: 800 !important;
             color: var(--dark) !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            max-width: 100% !important;
+            display: block !important;
         }
 
         .select2-selection__arrow {
@@ -1008,6 +1020,8 @@
         /* Fix Select2 dropdown stacking */
         .select2-container {
             z-index: 99999 !important;
+            max-width: 100% !important;
+            width: 100% !important;
         }
 
         .select2-dropdown {
@@ -1160,9 +1174,8 @@
                 box-shadow: 0 0 40px rgba(0, 0, 0, 0.2);
             }
 
+            /* RTL: only flip the slide direction – inset-inline-start already handles the position */
             [dir="rtl"] .fr-sidebar {
-                inset-inline-start: auto;
-                inset-inline-end: 0;
                 transform: translateX(110%);
             }
 

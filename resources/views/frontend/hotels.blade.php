@@ -421,9 +421,8 @@
             display: block !important;
             padding: 0;
         }
+        /* RTL: only flip the slide direction – inset-inline-start already handles the position */
         [dir="rtl"] .fe-sidebar {
-            inset-inline-start: auto;
-            inset-inline-end: 0;
             transform: translateX(110%);
         }
         .fe-sidebar.open { transform: translateX(0); }
