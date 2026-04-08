@@ -34,8 +34,8 @@
 
             {{-- Mobile Filters Toggle --}}
             <div class="trips-mobile-bar">
-                <p class="text-muted" style="font-size:0.9rem;">
-                    {{ __('Showing') }} <strong>{{ $trips->count() }}</strong> {{ __('out of') }} <strong>{{ $trips->total() }}</strong> {{ __('trips') }}
+                <p class="text-muted" style="font-size:0.9rem; margin:0;">
+                    <span id="mobileTripCount">{{ $trips->total() }}</span> {{ __('trips found') }}
                 </p>
                 <button id="filtersToggle" class="fe-btn fe-btn-primary fe-btn-sm">
                     <i class="fas fa-sliders-h"></i> {{ __('Filters') }}
@@ -45,98 +45,103 @@
             {{-- Overlay --}}
             <div id="filtersOverlay" class="filters-overlay"></div>
 
+
             <div class="trips-grid-wrapper-v2">
 
                 {{-- ─── Filters Sidebar ─── --}}
-                <aside id="filtersSidebar">
-                    <div class="filters-header">
-                        <h3><i class="fas fa-sliders-h" style="margin-inline-end:8px;color:var(--primary)"></i>{{ __('Filters') }}</h3>
-                        <div style="display:flex;align-items:center;gap:10px;">
+                <aside id="filtersSidebar" class="fe-sidebar">
+                    <div class="trips-sidebar-header">
+                        <h4>{{ __('Filters') }}</h4>
+                        <div style="display:flex; align-items:center; gap:10px;">
                             @if(request()->anyFilled(['q', 'category', 'destination', 'min_price', 'max_price', 'sort']))
-                                <a href="{{ route('trips.index') }}" class="filters-reset-link">{{ __('Reset All') }}</a>
+                                <a href="{{ route('trips.index') }}" class="fe-filter-reset-btn">{{ __('Reset all') }}</a>
                             @endif
                             <button id="closeSidebar" class="filters-close-btn" aria-label="Close">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
                     </div>
-                    <form action="{{ route('trips.index') }}" method="GET" class="filters-form">
+                    
+                    <div class="fe-filter-card">
+                        <form action="{{ route('trips.index') }}" method="GET" class="filters-form">
 
-                        {{-- Search --}}
-                        <div class="filter-group">
-                            <label class="filter-label">{{ __('Search') }}</label>
-                            <div class="filter-input-wrap">
-                                <i class="fas fa-search filter-icon"></i>
-                                <input type="text" name="q" class="filter-input" placeholder="{{ __('Keywords...') }}" value="{{ request('q') }}">
-                            </div>
-                        </div>
-
-                        {{-- Category --}}
-                        <div class="filter-group">
-                            <label class="filter-label">{{ __('Category') }}</label>
-                            <div class="filter-input-wrap">
-                                <i class="fas fa-th-large filter-icon"></i>
-                                <select name="category" class="filter-input filter-select">
-                                    <option value="">{{ __('All Categories') }}</option>
-                                    @foreach($categories as $cat)
-                                        <option value="{{ $cat->id }}" {{ request('category') == $cat->id ? 'selected' : '' }}>
-                                            {{ $cat->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-
-                        {{-- Destination --}}
-                        <div class="filter-group">
-                            <label class="filter-label">{{ __('Destination') }}</label>
-                            <div class="filter-input-wrap">
-                                <i class="fas fa-map-marker-alt filter-icon"></i>
-                                <select name="destination" class="filter-input filter-select">
-                                    <option value="">{{ __('All Destinations') }}</option>
-                                    @foreach($countries as $country)
-                                        <option value="{{ $country->id }}" {{ request('destination') == $country->id ? 'selected' : '' }}>
-                                            {{ $country->nicename ?? $country->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-
-                        {{-- Price Range --}}
-                        <div class="filter-group">
-                            <label class="filter-label">{{ __('Price Range') }}</label>
-                            <div class="filter-price-row">
+                            {{-- Search --}}
+                            <div class="fe-filter-group">
+                                <label class="fe-filter-section-label">{{ __('Search') }}</label>
                                 <div class="filter-input-wrap">
-                                    <input type="number" name="min_price" class="filter-input" placeholder="{{ __('Min') }}" value="{{ request('min_price') }}">
-                                </div>
-                                <span class="filter-price-sep">—</span>
-                                <div class="filter-input-wrap">
-                                    <input type="number" name="max_price" class="filter-input" placeholder="{{ __('Max') }}" value="{{ request('max_price') }}">
+                                    <i class="fas fa-search filter-icon"></i>
+                                    <input type="text" name="q" class="filter-input" placeholder="{{ __('Keywords...') }}" value="{{ request('q') }}">
                                 </div>
                             </div>
-                        </div>
 
-                        {{-- Sort By --}}
-                        <div class="filter-group">
-                            <label class="filter-label">{{ __('Sort By') }}</label>
-                            <div class="filter-input-wrap">
-                                <i class="fas fa-sort filter-icon"></i>
-                                <select name="sort" class="filter-input filter-select">
-                                    <option value="latest" {{ request('sort') == 'latest' ? 'selected' : '' }}>{{ __('Latest') }}</option>
-                                    <option value="price_low" {{ request('sort') == 'price_low' ? 'selected' : '' }}>{{ __('Price: Low to High') }}</option>
-                                    <option value="price_high" {{ request('sort') == 'price_high' ? 'selected' : '' }}>{{ __('Price: High to Low') }}</option>
-                                    <option value="rating" {{ request('sort') == 'rating' ? 'selected' : '' }}>{{ __('Highest Rated') }}</option>
-                                </select>
+                            {{-- Category --}}
+                            <div class="fe-filter-group">
+                                <label class="fe-filter-section-label">{{ __('Category') }}</label>
+                                <div class="filter-input-wrap">
+                                    <i class="fas fa-th-large filter-icon"></i>
+                                    <select name="category" class="filter-input filter-select">
+                                        <option value="">{{ __('All Categories') }}</option>
+                                        @foreach($categories as $cat)
+                                            <option value="{{ $cat->id }}" {{ request('category') == $cat->id ? 'selected' : '' }}>
+                                                {{ $cat->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             </div>
-                        </div>
 
-                        <button type="submit" class="fe-btn fe-btn-primary w-full" style="margin-top:var(--space-2);">
-                            <i class="fas fa-check"></i> {{ __('Apply Filters') }}
-                        </button>
+                            {{-- Destination --}}
+                            <div class="fe-filter-group">
+                                <label class="fe-filter-section-label">{{ __('Destination') }}</label>
+                                <div class="filter-input-wrap">
+                                    <i class="fas fa-map-marker-alt filter-icon"></i>
+                                    <select name="destination" class="filter-input filter-select">
+                                        <option value="">{{ __('All Destinations') }}</option>
+                                        @foreach($countries as $country)
+                                            <option value="{{ $country->id }}" {{ request('destination') == $country->id ? 'selected' : '' }}>
+                                                {{ $country->nicename ?? $country->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
 
-                    </form>
+                            {{-- Price Range --}}
+                            <div class="fe-filter-group">
+                                <label class="fe-filter-section-label">{{ __('Price Range') }}</label>
+                                <div class="filter-price-row">
+                                    <div class="filter-input-wrap">
+                                        <input type="number" name="min_price" class="filter-input" placeholder="{{ __('Min') }}" value="{{ request('min_price') }}">
+                                    </div>
+                                    <span class="filter-price-sep">—</span>
+                                    <div class="filter-input-wrap">
+                                        <input type="number" name="max_price" class="filter-input" placeholder="{{ __('Max') }}" value="{{ request('max_price') }}">
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Sort By --}}
+                            <div class="fe-filter-group">
+                                <label class="fe-filter-section-label">{{ __('Sort By') }}</label>
+                                <div class="filter-input-wrap">
+                                    <i class="fas fa-sort filter-icon"></i>
+                                    <select name="sort" class="filter-input filter-select">
+                                        <option value="latest" {{ request('sort') == 'latest' ? 'selected' : '' }}>{{ __('Latest') }}</option>
+                                        <option value="price_low" {{ request('sort') == 'price_low' ? 'selected' : '' }}>{{ __('Price: Low to High') }}</option>
+                                        <option value="price_high" {{ request('sort') == 'price_high' ? 'selected' : '' }}>{{ __('Price: High to Low') }}</option>
+                                        <option value="rating" {{ request('sort') == 'rating' ? 'selected' : '' }}>{{ __('Highest Rated') }}</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="fe-btn fe-btn-primary w-full" style="margin-top:var(--space-2);">
+                                <i class="fas fa-check"></i> {{ __('Apply Filters') }}
+                            </button>
+
+                        </form>
+                    </div>
                 </aside>
+
 
                 {{-- ─── Trips Grid ─── --}}
                 <div class="trips-results-col">
@@ -364,25 +369,25 @@
     margin-inline-start: 4px;
 }
 
-/* ══ SIDEBAR ══ */
-#filtersSidebar {
-    display: none;
-    background: white;
-    border-radius: var(--radius-xl);
-    border: 1px solid var(--gray-200);
-    box-shadow: var(--shadow-md);
-    padding: var(--space-6);
-    position: sticky;
-    top: 90px;
+/* ══ SIDEBAR (Drawer sync with hotels) ══ */
+.fe-sidebar { 
     height: fit-content;
-    /* Mobile drawer base */
-    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s ease;
 }
+.fe-filter-card {
+    background: white;
+    border-radius: 15px;
+    border: 1px solid var(--gray-100);
+    padding: 25px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+.fe-filter-card:hover { box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+
 /* Mobile drawer styles */
 @media (max-width: 1023px) {
-    #filtersSidebar {
-        position: fixed;
-        top: 0;
+    .fe-sidebar {
+        position: fixed !important;
+        top: 0 !important;
         inset-inline-start: 0;
         width: min(340px, 90vw);
         height: 100vh;
@@ -390,20 +395,55 @@
         border-radius: 0;
         z-index: 3000;
         transform: translateX(-110%);
-        display: block !important; /* always in DOM, controlled by transform */
+        display: block !important;
+        background: var(--gray-50);
+        padding: 0;
         box-shadow: var(--shadow-2xl);
-        padding-top: calc(var(--space-6) + env(safe-area-inset-top));
+        transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    [dir="rtl"] #filtersSidebar {
-        inset-inline-start: auto;
-        inset-inline-end: 0;
+    [dir="rtl"] .fe-sidebar {
         transform: translateX(110%);
     }
-    #filtersSidebar.open {
+    .fe-sidebar.open {
         transform: translateX(0);
     }
+    .fe-filter-card {
+        border-radius: 0;
+        border: none;
+        box-shadow: none;
+        background: white;
+    }
 }
+
+/* ══ SIDEBAR HEADER ══ */
+.trips-sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 25px;
+    border-bottom: 1px solid var(--gray-100);
+    background: white;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+@media (min-width: 1024px) {
+    .trips-sidebar-header { display: none; }
+}
+.trips-sidebar-header h4 { margin: 0; font-weight: 800; font-size: 1.1rem; }
+
+.fe-filter-reset-btn {
+    background: none; border: none;
+    color: var(--primary); font-size: 0.8rem; font-weight: 700; cursor: pointer;
+    text-decoration: none;
+}
+.fe-filter-section-label {
+    display: block; font-weight: 800; font-size: 0.9rem;
+    margin-bottom: 15px; text-transform: uppercase; color: var(--gray-500);
+}
+
 .filters-overlay {
+
     display: none;
     position: fixed;
     inset: 0;

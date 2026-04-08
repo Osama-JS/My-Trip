@@ -1,8 +1,18 @@
 {{-- Sidebar with Normal Dropdowns and Icons --}}
 <div class="dlabnav">
     <div class="dlabnav-scroll">
-        <ul class="metismenu" id="menu">
-            {{-- Main Menu --}}
+        {{-- Floating Scroll Buttons (Only visible in horizontal mode) --}}
+        <button class="nav-control-btn prev" id="nav-prev-btn" type="button">
+            <i class="fa fa-chevron-left"></i>
+        </button>
+        <button class="nav-control-btn next" id="nav-next-btn" type="button">
+            <i class="fa fa-chevron-right"></i>
+        </button>
+        
+        <div class="nav-scroll-wrapper" id="nav-scroll-container">
+            <ul class="metismenu" id="menu">
+                {{-- Main Menu --}}
+
             <li>
                 <a href="{{ route('admin.dashboard') }}" aria-expanded="false">
                     <i class="flaticon-025-dashboard"></i>
@@ -10,96 +20,78 @@
                 </a>
             </li>
 
-
             <li>
                 <a href="{{ route('admin.subscribers.index') }}" aria-expanded="false">
                     <i class="fa fa-users"></i>
                     <span class="nav-text">{{ __('Subscribers') }}</span>
                 </a>
             </li>
-             {{-- Booking Management --}}
-            <li>
-                <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
-                    <i class="fa fa-solid fa-plane"></i>
-                    <span class="nav-text">{{ __('Flights') }}</span>
-                </a>
-                <ul aria-expanded="false">
-                    <li><a href="{{ route('admin.bookings.index') }}"><i class="fa fa-database "></i>{{ __('All Bookings') }}</a></li>
-                    <li><a href="{{ route('admin.bookings.flights.available') }}"><i class="fa fa-search "></i>{{ __('Search Flights') }}</a></li>
-                </ul>
-            </li>
-            <li>
-                <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
-                    <i class="fa fa-solid fa-hotel"></i>
-                    <span class="nav-text">{{ __('Hotels') }}</span>
-                </a>
-                <ul aria-expanded="false">
-                    <li><a href="{{ route('admin.bookings.hotels.index') }}"><i class="fa fa-hotel "></i>{{ __('Hotels List') }}</a></li>
-                    <li><a href="{{ route('admin.bookings.hotels.requests') }}"><i class="fa fa-concierge-bell "></i>{{ __('Requests') }}</a></li>
-                </ul>
-            </li>
 
-            <li>
-                <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
-                    <i class="flaticon-381-map"></i>
-                    <span class="nav-text">{{ __('Locations') }}</span>
-                </a>
-                <ul aria-expanded="false">
-                    <li><a href="{{ route('admin.countries.index') }}"><i class="fa fa-hotel "></i>{{ __('Country') }}</a></li>
-                    <li><a href="{{ route('admin.cities.index') }}"><i class="fa fa-concierge-bell "></i>{{ __('Cities') }}</a></li>
-                </ul>
-            </li>
-
-            <li>
-                <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
-                   <i class="flaticon-381-home"></i>
-                    <span class="nav-text">{{ __('Company') }}</span>
-                </a>
-                <ul aria-expanded="false">
-                    <li><a href="{{ route('admin.companies.index') }}"><i class="fa fa-hotel "></i>{{ __('Company') }}</a></li>
-                    <li><a href="{{ route('admin.companycodes.index') }}"><i class="fa fa-concierge-bell "></i>{{ __('CompanyCode') }}</a></li>
-                </ul>
-            </li>
-
-            <li>
-                <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
-                   <i class="flaticon-381-home"></i>
-                    <span class="nav-text">{{ __('Banner') }}</span>
-                </a>
-                <ul aria-expanded="false">
-                    <li><a href="{{ route('admin.banners.index') }}"><i class="fa fa-hotel "></i>{{ __('Banner') }}</a></li>
-                </ul>
-            </li>
-
-
+            {{-- Flights --}}
             <li>
                 <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
                     <i class="fa fa-plane"></i>
-                    <span class="nav-text">{{ __('Trips') }}</span>
+                    <span class="nav-text">{{ __('Flights') }}</span>
                 </a>
                 <ul aria-expanded="false">
-                    <li><a href="{{ route('admin.trips.index') }}"><i class="fa fa-hotel "></i>{{ __('Trips') }}</a></li>
-                    <li><a href="{{ route('admin.trip-categories.index') }}">{{ __('Trip Categories') }}</a></li>
+                    <li><a href="{{ route('admin.bookings.flights.index') }}"><i class="fa fa-list"></i>{{ __('Flight Bookings') }}</a></li>
+                    <li><a href="{{ route('admin.bookings.flights.requests') }}"><i class="fa fa-paper-plane"></i>{{ __('Requests') }}</a></li>
                 </ul>
             </li>
 
-             <li>
-                <a href="{{ route('admin.trip-bookings.index') }}" aria-expanded="false">
-                    <i class="flaticon-381-calendar-1"></i>
-                    <span class="nav-text">{{ __('Bookings') }}</span>
+            {{-- Hotels --}}
+            <li>
+                <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
+                    <i class="fa fa-hotel"></i>
+                    <span class="nav-text">{{ __('Hotels') }}</span>
                 </a>
+                <ul aria-expanded="false">
+                    <li><a href="{{ route('admin.bookings.hotels.index') }}"><i class="fa fa-list"></i>{{ __('Hotel Bookings') }}</a></li>
+                    <li><a href="{{ route('admin.bookings.hotels.requests') }}"><i class="fa fa-concierge-bell"></i>{{ __('Requests') }}</a></li>
+                </ul>
             </li>
 
+            {{-- Tour Packages (Trips) --}}
             <li>
-                <a href="{{ route('admin.notifications.index') }}" aria-expanded="false">
-                    <i class="fas fa-bell"></i>
-                    <span class="nav-text">{{ __('Notifications') }}</span>
+                <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
+                    <i class="flaticon-381-map"></i>
+                    <span class="nav-text">{{ __('Tour Packages') }}</span>
                 </a>
+                <ul aria-expanded="false">
+                    <li><a href="{{ route('admin.trips.index') }}"><i class="fa fa-suitcase"></i>{{ __('Manage Tours') }}</a></li>
+                    <li><a href="{{ route('admin.trip-categories.index') }}"><i class="fa fa-tags"></i>{{ __('Categories') }}</a></li>
+                    <li><a href="{{ route('admin.trip-bookings.index') }}"><i class="fa fa-calendar-check"></i>{{ __('Tour Bookings') }}</a></li>
+                </ul>
+            </li>
+
+            {{-- Companies --}}
+            <li>
+                <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
+                    <i class="flaticon-381-briefcase"></i>
+                    <span class="nav-text">{{ __('Companies') }}</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{{ route('admin.companies.index') }}"><i class="fa fa-building"></i>{{ __('Manage Companies') }}</a></li>
+                    <li><a href="{{ route('admin.companycodes.index') }}"><i class="fa fa-barcode"></i>{{ __('Company Codes') }}</a></li>
+                </ul>
+            </li>
+
+
+            {{-- Locations --}}
+            <li>
+                <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
+                    <i class="flaticon-381-location"></i>
+                    <span class="nav-text">{{ __('Locations') }}</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{{ route('admin.countries.index') }}"><i class="fa fa-globe"></i>{{ __('Countries') }}</a></li>
+                    <li><a href="{{ route('admin.cities.index') }}"><i class="fa fa-city"></i>{{ __('Cities') }}</a></li>
+                </ul>
             </li>
 
 
             {{-- Financial Management --}}
-             <li>
+            <li>
                 <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
                     <i class="flaticon-381-layer-1"></i>
                     <span class="nav-text">{{ __('Financial Management') }}</span>
@@ -113,7 +105,7 @@
             {{-- Security & Access --}}
             @can('view users')
             <li class="mega-menu-container">
-                <a  class="has-arrow" href="javascript:void(0)" aria-expanded="false">
+                <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
                     <i class="flaticon-381-lock"></i>
                     <span class="nav-text nav-text-arrow">
                         {{ __('Access Control') }}
@@ -129,28 +121,6 @@
             </li>
             @endcan
 
-            <li>
-                <a href="{{ route('profile.edit') }}" aria-expanded="false">
-                    <i class="fa fa-user-circle"></i>
-                    <span class="nav-text">{{ __('My Profile') }}</span>
-                </a>
-            </li>
-
-            {{-- Settings --}}
-            <li>
-                <a href="{{ route('admin.settings.index') }}" aria-expanded="false">
-                    <i class="flaticon-381-settings-2"></i>
-                    <span class="nav-text">{{ __('Platform Settings') }}</span>
-                </a>
-            </li>
-
-            {{-- Settings --}}
-            <li>
-                <a href="{{ route('admin.questions.index') }}" aria-expanded="false">
-                    <i class="flaticon-381-settings-2"></i>
-                    <span class="nav-text">{{ __('Question') }}</span>
-                </a>
-            </li>
             {{-- Reports & Logs --}}
             <li>
                 <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
@@ -162,11 +132,44 @@
                     <li><a href="{{ route('admin.reports.search_logs') }}"><i class="fa fa-chart-bar "></i>{{ __('Search Statistics') }}</a></li>
                 </ul>
             </li>
-        </ul>
+
+            {{-- ===== الإعدادات والإدارة ===== --}}
+            <li>
+                <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
+                    <i class="flaticon-381-settings-2"></i>
+                    <span class="nav-text">{{ __('Settings & Administration') }}</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li>
+                        <a href="{{ route('admin.notifications.index') }}">
+                            <i class="fas fa-bell"></i>{{ __('Notifications') }}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.questions.index') }}">
+                            <i class="fa fa-question-circle"></i>{{ __('Questions') }}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.settings.index') }}">
+                            <i class="flaticon-381-settings-2"></i>{{ __('Platform Settings') }}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.banners.index') }}">
+                            <i class="fa fa-image"></i>{{ __('Banners') }}
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+
+        </div>
 
         <div class="copyright text-center">
             <p><strong>Fly Vio</strong> © {{ date('Y') }}</p>
         </div>
     </div>
 </div>
+
 {{-- Sidebar end --}}

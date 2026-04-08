@@ -341,6 +341,11 @@
                             <i class="flaticon-381-smartphone"></i> {{ __('Our Mission') }}
                         </button>
                     </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="pricing-tab" data-bs-toggle="tab" data-bs-target="#pricing" type="button" role="tab">
+                            <i class="fa fa-percentage"></i> {{ __('Pricing & Margins') }}
+                        </button>
+                    </li>
                 </ul>
 
                 <div class="card-body p-4">
@@ -694,6 +699,104 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- Pricing & Margins Tab -->
+                        <div class="tab-pane fade" id="pricing" role="tabpanel">
+                            <div class="form-section-title">{{ __('Service Profit Margins') }}</div>
+                            <p class="text-muted mb-4">{{ __('Set the profit margin to be added on top of the base price from the supplier. Choose between a percentage of the total price or a fixed amount per booking.') }}</p>
+
+                            {{-- Flight Margin --}}
+                            <div class="card border-0 bg-light rounded-3 p-3 mb-4">
+                                <h6 class="fw-bold mb-3"><i class="fa fa-plane text-primary me-2"></i>{{ __('Flights Margin') }}</h6>
+                                <div class="row align-items-end">
+                                    <div class="col-md-4 mb-3 form-group">
+                                        <label class="form-label">{{ __('Margin Type') }}</label>
+                                        <select name="flight_margin_type" id="flight_margin_type" class="form-control">
+                                            <option value="percentage" {{ \App\Models\Setting::get('flight_margin_type', 'percentage') === 'percentage' ? 'selected' : '' }}>{{ __('Percentage (%)') }}</option>
+                                            <option value="fixed" {{ \App\Models\Setting::get('flight_margin_type', 'percentage') === 'fixed' ? 'selected' : '' }}>{{ __('Fixed Amount (SAR)') }}</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 mb-3 form-group">
+                                        <label class="form-label">{{ __('Margin Value') }}</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fa fa-plane"></i></span>
+                                            <input type="number" step="0.01" min="0" class="form-control" name="flight_margin"
+                                                   value="{{ \App\Models\Setting::get('flight_margin', 0) }}"
+                                                   placeholder="e.g. 5.00">
+                                            <span class="input-group-text" id="flight_margin_unit">
+                                                {{ \App\Models\Setting::get('flight_margin_type', 'percentage') === 'fixed' ? 'SAR' : '%' }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <small class="text-muted d-block">
+                                            <span id="flight_margin_hint">
+                                            @if(\App\Models\Setting::get('flight_margin_type', 'percentage') === 'fixed')
+                                                {{ __('A fixed amount in SAR will be added to each flight booking.') }}
+                                            @else
+                                                {{ __('This percentage will be added to the base price of each flight.') }}
+                                            @endif
+                                            </span>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Hotel Margin --}}
+                            <div class="card border-0 bg-light rounded-3 p-3 mb-4">
+                                <h6 class="fw-bold mb-3"><i class="fa fa-hotel text-success me-2"></i>{{ __('Hotels Margin') }}</h6>
+                                <div class="row align-items-end">
+                                    <div class="col-md-4 mb-3 form-group">
+                                        <label class="form-label">{{ __('Margin Type') }}</label>
+                                        <select name="hotel_margin_type" id="hotel_margin_type" class="form-control">
+                                            <option value="percentage" {{ \App\Models\Setting::get('hotel_margin_type', 'percentage') === 'percentage' ? 'selected' : '' }}>{{ __('Percentage (%)') }}</option>
+                                            <option value="fixed" {{ \App\Models\Setting::get('hotel_margin_type', 'percentage') === 'fixed' ? 'selected' : '' }}>{{ __('Fixed Amount (SAR)') }}</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 mb-3 form-group">
+                                        <label class="form-label">{{ __('Margin Value') }}</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fa fa-hotel"></i></span>
+                                            <input type="number" step="0.01" min="0" class="form-control" name="hotel_margin"
+                                                   value="{{ \App\Models\Setting::get('hotel_margin', 0) }}"
+                                                   placeholder="e.g. 10.00">
+                                            <span class="input-group-text" id="hotel_margin_unit">
+                                                {{ \App\Models\Setting::get('hotel_margin_type', 'percentage') === 'fixed' ? 'SAR' : '%' }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <small class="text-muted d-block">
+                                            <span id="hotel_margin_hint">
+                                            @if(\App\Models\Setting::get('hotel_margin_type', 'percentage') === 'fixed')
+                                                {{ __('A fixed amount in SAR will be added to each hotel booking.') }}
+                                            @else
+                                                {{ __('This percentage will be added to the base price of each hotel room.') }}
+                                            @endif
+                                            </span>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            @push('scripts')
+                            <script>
+                                function syncMarginUI(prefix) {
+                                    const type = document.getElementById(prefix + '_margin_type').value;
+                                    const unit = document.getElementById(prefix + '_margin_unit');
+                                    const hint = document.getElementById(prefix + '_margin_hint');
+                                    const isFixed = type === 'fixed';
+                                    const service = prefix === 'flight' ? '{{ __('flight') }}' : '{{ __('hotel room') }}';
+                                    unit.textContent = isFixed ? 'SAR' : '%';
+                                    hint.textContent = isFixed
+                                        ? '{{ __('A fixed amount in SAR will be added to each booking.') }}'
+                                        : '{{ __('This percentage will be added to the base price of each result.') }}';
+                                }
+                                document.getElementById('flight_margin_type').addEventListener('change', () => syncMarginUI('flight'));
+                                document.getElementById('hotel_margin_type').addEventListener('change', () => syncMarginUI('hotel'));
+                            </script>
+                            @endpush
                         </div>
                     </div>
                 </div>

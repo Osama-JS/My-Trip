@@ -248,7 +248,7 @@ class TraveloproHotelService
                     'hotelRating' => (int) ($hotel['hotelRating'] ?? 0),
                     'address'     => $hotel['address']     ?? null,
                     'city'        => $hotel['city']        ?? null,
-                    'minPrice'    => $hotel['total']       ?? $hotel['minPrice'] ?? 0,
+                    'minPrice'    => $this->applyHotelMargin($hotel['total'] ?? $hotel['minPrice'] ?? 0),
                     'hotelImages' => !empty($hotel['thumbNailUrl']) ? [['url' => $hotel['thumbNailUrl']]] : [],
                     'facilities'  => $facilities,
                     'latitude'    => $hotel['latitude']    ?? null,
@@ -344,7 +344,24 @@ class TraveloproHotelService
         $data['requiredLanguage'] = ($locale === 'ar') ? 'ARA' : 'ENG';
 
         // Requires hotelId, sessionId, productId, tokenId
-        return $this->sendRequest('get_room_rates', $data, 'Get Room Rates');
+        $response = $this->sendRequest('get_room_rates', $data, 'Get Room Rates');
+        
+        // Apply Margin
+        if (!empty($response['roomRates']['perBookingRates'])) {
+            foreach ($response['roomRates']['perBookingRates'] as &$room) {
+                if (isset($room['netPrice'])) {
+                    $room['netPrice'] = $this->applyHotelMargin($room['netPrice']);
+                }
+            }
+        } elseif (!empty($response['roomRates']['RoomResults'])) {
+             foreach ($response['roomRates']['RoomResults'] as &$room) {
+                if (isset($room['net_price'])) {
+                    $room['net_price'] = $this->applyHotelMargin($room['net_price']);
+                }
+            }
+        }
+
+        return $response;
     }
 
     /**
@@ -356,7 +373,37 @@ class TraveloproHotelService
         $data['requiredLanguage'] = ($locale === 'ar') ? 'ARA' : 'ENG';
 
         // Requires rateBasisId, sessionId, productId, tokenId
-        return $this->sendRequest('get_rate_rules', $data, 'Check Room Rates');
+        $response = $this->sendRequest('get_rate_rules', $data, 'Check Room Rates');
+        
+        // Apply Margin to revalidated price
+        if (isset($response['rateBasis']['TotalFare']['Amount'])) {
+            $response['rateBasis']['TotalFare']['Amount'] = $this->applyHotelMargin($response['rateBasis']['TotalFare']['Amount']);
+        }
+        
+        return $response;
+    }
+
+    /**
+     * Helper to apply hotel profit margin.
+     * Supports two modes: 'percentage' (default) or 'fixed' (flat SAR amount).
+     */
+    private function applyHotelMargin($price)
+    {
+        $margin     = floatval(\App\Models\Setting::get('hotel_margin', 0));
+        $marginType = \App\Models\Setting::get('hotel_margin_type', 'percentage');
+
+        if ($margin <= 0) return $price;
+
+        $basePrice = floatval($price);
+
+        if ($marginType === 'fixed') {
+            $newPrice = $basePrice + $margin;
+        } else {
+            // percentage (default)
+            $newPrice = $basePrice * (1 + ($margin / 100));
+        }
+
+        return number_format($newPrice, 2, '.', '');
     }
 
     /**

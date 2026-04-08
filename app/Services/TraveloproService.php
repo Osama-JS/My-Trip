@@ -53,7 +53,25 @@ class TraveloproService
             $response = Http::timeout(60)->post($this->url, $payload);
 
             if ($response->successful()) {
-                return $response->json();
+                $results = $response->json();
+                
+                // Apply Profit Margin
+                $margin     = floatval(\App\Models\Setting::get('flight_margin', 0));
+                $marginType = \App\Models\Setting::get('flight_margin_type', 'percentage');
+
+                if ($margin > 0 && isset($results['AirSearchResponse']['AirSearchResult']['FareItineraries'])) {
+                    $itineraries = &$results['AirSearchResponse']['AirSearchResult']['FareItineraries'];
+
+                    if (isset($itineraries['FareItinerary'])) {
+                        $this->applyMarginToItinerary($itineraries['FareItinerary'], $margin, $marginType);
+                    } else {
+                        foreach ($itineraries as &$itinerary) {
+                            $this->applyMarginToItinerary($itinerary, $margin, $marginType);
+                        }
+                    }
+                }
+                
+                return $results;
             }
 
             Log::error('Travelopro Search Error', [
@@ -75,6 +93,35 @@ class TraveloproService
                 'message' => 'Service unavailable',
                 'error' => $e->getMessage()
             ];
+        }
+    }
+
+    /**
+     * Helper to apply margin to a single flight itinerary.
+     * Supports two modes: 'percentage' (default) or 'fixed' (flat SAR amount added to total fare).
+     */
+    private function applyMarginToItinerary(&$itinerary, $margin, $marginType = 'percentage')
+    {
+        if (isset($itinerary['AirItineraryFareInfo']['ItinTotalFares']['TotalFare']['Amount'])) {
+            $oldAmount = floatval($itinerary['AirItineraryFareInfo']['ItinTotalFares']['TotalFare']['Amount']);
+
+            if ($marginType === 'fixed') {
+                $newAmount = $oldAmount + $margin;
+            } else {
+                $newAmount = $oldAmount * (1 + ($margin / 100));
+            }
+
+            $itinerary['AirItineraryFareInfo']['ItinTotalFares']['TotalFare']['Amount'] = number_format($newAmount, 2, '.', '');
+
+            // Also update BaseFare proportionally
+            if (isset($itinerary['AirItineraryFareInfo']['ItinTotalFares']['BaseFare']['Amount'])) {
+                $oldBase = floatval($itinerary['AirItineraryFareInfo']['ItinTotalFares']['BaseFare']['Amount']);
+                if ($marginType === 'fixed') {
+                    $itinerary['AirItineraryFareInfo']['ItinTotalFares']['BaseFare']['Amount'] = number_format($oldBase + $margin, 2, '.', '');
+                } else {
+                    $itinerary['AirItineraryFareInfo']['ItinTotalFares']['BaseFare']['Amount'] = number_format($oldBase * (1 + ($margin / 100)), 2, '.', '');
+                }
+            }
         }
     }
 
@@ -291,7 +338,23 @@ class TraveloproService
             $response = Http::timeout(60)->post($url, $payload);
 
             if ($response->successful()) {
-                return $response->json();
+                $result = $response->json();
+                
+                // Apply Profit Margin
+                $margin = floatval(\App\Models\Setting::get('flight_margin', 0));
+                if ($margin > 0 && isset($result['AirRevalidateResponse']['AirRevalidateResult']['FareItineraries'])) {
+                    $itineraries = &$result['AirRevalidateResponse']['AirRevalidateResult']['FareItineraries'];
+                    
+                    if (isset($itineraries['FareItinerary'])) {
+                        $this->applyMarginToItinerary($itineraries['FareItinerary'], $margin);
+                    } else {
+                        foreach ($itineraries as &$itinerary) {
+                            $this->applyMarginToItinerary($itinerary, $margin);
+                        }
+                    }
+                }
+                
+                return $result;
             }
 
             Log::error('Travelopro Validate Fare Error', [

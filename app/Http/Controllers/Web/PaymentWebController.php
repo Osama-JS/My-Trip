@@ -77,8 +77,9 @@ class PaymentWebController extends Controller
 
             // If HyperPay, we might need a checkout_id immediately to load the widget
             if (in_array($method, ['mada', 'visa_master', 'apple_pay'])) {
-                // Simulation mode for local dev (XAMPP cannot reach oppwa.com)
-                if (config('app.env') === 'local' || env('PAYMENT_SIMULATION', false)) {
+                // Simulation mode ONLY when PAYMENT_SIMULATION=true is explicitly set
+                // APP_ENV=local does NOT trigger simulation, so real keys work locally too
+                if (env('PAYMENT_SIMULATION', false)) {
                     $fakeId = 'SIM-' . strtoupper(uniqid());
                     $data['checkout_id']  = null;           // No real widget
                     $data['sim_mode']     = true;
@@ -136,11 +137,12 @@ class PaymentWebController extends Controller
                 return response()->json(['error' => true, 'message' => 'Booking not found'], 404);
             }
 
-            $method = $request->method;
+            $method = $request->input('method');
             $user = $booking->user;
 
-            // Simulation mode for local dev (XAMPP cannot reach payment APIs)
-            if (config('app.env') === 'local' || env('PAYMENT_SIMULATION', false)) {
+            // Simulation mode ONLY when PAYMENT_SIMULATION=true is explicitly set in .env
+            // This allows Tamara/Tabby to work with real API keys even in local environment
+            if (env('PAYMENT_SIMULATION', false)) {
                 $fakeRef = 'SIM-' . strtoupper($method) . '-' . strtoupper(uniqid());
                 Log::info("Payment {$method} Simulation Mode — Ref: {$fakeRef}");
                 
@@ -256,8 +258,9 @@ class PaymentWebController extends Controller
             'order_id' => strtoupper($type) . '-BOOKING-' . $booking->id . '-' . time(),
             'callback_url' => route('payments.web.callback', [
                 'payment_type' => 'tamara',
-                'source' => $request->source,
-                'type' => $type
+                'source'       => $request->source,
+                'type'         => $type,
+                'booking_id'   => $booking->id,  // ← so callback_processing knows which booking to confirm
             ]),
             'items' => [
                 [
@@ -282,6 +285,128 @@ class PaymentWebController extends Controller
         }
 
         return response()->json($result);
+    }
+
+    /**
+     * Public payment verification endpoint (called from browser callback_processing page).
+     * No Sanctum token required — session CSRF only.
+     */
+    public function webVerify(Request $request)
+    {
+        $request->validate([
+            'payment_type' => 'required|string|in:mada,visa_master,apple_pay,tabby,tamara,tap',
+            'payment_id'   => 'nullable|string',
+            'checkout_id'  => 'nullable|string',
+            'booking_id'   => 'nullable',
+            'type'         => 'nullable|string|in:trip,hotel,flight',
+        ]);
+
+        try {
+            $paymentType = $request->payment_type;
+            $type        = $request->get('type', 'trip');
+            $bookingId   = $request->booking_id;
+
+            // ── Tamara ────────────────────────────────────────────────────────
+            if ($paymentType === 'tamara') {
+                $orderId = $request->payment_id ?? $request->order_id;
+                if (!$orderId) {
+                    return response()->json(['error' => true, 'message' => 'Missing Tamara order_id'], 422);
+                }
+
+                $result = $this->tamaraService->verifyPayment($orderId);
+                $status = $result['status'] ?? 'unknown';
+
+                if (in_array($status, ['authorised', 'fully_captured'])) {
+                    // Update booking if bookingId was passed
+                    if ($bookingId) {
+                        $booking = $this->resolveBooking($bookingId, $type);
+                        if ($booking) {
+                            $booking->update(['status' => 'paid']);
+                            Log::info("Tamara: Booking #{$bookingId} ({$type}) marked as PAID. Order: {$orderId}");
+                        }
+                    }
+                    return response()->json(['error' => false, 'message' => 'Payment successful', 'status' => $status, 'booking_id' => $bookingId, 'type' => $type]);
+                }
+
+                Log::warning("Tamara: Unexpected status '{$status}' for order {$orderId}");
+                return response()->json(['error' => true, 'message' => 'Payment not authorised. Status: ' . $status], 400);
+            }
+
+            // ── Tabby ─────────────────────────────────────────────────────────
+            if ($paymentType === 'tabby') {
+                $paymentId = $request->payment_id;
+                if (!$paymentId) {
+                    return response()->json(['error' => true, 'message' => 'Missing Tabby payment_id'], 422);
+                }
+
+                $result = $this->tabbyService->verifyPayment($paymentId);
+                $status = $result['status'] ?? 'unknown';
+
+                if (in_array($status, ['authorized', 'closed'])) {
+                    if ($bookingId) {
+                        $booking = $this->resolveBooking($bookingId, $type);
+                        if ($booking) {
+                            $booking->update(['status' => 'paid']);
+                            Log::info("Tabby: Booking #{$bookingId} ({$type}) marked as PAID.");
+                        }
+                    }
+                    return response()->json(['error' => false, 'message' => 'Payment successful', 'status' => $status, 'booking_id' => $bookingId, 'type' => $type]);
+                }
+
+                return response()->json(['error' => true, 'message' => 'Payment not authorized. Status: ' . $status], 400);
+            }
+
+            // ── Tap ───────────────────────────────────────────────────────────
+            if ($paymentType === 'tap') {
+                $paymentId = $request->payment_id;
+                if (!$paymentId) {
+                    return response()->json(['error' => true, 'message' => 'Missing Tap payment_id'], 422);
+                }
+
+                $result = $this->tapService->verifyPayment($paymentId);
+                $status = strtoupper($result['status'] ?? 'UNKNOWN');
+
+                if (in_array($status, ['CAPTURED', 'AUTHORIZED'])) {
+                    if ($bookingId) {
+                        $booking = $this->resolveBooking($bookingId, $type);
+                        if ($booking) {
+                            $booking->update(['status' => 'paid']);
+                            Log::info("Tap: Booking #{$bookingId} ({$type}) marked as PAID.");
+                        }
+                    }
+                    return response()->json(['error' => false, 'message' => 'Payment successful', 'status' => $status, 'booking_id' => $bookingId, 'type' => $type]);
+                }
+
+                return response()->json(['error' => true, 'message' => 'Payment not captured. Status: ' . $status], 400);
+            }
+
+            // ── HyperPay ──────────────────────────────────────────────────────
+            $checkoutId = $request->checkout_id;
+            if (!$checkoutId) {
+                return response()->json(['error' => true, 'message' => 'Missing checkout_id for HyperPay'], 422);
+            }
+
+            $result   = $this->hyperPayService->getPaymentStatus($checkoutId, $paymentType);
+            $code     = $result['result']['code'] ?? '';
+            $isSuccess = $this->hyperPayService->isSuccessful($code);
+
+            if ($isSuccess) {
+                if ($bookingId) {
+                    $booking = $this->resolveBooking($bookingId, $type);
+                    if ($booking) {
+                        $booking->update(['status' => 'paid']);
+                        Log::info("HyperPay: Booking #{$bookingId} ({$type}) marked as PAID.");
+                    }
+                }
+                return response()->json(['error' => false, 'message' => 'Payment successful', 'booking_id' => $bookingId, 'type' => $type]);
+            }
+
+            return response()->json(['error' => true, 'message' => $result['result']['description'] ?? 'Payment failed.'], 400);
+
+        } catch (\Exception $e) {
+            Log::error('webVerify Exception: ' . $e->getMessage());
+            return response()->json(['error' => true, 'message' => $e->getMessage()], 500);
+        }
     }
 
     protected function initiateTap($booking, $user, $request, $type)
@@ -389,7 +514,7 @@ class PaymentWebController extends Controller
             $booking = $this->resolveBooking($request->booking_id, $type);
             
             // If simulated success, update status and finalize supplier booking
-            if ($request->source === 'simulation' || config('app.env') === 'local') {
+            if ($request->source === 'simulation') {
                 if ($booking && in_array($booking->status, ['pending', 'paid'])) {
                     Log::info("Processing simulated success for {$type} Booking ID: {$booking->id}");
                     

@@ -62,28 +62,29 @@ Route::group(['prefix' => 'payments', 'as' => 'payments.web.'], function () {
     Route::get('/checkout/{booking_id}/{method}', [PaymentWebController::class, 'checkout'])->name('checkout');
     Route::post('/initiate', [PaymentWebController::class, 'initiateRedirect'])->name('initiate');
     Route::post('/bank-transfer', [PaymentWebController::class, 'submitBankTransfer'])->name('bank_transfer');
+    // Public verify endpoint — called from callback_processing.blade.php (no Sanctum token needed)
+    Route::post('/verify', [PaymentWebController::class, 'webVerify'])->name('verify');
     Route::get('/success', [PaymentWebController::class, 'success'])->name('success');
     Route::get('/failure', [PaymentWebController::class, 'failure'])->name('failure');
 
-    // Specialized callback that triggers verification then redirects to success/failure
+    // Specialized callback — receives user after payment gateway redirect
     Route::get('/callback/{payment_type}', function (Illuminate\Http\Request $request, $payment_type) {
-        $paymentId = $request->payment_id ?? $request->orderId ?? $request->id;
+        $paymentId  = $request->payment_id ?? $request->orderId ?? $request->order_id ?? $request->id;
         $checkoutId = $request->id; // For HyperPay
 
-        // We'll redirect to success or failure based on basic query params for now,
-        // but ideally we verify here. For the WebView flow, we'll let the success/failure
-        // pages handle the verification or use this intermediate route.
-        if ($request->status === 'cancel') {
-             return redirect()->route('payments.web.failure', ['error' => __('Payment cancelled by user.')]);
+        if ($request->status === 'cancel' || $request->status === 'failure') {
+            return redirect()->route('payments.web.failure', ['error' => __('Payment cancelled by user.')]);
         }
 
-        // Return a processing page that will then call the verify logic
+        // Pass booking context so webVerify can update the correct booking
         return view('payments.callback_processing', [
             'payment_type' => $payment_type,
-            'payment_id' => $paymentId,
-            'checkout_id' => $checkoutId,
-            'status' => $request->status,
-            'source' => $request->source
+            'payment_id'   => $paymentId,
+            'checkout_id'  => $checkoutId,
+            'booking_id'   => $request->booking_id,
+            'booking_type' => $request->type ?? $request->booking_type ?? 'trip',
+            'status'       => $request->status,
+            'source'       => $request->source,
         ]);
     })->name('callback');
 });
@@ -158,23 +159,35 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     // Bookings
     Route::group(['prefix' => 'bookings', 'as' => 'bookings.'], function() {
         // Flights
-        Route::get('/', [BookingController::class, 'index'])->name('index');
-        Route::get('/data', [BookingController::class, 'getData'])->name('data');
-        Route::get('/{id}/show', [BookingController::class, 'show'])->name('show');
-        Route::get('/{id}/invoice', [BookingController::class, 'invoice'])->name('invoice');
+        Route::group(['prefix' => 'flights', 'as' => 'flights.'], function() {
+            Route::get('/', [BookingController::class, 'flightBookings'])->name('index');
+            Route::get('/data', [BookingController::class, 'getFlightData'])->name('data');
+            Route::get('/requests', [BookingController::class, 'flightRequests'])->name('requests');
+            Route::get('/requests/data', [BookingController::class, 'getFlightRequestsData'])->name('requests.data');
+            Route::get('/ongoing', [BookingController::class, 'ongoingFlights'])->name('ongoing');
+            Route::post('/search', [BookingController::class, 'searchFlights'])->name('search');
+            Route::post('/validate', [BookingController::class, 'validateFare'])->name('validate');
+            Route::post('/book', [BookingController::class, 'createBooking'])->name('book');
+            Route::get('/{id}/show', [BookingController::class, 'showFlight'])->name('show');
 
-        Route::get('flights/available', [BookingController::class, 'availableFlights'])->name('flights.available');
-        Route::post('flights/search', [BookingController::class, 'searchFlights'])->name('flights.search');
-        Route::post('flights/validate', [BookingController::class, 'validateFare'])->name('flights.validate');
-        Route::post('flights/book', [BookingController::class, 'createBooking'])->name('flights.book');
-        Route::get('flights/airports', [BookingController::class, 'getAirports'])->name('flights.airports');
-        Route::get('flights/airlines', [BookingController::class, 'getAirlines'])->name('flights.airlines');
-        Route::get('flights/requests', [BookingController::class, 'flightRequests'])->name('flights.requests');
-        Route::get('flights/ongoing', [BookingController::class, 'ongoingFlights'])->name('flights.ongoing');
+        });
 
         // Hotels
-        Route::get('hotels', [BookingController::class, 'hotelList'])->name('hotels.index');
-        Route::get('hotels/requests', [BookingController::class, 'hotelRequests'])->name('hotels.requests');
+        Route::group(['prefix' => 'hotels', 'as' => 'hotels.'], function() {
+            Route::get('/', [BookingController::class, 'hotelBookings'])->name('index');
+            Route::get('/data', [BookingController::class, 'getHotelData'])->name('data');
+            Route::get('/requests', [BookingController::class, 'hotelRequests'])->name('requests');
+            Route::get('/requests/data', [BookingController::class, 'getHotelRequestsData'])->name('requests.data');
+            Route::get('/{id}/show', [BookingController::class, 'showHotel'])->name('show_detail');
+            Route::get('/{id}/invoice', [BookingController::class, 'invoice'])->name('invoice_detail');
+
+
+
+        });
+
+        // Common
+        Route::get('/{id}/show', [BookingController::class, 'show'])->name('show');
+        Route::get('/{id}/invoice', [BookingController::class, 'invoice'])->name('invoice');
     });
 
     // Settings

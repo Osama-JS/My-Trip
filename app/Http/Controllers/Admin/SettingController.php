@@ -28,6 +28,10 @@ class SettingController extends Controller
                 'android_url' => 'nullable|url',
                 'ios_url' => 'nullable|url',
                 'maintenance_mode' => 'nullable|in:0,1',
+                'flight_margin'      => 'nullable|numeric|min:0',
+                'flight_margin_type' => 'nullable|in:percentage,fixed',
+                'hotel_margin'       => 'nullable|numeric|min:0',
+                'hotel_margin_type'  => 'nullable|in:percentage,fixed',
             ]);
 
             $data = $request->except(['_token', 'site_logo', 'site_favicon']);

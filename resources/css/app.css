@@ -29,3 +29,119 @@ h6,
 .h6 {
     font-family: "Tajawal", sans-serif !important;
 }
+
+/* -------------------------------------------------------------------------- */
+/* PREMIUM HORIZONTAL NAVIGATION SCROLL                                       */
+/* -------------------------------------------------------------------------- */
+
+/* Target dlabnav scroll area */
+.dlabnav-scroll {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: #fff;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    padding: 0 40px; /* Space for buttons */
+}
+
+.nav-scroll-wrapper {
+    width: 100%;
+    overflow: visible; /* CRITICAL: Allows dropdowns to show */
+    position: relative;
+}
+
+.dlabnav .metismenu {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    will-change: transform;
+}
+
+/* Ensure list items don't break or wrap */
+.dlabnav .metismenu > li {
+    display: inline-block !important;
+    position: relative; /* Context for dropdowns */
+    flex-shrink: 0 !important;
+}
+
+/* Professional Floating Buttons */
+.nav-control-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(59, 75, 211, 0.2);
+    border-radius: 50%;
+    color: #3b4bd3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    cursor: pointer;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: auto;
+}
+
+/* Hide Visual Scrollbar completely */
+.nav-scroll-wrapper::-webkit-scrollbar,
+.metismenu::-webkit-scrollbar,
+.dlabnav-scroll::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+.nav-scroll-wrapper,
+#nav-scroll-container,
+.metismenu,
+.dlabnav-scroll {
+    -ms-overflow-style: none !important;  /* IE and Edge */
+    scrollbar-width: none !important;  /* Firefox */
+}
+
+.nav-control-btn.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.nav-control-btn:hover {
+    background: #3b4bd3;
+    color: #fff;
+    transform: translateY(-50%) scale(1.1);
+}
+
+.nav-control-btn.prev { left: 5px; }
+.nav-control-btn.next { right: 5px; }
+
+/* Submenu/Dropdown Fix */
+.dlabnav .metismenu ul {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 220px;
+    background: #fff;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+    border-radius: 0 0 8px 8px;
+    padding: 10px 0;
+    z-index: 99999 !important;
+    display: none; /* Metismenu handles display toggle */
+}
+
+/* Ensure RTL support for buttons */
+[dir="rtl"] .nav-control-btn.prev { right: 5px; left: auto; transform: translateY(-50%) rotate(180deg); }
+[dir="rtl"] .nav-control-btn.next { left: 5px; right: auto; transform: translateY(-50%) rotate(180deg); }
+[dir="rtl"] .nav-control-btn.prev:hover, [dir="rtl"] .nav-control-btn.next:hover {
+    transform: translateY(-50%) scale(1.1) rotate(180deg);
+}
+
+

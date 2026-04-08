@@ -5,7 +5,7 @@
     <div class="row page-titles">
         <ol class="breadcrumb">
             <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ __('Admin') }}</a></li>
-            <li class="breadcrumb-item"><a href="javascript:void(0)">{{ __('Hotel Bookings') }}</a></li>
+            <li class="breadcrumb-item"><a href="javascript:void(0)">{{ __('Flight Bookings') }}</a></li>
         </ol>
     </div>
 
@@ -14,7 +14,7 @@
             <x-stats-card
                 :label="__('Total Bookings')"
                 :value="$stats['total']"
-                icon="fas fa-hotel"
+                icon="fas fa-plane"
                 color="primary"
             />
         </div>
@@ -48,16 +48,16 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h4 class="card-title">{{ __('Hotel Bookings') }}</h4>
+                    <h4 class="card-title">{{ __('Flight Bookings') }}</h4>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table id="hotels-table" class="display" style="min-width: 845px">
+                        <table id="flights-table" class="display" style="min-width: 845px">
                             <thead>
                                 <tr>
                                     <th>{{ __('ID') }}</th>
                                     <th>{{ __('User') }}</th>
-                                    <th>{{ __('Hotel') }}</th>
+                                    <th>{{ __('Route') }}</th>
                                     <th>{{ __('Dates') }}</th>
                                     <th>{{ __('Amount') }}</th>
                                     <th>{{ __('Status') }}</th>
@@ -76,14 +76,14 @@
 @push('scripts')
 <script>
     $(document).ready(function() {
-        $('#hotels-table').DataTable({
+        $('#flights-table').DataTable({
             processing: true,
             serverSide: false,
-            ajax: "{{ route('admin.bookings.hotels.data') }}",
+            ajax: "{{ route('admin.bookings.flights.data') }}",
             columns: [
                 { data: 'id' },
                 { data: 'user' },
-                { data: 'hotel' },
+                { data: 'route' },
                 { data: 'dates' },
                 { data: 'amount' },
                 { 

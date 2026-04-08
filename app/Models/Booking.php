@@ -35,6 +35,14 @@ class Booking extends Model
     }
 
     /**
+     * Get the flight booking associated with the booking.
+     */
+    public function flightBooking()
+    {
+        return $this->hasOne(FlightBooking::class);
+    }
+
+    /**
      * Get all of the booking's payments.
      */
     public function payments()
@@ -42,3 +50,5 @@ class Booking extends Model
         return $this->morphMany(Payment::class, 'payable');
     }
 }
+
+
