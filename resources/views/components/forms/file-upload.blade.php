@@ -1,5 +1,6 @@
 @props([
     'name',
+    'id' => null,
     'label' => null,
     'accept' => null,
     'multiple' => false,
@@ -11,6 +12,9 @@
     'error' => null,
     'maxSize' => '5MB',
 ])
+@php
+    $inputId = $id ?? $name;
+@endphp
 
 <div class="form-group mb-3">
     @if($label)
@@ -26,13 +30,13 @@
         <input
             type="file"
             name="{{ $name }}{{ $multiple ? '[]' : '' }}"
-            id="{{ $name }}"
+            id="{{ $inputId }}"
             class="file-upload-input {{ $attributes->get('class') }}"
             {{ $accept ? "accept=$accept" : '' }}
             {{ $multiple ? 'multiple' : '' }}
             {{ $required ? 'required' : '' }}
             {{ $disabled ? 'disabled' : '' }}
-            {{ $attributes->except('class') }}
+            {{ $attributes->except(['class', 'id']) }}
         >
 
         <div class="file-upload-content">
@@ -61,7 +65,7 @@
         </div>
     @endif
 
-    <div class="file-preview-container mt-3" id="{{ $name }}_preview" style="display: none;">
+    <div class="file-preview-container mt-3" id="{{ $inputId }}_preview" style="display: none;">
         <label class="form-label text-muted">{{ __('معاينة') }}:</label>
         <div class="file-preview-list d-flex flex-wrap gap-2"></div>
     </div>
@@ -88,8 +92,8 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const input = document.getElementById('{{ $name }}');
-    const previewContainer = document.getElementById('{{ $name }}_preview');
+    const input = document.getElementById('{{ $inputId }}');
+    const previewContainer = document.getElementById('{{ $inputId }}_preview');
     const previewList = previewContainer?.querySelector('.file-preview-list');
 
     if (input && previewContainer && previewList) {
