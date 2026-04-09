@@ -113,9 +113,13 @@ class UserBookingController extends Controller
     public function show(Request $request, $reference)
     {
         $booking = Booking::where('user_id', $request->user()->id)
-            ->where('booking_reference', $reference)
+            ->where(function ($query) use ($reference) {
+                $query->where('booking_reference', $reference)
+                    ->orWhere('id', $reference);
+            })
             ->with(['passengers'])
             ->firstOrFail();
+
 
         // Fetch live details from Travelopro to sync status (Important for real-time status)
         try {
@@ -253,7 +257,8 @@ class UserBookingController extends Controller
                 ],
                 'rooms_count' => $booking->rooms,
             ],
-            'guests' => $booking->pax_details,
+            'guests' => $booking->passengers,
+
             'payment' => [
                 'total_price' => $booking->total_price,
                 'currency' => $booking->currency,

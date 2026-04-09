@@ -52,4 +52,10 @@ class HotelBooking extends Model
     {
         return $this->morphMany(Payment::class, 'payable');
     }
+
+    public function passengers()
+    {
+        return $this->hasMany(BookingPassenger::class, 'hotel_booking_id');
+    }
 }
+

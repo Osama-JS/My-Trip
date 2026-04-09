@@ -158,6 +158,8 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
 
     // Bookings
     Route::group(['prefix' => 'bookings', 'as' => 'bookings.'], function() {
+        Route::get('/', [BookingController::class, 'index'])->name('index');
+
         // Flights
         Route::group(['prefix' => 'flights', 'as' => 'flights.'], function() {
             Route::get('/', [BookingController::class, 'flightBookings'])->name('index');

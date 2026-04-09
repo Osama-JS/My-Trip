@@ -1,100 +1,41 @@
 @extends('layouts.app')
 
-@section('title', 'All Bookings')
-
-@section('page-header')
-<div class="row page-titles">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item active"><a href="javascript:void(0)">Bookings</a></li>
-        <li class="breadcrumb-item"><a href="javascript:void(0)">All Bookings</a></li>
-    </ol>
-</div>
-@endsection
-
 @section('content')
-@php
-    $totalBookings = \App\Models\Booking::count();
-    $confirmedBookings = \App\Models\Booking::where('status', 'confirmed')->count();
-    $pendingBookings = \App\Models\Booking::where('status', 'pending')->count();
-    $cancelledBookings = \App\Models\Booking::where('status', 'cancelled')->count();
-@endphp
+<div class="container-fluid">
+    <div class="row page-titles">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ __('Admin') }}</a></li>
+            <li class="breadcrumb-item"><a href="javascript:void(0)">{{ __('Bookings Dashboard') }}</a></li>
+        </ol>
+    </div>
 
-{{-- Stats Cards --}}
-@include('components.stats-cards', ['stats' => [
-    [
-        'title' => __('Total Bookings'),
-        'value' => $totalBookings,
-        'icon' => 'fa-plane',
-        'color' => 'primary',
-    ],
-    [
-        'title' => __('Confirmed'),
-        'value' => $confirmedBookings,
-        'icon' => 'fa-check-circle',
-        'color' => 'success',
-    ],
-    [
-        'title' => __('Pending'),
-        'value' => $pendingBookings,
-        'icon' => 'fa-clock',
-        'color' => 'warning',
-    ],
-    [
-        'title' => __('Cancelled'),
-        'value' => $cancelledBookings,
-        'icon' => 'fa-times-circle',
-        'color' => 'danger',
-    ],
-]])
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h4 class="card-title">Bookings List</h4>
+    <div class="row my-2">
+        <div class="col-xl-4 col-sm-6">
+            <div class="card bg-primary text-white text-center p-4">
+                <i class="fas fa-plane fa-3x mb-3"></i>
+                <h3>{{ $stats['flights'] ?? 0 }}</h3>
+                <p class="mb-0">{{ __('Flight Bookings') }}</p>
+                <a href="{{ route('admin.bookings.flights.index') }}" class="btn btn-light btn-sm mt-3">{{ __('View All') }}</a>
             </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table id="bookingsTable" class="table table-bordered table-striped" style="min-width: 845px">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Reference</th>
-                                <th>User</th>
-                                <th>Amount</th>
-                                <th>Payment Status</th>
-                                <th>Ticket Status</th>
-                                <th>Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
+        </div>
+        
+        <div class="col-xl-4 col-sm-6">
+            <div class="card bg-success text-white text-center p-4">
+                <i class="fas fa-hotel fa-3x mb-3"></i>
+                <h3>{{ $stats['hotels'] ?? 0 }}</h3>
+                <p class="mb-0">{{ __('Hotel Bookings') }}</p>
+                <a href="{{ route('admin.bookings.hotels.index') }}" class="btn btn-light btn-sm mt-3">{{ __('View All') }}</a>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-sm-6">
+            <div class="card bg-warning text-white text-center p-4">
+                <i class="fas fa-suitcase fa-3x mb-3"></i>
+                <h3>{{ $stats['trips'] ?? 0 }}</h3>
+                <p class="mb-0">{{ __('Trip Bookings') }}</p>
+                <a href="{{ route('admin.trip-bookings.index') }}" class="btn btn-light btn-sm mt-3">{{ __('View All') }}</a>
             </div>
         </div>
     </div>
 </div>
 @endsection
-
-@push('scripts')
-<script>
-    $(document).ready(function() {
-        $('#bookingsTable').DataTable({
-            processing: true,
-            serverSide: false,
-            ajax: "{{ route('admin.bookings.data') }}",
-            columns: [
-                { data: 'id', name: 'id' },
-                { data: 'reference', name: 'reference' },
-                { data: 'user', name: 'user' },
-                { data: 'amount', name: 'amount' },
-                { data: 'payment_status', name: 'payment_status' },
-                { data: 'ticket_status', name: 'ticket_status' },
-                { data: 'date', name: 'date' },
-                { data: 'actions', name: 'actions', orderable: false, searchable: false }
-            ],
-            order: [[0, 'desc']]
-        });
-    });
-</script>
-@endpush

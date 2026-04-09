@@ -253,6 +253,44 @@ class HotelController extends Controller
                 'pax_details' => $request->paxDetails,
             ]);
 
+            // Save detailed guests to booking_passengers table for unified access
+            foreach ($request->paxDetails as $room) {
+                $roomNo = $room['room_no'] ?? 1;
+                
+                // Process Adults
+                if (isset($room['adult']) && is_array($room['adult']['firstName'])) {
+                    foreach ($room['adult']['firstName'] as $index => $firstName) {
+                        $lastName = $room['adult']['lastName'][$index] ?? '';
+                        $title = $room['adult']['title'][$index] ?? 'Mr';
+                        
+                        $hotelBooking->passengers()->create([
+                            'name' => "{$title} {$firstName} {$lastName}",
+                            'first_name' => $firstName,
+                            'last_name' => $lastName,
+                            'title' => $title,
+                            'passenger_type' => 'adult',
+                        ]);
+                    }
+                }
+                
+                // Process Children
+                if (isset($room['child']) && is_array($room['child']['firstName'])) {
+                    foreach ($room['child']['firstName'] as $index => $firstName) {
+                        $lastName = $room['child']['lastName'][$index] ?? '';
+                        $title = $room['child']['title'][$index] ?? 'Mr';
+                        
+                        $hotelBooking->passengers()->create([
+                            'name' => "{$title} {$firstName} {$lastName}",
+                            'first_name' => $firstName,
+                            'last_name' => $lastName,
+                            'title' => $title,
+                            'passenger_type' => 'child',
+                        ]);
+                    }
+                }
+            }
+
+
             $result['payment_url'] = route('payments.web.checkout', [
                 'booking_id' => $hotelBooking->id,
                 'method' => 'visa_master', // Default selection

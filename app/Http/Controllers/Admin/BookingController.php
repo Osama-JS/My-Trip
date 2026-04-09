@@ -19,6 +19,16 @@ class BookingController extends Controller
         $this->traveloproService = $traveloproService;
     }
 
+    public function index()
+    {
+        $stats = [
+            'flights' => FlightBooking::count(),
+            'hotels' => HotelBooking::count(),
+            'trips' => \App\Models\TripBooking::count(),
+        ];
+        return view('admin.bookings.index', compact('stats'));
+    }
+
     // Flights
     public function flightBookings()
     {

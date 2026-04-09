@@ -486,16 +486,18 @@ class FlightController extends Controller
 
                 foreach ($request->passengers as $pax) {
                     $passenger = $booking->passengers()->create([
+                        'name' => ($pax['title'] ?? '') . ' ' . ($pax['first_name'] ?? '') . ' ' . ($pax['last_name'] ?? ''),
                         'title' => $pax['title'],
                         'first_name' => $pax['first_name'],
                         'last_name' => $pax['last_name'],
-                        'type' => $pax['type'],
+                        'passenger_type' => $pax['type'],
                         'dob' => $pax['dob'],
                         'nationality' => $pax['nationality'],
-                        'passport_no' => $pax['passport_no'] ?? null,
+                        'passport_number' => $pax['passport_no'] ?? null, // Synced with migration column name
                     ]);
                     Log::info('Passenger Saved', ['passenger_id' => $passenger->id]);
                 }
+
 
                 // Add Payment and Tracking details to response
                 $result['payment_url'] = route('payments.web.checkout', [
