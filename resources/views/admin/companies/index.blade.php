@@ -167,6 +167,41 @@
                                       placeholder="{{ __('Additional notes') }}"></textarea>
                         </div>
 
+                        <div class="col-12 mt-4">
+                            <h6 class="fw-bold mb-2 border-bottom pb-2 bg-light p-2 rounded">{{ __('Bank Information') }}</h6>
+                        </div>
+                        <div class="col-md-6 mt-3">
+                            <label class="form-label fw-semibold">
+                                {{ __('Bank Name') }}
+                            </label>
+                            <input type="text" name="bank_name" class="form-control"
+                                   placeholder="{{ __('Enter Bank Name') }}">
+                        </div>
+
+                        <div class="col-md-6 mt-3">
+                            <label class="form-label fw-semibold">
+                                {{ __('Beneficiary Name') }}
+                            </label>
+                            <input type="text" name="beneficiary_name" class="form-control"
+                                   placeholder="{{ __('Enter Beneficiary Name') }}">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                {{ __('Account Number') }}
+                            </label>
+                            <input type="text" name="account_number" class="form-control"
+                                   placeholder="{{ __('Enter Account Number') }}">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                {{ __('IBAN') }}
+                            </label>
+                            <input type="text" name="iban_number" class="form-control"
+                                   placeholder="{{ __('Enter IBAN Number') }}">
+                        </div>
+
                     </div>
 
                     <!-- Status Card -->
@@ -314,6 +349,62 @@
                             </div>
                         </div>
 
+                        <div class="col-12 mt-4">
+                            <h6 class="fw-bold mb-2 border-bottom pb-2 bg-light p-2 rounded">{{ __('Bank Information') }}</h6>
+                        </div>
+
+                        <!-- Bank Name -->
+                        <div class="col-md-6 mt-3">
+                            <div class="form-floating position-relative">
+                                <input type="text"
+                                       name="bank_name"
+                                       id="edit_bank_name"
+                                       class="form-control ps-5"
+                                       placeholder="{{ __('Bank Name') }}">
+                                <label>{{ __('Bank Name') }}</label>
+                                <i class="fas fa-university position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                            </div>
+                        </div>
+
+                        <!-- Beneficiary Name -->
+                        <div class="col-md-6 mt-3">
+                            <div class="form-floating position-relative">
+                                <input type="text"
+                                       name="beneficiary_name"
+                                       id="edit_beneficiary_name"
+                                       class="form-control ps-5"
+                                       placeholder="{{ __('Beneficiary Name') }}">
+                                <label>{{ __('Beneficiary Name') }}</label>
+                                <i class="fas fa-user position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                            </div>
+                        </div>
+
+                        <!-- Account Number -->
+                        <div class="col-md-6">
+                            <div class="form-floating position-relative">
+                                <input type="text"
+                                       name="account_number"
+                                       id="edit_account_number"
+                                       class="form-control ps-5"
+                                       placeholder="{{ __('Account Number') }}">
+                                <label>{{ __('Account Number') }}</label>
+                                <i class="fas fa-money-check position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                            </div>
+                        </div>
+
+                        <!-- IBAN Number -->
+                        <div class="col-md-6">
+                            <div class="form-floating position-relative">
+                                <input type="text"
+                                       name="iban_number"
+                                       id="edit_iban_number"
+                                       class="form-control ps-5"
+                                       placeholder="{{ __('IBAN') }}">
+                                <label>{{ __('IBAN') }}</label>
+                                <i class="fas fa-file-invoice-dollar position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                            </div>
+                        </div>
+
                     </div>
 
                     <!-- Status Card -->
@@ -449,6 +540,10 @@ $(document).ready(function() {
                 $('#edit_phone_code').val(company.phone_code);
                 $('#edit_phone').val(company.phone);
                 $('#edit_notes').val(company.notes);
+                $('#edit_bank_name').val(company.bank_name);
+                $('#edit_beneficiary_name').val(company.beneficiary_name);
+                $('#edit_account_number').val(company.account_number);
+                $('#edit_iban_number').val(company.iban_number);
                 $('#edit_active').prop('checked', company.active);
                 $('#logoPreviewEdit').attr('src', response.logo_url);
                 $('#editCompanyModal').modal('show');

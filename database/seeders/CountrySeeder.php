@@ -201,10 +201,10 @@ class CountrySeeder extends Seeder
             $country = \App\Models\Country::updateOrCreate(
                 ['iso' => $c[0]],
                 [
-                    'name' => strtoupper($c[1]),
-                    'nicename' => $c[1],
+                    'name_ar' => $c[2],
+                    'name_en' => $c[1],
                     'phonecode' => $c[3],
-                    'active' => true
+                    'active'   => true
                 ]
             );
 

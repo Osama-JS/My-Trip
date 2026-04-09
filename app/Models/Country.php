@@ -17,9 +17,10 @@ class Country extends Model
      * The attributes that are mass assignable.
      */
     protected $fillable = [
-        'name',
-        'nicename',
+        'name_ar',
+        'name_en',
         'iso',
+        'iso3',
         'numcode',
         'phonecode',
         'flag',
@@ -38,9 +39,12 @@ class Country extends Model
     /**
      * Get localized name based on current locale.
      */
-    public function getNameAttribute(): ?string
+    public function getNameAttribute(): string
     {
-        return $this->nicename ?? $this->name;
+        $locale = app()->getLocale();
+        return $locale === 'ar' 
+            ? ($this->name_ar ?? $this->name_en ?? '') 
+            : ($this->name_en ?? $this->name_ar ?? '');
     }
 
     /**

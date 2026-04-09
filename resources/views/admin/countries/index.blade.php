@@ -104,7 +104,7 @@
                         <div class="col-md-6">
                             <div class="form-floating position-relative">
                                 <input type="text"
-                                       name="name"
+                                       name="name_ar"
                                        class="form-control ps-5"
                                        placeholder="Arabic Name"
                                        required>
@@ -117,7 +117,7 @@
                         <div class="col-md-6">
                             <div class="form-floating position-relative">
                                 <input type="text"
-                                       name="nicename"
+                                       name="name_en"
                                        class="form-control ps-5"
                                        placeholder="English Name"
                                        required>
@@ -248,8 +248,8 @@
                         <div class="col-md-6">
                             <div class="form-floating position-relative">
                                 <input type="text"
-                                       id="edit_name"
-                                       name="name"
+                                       id="edit_name_ar"
+                                       name="name_ar"
                                        class="form-control ps-5"
                                        placeholder="Name (Arabic)"
                                        required>
@@ -262,8 +262,8 @@
                         <div class="col-md-6">
                             <div class="form-floating position-relative">
                                 <input type="text"
-                                       id="edit_nicename"
-                                       name="nicename"
+                                       id="edit_name_en"
+                                       name="name_en"
                                        class="form-control ps-5"
                                        placeholder="Name (English)"
                                        required>
@@ -365,8 +365,8 @@
             columns: [
                 { data: 'flag' },
                 { data: 'landmark' },
-                { data: 'name' },
-                { data: 'nicename' },
+                { data: 'name_ar' },
+                { data: 'name_en' },
                 { data: 'numcode' },
                 { data: 'phonecode' },
                 { data: 'cities_count' },
@@ -383,19 +383,6 @@
         // Add Country Form Submit
         $('#addCountryForm').on('submit', function(e) {
             e.preventDefault();
-            $('input[name="flag"]').off('change').on('change', function(e){
-
-                const reader = new FileReader();
-
-                reader.onload = function(){
-                    $('#flagPreview')
-                        .attr('src', reader.result)
-                        .fadeIn();
-                }
-
-                reader.readAsDataURL(e.target.files[0]);
-
-            });
             submitAjaxForm({
                 formId: "addCountryForm",
                 url: "{{ route('admin.countries.store') }}",
@@ -484,26 +471,28 @@
                 const country = response.country;
                 console.log(country);
                 $('#edit_country_id').val(country.id);
-                $('#edit_name').val(country.name);
-                $('#edit_nicename').val(country.nicename);
+                $('#edit_name_ar').val(country.name_ar);
+                $('#edit_name_en').val(country.name_en);
                 $('#edit_numcode').val(country.numcode);
                 $('#edit_phonecode').val(country.phonecode);
-                $('#edit_active').prop('checked', country.active);
+                $('#edit_active').prop('checked', country.active == 1);
 
                 // Show current flag
+                let flagPreviewDiv = $('#editCountryForm input[name="flag"]').closest('.form-group').find('.current-image-preview');
                 if (country.flag) {
-                    $('#editCountryForm .current-image-preview img').attr('src', response.flag_url);
-                    $('#editCountryForm .current-image-preview').show();
+                    flagPreviewDiv.find('img').attr('src', response.flag_url);
+                    flagPreviewDiv.show();
                 } else {
-                    $('#editCountryForm .current-image-preview').hide();
+                    flagPreviewDiv.hide();
                 }
 
                 // Show current landmark image
+                let landmarkPreviewDiv = $('#editCountryForm input[name="landmark_image"]').closest('.form-group').find('.current-image-preview');
                 if (country.landmark_image) {
-                    $('#editCountryForm .landmark_image-preview img').attr('src', response.landmark_image_url);
-                    $('#editCountryForm .landmark_image-preview').show();
+                    landmarkPreviewDiv.find('img').attr('src', response.landmark_image_url);
+                    landmarkPreviewDiv.show();
                 } else {
-                    $('#editCountryForm .landmark_image-preview').hide();
+                    landmarkPreviewDiv.hide();
                 }
 
                 $('#editCountryModal').modal('show');

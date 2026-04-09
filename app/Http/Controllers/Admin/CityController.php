@@ -15,7 +15,8 @@ class CityController extends Controller
      */
     public function index()
     {
-        $column = app()->getLocale() === 'ar' ? 'name' : 'nicename';
+        $locale = app()->getLocale();
+        $column = $locale === 'ar' ? 'name_ar' : 'name_en';
         $countries = Country::active()->orderBy($column)->get();
 
         $stats = [
@@ -184,7 +185,10 @@ class CityController extends Controller
      */
     public function byCountry(Country $country)
     {
-        $cities = $country->cities()->active()->orderBy('name_' . app()->getLocale())->get(['id', 'name_ar', 'name_en']);
+        $locale = app()->getLocale();
+        $orderBy = $locale === 'ar' ? 'title_ar' : 'title_en';
+
+        $cities = $country->cities()->active()->orderBy($orderBy)->get(['id', 'title_ar', 'title_en']);
 
         return response()->json($cities);
     }

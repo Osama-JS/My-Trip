@@ -33,13 +33,13 @@ class CountryController extends Controller
             $data = $countries->map(function ($country) {
                 return [
                     'id' => $country->id,
-                    'flag' => '<img src="' . $country->flag_url . '" alt="' . $country->nicename . '" class="rounded-circle" width="40" height="40" style="object-fit: cover;">',
-                    'name' => $country->name,
-                    'nicename' => $country->nicename,
+                    'flag' => '<img src="' . $country->flag_url . '" alt="' . ($country->name_en ?? $country->name_ar) . '" class="rounded-circle" width="40" height="40" style="object-fit: cover;">',
+                    'name_ar' => $country->name_ar,
+                    'name_en' => $country->name_en,
                     'numcode' => '<span class="badge badge-light">' . $country->numcode . '</span>',
                     'phonecode' => $country->phonecode ?? '---',
                     'cities_count' => '<span class="badge badge-primary">' . $country->cities_count . '</span>',
-                    'landmark' => '<img src="' . $country->landmark_image_url . '" alt="' . $country->nicename . '" class="rounded" width="50" height="35" style="object-fit: cover;">',
+                    'landmark' => '<img src="' . $country->landmark_image_url . '" alt="' . ($country->name_en ?? $country->name_ar) . '" class="rounded" width="50" height="35" style="object-fit: cover;">',
                     'status' => $country->active
                         ? '<span class="badge badge-success">' . __('Active') . '</span>'
                         : '<span class="badge badge-danger">' . __('Inactive') . '</span>',
@@ -76,8 +76,8 @@ class CountryController extends Controller
         ]); 
         
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'nicename' => 'required|string|max:255',
+            'name_ar' => 'required|string|max:255',
+            'name_en' => 'required|string|max:255',
             'numcode' => 'required|string|max:10|unique:countries,numcode',
             'phonecode' => 'nullable|string|max:10',
             'flag' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
@@ -89,7 +89,7 @@ class CountryController extends Controller
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
-        $data = $request->only(['name', 'nicename', 'numcode', 'phonecode']);
+        $data = $request->only(['name_ar', 'name_en', 'numcode', 'phonecode']);
         $data['active'] = $request->boolean('active');
 
         // Handle flag upload
@@ -131,20 +131,20 @@ class CountryController extends Controller
     public function update(Request $request, Country $country)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'nicename' => 'required|string|max:255',
+            'name_ar' => 'required|string|max:255',
+            'name_en' => 'required|string|max:255',
             'numcode' => 'required|string|max:10|unique:countries,numcode,' . $country->id,
             'phonecode' => 'nullable|string|max:10',
             'flag'      => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'landmark_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'active' => 'boolean',
+            'active' => 'sometimes|boolean',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
-        $data = $request->only(['name', 'nicename', 'numcode', 'phonecode']);
+        $data = $request->only(['name_ar', 'name_en', 'numcode', 'phonecode']);
         $data['active'] = $request->boolean('active', true);
 
         // Handle flag upload
@@ -215,9 +215,25 @@ class CountryController extends Controller
      */
     public function getActiveCountries()
     {
-        $countries = Country::active()->orderBy('name_' . app()->getLocale())->get(['id', 'name', 'nicename']);
+        $locale = app()->getLocale();
+        $orderBy = $locale === 'ar' ? 'name_ar' : 'name_en';
+
+        $countries = Country::active()->orderBy($orderBy)->get(['id', 'name_ar', 'name_en']);
 
         return response()->json($countries);
+    }
+
+    /**
+     * Show the form for editing the specified country.
+     */
+    public function edit(Country $country)
+    {
+        return response()->json([
+            'success' => true,
+            'country' => $country,
+            'flag_url' => $country->flag_url,
+            'landmark_image_url' => $country->landmark_image_url,
+        ]);
     }
 
 }
