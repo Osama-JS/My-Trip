@@ -78,6 +78,10 @@ class CompanyController extends Controller
             'phone_code' => 'nullable|string|max:10',
             'notes'  => 'nullable|string',
             'active' => 'sometimes|boolean',
+            'bank_name' => 'nullable|string|max:255',
+            'beneficiary_name' => 'nullable|string|max:255',
+            'account_number' => 'nullable|string|max:255',
+            'iban_number' => 'nullable|string|max:255',
         ]);
 
         if ($request->hasFile('logo')) {
@@ -122,6 +126,10 @@ class CompanyController extends Controller
             'phone_code' => 'nullable|string|max:10',
             'notes' => 'nullable',
             'active' => 'sometimes|boolean',
+            'bank_name' => 'nullable|string|max:255',
+            'beneficiary_name' => 'nullable|string|max:255',
+            'account_number' => 'nullable|string|max:255',
+            'iban_number' => 'nullable|string|max:255',
         ]);
 
         if ($request->hasFile('logo')) {
@@ -131,7 +139,7 @@ class CompanyController extends Controller
             $validated['logo'] = $request->file('logo')->store('companies/logos', 'public');
         }
 
-        $data = $request->only(['name','en_name', 'email', 'phone','phone_code', 'notes']);
+        $data = $request->only(['name','en_name', 'email', 'phone','phone_code', 'notes', 'bank_name', 'beneficiary_name', 'account_number', 'iban_number']);
         $data['active'] = $request->boolean('active');
         $company->update($data);
 
