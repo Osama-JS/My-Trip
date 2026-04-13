@@ -244,13 +244,75 @@
     <div class="card">
         @if($method === 'bank_transfer')
             <div class="payment-section-title">
-                <i class="fas fa-university"></i> التحويل البنكي
+                <i class="fas fa-university"></i> اختر الحساب البنكي للتحويل
             </div>
             
-            <div class="bank-details">
-                <p><strong>اسم البنك:</strong> بنك راجحي</p>
-                <p><strong>رقم الآيبان:</strong> SA12345678901234567890</p>
-                <p><strong>اسم المستفيد:</strong> شركة وجهتك السياحية</p>
+            <style>
+                .bank-cards { display: grid; gap: 15px; margin-bottom: 25px; }
+                .bank-card { 
+                    background: rgba(255,255,255,0.05); 
+                    border: 1px solid var(--border); 
+                    border-radius: 20px; 
+                    padding: 15px; 
+                    cursor: pointer; 
+                    transition: all 0.3s ease;
+                    position: relative;
+                    display: flex;
+                    align-items: center;
+                    gap: 15px;
+                }
+                .bank-card:hover { border-color: var(--primary-light); background: rgba(255,255,255,0.08); }
+                .bank-card.selected { 
+                    border-color: var(--primary); 
+                    background: rgba(79, 70, 229, 0.15); 
+                    box-shadow: 0 0 15px rgba(79, 70, 229, 0.3);
+                }
+                .bank-card.selected::after {
+                    content: '\f058';
+                    font-family: 'Font Awesome 6 Free';
+                    font-weight: 900;
+                    color: var(--primary);
+                    position: absolute;
+                    top: 10px;
+                    left: 10px;
+                }
+                .bank-logo-img { width: 50px; height: 50px; border-radius: 12px; object-fit: contain; background: white; padding: 5px; }
+                .bank-info { flex: 1; }
+                .bank-name-label { font-weight: 700; display: block; margin-bottom: 4px; font-size: 0.95rem; }
+                .bank-iban-label { font-family: monospace; font-size: 0.85rem; color: var(--text-muted); }
+                .copy-btn {
+                    padding: 8px 12px;
+                    border-radius: 10px;
+                    background: rgba(255,255,255,0.1);
+                    border: none;
+                    color: white;
+                    font-size: 0.8rem;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                }
+                .copy-btn:hover { background: var(--primary); }
+                .copy-btn.copied { background: var(--success); }
+            </style>
+
+            <div class="bank-cards">
+                @foreach($bankAccounts as $account)
+                    <div class="bank-card @if($loop->first) selected @endif" data-id="{{ $account->id }}" onclick="selectBank(this)">
+                        <img src="{{ $account->logo_path ? asset('storage/'.$account->logo_path) : 'https://cdn-icons-png.flaticon.com/512/2830/2830284.png' }}" class="bank-logo-img">
+                        <div class="bank-info">
+                            <span class="bank-name-label">{{ $account->bank_name }}</span>
+                            <span class="bank-iban-label">{{ $account->iban }}</span>
+                            <div class="mt-2 d-flex gap-2 align-items-center">
+                                <span class="text-muted" style="font-size: 0.75rem;">{{ $account->beneficiary_name }}</span>
+                                <button type="button" class="copy-btn" onclick="copyIBAN('{{ $account->iban }}', this); event.stopPropagation();">
+                                    <i class="far fa-copy"></i> نسخ الآيبان
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
             </div>
 
             <div class="upload-section">
@@ -258,10 +320,16 @@
                     @csrf
                     <input type="hidden" name="booking_id" value="{{ $booking->id }}">
                     <input type="hidden" name="type" value="{{ $booking_type }}">
+                    <input type="hidden" name="bank_account_id" id="selected_bank_id" value="{{ $bankAccounts->first()->id ?? '' }}">
                     
                     <div class="mb-3">
                         <label class="info-label mb-2 d-block">اسم المحول</label>
                         <input type="text" name="sender_name" class="wpwl-control" style="width:100%" required placeholder="أدخل اسم المحول">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="info-label mb-2 d-block">رقم الإيصال (اختياري)</label>
+                        <input type="text" name="receipt_number" class="wpwl-control" style="width:100%" placeholder="رقم العملية البنكية">
                     </div>
 
                     <div class="mb-3">
@@ -373,6 +441,22 @@
     function updateFileName(input) {
         const fileName = input.files[0] ? input.files[0].name : "اضغط هنا لرفع الوثيقة";
         document.getElementById('file-name').textContent = fileName;
+    }
+
+    function selectBank(element) {
+        $('.bank-card').removeClass('selected');
+        $(element).addClass('selected');
+        $('#selected_bank_id').val($(element).data('id'));
+    }
+
+    function copyIBAN(iban, btn) {
+        navigator.clipboard.writeText(iban).then(() => {
+            const originalText = $(btn).html();
+            $(btn).addClass('copied').html('<i class="fas fa-check"></i> تم النسخ');
+            setTimeout(() => {
+                $(btn).removeClass('copied').html(originalText);
+            }, 2000);
+        });
     }
 
     $(document).ready(function() {

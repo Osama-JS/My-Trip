@@ -215,14 +215,13 @@
                             </div>
                         </div>
 
-                        <form action="{{ route('book.trip') }}" method="POST" class="fe-booking-form">
-                            @csrf
+                        <form action="{{ route('trips.booking.form') }}" method="GET" class="fe-booking-form">
                             <input type="hidden" name="trip_id" value="{{ $trip->id }}">
                             
-                            <div class="form-group">
-                                <label>{{ __('Travel Date') }}</label>
-                                <input type="date" name="booking_date" class="fe-booking-input" required min="{{ date('Y-m-d') }}">
-                            </div>
+                            @php
+                                $defaultDate = $trip->expiry_date ? $trip->expiry_date->format('Y-m-d') : date('Y-m-d', strtotime('+2 days'));
+                            @endphp
+                            <input type="hidden" name="booking_date" value="{{ $defaultDate }}">
 
                             <div class="form-group">
                                 <label>{{ __('Number of Travelers') }}</label>

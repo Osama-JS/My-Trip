@@ -9,6 +9,7 @@ class BankTransfer extends Model
     protected $fillable = [
         'trip_booking_id',
         'user_id',
+        'bank_account_id',
         'receipt_number',
         'sender_name',
         'receipt_image',
@@ -36,5 +37,10 @@ class BankTransfer extends Model
     public function reviewer()
     {
         return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    public function bankAccount()
+    {
+        return $this->belongsTo(BankAccount::class, 'bank_account_id');
     }
 }

@@ -1,416 +1,433 @@
-@extends('frontend.customer.layouts.customer-layout')
-
-@section('title', __('Complete Payment'))
-@section('page-title', __('Complete Payment'))
-
-@push('styles')
-<style>
-:root {
-    --accent-color: #6a11cb;
-    --accent-color-light: #c7d2fe;
-    --card-bg: #ffffff;
-    --card-shadow: rgba(0,0,0,.08);
-    --text-primary: #111827;
-    --text-secondary: #6b7280;
-    --text-muted: #9ca3af;
-    --bg-light: #f4f6f9;
-}
-
-/* Grid */
-.checkout-grid {
-    display: grid;
-    grid-template-columns: 1fr 360px;
-    gap: 24px;
-    align-items: start;
-}
-@media (max-width: 960px) { .checkout-grid { grid-template-columns: 1fr; } }
-
-/* Card */
-.checkout-card, .order-summary-card {
-    background: var(--card-bg);
-    border-radius: 20px;
-    box-shadow: 0 8px 25px var(--card-shadow);
-    overflow: hidden;
-    transition: transform .25s, box-shadow .25s;
-}
-.checkout-card:hover, .order-summary-card:hover { transform: translateY(-3px); box-shadow: 0 12px 35px rgba(0,0,0,.1); }
-
-/* Card header */
-.checkout-card-header {
-    padding: 22px 24px;
-    border-bottom: 1px solid #e5e7eb;
-    font-weight: 700;
-    font-size: 1rem;
-    color: var(--text-primary);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-.checkout-card-header i { color: var(--accent-color); }
-
-/* Payment Methods */
-.payment-methods {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 16px;
-}
-.payment-method-option input[type=radio] { display: none; }
-.payment-method-label {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 18px 12px;
-    border: 2px solid #e5e7eb;
-    border-radius: 16px;
-    cursor: pointer;
-    text-align: center;
-    transition: all .25s;
-    background: #fff;
-}
-.payment-method-label:hover { border-color: var(--accent-color); background: var(--accent-color-light); }
-.payment-method-option input:checked + .payment-method-label {
-    border-color: var(--accent-color);
-    background: var(--accent-color-light);
-    box-shadow: 0 0 0 3px rgba(106,17,203,.12);
-}
-.payment-method-label img { height: 36px; object-fit: contain; }
-.payment-method-label .method-name { font-size: .85rem; font-weight: 700; color: var(--text-primary); }
-.payment-method-label .method-desc { font-size: .75rem; color: var(--text-secondary); }
-
-/* Bank Transfer Form */
-#bankTransferForm {
-    display: none;
-    margin-top: 22px;
-    padding: 20px;
-    border: 1px solid #e5e7eb;
-    border-radius: 16px;
-    background: var(--bg-light);
-}
-#bankTransferForm input, #bankTransferForm textarea {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #d1d5db;
-    border-radius: 12px;
-    margin-bottom: 14px;
-}
-
-/* Order Summary */
-.order-summary-card {
-    position: sticky;
-    top: 80px;
-    border-radius: 20px;
-    overflow: hidden;
-}
-.order-summary-trip {
-    padding: 20px 22px;
-    border-bottom: 1px solid #e5e7eb;
-}
-.order-trip-img, .order-trip-img-placeholder { border-radius: 16px; height: 160px; object-fit: cover; width: 100%; margin-bottom: 14px; }
-.order-trip-img-placeholder { display: flex; align-items: center; justify-content: center; font-size: 2.8rem; background: linear-gradient(135deg, #f1f5f9, #e2e8f0); color: #94a3b8; }
-.order-trip-name { font-weight: 700; font-size: 1rem; color: var(--text-primary); }
-.order-trip-meta { font-size: .82rem; color: var(--text-secondary); margin-top: 4px; }
-
-/* Pricing rows */
-.order-price-rows { padding: 20px 22px; border-bottom: 1px solid #e5e7eb; }
-.order-price-row { display: flex; justify-content: space-between; font-size: .9rem; margin-bottom: 10px; }
-.order-price-row .label { color: var(--text-secondary); }
-.order-price-row .value { font-weight: 600; color: var(--text-primary); }
-.order-total { padding: 20px 22px; display: flex; justify-content: space-between; align-items: center; background: var(--bg-light); border-radius: 0 0 20px 20px; }
-.order-total .total-label { font-weight: 700; color: var(--text-primary); }
-.order-total .total-amount { font-size: 1.5rem; font-weight: 700; color: var(--accent-color); }
-
-/* Pay Button */
-.btn-pay {
-    width: calc(100% - 44px);
-    margin: 18px 22px;
-    padding: 16px;
-    background: var(--accent-color);
-    color: #fff;
-    border: none;
-    border-radius: 14px;
-    font-size: 1rem;
-    font-weight: 700;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    transition: background .25s, transform .25s;
-}
-.btn-pay:hover { background: #4e0dbb; transform: translateY(-2px); }
-.btn-pay:disabled { opacity: .6; cursor: not-allowed; }
-
-/* Notes & Back Link */
-.secure-note { text-align: center; padding: 16px 20px 0; font-size: .78rem; color: var(--text-muted); display: flex; align-items: center; justify-content: center; gap: 6px; }
-.back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--text-secondary); text-decoration: none; font-size: .9rem; margin-bottom: 22px; font-weight: 600; transition: color .25s; }
-.back-link:hover { color: var(--accent-color); }
-
-</style>
-@endpush
+@extends('frontend.layouts.app')
 
 @section('content')
 
-<a href="{{ route('customer.bookings.show', $booking->id) }}" class="back-link">
-    <i class="fas fa-arrow-{{ app()->isLocale('ar') ? 'right' : 'left' }}"></i>
-    {{ __('Back to Booking Details') }}
-</a>
+{{-- Hero Background --}}
+<div class="pay-page ">
+    <div class="pay-page__bg"></div>
 
-<div class="checkout-grid">
+    <div class="fe-container pay-page__inner">
 
-    {{-- LEFT: Payment Method Selection --}}
-    <div>
-        <div class="checkout-card">
-            <div class="checkout-card-header">
-                <i class="fas fa-credit-card"></i> {{ __('Select Payment Method') }}
-            </div>
-            <div class="checkout-card-body">
-                    <form id="paymentForm" enctype="multipart/form-data">
-                    @csrf
-                    <input type="hidden" name="booking_id" value="{{ $booking->id }}">
-                    <input type="hidden" name="method" id="selectedMethod" value="">
+        {{-- ── Breadcrumb Progress ── --}}
+        <div class="pay-steps " style="margin-top: 50px;">
+            <div class="pay-steps__item done"><span class="pay-steps__bubble"><i class="fas fa-check"></i></span><span class="pay-steps__label">{{ __('Search') }}</span></div>
+            <div class="pay-steps__line done"></div>
+            <div class="pay-steps__item done"><span class="pay-steps__bubble"><i class="fas fa-check"></i></span><span class="pay-steps__label">{{ __('Guest Details') }}</span></div>
+            <div class="pay-steps__line active"></div>
+            <div class="pay-steps__item active"><span class="pay-steps__bubble">3</span><span class="pay-steps__label">{{ __('Payment') }}</span></div>
+        </div>
 
-                    <div class="payment-methods">
+        <div class="pay-grid">
 
-                        {{-- Mada --}}
-                        <div class="payment-method-option">
-                            <input type="radio" name="method" id="m_mada" value="mada" onchange="setMethod('mada')">
-                            <label for="m_mada" class="payment-method-label">
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/f/fb/Mada_Logo.svg" alt="Mada">
-                                <span class="method-name">Mada</span>
-                                <span class="method-desc">{{ __('Mada Card') }}</span>
-                            </label>
+            {{-- ── LEFT: Methods ── --}}
+            <div class="pay-grid__left">
+                <div class="pay-card">
+                    <div class="pay-card__head">
+                        <div class="pay-card__icon-wrap"><i class="fas fa-lock"></i></div>
+                        <div>
+                            <h1 class="pay-card__title">{{ __('Secure Checkout') }}</h1>
+                            <p class="pay-card__sub">{{ __('Pick a payment method to complete your booking.') }}</p>
                         </div>
+                    </div>
 
-                        {{-- Visa / Mastercard --}}
-                        <div class="payment-method-option">
-                            <input type="radio" name="method" id="m_visa_master" value="visa_master" onchange="setMethod('visa_master')">
-                            <label for="m_visa_master" class="payment-method-label">
-                                <div style="display:flex; gap:8px;">
-                                    <img src="https://t3.ftcdn.net/jpg/03/33/21/62/240_F_333216210_HjHUw1jjcYdGr3rRtYm3W1DIXAElEFJL.jpg" alt="Visa" style="height:20px;">
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" style="height:20px;">
+                    <div class="pay-methods">
+
+                        {{-- Card --}}
+                        <a href="{{ route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'visa_master', 'type' => 'trip']) }}" class="pay-method">
+                            <div class="pay-method__left">
+                                <div class="pay-method__img-wrap card-wrap">
+                                    <div class="card-chips">
+                                        <img src="https://www.logo.wine/a/logo/Visa_Inc./Visa_Inc.-Logo.wine.svg" alt="Visa">
+                                        <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard">
+                                        <img src="https://upload.wikimedia.org/wikipedia/commons/f/fb/Mada_Logo.svg" alt="Mada">
+                                    </div>
                                 </div>
-                                <span class="method-name">Visa / Master</span>
-                                <span class="method-desc">{{ __('Instant Payment') }}</span>
-                            </label>
-                        </div>
+                                <div class="pay-method__info">
+                                    <span class="pay-method__name">{{ __('Credit / Debit Card') }}</span>
+                                    <span class="pay-method__desc">{{ __('Visa, Mastercard, Mada — instant confirmation') }}</span>
+                                </div>
+                            </div>
+                            <span class="pay-method__arrow"><i class="fas fa-chevron-right"></i></span>
+                        </a>
 
-                        {{-- Tamara --}}
-                        <div class="payment-method-option">
-                            <input type="radio" name="method" id="m_tamara" value="tamara" onchange="setMethod('tamara')">
-                            <label for="m_tamara" class="payment-method-label">
-                                <img src="https://cdn.tamara.co/assets/svg/tamara-logo-badge-ar.svg" alt="Tamara">
-                                <span class="method-name">Tamara</span>
-                                <span class="method-desc">{{ __('3 Installments') }}</span>
-                            </label>
-                        </div>
+                        {{-- Tap --}}
+                        <a href="{{ route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'tap', 'type' => 'trip']) }}" class="pay-method">
+                            <div class="pay-method__left">
+                                <div class="pay-method__img-wrap" style="background:#f5f8ff;">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Tap_Payments_Logo.svg/512px-Tap_Payments_Logo.svg.png" alt="Tap" style="height:26px;">
+                                </div>
+                                <div class="pay-method__info">
+                                    <span class="pay-method__name">{{ __('Tap Payment') }}</span>
+                                    <span class="pay-method__desc">{{ __('Fast, secure global gateway') }}</span>
+                                </div>
+                            </div>
+                            <span class="pay-method__arrow"><i class="fas fa-chevron-right"></i></span>
+                        </a>
 
-                        {{-- Bank Transfer --}}
-                        <div class="payment-method-option">
-                            <input type="radio" name="method" id="m_bank_transfer" value="bank_transfer" onchange="setMethod('bank_transfer')">
-                            <label for="m_bank_transfer" class="payment-method-label">
-                                <i class="fas fa-university" style="font-size: 24px; color: #4b5563;"></i>
-                                <span class="method-name">{{ __('Bank Transfer') }}</span>
-                                <span class="method-desc">{{ __('Manual Review') }}</span>
-                            </label>
+                        {{-- Installments Label --}}
+                        <div class="pay-divider"><span>{{ __('Pay in installments') }}</span></div>
+
+                        <div class="pay-mini-grid">
+                            <a href="{{ route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'tamara', 'type' => 'trip']) }}" class="pay-mini">
+                                <img src="https://cdn.tamara.co/assets/svg/tamara-logo-badge-en.svg" alt="Tamara">
+                                <span>{{ __('Split × 3 or 4') }}</span>
+                            </a>
+                            <a href="{{ route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'tabby', 'type' => 'trip']) }}" class="pay-mini">
+                                <img src="https://www.pfgrowth.com/wp-content/uploads/2023/03/tabby-logo-1.png" alt="Tabby" style="background:#39ffbd; padding:3px 6px; border-radius:5px;">
+                                <span>{{ __('Pay later, no interest') }}</span>
+                            </a>
                         </div>
 
                     </div>
 
-                    {{-- Bank Transfer Form (Hidden by default) --}}
-                    <div id="bankTransferForm" style="display:none; margin-top:20px; padding:15px; border:1px solid #e5e7eb; border-radius:10px; background:#f9fafb;">
-                        <h4 style="font-size: 0.95rem; margin-bottom: 12px; color: #374151;">
-                            <i class="fas fa-info-circle"></i> {{ __('Bank Transfer Details') }}
-                        </h4>
-
-                        <div class="form-group" style="margin-bottom: 15px;">
-                            <label for="receipt_image" style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:5px;">
-                                {{ __('Upload Receipt Copy') }} <span style="color:red">*</span>
-                            </label>
-                            <input type="file" name="receipt_image" id="receipt_image" accept="image/*,.pdf" style="width:100%; padding:8px; background:#fff; border:1px solid #d1d5db; border-radius:6px;" required disabled>
-                        </div>
-
-                        <div class="form-group" style="margin-bottom: 15px;">
-                            <label for="sender_name" style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:5px;">
-                                {{ __('Sender / Account Name') }} <span style="color:red">*</span>
-                            </label>
-                            <input type="text" name="sender_name" id="sender_name" class="form-control" style="width:100%; padding:8px; border:1px solid #d1d5db; border-radius:6px;" placeholder="{{ __('Name matching the bank account') }}" required disabled>
-                        </div>
-
-                        <div class="form-group" style="margin-bottom: 15px;">
-                            <label for="receipt_number" style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:5px;">
-                                {{ __('Reference / Receipt Number') }}
-                            </label>
-                            <input type="text" name="receipt_number" id="receipt_number" class="form-control" style="width:100%; padding:8px; border:1px solid #d1d5db; border-radius:6px;" placeholder="{{ __('Optional reference number') }}" disabled>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="notes" style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:5px;">
-                                {{ __('Notes') }}
-                            </label>
-                            <textarea name="notes" id="notes" class="form-control" rows="2" style="width:100%; padding:8px; border:1px solid #d1d5db; border-radius:6px;" placeholder="{{ __('Any additional information') }}" disabled></textarea>
-                        </div>
+                    <div class="pay-trust">
+                        <span><i class="fas fa-shield-alt"></i> {{ __('256-bit SSL') }}</span>
+                        <span><i class="fas fa-lock"></i> {{ __('PCI-DSS Level 1') }}</span>
+                        <span><i class="fas fa-check-circle"></i> {{ __('Encrypted') }}</span>
                     </div>
-
-                    <div id="methodError" style="display:none;margin-top:14px;padding:10px 14px;background:#fef2f2;border-radius:8px;color:#b91c1c;font-size:.85rem;">
-                        <i class="fas fa-exclamation-circle"></i> {{ __('Please select a payment method first.') }}
-                    </div>
-                </form>
+                </div>
             </div>
-        </div>
-    </div>
 
-    {{-- RIGHT: Order Summary --}}
-    <div>
-        <div class="order-summary-card">
-            <div class="order-summary-trip">
-                @php $trip = $booking->trip; $img = $trip?->images?->first(); @endphp
-                @if($img)
-                    <img src="{{ asset('storage/' . $img->image_path) }}" class="order-trip-img" alt="">
-                @else
-                    <div class="order-trip-img-placeholder"><i class="fas fa-map-marked-alt"></i></div>
-                @endif
-                <div class="order-trip-name">{{ $trip?->title ?? __('Trip') }}</div>
-                <div class="order-trip-meta">
-                    <i class="fas fa-users"></i> {{ $booking->tickets_count }} {{ __('Passenger') }}
-                    @if($trip?->toCountry)
-                        &nbsp;·&nbsp;<i class="fas fa-globe"></i> {{ $trip->toCountry->name }}
+            {{-- ── RIGHT: Summary ── --}}
+            <div class="pay-grid__right">
+                <div class="pay-summary">
+                    <div class="pay-summary__tag"><i class="fas fa-suitcase-rolling"></i>  {{ __('Trip Booking') }}</div>
+                    
+                    @php 
+                        $trip = $booking->trip; 
+                        $img = $trip?->images?->first(); 
+                        $locale = app()->getLocale();
+                        $title = $trip?->{'title_'.$locale} ?? $trip?->title_en ?? __('Trip Booking');
+                        $desc = $trip?->{'description_'.$locale} ?? $trip?->description_en ?? '';
+                    @endphp
+                    
+                    @if($img)
+                    <div class="pay-summary__img-wrap" style="margin-bottom: 20px; border-radius: 16px; overflow: hidden; height: 160px;">
+                        <img src="{{ asset('storage/' . $img->image_path) }}" alt="{{ $title }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
                     @endif
+
+                    <h2 class="pay-summary__name">{{ $title }}</h2>
+                    <p class="pay-summary__loc"><i class="fas fa-map-marker-alt" style="color:#f97316;"></i> 
+                        @if($trip?->toCity) {{ $trip->toCity->{'city_name_'.$locale} ?? $trip->toCity->city_name_en }}, @endif 
+                        @if($trip?->toCountry) {{ $trip->toCountry->{'name_'.$locale} ?? $trip->toCountry->name_en ?? $trip->toCountry->name }} @endif
+                    </p>
+
+                    @if($desc)
+                    <p class="pay-summary__desc" style="font-size: 0.85rem; color: rgba(255,255,255,0.7); margin-bottom: 24px; line-height: 1.5; text-align: justify;">
+                        {{ \Illuminate\Support\Str::limit(strip_tags($desc), 100) }}
+                    </p>
+                    @endif
+
+                    <div class="pay-summary__dates">
+                        <div class="pay-summary__date-box">
+                            <span>{{ __('Booking Date') }}</span>
+                            <strong>{{ \Carbon\Carbon::parse($booking->booking_date)->format('d M') }}</strong>
+                            <small>{{ \Carbon\Carbon::parse($booking->booking_date)->format('Y') }}</small>
+                        </div>
+                        <div class="pay-summary__date-divider"><i class="fas fa-calendar-alt" style="font-size:1.2rem;"></i></div>
+                        <div class="pay-summary__date-box pay-summary__date-box--right">
+                            <span>{{ __('Duration') }}</span>
+                            <strong>{{ $booking->trip?->duration ?? 1 }} {{ __('Days') }}</strong>
+                            <small>&nbsp;</small>
+                        </div>
+                    </div>
+
+                    <div class="pay-summary__pill">
+                        <i class="fas fa-users"></i> {{ $booking->tickets_count }} {{ __('Passengers') }}
+                    </div>
+
+                    <div class="pay-summary__amount">
+                        <span>{{ __('Total Due') }}</span>
+                        <div class="pay-summary__price">
+                            {{ number_format($booking->total_price, 2) }}
+                            <sup>{{ env('HYPERPAY_CURRENCY', 'SAR') }}</sup>
+                        </div>
+                    </div>
+
+                    <div class="pay-summary__refund">
+                        <i class="fas fa-shield-alt"></i> {{ __('Secure and Encrypted Payment') }}
+                    </div>
                 </div>
             </div>
 
-            <div class="order-price-rows">
-                <div class="order-price-row">
-                    <span class="label">{{ __('Booking No') }}</span>
-                    <span class="value">#{{ $booking->id }}</span>
-                </div>
-                <div class="order-price-row">
-                    <span class="label">{{ __('Passengers Count') }}</span>
-                    <span class="value">{{ $booking->tickets_count }}</span>
-                </div>
-            </div>
+        </div>{{-- /pay-grid --}}
+    </div>{{-- /container --}}
+</div>{{-- /pay-page --}}
 
-            <div class="order-total">
-                <span class="total-label">{{ __('Total') }}</span>
-                <span class="total-amount">{{ number_format($booking->total_price, 0) }} {{ __('SAR') }}</span>
-            </div>
+<style>
+/* ─── Root ─────── */
+.pay-page {
+    position: relative;
+    min-height: 100vh;
+    padding: 70px 0 80px;
+    font-family: 'Outfit', 'Cairo', sans-serif;
+    overflow: hidden;
+}
+.pay-page__bg {
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, #0a2540 0%, #0f4c81 55%, #1565c0 100%);
+    z-index: 0;
+}
+.pay-page__bg::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 70% 20%, rgba(255,255,255,.07) 0%, transparent 60%),
+                radial-gradient(ellipse at 20% 90%, rgba(0,100,200,.15) 0%, transparent 50%);
+}
+.pay-page__inner { position: relative; z-index: 1; }
 
-            <button class="btn-pay" id="payBtn" onclick="submitPayment()" type="button">
-                <i class="fas fa-lock"></i> {{ __('Pay Now') }}
-            </button>
+/* ─── Steps ─────── */
+.pay-steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 50px;
+}
+.pay-steps__item {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.pay-steps__bubble {
+    width: 44px; height: 44px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.25);
+    background: rgba(255,255,255,.1);
+    backdrop-filter: blur(8px);
+    color: rgba(255,255,255,.5);
+    font-weight: 700; font-size: 0.95rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .3s;
+}
+.pay-steps__item.done .pay-steps__bubble {
+    background: #10b981; border-color: #10b981; color: white;
+}
+.pay-steps__item.active .pay-steps__bubble {
+    background: white; border-color: white; color: #0f4c81;
+    box-shadow: 0 0 0 6px rgba(255,255,255,.15);
+}
+.pay-steps__label {
+    font-size: .75rem; font-weight: 700; color: rgba(255,255,255,.5);
+    text-transform: uppercase; letter-spacing: .5px;
+}
+.pay-steps__item.done .pay-steps__label,
+.pay-steps__item.active .pay-steps__label { color: rgba(255,255,255,.9); }
+.pay-steps__line {
+    flex: 1; max-width: 80px; height: 2px;
+    background: rgba(255,255,255,.15);
+    margin: 0 12px 22px;
+    transition: all .3s;
+}
+.pay-steps__line.done { background: #10b981; }
+.pay-steps__line.active { background: rgba(255,255,255,.4); }
 
-            <div class="secure-note">
-                <i class="fas fa-shield-alt"></i>
-                {{ __('Secure and Encrypted Payment') }}
-            </div>
-        </div>
-    </div>
+/* ─── Grid ─────── */
+.pay-grid {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 30px;
+    align-items: start;
+}
 
-</div>
+/* ─── Left Card ─────── */
+.pay-card {
+    background: rgba(255,255,255,.97);
+    border-radius: 28px;
+    padding: 44px 44px 36px;
+    box-shadow: 0 40px 80px rgba(0,0,0,.25);
+}
+.pay-card__head {
+    display: flex; align-items: flex-start; gap: 20px;
+    margin-bottom: 36px; padding-bottom: 28px;
+    border-bottom: 1px solid #f1f5f9;
+}
+.pay-card__icon-wrap {
+    width: 52px; height: 52px; flex-shrink: 0;
+    background: linear-gradient(135deg, #0f4c81, #1976d2);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 1.2rem;
+    box-shadow: 0 8px 20px rgba(15,76,129,.35);
+}
+.pay-card__title {
+    font-size: 1.65rem; font-weight: 900; color: #0f172a;
+    margin: 0 0 6px; letter-spacing: -.02em;
+}
+.pay-card__sub { color: #64748b; font-size: .95rem; margin: 0; }
+
+/* ─── Methods ─────── */
+.pay-methods { display: flex; flex-direction: column; gap: 12px; }
+
+.pay-method {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 22px;
+    background: #f8fafc;
+    border: 1.5px solid #e8edf3;
+    border-radius: 18px;
+    text-decoration: none !important;
+    transition: all .35s cubic-bezier(.175,.885,.32,1.275);
+    cursor: pointer;
+}
+.pay-method:hover {
+    background: white;
+    border-color: #0f4c81;
+    box-shadow: 0 8px 24px rgba(15,76,129,.12);
+    transform: translateY(-3px);
+}
+.pay-method--dark { background: #0d1117; border-color: #1c2638; }
+.pay-method--dark:hover { border-color: #555; box-shadow: 0 8px 24px rgba(0,0,0,.3); }
+.pay-method--dark .pay-method__arrow { color: rgba(255,255,255,.3); }
+.pay-method--dark:hover .pay-method__arrow { color: white; }
+
+.pay-method__left { display: flex; align-items: center; gap: 18px; }
+.pay-method__img-wrap {
+    width: 68px; height: 52px;
+    border-radius: 14px;
+    background: white;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid #e8edf3;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.card-chips { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; padding: 4px; }
+.card-chips img { height: 14px; object-fit: contain; }
+
+.pay-method__name {
+    display: block; font-size: 1rem; font-weight: 800; color: #0f172a; margin-bottom: 3px;
+}
+.pay-method--dark .pay-method__name { color: white; }
+.pay-method__desc { display: block; font-size: .82rem; color: #94a3b8; font-weight: 500; }
+
+.pay-method__arrow {
+    width: 36px; height: 36px;
+    background: white; border: 1px solid #e8edf3;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #cbd5e1; font-size: .8rem;
+    transition: all .3s; flex-shrink: 0;
+}
+.pay-method:hover .pay-method__arrow {
+    background: #0f4c81; border-color: #0f4c81; color: white;
+}
+
+/* ─── Divider ─────── */
+.pay-divider {
+    display: flex; align-items: center; gap: 15px;
+    margin: 8px 0;
+    color: #94a3b8; font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+}
+.pay-divider::before, .pay-divider::after {
+    content: ''; flex: 1; height: 1px; background: #e8edf3;
+}
+
+/* ─── Mini Methods ─────── */
+.pay-mini-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pay-mini {
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    padding: 18px 12px;
+    background: #f8fafc; border: 1.5px solid #e8edf3; border-radius: 16px;
+    text-decoration: none !important;
+    transition: all .3s;
+}
+.pay-mini:hover { border-color: #0f4c81; background: white; transform: translateY(-2px); }
+.pay-mini img { height: 22px; object-fit: contain; }
+.pay-mini span { font-size: .78rem; font-weight: 700; color: #475569; text-align: center; }
+
+/* ─── Trust ─────── */
+.pay-trust {
+    display: flex; justify-content: center; gap: 24px;
+    margin-top: 28px; padding-top: 24px;
+    border-top: 1px solid #f1f5f9;
+    color: #94a3b8; font-size: .78rem; font-weight: 600;
+}
+.pay-trust span { display: flex; align-items: center; gap: 6px; }
+.pay-trust i { color: #10b981; }
+
+/* ─── Summary Card ─────── */
+.pay-summary {
+    background: rgba(255,255,255,.09);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,.2);
+    border-radius: 28px;
+    padding: 36px;
+    position: sticky; top: 24px;
+    color: white;
+    box-shadow: 0 20px 60px rgba(0,0,0,.2);
+}
+.pay-summary__tag {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-size: .73rem; font-weight: 800; text-transform: uppercase; letter-spacing: .5px;
+    color: rgba(255,255,255,.85);
+    margin-bottom: 22px;
+}
+.pay-summary__name {
+    font-size: 1.6rem; font-weight: 950; color: white;
+    margin: 0 0 10px; letter-spacing: -.02em; line-height: 1.2;
+}
+.pay-summary__loc {
+    font-size: .9rem; color: rgba(255,255,255,.65); margin: 0 0 28px; display: flex; align-items: center; gap: 6px;
+}
+
+.pay-summary__dates {
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(255,255,255,.08); border-radius: 18px; padding: 20px;
+    margin-bottom: 16px; border: 1px solid rgba(255,255,255,.1);
+}
+.pay-summary__date-box { display: flex; flex-direction: column; }
+.pay-summary__date-box--right { text-align: end; align-items: flex-end; }
+.pay-summary__date-box span { font-size: .7rem; color: rgba(255,255,255,.5); font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
+.pay-summary__date-box strong { font-size: 1.4rem; font-weight: 900; color: white; line-height: 1; }
+.pay-summary__date-box small { font-size: .8rem; color: rgba(255,255,255,.55); font-weight: 600; }
+.pay-summary__date-divider { color: rgba(255,255,255,.3); font-size: 1.2rem; }
+
+.pay-summary__pill {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    background: rgba(255,255,255,.1); border-radius: 12px; padding: 10px 16px;
+    font-size: .85rem; font-weight: 700; color: rgba(255,255,255,.85);
+    margin-bottom: 28px;
+}
+.pay-summary__board {
+    font-size: .75rem; color: rgba(255,255,255,.55); font-weight: 500;
+    background: rgba(255,255,255,.08); padding: 2px 8px; border-radius: 6px;
+}
+
+.pay-summary__amount {
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2);
+    border-radius: 16px; padding: 20px 22px; margin-bottom: 16px;
+}
+.pay-summary__amount span { font-size: .8rem; font-weight: 700; color: rgba(255,255,255,.6); text-transform: uppercase; }
+.pay-summary__price {
+    font-size: 2.2rem; font-weight: 950; color: white; line-height: 1;
+}
+.pay-summary__price sup { font-size: .95rem; font-weight: 700; color: rgba(255,255,255,.7); margin-inline-start: 4px; vertical-align: super; }
+
+.pay-summary__refund {
+    display: flex; align-items: center; gap: 8px;
+    font-size: .78rem; color: rgba(255,255,255,.5); font-weight: 600;
+}
+.pay-summary__refund i { color: #10b981; }
+
+/* ─── RTL ─────── */
+[dir="rtl"] .pay-method:hover { transform: translateY(-3px); }
+[dir="rtl"] .pay-steps__line { margin: 0 12px 22px; }
+[dir="rtl"] .pay-summary__date-box--right { text-align: start; align-items: flex-start; }
+
+/* ─── Responsive ─────── */
+@media (max-width: 992px) {
+    .pay-grid { grid-template-columns: 1fr; }
+    .pay-summary { position: static; }
+    .pay-card { padding: 28px 22px; }
+}
+@media (max-width: 576px) {
+    .pay-page { padding: 50px 0 60px; }
+    .pay-steps__line { max-width: 40px; }
+    .pay-card__title { font-size: 1.3rem; }
+    .pay-trust { flex-wrap: wrap; gap: 12px; }
+}
+</style>
+
 @endsection
-
-@push('scripts')
-<script>
-let selectedMethod = '';
-
-function setMethod(method) {
-    selectedMethod = method;
-    document.getElementById('selectedMethod').value = method;
-    document.getElementById('methodError').style.display = 'none';
-
-    // Toggle Bank Transfer Form
-    const bankTransferForm = document.getElementById('bankTransferForm');
-    const b_inputs = bankTransferForm.querySelectorAll('input, textarea');
-
-    if (method === 'bank_transfer') {
-        bankTransferForm.style.display = 'block';
-        b_inputs.forEach(el => el.disabled = false);
-    } else {
-        bankTransferForm.style.display = 'none';
-        b_inputs.forEach(el => el.disabled = true);
-    }
-}
-
-function submitPayment() {
-    if (!selectedMethod) {
-        document.getElementById('methodError').style.display = 'block';
-        return;
-    }
-
-    const formElement = document.getElementById('paymentForm');
-    if (selectedMethod === 'bank_transfer' && !formElement.checkValidity()) {
-        formElement.reportValidity();
-        return;
-    }
-
-    const btn = document.getElementById('payBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> {{ __("Processing...") }}';
-
-    const bookingId = {{ $booking->id }};
-
-    // Bank Transfer (Multipart form data)
-    if (selectedMethod === 'bank_transfer') {
-        const formData = new FormData(formElement);
-
-        fetch('{{ route("payments.web.bank_transfer") }}', {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json',
-            },
-            body: formData
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.error === false) {
-                // Redirect to success or booking details
-                window.location.href = '{{ route("customer.bookings.show", $booking->id) }}?bank_transfer_submitted=1';
-            } else {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-lock"></i> {{ __("Pay Now") }}';
-                alert(data.message || '{{ __("An error occurred, please try again.") }}');
-            }
-        })
-        .catch(() => {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-lock"></i> {{ __("Pay Now") }}';
-            alert('{{ __("Connection error, please try again.") }}');
-        });
-        return;
-    }
-
-    // For redirect-based methods (Tamara)
-    if (['tamara'].includes(selectedMethod)) {
-        fetch('{{ route("payments.web.initiate") }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json',
-            },
-            body: JSON.stringify({ booking_id: bookingId, method: selectedMethod })
-        })
-        .then(r => r.json())
-        .then(data => {
-            const redirectUrl = data.checkout_url || data.redirect_url || data.payment_url || data.url;
-            if (redirectUrl) {
-                window.location.href = redirectUrl;
-            } else {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-lock"></i> {{ __("Pay Now") }}';
-                alert(data.message || '{{ __("An error occurred, please try again.") }}');
-            }
-        })
-        .catch(() => {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-lock"></i> {{ __("Pay Now") }}';
-        });
-    } else {
-        // HyperPay (Visa/Master/Mada) — redirect to existing web checkout
-        window.location.href = `{{ url('payments/checkout') }}/${bookingId}/${selectedMethod}`;
-    }
-}
-</script>
-@endpush

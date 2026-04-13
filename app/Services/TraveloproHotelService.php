@@ -444,31 +444,41 @@ class TraveloproHotelService
      */
     public function syncCities($startFrom = 1)
     {
-        // We fetch in smaller batches to avoid timeouts.
         $batchSize = 100;
         $from = $startFrom;
         $totalSynced = 0;
-        $maxCities = 10000; // Let's sync more cities for a start
         $retryLimit = 3;
+        $syncedCityCodes = [];
+
+        // --- FIRST PASS: English Names ---
+        Log::info("Starting Hotel Cities sync: English Pass from index {$from}");
         
-        while ($from < $maxCities) {
+        while (true) {
             $to = $from + $batchSize - 1;
-            
-            $attempts = 0;
             $cities = [];
+            $attempts = 0;
+
             while ($attempts < $retryLimit) {
                 try {
-                    $response = $this->getCities(['from' => $from, 'to' => $to]);
+                    $response = $this->getCities(['from' => $from, 'to' => $to, 'requiredLanguage' => 'ENG']);
                     $cities = $response['cities'] ?? $response['Cities'] ?? [];
-                    break; // Success
+                    if (!empty($cities)) break;
+                    
+                    // If response is successful but empty, it might be the end
+                    if (isset($response['cities']) || isset($response['Cities'])) {
+                        break; 
+                    }
                 } catch (\Exception $e) {
                     $attempts++;
-                    Log::warning("Batch sync attempt {$attempts} failed for range {$from}-{$to}: " . $e->getMessage());
-                    sleep(2); // Wait before retry
+                    Log::warning("Batch sync (EN) attempt {$attempts} failed for range {$from}-{$to}: " . $e->getMessage());
+                    sleep(2);
                 }
             }
 
-            if (empty($cities)) break;
+            if (empty($cities)) {
+                Log::info("No more cities found at index {$from}. Ending English pass.");
+                break;
+            }
 
             $data = [];
             foreach ($cities as $city) {
@@ -488,29 +498,43 @@ class TraveloproHotelService
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
+                $syncedCityCodes[] = $cityCode;
             }
 
             if (!empty($data)) {
                 \App\Models\HotelCity::upsert($data, ['city_name_en', 'country_name_en'], ['city_code', 'country_code', 'updated_at']);
                 $totalSynced += count($data);
-                Log::info("Synced batch {$from}-{$to}. Current total: " . \App\Models\HotelCity::count());
+                Log::info("Synced batch {$from}-{$to}. Total EN synced: {$totalSynced}");
             }
 
             if (count($cities) < $batchSize) break;
             $from += $batchSize;
         }
 
-        // Second Pass: Try to get Arabic names (Only for top results)
-        $from = $startFrom;
-        $maxArabic = min($totalSynced, 2000); 
-        while ($from < $maxArabic) {
-            $to = $from + $batchSize - 1;
-            try {
-                $response = $this->getCities(['from' => $from, 'to' => $to, 'requiredLanguage' => 'ARA']);
-                $cities = $response['cities'] ?? $response['Cities'] ?? [];
-                if (empty($cities)) break;
+        // --- SECOND PASS: Arabic Names (For all synced codes) ---
+        if (!empty($syncedCityCodes)) {
+            Log::info("Starting Hotel Cities sync: Arabic Pass for " . count($syncedCityCodes) . " cities.");
+            $fromAr = $startFrom;
+            while ($fromAr < ($startFrom + count($syncedCityCodes))) {
+                $toAr = $fromAr + $batchSize - 1;
+                $citiesAr = [];
+                $attempts = 0;
 
-                foreach ($cities as $city) {
+                while ($attempts < $retryLimit) {
+                    try {
+                        $response = $this->getCities(['from' => $fromAr, 'to' => $toAr, 'requiredLanguage' => 'ARA']);
+                        $citiesAr = $response['cities'] ?? $response['Cities'] ?? [];
+                        break;
+                    } catch (\Exception $e) {
+                        $attempts++;
+                        Log::warning("Batch sync (AR) attempt {$attempts} failed for range {$fromAr}-{$toAr}");
+                        sleep(2);
+                    }
+                }
+
+                if (empty($citiesAr)) break;
+
+                foreach ($citiesAr as $city) {
                     $id = $city['id'] ?? null;
                     $cityNameAr = $city['city_name'] ?? $city['CityName'] ?? null;
                     $countryNameAr = $city['country_name'] ?? $city['CountryName'] ?? null;
@@ -522,15 +546,14 @@ class TraveloproHotelService
                         ]);
                     }
                 }
-            } catch (\Exception $e) {
-                Log::warning("Arabic sync pass failed for range {$from}-{$to}");
+                
+                Log::info("Arabic names updated for batch {$fromAr}-{$toAr}");
+                if (count($citiesAr) < $batchSize) break;
+                $fromAr += $batchSize;
             }
-
-            if (count($cities) < $batchSize) break;
-            $from += $batchSize;
         }
 
-        // --- FALLBACK: Sync prominent cities with Arabic names if API fails/times out ---
+        // --- FALLBACK: Standard prominent cities ---
         $prominentCities = [
             ['city_code' => 'SA_1', 'city_name_en' => 'Makkah', 'city_name_ar' => 'مكة المكرمة', 'country_code' => 'SA', 'country_name_en' => 'Saudi Arabia', 'country_name_ar' => 'المملكة العربية السعودية'],
             ['city_code' => 'SA_2', 'city_name_en' => 'Madinah', 'city_name_ar' => 'المدينة المنورة', 'country_code' => 'SA', 'country_name_en' => 'Saudi Arabia', 'country_name_ar' => 'المملكة العربية السعودية'],
@@ -538,30 +561,19 @@ class TraveloproHotelService
             ['city_code' => 'SA_4', 'city_name_en' => 'Jeddah', 'city_name_ar' => 'جدة', 'country_code' => 'SA', 'country_name_en' => 'Saudi Arabia', 'country_name_ar' => 'المملكة العربية السعودية'],
             ['city_code' => 'SA_5', 'city_name_en' => 'Dammam', 'city_name_ar' => 'الدمام', 'country_code' => 'SA', 'country_name_en' => 'Saudi Arabia', 'country_name_ar' => 'المملكة العربية السعودية'],
             ['city_code' => 'AE_1', 'city_name_en' => 'Dubai', 'city_name_ar' => 'دبي', 'country_code' => 'AE', 'country_name_en' => 'United Arab Emirates', 'country_name_ar' => 'الإمارات العربية المتحدة'],
-            ['city_code' => 'AE_2', 'city_name_en' => 'Abu Dhabi', 'city_name_ar' => 'أبو ظبي', 'country_code' => 'AE', 'country_name_en' => 'United Arab Emirates', 'country_name_ar' => 'الإمارات العربية المتحدة'],
             ['city_code' => 'EG_1', 'city_name_en' => 'Cairo', 'city_name_ar' => 'القاهرة', 'country_code' => 'EG', 'country_name_en' => 'Egypt', 'country_name_ar' => 'مصر'],
-            ['city_code' => 'EG_2', 'city_name_en' => 'Alexandria', 'city_name_ar' => 'الإسكندرية', 'country_code' => 'EG', 'country_name_en' => 'Egypt', 'country_name_ar' => 'مصر'],
             ['city_code' => 'TR_1', 'city_name_en' => 'Istanbul', 'city_name_ar' => 'اسطنبول', 'country_code' => 'TR', 'country_name_en' => 'Turkey', 'country_name_ar' => 'تركيا'],
-            ['city_code' => 'FR_1', 'city_name_en' => 'Paris', 'city_name_ar' => 'باريس', 'country_code' => 'FR', 'country_name_en' => 'France', 'country_name_ar' => 'فرنسا'],
             ['city_code' => 'GB_1', 'city_name_en' => 'London', 'city_name_ar' => 'لندن', 'country_code' => 'GB', 'country_name_en' => 'United Kingdom', 'country_name_ar' => 'المملكة المتحدة'],
-            ['city_code' => 'JO_1', 'city_name_en' => 'Amman', 'city_name_ar' => 'عمان', 'country_code' => 'JO', 'country_name_en' => 'Jordan', 'country_name_ar' => 'الأردن'],
-            ['city_code' => 'KW_1', 'city_name_en' => 'Kuwait City', 'city_name_ar' => 'الكويت', 'country_code' => 'KW', 'country_name_en' => 'Kuwait', 'country_name_ar' => 'الكويت'],
-            ['city_code' => 'QA_1', 'city_name_en' => 'Doha', 'city_name_ar' => 'الدوحة', 'country_code' => 'QA', 'country_name_en' => 'Qatar', 'country_name_ar' => 'قطر'],
         ];
 
         foreach ($prominentCities as $city) {
-            \App\Models\HotelCity::updateOrCreate(
-                ['city_code' => $city['city_code']],
-                array_merge($city, ['is_active' => true])
-            );
+            \App\Models\HotelCity::updateOrCreate(['city_code' => $city['city_code']], array_merge($city, ['is_active' => true]));
         }
 
         return [
             'status' => 'success',
             'count' => max($totalSynced, count($prominentCities)),
-            'message' => $totalSynced > 0 
-                ? "Full sync complete. Synced {$totalSynced} cities." 
-                : "API Timeout. Fallback major cities seeded with Arabic names."
+            'message' => $totalSynced > 0 ? "Full sync complete. Synced {$totalSynced} cities." : "API Timeout. Fallback major cities seeded."
         ];
     }
 

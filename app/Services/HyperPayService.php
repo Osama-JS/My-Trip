@@ -58,7 +58,9 @@ class HyperPayService
 
         Log::info('HyperPay Prepare Checkout Request', ['url' => $url, 'params' => $params]);
 
-        $response = Http::withToken($this->accessToken)
+        $response = Http::withoutVerifying()
+            ->timeout(30)
+            ->withToken($this->accessToken)
             ->asForm()
             ->post($url, $params);
 
@@ -84,7 +86,9 @@ class HyperPayService
         $entityId = $this->getEntityId($paymentType);
         $url = $this->baseUrl . "checkouts/{$checkoutId}/payment";
 
-        $response = Http::withToken($this->accessToken)
+        $response = Http::withoutVerifying()
+            ->timeout(30)
+            ->withToken($this->accessToken)
             ->get($url, [
                 'entityId' => $entityId
             ]);

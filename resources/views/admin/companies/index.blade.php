@@ -447,7 +447,6 @@
 </div>
 
 
-<script src="{{ asset('build/ajaxall.js') }}"></script>
 <script>
     let CompanysTable;
 $(document).ready(function() {

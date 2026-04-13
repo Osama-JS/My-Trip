@@ -7,6 +7,7 @@ use App\Models\TripBooking;
 use App\Models\HotelBooking;
 use App\Models\Booking as FlightBooking;
 use App\Models\BankTransfer;
+use App\Models\BankAccount;
 use App\Services\HyperPayService;
 use App\Services\TabbyPaymentService;
 use App\Services\TamaraPaymentService;
@@ -64,6 +65,7 @@ class PaymentWebController extends Controller
                 'method' => $method,
                 'amount' => $type === 'flight' ? $booking->total_amount : $booking->total_price,
                 'source' => $request->source,
+                'bankAccounts' => $method === 'bank_transfer' ? BankAccount::where('is_active', true)->get() : [],
             ];
 
             // Add specific details for the view
@@ -446,8 +448,8 @@ class PaymentWebController extends Controller
     public function submitBankTransfer(Request $request)
     {
         $request->validate([
-            'booking_id' => 'required',
             'type' => 'required|string|in:trip', // STRICTLY Trip only
+            'bank_account_id' => 'required|exists:bank_accounts,id',
             'receipt_image' => 'required|file|mimes:jpeg,png,jpg,pdf|max:5120',
             'sender_name' => 'required|string|max:255',
             'receipt_number' => 'nullable|string|max:255',
@@ -473,6 +475,7 @@ class PaymentWebController extends Controller
             BankTransfer::create([
                 'trip_booking_id' => $booking->id,
                 'user_id' => $booking->user_id,
+                'bank_account_id' => $request->bank_account_id,
                 'receipt_number' => $request->receipt_number,
                 'sender_name' => $request->sender_name,
                 'receipt_image' => $path,

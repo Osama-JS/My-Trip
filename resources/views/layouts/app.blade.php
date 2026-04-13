@@ -83,6 +83,102 @@
     <!-- Vite CSS -->
     @vite(['resources/css/app.css'])
 
+    <!-- ============================================================ -->
+    <!-- MOBILE SIDEBAR FIX — Overrides horizontal nav for small screens -->
+    <!-- ============================================================ -->
+    <style>
+        @media (max-width: 991px) {
+
+            /* ── Sidebar container ── */
+            .dlabnav {
+                overflow-y: auto !important;
+                overflow-x: hidden !important;
+            }
+
+            .dlabnav-scroll {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                padding: 0 !important;
+                overflow-y: auto !important;
+                overflow-x: hidden !important;
+                height: 100% !important;
+                box-shadow: none !important;
+            }
+
+            .nav-scroll-wrapper {
+                width: 100% !important;
+                overflow: visible !important;
+                transform: none !important; /* Reset JS-applied transform */
+            }
+
+            /* ── Make metismenu vertical ── */
+            .dlabnav .metismenu {
+                display: block !important;
+                flex-direction: column !important;
+                flex-wrap: wrap !important;
+                transform: none !important;  /* Freeze horizontal scroll position */
+                width: 100% !important;
+            }
+
+            .dlabnav .metismenu > li {
+                display: block !important;
+                width: 100% !important;
+                flex-shrink: unset !important;
+            }
+
+            /* ── Top-level link layout ── */
+            .dlabnav .metismenu > li > a {
+                display: flex !important;
+                align-items: center !important;
+                gap: 10px !important;
+                padding: 12px 20px !important;
+                white-space: nowrap !important;
+            }
+
+            /* ── Sub-menu: INLINE (not floating) ── */
+            .dlabnav .metismenu ul {
+                position: static !important;
+                top: auto !important;
+                left: auto !important;
+                right: auto !important;
+                width: 100% !important;
+                min-width: 100% !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                background: rgba(0, 0, 0, 0.04) !important;
+                padding: 4px 0 4px 28px !important;
+                z-index: auto !important;
+                /* MetisMenu controls display via max-height & mm-collapse */
+            }
+
+            [dir="rtl"] .dlabnav .metismenu ul {
+                padding: 4px 28px 4px 0 !important;
+            }
+
+            .dlabnav .metismenu ul li a {
+                padding: 9px 15px !important;
+                display: block !important;
+            }
+
+            /* ── MetisMenu open state ── */
+            .dlabnav .metismenu ul.mm-show,
+            .dlabnav .metismenu li.mm-active > ul {
+                display: block !important;
+            }
+
+            /* ── Hide horizontal scroll arrows ── */
+            .nav-control-btn {
+                display: none !important;
+            }
+
+            /* ── Arrow indicator fix (RTL) ── */
+            [dir="rtl"] .dlabnav .metismenu li a.has-arrow::after {
+                left: 15px;
+                right: auto;
+            }
+        }
+    </style>
+
     @stack('styles')
 </head>
 <body
@@ -155,6 +251,88 @@
 
     <!-- Vite JS -->
     @vite(['resources/js/app.js'])
+
+    <!-- ============================================================ -->
+    <!-- MOBILE SIDEBAR PATCH — Works immediately without npm build   -->
+    <!-- ============================================================ -->
+    <script>
+    (function() {
+        'use strict';
+
+        var MOBILE_BREAKPOINT = 991;
+
+        function isMobile() {
+            return window.innerWidth <= MOBILE_BREAKPOINT;
+        }
+
+        /**
+         * Reset the horizontal translateX transform applied by initHorizontalNav
+         * so that the mobile vertical sidebar is not broken.
+         */
+        function resetMenuTransform() {
+            var menu = document.getElementById('menu');
+            var navScrollContainer = document.getElementById('nav-scroll-container');
+            var prevBtn = document.getElementById('nav-prev-btn');
+            var nextBtn = document.getElementById('nav-next-btn');
+
+            if (menu) menu.style.transform = '';
+            if (navScrollContainer) navScrollContainer.style.transform = '';
+            if (prevBtn) { prevBtn.style.opacity = '0'; prevBtn.style.visibility = 'hidden'; }
+            if (nextBtn) { nextBtn.style.opacity = '0'; nextBtn.style.visibility = 'hidden'; }
+        }
+
+        /**
+         * On mobile, ensure MetisMenu submenus work correctly.
+         * MetisMenu uses max-height + mm-show/mm-collapse for animation.
+         * We patch the sidebar link clicks to properly toggle submenus.
+         */
+        function initMobileSidebar() {
+            if (!isMobile()) return;
+
+            resetMenuTransform();
+
+            // Make sure metismenu is re-initialized when sidebar opens
+            var hamburger = document.querySelector('.nav-control');
+            if (hamburger) {
+                hamburger.addEventListener('click', function() {
+                    setTimeout(function() {
+                        if (typeof $ !== 'undefined' && $.fn.metisMenu) {
+                            if (typeof $('#menu').data('mm') === 'undefined') {
+                                $('#menu').metisMenu();
+                            }
+                        }
+                        resetMenuTransform();
+                    }, 100);
+                });
+            }
+        }
+
+        // Run on DOM ready
+        document.addEventListener('DOMContentLoaded', function() {
+            initMobileSidebar();
+        });
+
+        // Run on window load (after all scripts initialize)
+        window.addEventListener('load', function() {
+            if (isMobile()) {
+                resetMenuTransform();
+            }
+        });
+
+        // Reset on resize if we switch to mobile
+        window.addEventListener('resize', function() {
+            if (isMobile()) {
+                resetMenuTransform();
+            }
+        });
+
+        // Also patch immediately since DOMContentLoaded may have already fired
+        if (document.readyState !== 'loading') {
+            setTimeout(initMobileSidebar, 0);
+        }
+
+    })();
+    </script>
 
     @stack('scripts')
 </body>

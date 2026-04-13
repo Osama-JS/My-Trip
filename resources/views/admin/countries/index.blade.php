@@ -350,7 +350,6 @@
         </div>
     </div>
 </div>
-<script src="{{ asset('build/ajaxall.js') }}"></script>
 <script>
     let countriesTable;
     const countriesDataUrl = "{{ route('admin.countries.data') }}";

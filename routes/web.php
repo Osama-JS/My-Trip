@@ -47,11 +47,13 @@ Route::get('/hotels/revalidate', [FrontendController::class, 'hotelRevalidate'])
 Route::get('/hotels/booking', [FrontendController::class, 'hotelBookingForm'])->name('hotels.booking.form')->middleware('auth');
 Route::post('/hotels/book', [FrontendController::class, 'processHotelBooking'])->name('hotels.book.process')->middleware('auth');
 Route::get('/hotels/payment/{booking_id}', [FrontendController::class, 'hotelSelectPayment'])->name('hotels.payment.select')->middleware('auth');
+Route::get('/trips/payment/{booking_id}', [FrontendController::class, 'tripSelectPayment'])->name('trips.payment.select')->middleware('auth');
 Route::get('/hotels/cities/search', [FrontendController::class, 'searchHotelCities'])->name('hotels.cities.search');
 
 Route::get('/destinations', [FrontendController::class, 'destinations'])->name('destinations');
 Route::get('/about', [FrontendController::class, 'about'])->name('about');
 Route::get('/search', [FrontendController::class, 'search'])->name('search');
+Route::get('/book-trip/form', [FrontendController::class, 'tripBookingForm'])->name('trips.booking.form')->middleware('auth');
 Route::post('/book-trip', [FrontendController::class, 'bookTrip'])->name('book.trip')->middleware('auth');
 
 
@@ -109,6 +111,7 @@ Route::get('/hotels', [FrontendController::class, 'hotels'])->name('hotels');
 Route::get('/destinations', [FrontendController::class, 'destinations'])->name('destinations');
 Route::get('/about', [FrontendController::class, 'about'])->name('about');
 Route::get('/search', [FrontendController::class, 'search'])->name('search');
+Route::get('/book-trip/form', [FrontendController::class, 'tripBookingForm'])->name('trips.booking.form')->middleware('auth');
 Route::post('/book-trip', [FrontendController::class, 'bookTrip'])->name('book.trip')->middleware('auth');
 
 // Redirect root to login
@@ -300,6 +303,11 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     Route::get('users/{id}/activity', [UserController::class, 'activity'])->name('users.activity');
 
 
+
+    // Bank Accounts Management
+    Route::get('bank-accounts/data', [App\Http\Controllers\Admin\BankAccountController::class, 'getData'])->name('bank-accounts.data');
+    Route::post('bank-accounts/{id}/toggle-active', [App\Http\Controllers\Admin\BankAccountController::class, 'toggleActive'])->name('bank-accounts.toggle-active');
+    Route::resource('bank-accounts', App\Http\Controllers\Admin\BankAccountController::class);
 
     // Permission Management
     Route::get('permissions/data', [PermissionController::class, 'getData'])->name('permissions.data');

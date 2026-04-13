@@ -552,14 +552,20 @@
 <script>
 $(document).ready(function() {
     // 1. SELECT2 FOR CITIES
+    const currentLocale = '{{ app()->getLocale() }}';
+
     function formatCity(repo) {
         if (repo.loading) return repo.text;
+        
+        const cityName = (currentLocale === 'ar' && repo.city_name_ar) ? repo.city_name_ar : (repo.city_name || repo.text);
+        const countryName = (currentLocale === 'ar' && repo.country_name_ar) ? repo.country_name_ar : (repo.country_name || '');
+
         return $(`
             <div class="fe-city-result">
                 <div class="fe-city-icon"><i class="fas fa-map-marker-alt"></i></div>
                 <div class="fe-city-body">
-                    <div class="fe-city-name">${repo.city_name || repo.text}</div>
-                    <div class="fe-city-sub">${repo.country_name || ''}</div>
+                    <div class="fe-city-name">${cityName}</div>
+                    <div class="fe-city-sub">${countryName}</div>
                 </div>
             </div>
         `);
@@ -576,7 +582,12 @@ $(document).ready(function() {
         placeholder: '{{ __("Enter city or destination") }}',
         minimumInputLength: 2,
         templateResult: formatCity,
-        templateSelection: repo => repo.text || '{{ __("Choose Destination") }}',
+        templateSelection: repo => {
+            if (!repo.id) return repo.text || '{{ __("Choose Destination") }}';
+            const cityName = (currentLocale === 'ar' && repo.city_name_ar) ? repo.city_name_ar : (repo.city_name || repo.text);
+            const countryName = (currentLocale === 'ar' && repo.country_name_ar) ? repo.country_name_ar : (repo.country_name || '');
+            return countryName ? `${cityName}, ${countryName}` : cityName;
+        },
         width: '100%'
     }).on('select2:select', function(e) {
         $('#countryName').val(e.params.data.country_name);

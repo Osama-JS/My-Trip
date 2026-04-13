@@ -226,15 +226,21 @@
         });
 
         // 2. Select2
+        const currentLocale = '{{ app()->getLocale() }}';
+
         if (typeof jQuery !== 'undefined' && jQuery.fn.select2) {
             function formatAirport(repo) {
                 if (repo.loading) return repo.text;
+                
+                const name = (currentLocale === 'ar' && repo.airport_name_ar) ? repo.airport_name_ar : (repo.airport_name || repo.text);
+                const city = (currentLocale === 'ar' && repo.city_name_ar) ? repo.city_name_ar : (repo.city_name || '');
+
                 return $(`
                     <div class="fe-airport-result">
                         <div class="fe-airport-icon"><i class="fas fa-plane-departure"></i></div>
                         <div class="fe-airport-body">
-                            <div class="fe-airport-name">${repo.airport_name || repo.text}</div>
-                            <div class="fe-airport-sub">${repo.city_name || ''}</div>
+                            <div class="fe-airport-name">${name}</div>
+                            <div class="fe-airport-sub">${city}</div>
                         </div>
                         <div class="fe-airport-code">${repo.airport_code || ''}</div>
                     </div>
@@ -242,7 +248,8 @@
             }
             function formatAirportSelection(repo) {
                 if (!repo.id) return repo.text;
-                return $(`<span><i class="fas fa-plane-departure" style="margin-inline-end:8px;color:var(--primary);font-size:0.9rem"></i> ${repo.airport_code || repo.id} - ${repo.airport_name || repo.text}</span>`);
+                const name = (currentLocale === 'ar' && repo.airport_name_ar) ? repo.airport_name_ar : (repo.airport_name || repo.text);
+                return $(`<span><i class="fas fa-plane-departure" style="margin-inline-end:8px;color:var(--primary);font-size:0.9rem"></i> ${repo.airport_code || repo.id} - ${name}</span>`);
             }
 
             $('.airport-select').select2({

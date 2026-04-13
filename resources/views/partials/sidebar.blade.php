@@ -97,7 +97,8 @@
                     <span class="nav-text">{{ __('Financial Management') }}</span>
                 </a>
                 <ul aria-expanded="false">
-                   <li><a href="{{ route('admin.payments.index') }}">{{ __('Payment Records') }}</a></li>
+                    <li><a href="{{ route('admin.payments.index') }}">{{ __('Payment Records') }}</a></li>
+                    <li><a href="{{ route('admin.bank-accounts.index') }}"><i class="fa fa-university me-2" style="font-size: 14px;"></i>{{ __('Bank Accounts') }}</a></li>
                     <li><a href="{{ route('admin.bank-transfers.index') }}">{{ __('Bank Transfer Review') }}</a></li>
                 </ul>
             </li>

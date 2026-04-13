@@ -66,7 +66,7 @@
                         <h3>{{ __('Contact Details') }}</h3>
                     </div>
                     <div class="fe-card-body">
-                        <div class="fe-form-row">
+                        <div class="fe-form-row fe-form-row-2">
                             <div class="fe-form-group">
                                 <label class="fe-label">{{ __('Email Address') }}</label>
                                 <input type="email" name="customerEmail" class="fe-input" placeholder="{{ __('Your email for confirmation') }}" required value="{{ auth()->user()->email ?? '' }}">
@@ -206,5 +206,22 @@
     .fe-booking-action { margin-top: 30px; text-align: center; }
     .fe-terms-fine { font-size: 0.75rem; color: var(--gray-500); margin-top: 15px; }
     .fe-terms-fine a { color: var(--primary); font-weight: 700; }
+
+    /* Responsive form helper */
+    .fe-form-row-2 { grid-template-columns: 1fr 1fr; }
+
+    /* Mobile Responsiveness */
+    @media (max-width: 991px) {
+        .fe-booking-grid { grid-template-columns: 1fr; gap: 20px; display: flex; flex-direction: column; }
+        .fe-summary-card { position: static; }
+        .fe-booking-main { order: 2; }
+        .fe-booking-sidebar { order: 1; }
+    }
+
+    @media (max-width: 767px) {
+        .fe-form-row, .fe-form-row-2 { grid-template-columns: 1fr; gap: 15px; }
+        .fe-card-body, .fe-summary-header, .fe-summary-body { padding: 20px; }
+        .fe-booking-header { padding: 60px 0 80px; }
+    }
 </style>
 @endpush

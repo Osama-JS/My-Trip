@@ -12,9 +12,12 @@ class Airport extends Model
     protected $fillable = [
         'airport_code',
         'airport_name',
+        'airport_name_ar',
         'city_code',
         'city_name',
+        'city_name_ar',
         'country_code',
         'country_name',
+        'country_name_ar',
     ];
 }

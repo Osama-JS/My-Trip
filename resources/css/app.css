@@ -144,4 +144,81 @@ h6,
     transform: translateY(-50%) scale(1.1) rotate(180deg);
 }
 
+/* -------------------------------------------------------------------------- */
+/* MOBILE SIDEBAR FIX (Screens <= 991px)                                      */
+/* -------------------------------------------------------------------------- */
 
+@media (max-width: 991px) {
+    /* Reset the horizontal navigation layout to vertical for mobile sidebar */
+    .dlabnav-scroll {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 0;
+        overflow-y: auto;
+        height: calc(100vh - 65px);
+        box-shadow: none;
+    }
+
+    .nav-scroll-wrapper {
+        width: 100%;
+        overflow: visible;
+    }
+
+    /* Revert metismenu to vertical stacked layout */
+    .dlabnav .metismenu {
+        display: block !important;
+        flex-direction: column !important;
+        flex-wrap: wrap !important;
+        transform: none !important;
+        overflow: visible !important;
+    }
+
+    /* Each list item takes full width */
+    .dlabnav .metismenu > li {
+        display: block !important;
+        width: 100% !important;
+        position: relative;
+    }
+
+    /* Submenu: in-flow (not absolutely positioned) on mobile */
+    .dlabnav .metismenu ul {
+        position: static !important;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        min-width: 100% !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        background: rgba(0, 0, 0, 0.05) !important;
+        padding: 0 0 0 20px !important;
+        z-index: auto !important;
+    }
+
+    [dir="rtl"] .dlabnav .metismenu ul {
+        padding: 0 20px 0 0 !important;
+    }
+
+    /* Hide horizontal scroll navigation arrows on mobile */
+    .nav-control-btn {
+        display: none !important;
+    }
+
+    /* Ensure .has-arrow indicator is visible */
+    .dlabnav .metismenu li a.has-arrow::after {
+        right: 15px;
+        position: absolute;
+    }
+
+    /* Give links proper padding for touch targets */
+    .dlabnav .metismenu > li > a {
+        padding: 12px 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .dlabnav .metismenu ul li a {
+        padding: 10px 15px;
+        display: block;
+    }
+}

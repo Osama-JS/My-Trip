@@ -123,8 +123,8 @@ class FlightController extends Controller
         $result = $this->traveloproService->searchFlights($data);
 
         if (isset($result['status']) && $result['status'] === 'error') {
-             $message = $result['message'] ?? __('Failed to fetch flight data');
-             return $this->apiResponse(true, $message, $result, null, 500);
+            $message = $result['message'] ?? __('Failed to fetch flight data');
+            return $this->apiResponse(true, $message, $result, null, 500);
         }
 
         return $this->apiResponse(false, __('Flights retrieved successfully.'), $result, null, 200);
@@ -176,24 +176,38 @@ class FlightController extends Controller
     public function getAirports(Request $request)
     {
         $q = $request->get('q');
-        
+        $lang = $request->get('lang');
+
+        if ($lang) {
+            app()->setLocale($lang);
+        }
+
         $query = \App\Models\Airport::query();
 
         if ($q) {
-            $query->where('airport_name', 'like', "%{$q}%")
-                ->orWhere('airport_code', 'like', "%{$q}%")
-                ->orWhere('city_name', 'like', "%{$q}%");
+            $query->where(function ($query) use ($q) {
+                $query->where('airport_name', 'like', "%{$q}%")
+                    ->orWhere('airport_name_ar', 'like', "%{$q}%")
+                    ->orWhere('airport_code', 'like', "%{$q}%")
+                    ->orWhere('city_name', 'like', "%{$q}%")
+                    ->orWhere('city_name_ar', 'like', "%{$q}%");
+            });
         }
 
-        $airports = $query->latest()
-            ->limit(50)
+        $locale = app()->getLocale();
+        $isArabic = ($locale === 'ar');
+
+        $airports = $query->orderBy('airport_name')
             ->get()
             ->map(function ($airport) {
                 return [
                     'AirportCode' => $airport->airport_code,
                     'AirportName' => $airport->airport_name,
+                    'AirportNameAr' => $airport->airport_name_ar ?? $airport->airport_name,
                     'City' => $airport->city_name,
+                    'CityAr' => $airport->city_name_ar ?? $airport->city_name,
                     'Country' => $airport->country_name,
+                    'CountryAr' => $airport->country_name_ar ?? $airport->country_name,
                 ];
             });
 
@@ -551,7 +565,7 @@ class FlightController extends Controller
             new OA\Response(
                 response: 200,
                 description: "تم إصدار التذكرة بنجاح",
-                 content: new OA\JsonContent(
+                content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: "error", type: "boolean", example: false),
                         new OA\Property(property: "message", type: "string", example: "Ticket ordered successfully."),
@@ -586,13 +600,13 @@ class FlightController extends Controller
         $booking = Booking::where('booking_reference', $request->uniqueId)->first();
 
         if (!$booking) {
-             return $this->apiResponse(true, __('Booking not found.'), null, null, 404);
+            return $this->apiResponse(true, __('Booking not found.'), null, null, 404);
         }
 
         // Bypass check to allow testing IF needed, otherwise enforce strict check
         // Ideally: if ($booking->status !== 'paid') ....
         if ($booking->status !== 'paid') {
-             return $this->apiResponse(true, __('Payment required before ticket issuance.'), null, null, 402);
+            return $this->apiResponse(true, __('Payment required before ticket issuance.'), null, null, 402);
         }
 
         Log::info('Initiating Travelopro Order Ticket Request', ['uniqueId' => $request->uniqueId, 'booking_id' => $booking->id]);
@@ -655,7 +669,7 @@ class FlightController extends Controller
             content: new OA\JsonContent(
                 required: ["uniqueId"],
                 properties: [
-                     new OA\Property(property: "uniqueId", type: "string", example: "TR123456", description: "The UniqueID returned from the booking response")
+                    new OA\Property(property: "uniqueId", type: "string", example: "TR123456", description: "The UniqueID returned from the booking response")
                 ]
             )
         ),
@@ -663,7 +677,7 @@ class FlightController extends Controller
             new OA\Response(
                 response: 200,
                 description: "تم استرجاع تفاصيل الرحلة بنجاح",
-                 content: new OA\JsonContent(
+                content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: "error", type: "boolean", example: false),
                         new OA\Property(property: "message", type: "string", example: "Trip details retrieved successfully."),
@@ -697,7 +711,7 @@ class FlightController extends Controller
         $booking = Booking::where('booking_reference', $request->uniqueId)->first();
 
         if (!$booking) {
-             return $this->apiResponse(true, __('Booking not found.'), null, null, 404);
+            return $this->apiResponse(true, __('Booking not found.'), null, null, 404);
         }
 
         $result = $this->traveloproService->getTripDetails($request->uniqueId, $booking->id);
@@ -740,7 +754,8 @@ class FlightController extends Controller
             'notes' => 'required|string'
         ]);
 
-        if ($validator->fails()) return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+        if ($validator->fails())
+            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
 
         $result = $this->traveloproService->addBookingNotes($request->all());
 
@@ -780,7 +795,8 @@ class FlightController extends Controller
             'uniqueId' => 'required|string',
         ]);
 
-        if ($validator->fails()) return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+        if ($validator->fails())
+            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
 
         $result = $this->traveloproService->cancelBooking($request->all());
 
@@ -835,7 +851,8 @@ class FlightController extends Controller
             'fare_source_code' => 'required|string',
         ]);
 
-        if ($validator->fails()) return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+        if ($validator->fails())
+            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
 
         $result = $this->traveloproService->getExtraServices($request->all());
 
@@ -879,7 +896,8 @@ class FlightController extends Controller
             'fare_source_code_inbound' => 'nullable|string',
         ]);
 
-        if ($validator->fails()) return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+        if ($validator->fails())
+            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
 
         $result = $this->traveloproService->getFareRules($request->all());
 
@@ -907,14 +925,14 @@ class FlightController extends Controller
                         property: "paxDetails",
                         type: "array",
                         items: new OA\Items(
-                             required: ["type", "title", "firstName", "lastName", "eTicket"],
-                             properties: [
-                                 new OA\Property(property: "type", type: "string", example: "ADT"),
-                                 new OA\Property(property: "title", type: "string", example: "Mr"),
-                                 new OA\Property(property: "firstName", type: "string", example: "John"),
-                                 new OA\Property(property: "lastName", type: "string", example: "Doe"),
-                                 new OA\Property(property: "eTicket", type: "string", example: "TKT123456789")
-                             ]
+                            required: ["type", "title", "firstName", "lastName", "eTicket"],
+                            properties: [
+                                new OA\Property(property: "type", type: "string", example: "ADT"),
+                                new OA\Property(property: "title", type: "string", example: "Mr"),
+                                new OA\Property(property: "firstName", type: "string", example: "John"),
+                                new OA\Property(property: "lastName", type: "string", example: "Doe"),
+                                new OA\Property(property: "eTicket", type: "string", example: "TKT123456789")
+                            ]
                         )
                     )
                 ]
@@ -939,7 +957,8 @@ class FlightController extends Controller
             'paxDetails.*.eTicket' => 'required|string',
         ]);
 
-        if ($validator->fails()) return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+        if ($validator->fails())
+            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
 
         $result = $this->traveloproService->refundQuote($request->all());
 
@@ -966,15 +985,15 @@ class FlightController extends Controller
                     new OA\Property(
                         property: "paxDetails",
                         type: "array",
-                         items: new OA\Items(
-                             required: ["type", "title", "firstName", "lastName", "eTicket"],
-                             properties: [
-                                 new OA\Property(property: "type", type: "string", example: "ADT"),
-                                 new OA\Property(property: "title", type: "string", example: "Mr"),
-                                 new OA\Property(property: "firstName", type: "string", example: "John"),
-                                 new OA\Property(property: "lastName", type: "string", example: "Doe"),
-                                 new OA\Property(property: "eTicket", type: "string", example: "TKT123456789")
-                             ]
+                        items: new OA\Items(
+                            required: ["type", "title", "firstName", "lastName", "eTicket"],
+                            properties: [
+                                new OA\Property(property: "type", type: "string", example: "ADT"),
+                                new OA\Property(property: "title", type: "string", example: "Mr"),
+                                new OA\Property(property: "firstName", type: "string", example: "John"),
+                                new OA\Property(property: "lastName", type: "string", example: "Doe"),
+                                new OA\Property(property: "eTicket", type: "string", example: "TKT123456789")
+                            ]
                         )
                     )
                 ]
@@ -994,7 +1013,8 @@ class FlightController extends Controller
             'paxDetails' => 'required|array|min:1',
         ]);
 
-        if ($validator->fails()) return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+        if ($validator->fails())
+            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
 
         $result = $this->traveloproService->refundTicket($request->all());
 
@@ -1017,18 +1037,18 @@ class FlightController extends Controller
                 required: ["uniqueId", "paxDetails", "OriginDestinationInfo"],
                 properties: [
                     new OA\Property(property: "uniqueId", type: "string", example: "TR123456"),
-                     new OA\Property(
+                    new OA\Property(
                         property: "paxDetails",
                         type: "array",
                         items: new OA\Items(
-                             required: ["type", "title", "firstName", "lastName", "eTicket"],
-                             properties: [
-                                 new OA\Property(property: "type", type: "string", example: "ADT"),
-                                 new OA\Property(property: "title", type: "string", example: "Mr"),
-                                 new OA\Property(property: "firstName", type: "string", example: "John"),
-                                 new OA\Property(property: "lastName", type: "string", example: "Doe"),
-                                 new OA\Property(property: "eTicket", type: "string", example: "TKT123456789")
-                             ]
+                            required: ["type", "title", "firstName", "lastName", "eTicket"],
+                            properties: [
+                                new OA\Property(property: "type", type: "string", example: "ADT"),
+                                new OA\Property(property: "title", type: "string", example: "Mr"),
+                                new OA\Property(property: "firstName", type: "string", example: "John"),
+                                new OA\Property(property: "lastName", type: "string", example: "Doe"),
+                                new OA\Property(property: "eTicket", type: "string", example: "TKT123456789")
+                            ]
                         )
                     ),
                     new OA\Property(
@@ -1060,7 +1080,8 @@ class FlightController extends Controller
             'OriginDestinationInfo' => 'required|array|min:1'
         ]);
 
-        if ($validator->fails()) return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+        if ($validator->fails())
+            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
 
         $result = $this->traveloproService->reissueQuote($request->all());
 
@@ -1090,7 +1111,7 @@ class FlightController extends Controller
             )
         ),
         responses: [
-             new OA\Response(
+            new OA\Response(
                 response: 200,
                 description: "تم طلب التعديل بنجاح"
             )
@@ -1104,7 +1125,8 @@ class FlightController extends Controller
             'PreferenceOption' => 'required',
         ]);
 
-        if ($validator->fails()) return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+        if ($validator->fails())
+            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
 
         $result = $this->traveloproService->reissueTicket($request->all());
 
@@ -1131,21 +1153,21 @@ class FlightController extends Controller
                         property: "paxDetails",
                         type: "array",
                         items: new OA\Items(
-                             required: ["type", "title", "firstName", "lastName", "eTicket"],
-                             properties: [
-                                 new OA\Property(property: "type", type: "string", example: "ADT"),
-                                 new OA\Property(property: "title", type: "string", example: "Mr"),
-                                 new OA\Property(property: "firstName", type: "string", example: "John"),
-                                 new OA\Property(property: "lastName", type: "string", example: "Doe"),
-                                 new OA\Property(property: "eTicket", type: "string", example: "TKT123456789")
-                             ]
+                            required: ["type", "title", "firstName", "lastName", "eTicket"],
+                            properties: [
+                                new OA\Property(property: "type", type: "string", example: "ADT"),
+                                new OA\Property(property: "title", type: "string", example: "Mr"),
+                                new OA\Property(property: "firstName", type: "string", example: "John"),
+                                new OA\Property(property: "lastName", type: "string", example: "Doe"),
+                                new OA\Property(property: "eTicket", type: "string", example: "TKT123456789")
+                            ]
                         )
                     ),
                 ]
             )
         ),
         responses: [
-             new OA\Response(
+            new OA\Response(
                 response: 200,
                 description: "تم استرجاع عرض الإلغاء بنجاح"
             )
@@ -1153,12 +1175,13 @@ class FlightController extends Controller
     )]
     public function voidQuote(Request $request)
     {
-         $validator = Validator::make($request->all(), [
+        $validator = Validator::make($request->all(), [
             'uniqueId' => 'required|string',
             'paxDetails' => 'required|array|min:1',
         ]);
 
-        if ($validator->fails()) return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+        if ($validator->fails())
+            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
 
         $result = $this->traveloproService->voidQuote($request->all());
 
@@ -1181,19 +1204,19 @@ class FlightController extends Controller
                 required: ["uniqueId", "paxDetails"],
                 properties: [
                     new OA\Property(property: "uniqueId", type: "string", example: "TR123456"),
-                     new OA\Property(property: "remark", type: "string", example: "Voiding ticket"),
+                    new OA\Property(property: "remark", type: "string", example: "Voiding ticket"),
                     new OA\Property(
                         property: "paxDetails",
                         type: "array",
                         items: new OA\Items(
-                             required: ["type", "title", "firstName", "lastName", "eTicket"],
-                             properties: [
-                                 new OA\Property(property: "type", type: "string", example: "ADT"),
-                                 new OA\Property(property: "title", type: "string", example: "Mr"),
-                                 new OA\Property(property: "firstName", type: "string", example: "John"),
-                                 new OA\Property(property: "lastName", type: "string", example: "Doe"),
-                                 new OA\Property(property: "eTicket", type: "string", example: "TKT123456789")
-                             ]
+                            required: ["type", "title", "firstName", "lastName", "eTicket"],
+                            properties: [
+                                new OA\Property(property: "type", type: "string", example: "ADT"),
+                                new OA\Property(property: "title", type: "string", example: "Mr"),
+                                new OA\Property(property: "firstName", type: "string", example: "John"),
+                                new OA\Property(property: "lastName", type: "string", example: "Doe"),
+                                new OA\Property(property: "eTicket", type: "string", example: "TKT123456789")
+                            ]
                         )
                     )
                 ]
@@ -1208,12 +1231,13 @@ class FlightController extends Controller
     )]
     public function voidTicket(Request $request)
     {
-         $validator = Validator::make($request->all(), [
+        $validator = Validator::make($request->all(), [
             'uniqueId' => 'required|string',
             'paxDetails' => 'required|array|min:1',
         ]);
 
-        if ($validator->fails()) return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+        if ($validator->fails())
+            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
 
         $result = $this->traveloproService->voidTicket($request->all());
 
@@ -1249,12 +1273,13 @@ class FlightController extends Controller
     )]
     public function searchPostTicketStatus(Request $request)
     {
-         $validator = Validator::make($request->all(), [
+        $validator = Validator::make($request->all(), [
             'uniqueId' => 'required|string',
             'ptrUniqueID' => 'required|string'
         ]);
 
-        if ($validator->fails()) return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+        if ($validator->fails())
+            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
 
         $result = $this->traveloproService->searchPostTicketStatus($request->all());
 

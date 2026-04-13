@@ -541,6 +541,11 @@ class HotelController extends Controller
     public function getCities(Request $request)
     {
         $q = $request->get('q', '');
+        $lang = $request->get('lang');
+        
+        if ($lang) {
+            app()->setLocale($lang);
+        }
         
         $cities = \App\Models\HotelCity::where('is_active', true)
             ->when($q, function($query) use ($q) {
@@ -553,13 +558,13 @@ class HotelController extends Controller
             ->get();
             
         $formatted = $cities->map(function ($city) {
-            $name = app()->getLocale() == 'ar' && $city->city_name_ar ? $city->city_name_ar : $city->city_name_en;
-            $country = app()->getLocale() == 'ar' && $city->country_name_ar ? $city->country_name_ar : $city->country_name_en;
-            
             return [
-                'city_name' => $city->city_name_en, // Value expected by API for searching
-                'country_name' => $city->country_name_en, // Value expected by API for searching
-                'display_name' => "{$name}, {$country}",
+                'city_name' => $city->city_name_en,
+                'city_name_ar' => $city->city_name_ar,
+                'country_name' => $city->country_name_en,
+                'country_name_ar' => $city->country_name_ar,
+                'display_name' => "{$city->city_name_en}, {$city->country_name_en}",
+                'display_name_ar' => $city->city_name_ar ? "{$city->city_name_ar}, {$city->country_name_ar}" : null,
             ];
         });
 

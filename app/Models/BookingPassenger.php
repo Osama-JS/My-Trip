@@ -22,6 +22,7 @@ class BookingPassenger extends Model
         'phone',
         'passport_number',
         'passport_expiry',
+        'passport_image',
         'nationality',
     ];
 

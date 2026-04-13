@@ -320,7 +320,6 @@
 
 {{-- Include jQuery UI for Drag and Drop --}}
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
-<script src="{{ asset('build/ajaxall.js') }}"></script>
 
 
 <script>

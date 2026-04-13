@@ -83,6 +83,7 @@ class UserBookingController extends Controller
                 'currency' => $booking->currency,
                 'pnr_date' => $booking->pnr_created_at,
                 'passengers_count' => $booking->passengers->count(),
+                'route_summary' => $booking->flightBooking ? ($booking->flightBooking->origin . ' → ' . $booking->flightBooking->destination) : null,
                 'invoice_url' => $booking->ticket_status === 'ticketed' ? route('admin.bookings.invoice', $booking->id) : null,
             ];
         });
@@ -117,25 +118,56 @@ class UserBookingController extends Controller
                 $query->where('booking_reference', $reference)
                     ->orWhere('id', $reference);
             })
-            ->with(['passengers'])
+            ->with(['passengers', 'flightBooking'])
             ->firstOrFail();
 
 
         // Fetch live details from Travelopro to sync status (Important for real-time status)
+        $liveDetails = null;
         try {
             $liveDetails = $this->traveloproService->getTripDetails($reference, $booking->id);
         } catch (\Exception $e) {
             \Log::error('Failed to fetch live trip details: ' . $e->getMessage());
-            $liveDetails = null;
         }
+
+        $formattedData = [
+            'booking_id' => $booking->id,
+            'reference' => $booking->booking_reference,
+            'status' => $booking->status,
+            'ticket_status' => $booking->ticket_status,
+            'total_amount' => $booking->total_amount,
+            'currency' => $booking->currency,
+            'created_at' => $booking->created_at->format('Y-m-d H:i'),
+            
+            'itinerary' => $booking->flightBooking ? [
+                'origin' => $booking->flightBooking->origin,
+                'destination' => $booking->flightBooking->destination,
+                'departure_date' => $booking->flightBooking->departure_date,
+                'return_date' => $booking->flightBooking->return_date,
+                'flight_class' => $booking->flightBooking->flight_class,
+                'passengers_counts' => [
+                    'adults' => $booking->flightBooking->adults,
+                    'childs' => $booking->flightBooking->childs,
+                    'infants' => $booking->flightBooking->infants,
+                ]
+            ] : null,
+
+            'passengers' => $booking->passengers->map(function($p) {
+                return [
+                    'name' => $p->name ?? ($p->first_name . ' ' . $p->last_name),
+                    'type' => $p->passenger_type,
+                    'passport' => $p->passport_number,
+                    'dob' => $p->dob ? $p->dob->format('Y-m-d') : null,
+                ];
+            }),
+
+            'live_details' => $liveDetails
+        ];
 
         return response()->json([
             'error' => false,
             'message' => __('Booking details retrieved successfully.'),
-            'data' => [
-                'local_details' => $booking,
-                'live_details' => $liveDetails
-            ]
+            'data' => $formattedData
         ]);
     }
 

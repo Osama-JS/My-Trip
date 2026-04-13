@@ -375,6 +375,7 @@ class FrontendController extends Controller
     public function searchHotelCities(Request $request)
     {
         $q = $request->get('q', '');
+        $isArabic = app()->getLocale() === 'ar';
         
         $cities = \App\Models\HotelCity::where('is_active', true)
             ->where(function($query) use ($q) {
@@ -383,18 +384,20 @@ class FrontendController extends Controller
                       ->orWhere('country_name_en', 'like', "%{$q}%")
                       ->orWhere('country_name_ar', 'like', "%{$q}%");
             })
-            ->limit(20)
+            ->limit(50)
             ->get();
             
-        $formatted = $cities->map(function ($city) {
-            $name = app()->getLocale() == 'ar' && $city->city_name_ar ? $city->city_name_ar : $city->city_name_en;
-            $country = app()->getLocale() == 'ar' && $city->country_name_ar ? $city->country_name_ar : $city->country_name_en;
+        $formatted = $cities->map(function ($city) use ($isArabic) {
+            $name = ($isArabic && $city->city_name_ar) ? $city->city_name_ar : $city->city_name_en;
+            $country = ($isArabic && $city->country_name_ar) ? $city->country_name_ar : $city->country_name_en;
             
             return [
                 'id' => $city->city_name_en, // Value sent to search
                 'text' => "{$name}, {$country}",
                 'city_name' => $city->city_name_en,
-                'country_name' => $city->country_name_en
+                'city_name_ar' => $city->city_name_ar,
+                'country_name' => $city->country_name_en,
+                'country_name_ar' => $city->country_name_ar
             ];
         });
 
@@ -678,6 +681,18 @@ class FrontendController extends Controller
     }
 
     /**
+     * Trip-specific Payment Selection Page
+     */
+    public function tripSelectPayment(Request $request, $booking_id)
+    {
+        $booking = \App\Models\TripBooking::with(['trip', 'user'])->where('id', $booking_id)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
+
+        return view('frontend.trips.payment_select', compact('booking'));
+    }
+
+    /**
      * Destinations page
      */
     public function destinations()
@@ -732,15 +747,42 @@ class FrontendController extends Controller
     }
 
     /**
-     * Book a trip
+     * Show passenger details form before booking a trip
+     */
+    public function tripBookingForm(Request $request)
+    {
+        $request->validate([
+            'trip_id' => 'required|exists:trips,id',
+            'tickets_count' => 'required|integer|min:1',
+            'booking_date' => 'required|date',
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        $trip = Trip::active()->findOrFail($request->trip_id);
+        
+        return view('frontend.trips.booking', [
+            'trip' => $trip,
+            'tickets_count' => $request->tickets_count,
+            'booking_date' => $request->booking_date,
+            'notes' => $request->notes
+        ]);
+    }
+
+    /**
+     * Book a trip (After passing through passenger form)
      */
     public function bookTrip(Request $request)
     {
         $request->validate([
             'trip_id' => 'required|exists:trips,id',
             'tickets_count' => 'required|integer|min:1',
-            'booking_date' => 'required|date|after:today',
-            'notes' => 'nullable|string|max:500',
+            'passengers' => 'required|array|min:1',
+            'passengers.*.name' => 'required|string|max:255',
+            'passengers.*.phone' => 'required|string|max:50',
+            'passengers.*.nationality' => 'required|string|max:100',
+            'passengers.*.passport_number' => 'required|string|max:100',
+            'passengers.*.passport_expiry' => 'required|date',
+            'passengers.*.passport_image' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
 
         $trip = Trip::active()->findOrFail($request->trip_id);
@@ -759,12 +801,36 @@ class FrontendController extends Controller
             'status' => 'pending',
             'booking_state' => TripBooking::STATE_RECEIVED,
             'total_price' => $totalPrice,
-            'booking_date' => $request->booking_date,
+            'booking_date' => $request->booking_date ?? $trip->expiry_date ?? now()->addDay(),
             'tickets_count' => $request->tickets_count,
             'notes' => $request->notes,
         ]);
 
-        return redirect()->route('customer.bookings.show', $booking->id)
+        // Process Passengers
+        foreach ($request->passengers as $index => $pax) {
+            $passportImagePath = null;
+            if ($request->hasFile("passengers.{$index}.passport_image")) {
+                $file = $request->file("passengers.{$index}.passport_image");
+                $passportImagePath = $file->store('passports', 'public');
+            }
+
+            \App\Models\BookingPassenger::create([
+                'trip_booking_id' => $booking->id,
+                'name' => $pax['name'],
+                'phone' => $pax['phone'],
+                'nationality' => $pax['nationality'],
+                'passport_number' => $pax['passport_number'],
+                'passport_expiry' => $pax['passport_expiry'],
+                'passport_image' => $passportImagePath,
+                // Assign dummy title/name split if required by older components
+                'first_name' => explode(' ', $pax['name'])[0],
+                'last_name' => count(explode(' ', $pax['name'])) > 1 ? explode(' ', $pax['name'])[1] : '',
+                'title' => 'Mr', 
+            ]);
+        }
+
+        // Redirect to the trip-specific payment selection page
+        return redirect()->route('trips.payment.select', ['booking_id' => $booking->id])
             ->with('success', __('Booking created successfully! Please proceed with payment.'));
     }
         /**
@@ -773,21 +839,32 @@ class FrontendController extends Controller
     public function searchAirports(Request $request)
     {
         $q = $request->get('q');
+        $isArabic = app()->getLocale() === 'ar';
         
-        $airports = Airport::where('airport_name', 'like', "%{$q}%")
-            ->orWhere('airport_code', 'like', "%{$q}%")
-            ->orWhere('city_name', 'like', "%{$q}%")
-            ->latest()
-            ->limit(20)
+        $airports = Airport::where(function($query) use ($q) {
+                $query->where('airport_name', 'like', "%{$q}%")
+                    ->orWhere('airport_name_ar', 'like', "%{$q}%")
+                    ->orWhere('airport_code', 'like', "%{$q}%")
+                    ->orWhere('city_name', 'like', "%{$q}%")
+                    ->orWhere('city_name_ar', 'like', "%{$q}%")
+                    ->orWhere('country_name_ar', 'like', "%{$q}%");
+            })
+            ->orderBy('airport_name')
+            ->limit(50)
             ->get();
 
-        $formatted = $airports->map(function($item) {
+        $formatted = $airports->map(function($item) use ($isArabic) {
+            $name = ($isArabic && $item->airport_name_ar) ? $item->airport_name_ar : $item->airport_name;
+            $city = ($isArabic && $item->city_name_ar) ? $item->city_name_ar : $item->city_name;
+            
             return [
                 'id' => $item->airport_code,
                 'airport_name' => $item->airport_name,
+                'airport_name_ar' => $item->airport_name_ar,
                 'city_name' => $item->city_name,
+                'city_name_ar' => $item->city_name_ar,
                 'airport_code' => $item->airport_code,
-                'text' => "{$item->airport_name} ({$item->airport_code}) - {$item->city_name}"
+                'text' => "{$name} ({$item->airport_code}) - {$city}"
             ];
         });
 

@@ -15,7 +15,7 @@ $.ajaxSetup({
     },
 });
 
-function submitAjaxForm({
+window.submitAjaxForm = function({
     formId,
     url,
     method = "POST",
@@ -27,7 +27,7 @@ function submitAjaxForm({
     resetSelect2 = true,
     useSweetAlert = false
 }) {
-
+    // ... function body stays the same ...
     const form = document.getElementById(formId);
     let formData = new FormData(form);
 
@@ -118,6 +118,14 @@ $(document).ready(function() {
 });
 
 function initHorizontalNav() {
+    // Only run horizontal nav logic on large screens
+    if (window.innerWidth <= 991) {
+        // On mobile: reset any transform that may have been applied
+        const menu = document.getElementById('menu');
+        if (menu) menu.style.transform = '';
+        return;
+    }
+
     try {
         const navContainer = document.getElementById('nav-scroll-container');
         const menu = document.getElementById('menu');
@@ -176,7 +184,16 @@ function initHorizontalNav() {
             }
         };
 
-        window.addEventListener('resize', updateNavControls);
+        window.addEventListener('resize', () => {
+            // If resized to mobile, reset transform
+            if (window.innerWidth <= 991) {
+                menu.style.transform = '';
+                nextBtn.classList.remove('visible');
+                prevBtn.classList.remove('visible');
+            } else {
+                updateNavControls();
+            }
+        });
         window.addEventListener('load', updateNavControls);
         
         // Multi-stage verification

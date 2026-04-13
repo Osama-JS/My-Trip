@@ -353,6 +353,7 @@ class TripController extends Controller
                                 new OA\Property(property: "passport_number", type: "string", example: "A1234567"),
                                 new OA\Property(property: "passport_expiry", type: "string", format: "date", example: "2030-12-31"),
                                 new OA\Property(property: "nationality", type: "string", example: "USA"),
+                                new OA\Property(property: "passport_image", type: "string", format: "binary", description: "Optional passport image upload"),
                             ]
                         )
                     ),
@@ -387,6 +388,7 @@ class TripController extends Controller
             'passengers.*.passport_number' => 'nullable|string|max:50',
             'passengers.*.passport_expiry' => 'nullable|date',
             'passengers.*.nationality' => 'nullable|string|max:100',
+            'passengers.*.passport_image' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
 
         if ($validator->fails()) {
@@ -431,8 +433,26 @@ class TripController extends Controller
         ]);
 
         // Save passengers
-        foreach ($request->passengers as $passengerData) {
-            $booking->passengers()->create($passengerData);
+        foreach ($request->passengers as $index => $passengerData) {
+            
+            $passportImagePath = null;
+            if ($request->hasFile("passengers.{$index}.passport_image")) {
+                $file = $request->file("passengers.{$index}.passport_image");
+                $passportImagePath = $file->store('passports', 'public');
+            }
+
+            $booking->passengers()->create([
+                'name' => $passengerData['name'] ?? '',
+                'phone' => $passengerData['phone'] ?? null,
+                'nationality' => $passengerData['nationality'] ?? null,
+                'passport_number' => $passengerData['passport_number'] ?? null,
+                'passport_expiry' => $passengerData['passport_expiry'] ?? null,
+                'passport_image' => $passportImagePath,
+                // Assign dummy title/name split 
+                'first_name' => isset($passengerData['name']) ? explode(' ', $passengerData['name'])[0] : '',
+                'last_name' => isset($passengerData['name']) && count(explode(' ', $passengerData['name'])) > 1 ? explode(' ', $passengerData['name'])[1] : '',
+                'title' => 'Mr',
+            ]);
         }
 
         // Add history
@@ -770,6 +790,7 @@ class TripController extends Controller
                                     new OA\Property(property: "phone", type: "string", example: "+123456789"),
                                     new OA\Property(property: "passport_number", type: "string", example: "A1234567"),
                                     new OA\Property(property: "nationality", type: "string", example: "USA"),
+                                    new OA\Property(property: "passport_image", type: "string", example: "http://domain.com/storage/passports/img.jpg"),
                                 ]
                             )),
                             new OA\Property(property: "booking_state", type: "string", example: "preparing"),
@@ -833,6 +854,7 @@ class TripController extends Controller
                     'passport_number' => $p->passport_number,
                     'passport_expiry' => $p->passport_expiry ? $p->passport_expiry->format('Y-m-d') : null,
                     'nationality' => $p->nationality,
+                    'passport_image' => $p->passport_image ? asset('storage/' . $p->passport_image) : null,
                 ];
             }),
         ];
