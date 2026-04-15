@@ -52,40 +52,59 @@
                     
                     {{-- Pax Popover --}}
                     <div class="fe-pax-popover" id="paxPopover">
-                        <div class="fe-pax-row">
-                            <div class="fe-pax-label">
-                                <strong>{{ __('Rooms') }}</strong>
+                        <div class="fe-pax-mode-switcher" style="margin-bottom: 20px; display: flex; background: var(--gray-100); padding: 4px; border-radius: 12px;">
+                            @php 
+                                $currentMode = $searchParams['distribution_mode'] ?? 'auto';
+                            @endphp
+                            <button type="button" class="fe-mode-btn {{ $currentMode == 'auto' ? 'active' : '' }}" data-mode="auto" style="flex: 1; border: none; background: {{ $currentMode == 'auto' ? 'white' : 'transparent' }}; padding: 8px; border-radius: 10px; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: all 0.2s;">{{ __('Automatic') }}</button>
+                            <button type="button" class="fe-mode-btn {{ $currentMode == 'manual' ? 'active' : '' }}" data-mode="manual" style="flex: 1; border: none; background: {{ $currentMode == 'manual' ? 'white' : 'transparent' }}; padding: 8px; border-radius: 10px; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: all 0.2s;">{{ __('Manual') }}</button>
+                            <input type="hidden" name="distribution_mode" id="distributionMode" value="{{ $currentMode }}">
+                        </div>
+
+                        <div id="paxAutoContent">
+                            <div class="fe-pax-row">
+                                <div class="fe-pax-label">
+                                    <strong>{{ __('Rooms') }}</strong>
+                                </div>
+                                <div class="fe-pax-counter">
+                                    <button type="button" class="minus" data-type="rooms">-</button>
+                                    <input type="number" id="inputRooms" name="rooms" value="1" min="1" max="5" readonly>
+                                    <button type="button" class="plus" data-type="rooms">+</button>
+                                </div>
                             </div>
-                            <div class="fe-pax-counter">
-                                <button type="button" class="minus" data-type="rooms">-</button>
-                                <input type="number" id="inputRooms" name="rooms" value="1" min="1" max="5" readonly>
-                                <button type="button" class="plus" data-type="rooms">+</button>
+                            <div class="fe-pax-row">
+                                <div class="fe-pax-label">
+                                    <strong>{{ __('Adults') }}</strong>
+                                    <span>{{ __('12+ years') }}</span>
+                                </div>
+                                <div class="fe-pax-counter">
+                                    <button type="button" class="minus" data-type="adults">-</button>
+                                    <input type="number" id="inputAdults" name="adults" value="2" min="1" max="10" readonly>
+                                    <button type="button" class="plus" data-type="adults">+</button>
+                                </div>
+                            </div>
+                            <div class="fe-pax-row">
+                                <div class="fe-pax-label">
+                                    <strong>{{ __('Children') }}</strong>
+                                    <span>{{ __('0-12 years') }}</span>
+                                </div>
+                                <div class="fe-pax-counter">
+                                    <button type="button" class="minus" data-type="childs">-</button>
+                                    <input type="number" id="inputChilds" name="childs" value="0" min="0" max="10" readonly>
+                                    <button type="button" class="plus" data-type="childs">+</button>
+                                </div>
+                            </div>
+                            <div id="childAges" style="margin-top: 15px; display: none; border-top: 1px dashed var(--gray-200); padding-top: 15px;">
+                                <label style="font-size: 0.8rem; font-weight: 800; display: block; margin-bottom: 10px;">{{ __('Child Ages') }}</label>
+                                <div id="childAgesList" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
                             </div>
                         </div>
-                        <div class="fe-pax-row">
-                            <div class="fe-pax-label">
-                                <strong>{{ __('Adults') }}</strong>
-                                <span>{{ __('12+ years') }}</span>
-                            </div>
-                            <div class="fe-pax-counter">
-                                <button type="button" class="minus" data-type="adults">-</button>
-                                <input type="number" id="inputAdults" name="adults" value="2" min="1" max="10" readonly>
-                                <button type="button" class="plus" data-type="adults">+</button>
-                            </div>
+
+                        <div id="paxManualContent" style="display: none; max-height: 300px; overflow-y: auto; padding-inline-end: 10px;">
+                            <div id="manualRoomsList"></div>
                         </div>
-                        <div class="fe-pax-row">
-                            <div class="fe-pax-label">
-                                <strong>{{ __('Children') }}</strong>
-                                <span>{{ __('0-12 years') }}</span>
-                            </div>
-                            <div class="fe-pax-counter">
-                                <button type="button" class="minus" data-type="childs">-</button>
-                                <input type="number" id="inputChilds" name="childs" value="0" min="0" max="10" readonly>
-                                <button type="button" class="plus" data-type="childs">+</button>
-                            </div>
-                        </div>
-                        <div id="childAges"></div>
-                        <button type="button" class="fe-btn fe-btn-primary fe-btn-block" id="applyPax">{{ __('Apply') }}</button>
+
+                        <button type="button" class="fe-btn fe-btn-primary fe-btn-block" id="applyPax" style="margin-top: 20px;">{{ __('Apply') }}</button>
                     </div>
                 </div>
 
@@ -554,6 +573,14 @@ $(document).ready(function() {
     // 1. SELECT2 FOR CITIES
     const currentLocale = '{{ app()->getLocale() }}';
 
+    // Initialize mode visibility
+    const initialMode = $('#distributionMode').val();
+    if (initialMode === 'manual') {
+        $('#paxAutoContent').hide();
+        $('#paxManualContent').show();
+        renderManualRooms();
+    }
+
     function formatCity(repo) {
         if (repo.loading) return repo.text;
         
@@ -618,6 +645,95 @@ $(document).ready(function() {
         }
     });
 
+    // Mode Switcher
+    $(document).on('click', '.fe-mode-btn', function() {
+        const mode = $(this).data('mode');
+        $('.fe-mode-btn').removeClass('active').css('background', 'transparent');
+        $(this).addClass('active').css('background', 'white');
+        $('#distributionMode').val(mode);
+
+        if (mode === 'manual') {
+            $('#paxAutoContent').hide();
+            $('#paxManualContent').show();
+            renderManualRooms();
+        } else {
+            $('#paxAutoContent').show();
+            $('#paxManualContent').hide();
+        }
+        updatePaxSummary();
+    });
+
+    function renderManualRooms() {
+        const container = $('#manualRoomsList');
+        const roomCount = parseInt($('#inputRooms').val());
+        container.empty();
+
+        for (let i = 1; i <= roomCount; i++) {
+            const roomHtml = `
+                <div class="fe-manual-room-box" style="margin-bottom: 20px; padding: 15px; background: var(--gray-50); border-radius: 12px; border: 1px solid var(--gray-100);">
+                    <h5 style="margin-bottom: 15px; font-weight: 800; font-size: 0.9rem; color: var(--primary);">{{ __("Room") }} ${i}</h5>
+                    
+                    <div class="fe-pax-row" style="margin-bottom: 12px;">
+                        <div class="fe-pax-label"><strong>{{ __("Adults") }}</strong></div>
+                        <div class="fe-pax-counter">
+                            <button type="button" class="m-minus" data-room="${i}" data-type="adult">-</button>
+                            <input type="number" name="occupancy[${i-1}][adult]" class="m-adult-input" data-room="${i}" value="2" min="1" max="5" readonly>
+                            <button type="button" class="m-plus" data-room="${i}" data-type="adult">+</button>
+                        </div>
+                    </div>
+                    
+                    <div class="fe-pax-row" style="margin-bottom: 12px;">
+                        <div class="fe-pax-label"><strong>{{ __("Children") }}</strong></div>
+                        <div class="fe-pax-counter">
+                            <button type="button" class="m-minus" data-room="${i}" data-type="child">-</button>
+                            <input type="number" name="occupancy[${i-1}][child]" class="m-child-input" data-room="${i}" value="0" min="0" max="3" readonly>
+                            <button type="button" class="m-plus" data-room="${i}" data-type="child">+</button>
+                        </div>
+                    </div>
+                    
+                    <div class="m-child-ages-list" data-room="${i}" style="display: none; border-top: 1px dashed #cbd5e1; padding-top: 10px; margin-top: 10px;"></div>
+                </div>
+            `;
+            container.append(roomHtml);
+        }
+    }
+
+    // Manual Counters
+    $(document).on('click', '.m-plus, .m-minus', function() {
+        const counter = $(this).closest('.fe-pax-counter');
+        const input = counter.find('input');
+        const type = $(this).data('type');
+        const roomNo = $(this).data('room');
+        let val = parseInt(input.val());
+
+        if ($(this).hasClass('m-plus')) {
+            if (val < input.attr('max')) val++;
+        } else {
+            if (val > input.attr('min')) val--;
+        }
+        input.val(val).trigger('change');
+
+        if (type === 'child') {
+            const ageList = $(`.m-child-ages-list[data-room="${roomNo}"]`);
+            if (val > 0) {
+                ageList.show().empty();
+                for (let j = 0; j < val; j++) {
+                    ageList.append(`
+                        <div style="margin-bottom: 8px;">
+                            <label style="font-size: 0.7rem; font-weight: 700; color: var(--gray-500);">{{ __("Child") }} ${j+1} {{ __("Age") }}</label>
+                            <select name="occupancy[${roomNo-1}][child_age][]" class="fe-search-input" style="height: 34px; font-size: 0.8rem; padding: 0 8px;">
+                                ${Array(13).fill(0).map((_, idx) => `<option value="${idx}">${idx}</option>`).join('')}
+                            </select>
+                        </div>
+                    `);
+                }
+            } else {
+                ageList.hide().empty();
+            }
+        }
+        updatePaxSummary();
+    });
+
     $('.plus, .minus').click(function() {
         const type = $(this).data('type');
         const input = $(this).siblings('input');
@@ -628,13 +744,50 @@ $(document).ready(function() {
             if (val > input.attr('min')) val--;
         }
         input.val(val).trigger('change');
+        
+        if (type === 'childs') {
+            const list = $('#childAgesList');
+            if (val > 0) {
+                $('#childAges').show();
+                list.empty();
+                for (let i = 0; i < val; i++) {
+                    list.append(`
+                        <select name="childAge[]" class="fe-search-input" style="height:40px; font-size:0.85rem">
+                            ${Array(13).fill(0).map((_, idx) => `<option value="${idx}">${idx} {{ __("years") }}</option>`).join('')}
+                        </select>
+                    `);
+                }
+            } else {
+                $('#childAges').hide();
+            }
+        }
+        
+        if (type === 'rooms' && $('#distributionMode').val() === 'manual') {
+            renderManualRooms();
+        }
+
         updatePaxSummary();
     });
 
     function updatePaxSummary() {
-        const r = $('#inputRooms').val();
-        const a = $('#inputAdults').val();
-        const c = $('#inputChilds').val();
+        const mode = $('#distributionMode').val();
+        let r, a, c;
+
+        if (mode === 'manual') {
+            r = parseInt($('#inputRooms').val());
+            a = 0; c = 0;
+            $('.m-adult-input').each(function() { a += parseInt($(this).val()); });
+            $('.m-child-input').each(function() { c += parseInt($(this).val()); });
+            
+            // Sync the auto counters just in case
+            $('#inputAdults').val(a);
+            $('#inputChilds').val(c);
+        } else {
+            r = $('#inputRooms').val() || 1;
+            a = $('#inputAdults').val() || 2;
+            c = $('#inputChilds').val() || 0;
+        }
+
         let text = `${r} {{ __("Room") }}, ${a} {{ __("Adults") }}`;
         if (c > 0) text += `, ${c} {{ __("Children") }}`;
         $('#paxText').text(text);
@@ -903,6 +1056,7 @@ $(document).ready(function() {
     $(document).on('click', '.book-room-btn', function() {
         const btn = $(this);
         const searchForm = $('#hotelSearchForm');
+        const mode = $('#distributionMode').val() || 'auto';
         
         const data = {
             rateBasisId: btn.data('rate-basis-id'),
@@ -925,9 +1079,23 @@ $(document).ready(function() {
             rooms: searchForm.find('#inputRooms').val(),
             adults: searchForm.find('#inputAdults').val(),
             childs: searchForm.find('#inputChilds').val(),
+            distribution_mode: mode,
             
             _token: '{{ csrf_token() }}'
         };
+
+        // If manual mode, gather occupancy details
+        if (mode === 'manual') {
+            searchForm.find('[name^="occupancy"]').serializeArray().forEach(item => {
+                if (item.name.endsWith('[]')) {
+                    const key = item.name;
+                    if (!data[key]) data[key] = [];
+                    data[key].push(item.value);
+                } else {
+                    data[item.name] = item.value;
+                }
+            });
+        }
 
         btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> {{ __("Verifying...") }}');
 
@@ -939,9 +1107,16 @@ $(document).ready(function() {
                    alert(res.message);
                    btn.prop('disabled', false).html('{{ __("Book Now") }}');
                 } else {
-                   // Redirect to booking form with ALL parameters
-                   const params = new URLSearchParams(data).toString();
-                   window.location.href = `{{ route("hotels.booking.form") }}?${params}`;
+                   // Redirect with ALL parameters correctly serialized
+                   const params = new URLSearchParams();
+                   Object.keys(data).forEach(k => {
+                       if (Array.isArray(data[k])) {
+                           data[k].forEach(v => params.append(k, v));
+                       } else {
+                           params.append(k, data[k]);
+                       }
+                   });
+                   window.location.href = `{{ route("hotels.booking.form") }}?${params.toString()}`;
                 }
             },
             error: function() {

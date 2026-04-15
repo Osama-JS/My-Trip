@@ -76,8 +76,11 @@
                             'sessionId' => $results['sessionId'] ?? '',
                             'checkIn' => $searchParams['checkIn'] ?? '',
                             'checkOut' => $searchParams['checkOut'] ?? '',
+                            'rooms' => $searchParams['rooms'] ?? 1,
                             'adults' => $searchParams['adults'] ?? 1,
                             'childs' => $searchParams['childs'] ?? 0,
+                            'distribution_mode' => $searchParams['distribution_mode'] ?? 'auto',
+                            'occupancy' => $searchParams['occupancy'] ?? [],
                         ]) }}" class="fe-btn fe-btn-primary fe-btn-block">
                             {{ __('View Rooms') }}
                         </a>

@@ -11,54 +11,176 @@
 </div>
 
 <div class="fe-container" style="margin-top: -40px; margin-bottom: 80px;">
+    {{-- Alerts --}}
+    @if(session('error'))
+        <div class="alert alert-danger" style="background: #fee2e2; border: 1px solid #fecaca; color: #b91c1c; padding: 15px; border-radius: 12px; margin-bottom: 20px; font-weight: 700;">
+            <i class="fas fa-exclamation-circle"></i> {{ session('error') }}
+        </div>
+    @endif
+    @if(session('success'))
+        <div class="alert alert-success" style="background: #dcfce7; border: 1px solid #bbf7d0; color: #15803d; padding: 15px; border-radius: 12px; margin-bottom: 20px; font-weight: 700;">
+            <i class="fas fa-check-circle"></i> {{ session('success') }}
+        </div>
+    @endif
+    
+    @if ($errors->any())
+        <div class="alert alert-danger" style="background: #fee2e2; border: 1px solid #fecaca; color: #b91c1c; padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+            <ul style="margin: 0; padding-inline-start: 20px; font-weight: 700;">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <form action="{{ route('hotels.book.process') }}" method="POST" id="hotelBookingForm">
         @csrf
         {{-- Hidden Params from Search/Selection --}}
+        {{-- Hidden Params from Search/Selection --}}
         @foreach($details as $key => $value)
             @if(!in_array($key, ['pax', '_token']))
-                <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                @if(is_array($value))
+                    @foreach($value as $subKey => $subValue)
+                        @if(is_array($subValue))
+                            @foreach($subValue as $subSubKey => $subSubValue)
+                                @if(is_array($subSubValue))
+                                    @foreach($subSubValue as $s4k => $s4v)
+                                        <input type="hidden" name="{{ $key }}[{{ $subKey }}][{{ $subSubKey }}][{{ $s4k }}]" value="{{ $s4v }}">
+                                    @endforeach
+                                @else
+                                    <input type="hidden" name="{{ $key }}[{{ $subKey }}][{{ $subSubKey }}]" value="{{ $subSubValue }}">
+                                @endif
+                            @endforeach
+                        @else
+                            <input type="hidden" name="{{ $key }}[{{ $subKey }}]" value="{{ $subValue }}">
+                        @endif
+                    @endforeach
+                @else
+                    <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                @endif
             @endif
         @endforeach
 
         <div class="fe-booking-grid">
             {{-- Left Side: Passenger Forms --}}
             <div class="fe-booking-main">
-                @php $rooms = $details['rooms'] ?? 1; @endphp
-                @for($i = 1; $i <= $rooms; $i++)
+                @php 
+                    $distributionMode = $details['distribution_mode'] ?? 'auto';
+                    $roomsCount = (int)($details['rooms'] ?? (isset($details['occupancy']) ? count($details['occupancy']) : 1));
+                    $roomsOccupancy = [];
+
+                    // Extract and split room names if they are concatenated with |t|
+                    $rawRoomName = $details['roomName'] ?? __('Standard Room');
+                    $availableRoomNames = explode('|t|', $rawRoomName);
+
+                    if ($distributionMode === 'manual' && isset($details['occupancy'])) {
+                        for ($i = 0; $i < $roomsCount; $i++) {
+                            $roomsOccupancy[] = [
+                                'room_no' => $i + 1,
+                                'adult' => (int)($details["occupancy"][$i]["adult"] ?? 1),
+                                'child' => (int)($details["occupancy"][$i]["child"] ?? 0),
+                                'child_ages' => $details["occupancy"][$i]["child_age"] ?? []
+                            ];
+                        }
+                    } else {
+                        // Automatic distribution logic
+                        $totalAdults = (int)($details['adults'] ?? 2);
+                        $totalChilds = (int)($details['childs'] ?? 0);
+                        $childAges = $details['childAge'] ?? [];
+                        
+                        $remainingAdults = $totalAdults;
+                        $remainingChilds = $totalChilds;
+                        $ageIndex = 0;
+
+                        for ($i = 1; $i <= $roomsCount; $i++) {
+                            $roomAdults = ceil($remainingAdults / ($roomsCount - $i + 1));
+                            $remainingAdults -= $roomAdults;
+                            
+                            $roomChilds = ceil($remainingChilds / ($roomsCount - $i + 1));
+                            $remainingChilds -= $roomChilds;
+
+                            $roomAges = [];
+                            for ($j = 0; $j < $roomChilds; $j++) {
+                                $roomAges[] = $childAges[$ageIndex++] ?? 0;
+                            }
+                            
+                            $roomsOccupancy[] = [
+                                'room_no' => $i,
+                                'adult' => $roomAdults,
+                                'child' => $roomChilds,
+                                'child_ages' => $roomAges
+                            ];
+                        }
+                    }
+                @endphp
+
+                @foreach($roomsOccupancy as $room)
+                    @php 
+                        $roomIdx = $loop->iteration; 
+                        // Pick the specific room name for this index, fallback to first one or raw name
+                        $currentRoomName = $availableRoomNames[$roomIdx - 1] ?? ($availableRoomNames[0] ?? $rawRoomName);
+                    @endphp
                     <div class="fe-booking-card">
                         <div class="fe-card-header">
                             <i class="fas fa-bed"></i> 
-                            <h3>{{ __('Room') }} {{ $i }} - {{ $details['roomName'] ?? __('Standard Room') }}</h3>
+                            <h3>{{ __('Room') }} {{ $roomIdx }} - {{ $currentRoomName }}</h3>
                         </div>
                         <div class="fe-card-body">
-                            {{-- Adult 1 (Main Guest for this room) --}}
-                            <h4 class="fe-guest-title">{{ __('Adult') }} 1 ({{ __('Lead Guest') }})</h4>
-                            <div class="fe-form-row">
-                                <div class="fe-form-group">
-                                    <label class="fe-label">{{ __('Title') }}</label>
-                                    <select name="pax[{{ $i }}][adult][title]" class="fe-input" required>
-                                        <option value="Mr">{{ __('Mr.') }}</option>
-                                        <option value="Ms">{{ __('Ms.') }}</option>
-                                        <option value="Mrs">{{ __('Mrs.') }}</option>
-                                    </select>
+                            {{-- Adults --}}
+                            @for($a = 1; $a <= $room['adult']; $a++)
+                                <h4 class="fe-guest-title" style="margin-top: {{ $a > 1 ? '30px' : '0' }}">
+                                    {{ __('Adult') }} {{ $a }} {{ ($roomIdx == 1 && $a == 1) ? '(' . __('Lead Guest') . ')' : '' }}
+                                </h4>
+                                <div class="fe-form-row">
+                                    <div class="fe-form-group">
+                                        <label class="fe-label">{{ __('Title') }}</label>
+                                        <select name="pax[{{ $roomIdx }}][adult][{{ $a }}][title]" class="fe-input" required>
+                                            <option value="Mr">{{ __('Mr.') }}</option>
+                                            <option value="Ms">{{ __('Ms.') }}</option>
+                                            <option value="Mrs">{{ __('Mrs.') }}</option>
+                                        </select>
+                                    </div>
+                                    <div class="fe-form-group">
+                                        <label class="fe-label">{{ __('First Name') }}</label>
+                                        <input type="text" name="pax[{{ $roomIdx }}][adult][{{ $a }}][firstName]" value="{{ old('pax.'.$roomIdx.'.adult.'.$a.'.firstName') }}" class="fe-input" placeholder="{{ __('First name') }}" required>
+                                    </div>
+                                    <div class="fe-form-group">
+                                        <label class="fe-label">{{ __('Last Name') }}</label>
+                                        <input type="text" name="pax[{{ $roomIdx }}][adult][{{ $a }}][lastName]" value="{{ old('pax.'.$roomIdx.'.adult.'.$a.'.lastName') }}" class="fe-input" placeholder="{{ __('Last name') }}" required>
+                                    </div>
                                 </div>
-                                <div class="fe-form-group">
-                                    <label class="fe-label">{{ __('First Name') }}</label>
-                                    <input type="text" name="pax[{{ $i }}][adult][firstName]" class="fe-input" placeholder="{{ __('First name') }}" required>
-                                </div>
-                                <div class="fe-form-group">
-                                    <label class="fe-label">{{ __('Last Name') }}</label>
-                                    <input type="text" name="pax[{{ $i }}][adult][lastName]" class="fe-input" placeholder="{{ __('Last name') }}" required>
-                                </div>
-                            </div>
+                            @endfor
 
-                            {{-- We can add more adults/children per room if needed, 
-                                but for this simplified flow, we collect the lead guest per room 
-                                and allow the total guest counts to be handled by the API.
-                            --}}
+                            {{-- Children --}}
+                            @if($room['child'] > 0)
+                                @for($c = 1; $c <= $room['child']; $c++)
+                                    @php $childAge = $room['child_ages'][$c-1] ?? 0; @endphp
+                                    <h4 class="fe-guest-title" style="margin-top: 30px;">
+                                        {{ __('Child') }} {{ $c }} ({{ __('Age') }}: {{ $childAge }})
+                                    </h4>
+                                    <div class="fe-form-row">
+                                        <div class="fe-form-group">
+                                            <label class="fe-label">{{ __('Title') }}</label>
+                                            <select name="pax[{{ $roomIdx }}][child][{{ $c }}][title]" class="fe-input" required>
+                                                <option value="Mr">{{ __('Master') }}</option>
+                                                <option value="Ms">{{ __('Miss') }}</option>
+                                            </select>
+                                        </div>
+                                        <div class="fe-form-group">
+                                            <label class="fe-label">{{ __('First Name') }}</label>
+                                            <input type="text" name="pax[{{ $roomIdx }}][child][{{ $c }}][firstName]" value="{{ old('pax.'.$roomIdx.'.child.'.$c.'.firstName') }}" class="fe-input" placeholder="{{ __('First name') }}" required>
+                                        </div>
+                                        <div class="fe-form-group">
+                                            <label class="fe-label">{{ __('Last Name') }}</label>
+                                            <input type="text" name="pax[{{ $roomIdx }}][child][{{ $c }}][lastName]" value="{{ old('pax.'.$roomIdx.'.child.'.$c.'.lastName') }}" class="fe-input" placeholder="{{ __('Last name') }}" required>
+                                        </div>
+                                        <input type="hidden" name="pax[{{ $roomIdx }}][child][{{ $c }}][age]" value="{{ $childAge }}">
+                                    </div>
+                                @endfor
+                            @endif
                         </div>
                     </div>
-                @endfor
+                @endforeach
 
                 <div class="fe-booking-card">
                     <div class="fe-card-header">
@@ -69,11 +191,11 @@
                         <div class="fe-form-row fe-form-row-2">
                             <div class="fe-form-group">
                                 <label class="fe-label">{{ __('Email Address') }}</label>
-                                <input type="email" name="customerEmail" class="fe-input" placeholder="{{ __('Your email for confirmation') }}" required value="{{ auth()->user()->email ?? '' }}">
+                                <input type="email" name="customerEmail" class="fe-input" placeholder="{{ __('Your email for confirmation') }}" required value="{{ old('customerEmail', auth()->user()->email ?? '') }}">
                             </div>
                             <div class="fe-form-group">
                                 <label class="fe-label">{{ __('Phone Number') }}</label>
-                                <input type="tel" name="customerPhone" class="fe-input" placeholder="{{ __('Phone number') }}" required value="{{ auth()->user()->phone ?? '' }}">
+                                <input type="tel" name="customerPhone" class="fe-input" placeholder="{{ __('Phone number') }}" required value="{{ old('customerPhone', auth()->user()->phone ?? '') }}">
                             </div>
                         </div>
                     </div>

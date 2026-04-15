@@ -127,30 +127,48 @@ class TraveloproHotelService
         ];
 
         // Format occupancy
-        $rooms = (int) ($data['rooms'] ?? 1);
-        $adults = (int) ($data['adults'] ?? 1);
-        $childs = (int) ($data['childs'] ?? 0);
-        $childAge = $data['childAge'] ?? [];
-
         $payload['occupancy'] = [];
-        $remainingAdults = $adults;
-        $remainingChilds = $childs;
+        if (isset($data['distribution_mode']) && $data['distribution_mode'] === 'manual' && isset($data['occupancy'])) {
+            foreach ($data['occupancy'] as $index => $roomData) {
+                $payload['occupancy'][] = [
+                    'room_no' => $index + 1,
+                    'adult' => (int) ($roomData['adult'] ?? 1),
+                    'child' => (int) ($roomData['child'] ?? 0),
+                    'child_age' => (isset($roomData['child_age']) && !empty($roomData['child_age'])) ? $roomData['child_age'] : [0]
+                ];
+            }
+        } else {
+            $rooms = (int) ($data['rooms'] ?? 1);
+            $adults = (int) ($data['adults'] ?? 1);
+            $childs = (int) ($data['childs'] ?? 0);
+            $childAge = $data['childAge'] ?? [];
 
-        for ($i = 1; $i <= $rooms; $i++) {
-            // Distribute adults
-            $roomAdults = ceil($remainingAdults / ($rooms - $i + 1));
-            $remainingAdults -= $roomAdults;
+            $remainingAdults = $adults;
+            $remainingChilds = $childs;
+            $ageIndex = 0;
 
-            // Distribute children
-            $roomChilds = ceil($remainingChilds / ($rooms - $i + 1));
-            $remainingChilds -= $roomChilds;
+            for ($i = 1; $i <= $rooms; $i++) {
+                // Distribute adults
+                $roomAdults = ceil($remainingAdults / ($rooms - $i + 1));
+                $remainingAdults -= $roomAdults;
 
-            $payload['occupancy'][] = [
-                'room_no' => $i,
-                'adult' => (int) $roomAdults,
-                'child' => (int) $roomChilds,
-                'child_age' => !empty($childAge) ? $childAge : [0]
-            ];
+                // Distribute children
+                $roomChilds = ceil($remainingChilds / ($rooms - $i + 1));
+                $remainingChilds -= $roomChilds;
+
+                // Distribute child ages
+                $roomAges = [];
+                for ($j = 0; $j < $roomChilds; $j++) {
+                    $roomAges[] = $childAge[$ageIndex++] ?? 0;
+                }
+
+                $payload['occupancy'][] = [
+                    'room_no' => $i,
+                    'adult' => (int) $roomAdults,
+                    'child' => (int) $roomChilds,
+                    'child_age' => !empty($roomAges) ? $roomAges : [0]
+                ];
+            }
         }
 
         $response = $this->sendRequest('hotel_search', $payload, 'Hotel Search');

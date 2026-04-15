@@ -435,29 +435,71 @@ class FrontendController extends Controller
      */
     public function processHotelBooking(Request $request)
     {
+        // 1. Validate Input
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'hotelId' => 'required',
+            'hotelName' => 'required',
+            'checkIn' => 'required|date',
+            'checkOut' => 'required|date',
+            'total_amount' => 'required|numeric',
+            'customerEmail' => 'required|email',
+            'customerPhone' => 'required',
+            'pax' => 'required|array',
+        ], [
+            'hotelId.required' => __('Hotel ID is missing.'),
+            'pax.required' => __('Please fill all passenger details.'),
+            'customerEmail.required' => __('Email is required.'),
+            'customerPhone.required' => __('Phone number is required.'),
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        $rooms = (int) $request->get('rooms', 1);
+        $paxInput = $request->get('pax', []);
         $paxDetails = [];
-        $rooms = $request->get('rooms', 1);
+
         for ($i = 1; $i <= $rooms; $i++) {
             $roomPax = [
                 'room_no' => $i,
-                'pax' => [
-                    [
-                        'type' => 'AD', // Standard Adult type
-                        'Title' => $request->input("pax.{$i}.adult.title", 'Mr'),
-                        'FirstName' => $request->input("pax.{$i}.adult.firstName", 'Guest'),
-                        'LastName' => $request->input("pax.{$i}.adult.lastName", 'Name'),
-                    ]
-                ]
+                'pax' => []
             ];
-            
-            if ($request->has("pax.{$i}.child")) {
+
+            // Capture all adults for this room
+            $roomAdults = $paxInput[$i]['adult'] ?? [];
+            foreach ($roomAdults as $adult) {
+                if (empty($adult['firstName']) || empty($adult['lastName'])) {
+                     return back()->with('error', __('Please enter first and last name for all adults in Room :n', ['n' => $i]))->withInput();
+                }
                 $roomPax['pax'][] = [
-                    'type' => 'CH',
-                    'Title' => $request->input("pax.{$i}.child.title"),
-                    'FirstName' => $request->input("pax.{$i}.child.firstName"),
-                    'LastName' => $request->input("pax.{$i}.child.lastName"),
+                    'type' => 'AD',
+                    'Title' => $adult['title'] ?? 'Mr',
+                    'FirstName' => $adult['firstName'] ?? '',
+                    'LastName' => $adult['lastName'] ?? '',
                 ];
             }
+
+            // Capture all children for this room
+            $roomChildren = $paxInput[$i]['child'] ?? [];
+            foreach ($roomChildren as $child) {
+                if (empty($child['firstName']) || empty($child['lastName'])) {
+                     return back()->with('error', __('Please enter first and last name for all children in Room :n', ['n' => $i]))->withInput();
+                }
+                $roomPax['pax'][] = [
+                    'type' => 'CH',
+                    'Title' => $child['title'] ?? 'Mr',
+                    'FirstName' => $child['firstName'] ?? '',
+                    'LastName' => $child['lastName'] ?? '',
+                    'Age' => (int) ($child['age'] ?? 0),
+                ];
+            }
+
+            // Fallback if no pax provided for this room - though validation should handle this
+            if (empty($roomPax['pax'])) {
+                return back()->with('error', __('No passenger details found for Room :n', ['n' => $i]))->withInput();
+            }
+
             $paxDetails[] = $roomPax;
         }
 
@@ -469,8 +511,8 @@ class FrontendController extends Controller
             'tokenId'      => $request->get('tokenId'),
             'rateBasisId'  => $request->get('rateBasisId'),
             'clientRef'    => $referenceNum,
-            'customerEmail' => $request->get('customerEmail', auth()->user()->email ?? 'guest@example.com'),
-            'customerPhone' => $request->get('customerPhone', auth()->user()->phone ?? '0000000000'),
+            'customerEmail' => $request->get('customerEmail'),
+            'customerPhone' => $request->get('customerPhone'),
             'bookingNote'  => 'Hotel Booking - ' . $request->get('hotelName'),
             'paxDetails'   => $paxDetails,
         ];
@@ -485,17 +527,20 @@ class FrontendController extends Controller
             $supplierResult = $hotelService->book($bookingData);
 
             if (isset($supplierResult['referenceNum']) || isset($supplierResult['supplierConfirmationNum'])) {
-                // Supplier accepted the pre-booking
                 $supplierConfirmationNum = $supplierResult['supplierConfirmationNum'] ?? $supplierResult['referenceNum'] ?? null;
-                $initialStatus = 'pending'; // Still pending payment — not yet paid
-                \Illuminate\Support\Facades\Log::info('Supplier pre-booking successful', ['ref' => $supplierConfirmationNum]);
+                $initialStatus = 'pending';
             } else {
-                // Log the supplier error but do NOT block the user — continue to collect payment
                 $errMsg = $supplierResult['status']['error'] ?? $supplierResult['message'] ?? 'Unknown supplier error';
-                \Illuminate\Support\Facades\Log::warning("Supplier pre-booking failed (will retry after payment): {$errMsg}", ['result' => $supplierResult]);
+                \Illuminate\Support\Facades\Log::warning("Supplier pre-booking failed: {$errMsg}", ['result' => $supplierResult]);
+                // If the supplier explicitly rejects (e.g. Sold Out), we should block the payment
+                if (isset($supplierResult['status']['error'])) {
+                     return back()->with('error', __('Supplier Error: :msg', ['msg' => $errMsg]))->withInput();
+                }
             }
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Supplier book call exception: ' . $e->getMessage());
+            // Fail early if supplier call crashed
+            return back()->with('error', __('Connection error with hotel provider. Please try again.'))->withInput();
         }
 
         try {
@@ -508,8 +553,8 @@ class FrontendController extends Controller
                 'check_in'    => $request->get('checkIn'),
                 'check_out'   => $request->get('checkOut'),
                 'rooms'       => $rooms,
-                'adults'      => $request->get('adults', 1),
-                'childs'      => $request->get('childs', 0),
+                'adults'      => (int) $request->get('adults', 1),
+                'childs'      => (int) $request->get('childs', 0),
                 'total_price' => $request->get('total_amount', 0),
                 'currency'    => $request->get('currency', 'SAR'),
                 'status'      => $initialStatus,
@@ -524,12 +569,27 @@ class FrontendController extends Controller
                 'board_type'  => $request->get('boardType'),
             ]);
 
-            // Redirect to payment
+            // Save individual passengers
+            foreach ($paxDetails as $room) {
+                $roomPax = $room['pax'] ?? [];
+                foreach ($roomPax as $pax) {
+                    $type = (isset($pax['type']) && $pax['type'] == 'CH') ? 'child' : 'adult';
+                    \App\Models\BookingPassenger::create([
+                        'hotel_booking_id' => $hotelBooking->id,
+                        'name'             => ($pax['Title'] ?? 'Mr') . ' ' . ($pax['FirstName'] ?? '') . ' ' . ($pax['LastName'] ?? ''),
+                        'first_name'       => $pax['FirstName'] ?? '',
+                        'last_name'        => $pax['LastName'] ?? '',
+                        'title'            => $pax['Title'] ?? 'Mr',
+                        'passenger_type'   => $type,
+                    ]);
+                }
+            }
+
             return redirect()->route('hotels.payment.select', ['booking_id' => $hotelBooking->id]);
 
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Local Hotel Save Error: ' . $e->getMessage());
-            return back()->with('error', __('Local save failed. Please try again.'));
+            return back()->with('error', __('Local save failed: :msg', ['msg' => $e->getMessage()]))->withInput();
         }
     }
 

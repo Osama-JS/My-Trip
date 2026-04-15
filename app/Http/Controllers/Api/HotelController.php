@@ -24,29 +24,37 @@ class HotelController extends Controller
         path: "/api/hotels/search",
         summary: "البحث عن الفنادق (Search for hotels)",
         operationId: "searchHotels",
-        description: "البحث عن الفنادق المتاحة. يجب استخدامcityName و countryName من دالة /api/hotels/cities. (Search for hotels. Use cityName and countryName from /api/hotels/cities).",
+        description: "البحث عن الفنادق المتاحة. يدعم النظام نمطين للتوزيع: التلقائي (auto) حيث يقوم النظام بتوزيع النزلاء على الغرف، واليدوي (manual) حيث يحدد المبرمج توزيع النزلاء لكل غرفة بدقة. (Search for hotels. Supports auto and manual guest distribution).",
         tags: ["Hotels"],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ["checkIn", "checkOut", "rooms", "adults"],
+                required: ["checkIn", "checkOut", "rooms"],
                 properties: [
-                    new OA\Property(property: "cityName", type: "string", description: "اسم المدينة من دالة المدن (City name from cities API)", example: "Dubai"),
-                    new OA\Property(property: "countryName", type: "string", description: "اسم الدولة من دالة المدن (Country name from cities API)", example: "United Arab Emirates"),
-                    new OA\Property(property: "checkIn", type: "string", format: "date", description: "تاريخ الدخول YYYY-MM-DD", example: "2024-12-01"),
-                    new OA\Property(property: "checkOut", type: "string", format: "date", description: "تاريخ الخروج YYYY-MM-DD", example: "2024-12-10"),
-                    new OA\Property(property: "rooms", type: "integer", description: "عدد الغرف", example: 1),
-                    new OA\Property(property: "adults", type: "integer", description: "عدد البالغين", example: 1),
-                    new OA\Property(property: "childs", type: "integer", description: "عدد الأطفال", example: 0),
-                    new OA\Property(property: "childAge", type: "array", items: new OA\Items(type: "integer"), description: "أعمار الأطفال", example: []),
-                    new OA\Property(property: "requiredCurrency", type: "string", description: "العملة (ISO 3 letters)", example: "SAR"),
-                    new OA\Property(property: "residentNationality", type: "string", description: "جنسية المقيم (ISO 2 letters)", example: "SA"),
-                    new OA\Property(property: "requiredLanguage", type: "string", description: "اللغة من دالة اللغات (Language code from languages API)", example: "ARA")
+                    new OA\Property(property: "cityName", type: "string", description: "اسم المدينة بالإنجليزية (مثلاً Dubai)", example: "Dubai"),
+                    new OA\Property(property: "countryName", type: "string", description: "اسم الدولة بالإنجليزية (مثلاً UAE)", example: "United Arab Emirates"),
+                    new OA\Property(property: "checkIn", type: "string", format: "date", description: "تاريخ الدخول (YYYY-MM-DD)", example: "2024-12-01"),
+                    new OA\Property(property: "checkOut", type: "string", format: "date", description: "تاريخ الخروج (YYYY-MM-DD)", example: "2024-12-10"),
+                    new OA\Property(property: "rooms", type: "integer", description: "إجمالي عدد الغرف المطلوبة", example: 1),
+                    new OA\Property(property: "adults", type: "integer", description: "إجمالي عدد البالغين (مطلوب في النمط التلقائي auto فقط)", example: 2),
+                    new OA\Property(property: "childs", type: "integer", description: "إجمالي عدد الأطفال (اختياري في النمط التلقائي)", example: 0),
+                    new OA\Property(property: "childAge", type: "array", items: new OA\Items(type: "integer"), description: "مصفوفة أعمار الأطفال (تستخدم في النمط التلقائي)", example: []),
+                    new OA\Property(property: "distribution_mode", type: "string", description: "نمط التوزيع: 'auto' (تلقائي) أو 'manual' (يدوي).", example: "auto"),
+                    new OA\Property(property: "occupancy", type: "array", description: "مطلوب في النمط اليدوي فقط. مصفوفة تحتوي على تفاصيل كل غرفة (عدد البالغين، الأطفال وأعمارهم).", items: new OA\Items(
+                        properties: [
+                            new OA\Property(property: "adult", type: "integer", description: "عدد البالغين في هذه الغرفة", example: 2),
+                            new OA\Property(property: "child", type: "integer", description: "عدد الأطفال في هذه الغرفة", example: 1),
+                            new OA\Property(property: "child_age", type: "array", items: new OA\Items(type: "integer"), description: "أعمار الأطفال في هذه الغرفة (مثلاً [5, 8])", example: [5])
+                        ]
+                    )),
+                    new OA\Property(property: "requiredCurrency", type: "string", description: "رمز العملة المكون من 3 أحرف (مثل SAR)", example: "SAR"),
+                    new OA\Property(property: "residentNationality", type: "string", description: "جنسية المقيم (مثل SA)", example: "SA"),
+                    new OA\Property(property: "requiredLanguage", type: "string", description: "رمز اللغة (مثل ARA أو ENG)", example: "ARA")
                 ]
             )
         ),
         responses: [
-            new OA\Response(response: 200, description: "تم استرجاع الفنادق بنجاح. لاحظ وجود sessionId و nextToken و moreResults في النتيجة.")
+            new OA\Response(response: 200, description: "تم استرجاع قائمة الفنادق بنجاح.")
         ]
     )]
     public function search(Request $request)
@@ -60,9 +68,11 @@ class HotelController extends Controller
             'checkIn' => 'required|date_format:Y-m-d|after_or_equal:today',
             'checkOut' => 'required|date_format:Y-m-d|after:checkIn',
             'rooms' => 'required|integer|min:1',
-            'adults' => 'required|integer|min:1',
+            'adults' => 'required_if:distribution_mode,auto|integer|min:1',
             'childs' => 'nullable|integer|min:0',
-            'childAge' => 'required_if:childs,>0|array',
+            'childAge' => 'nullable|array',
+            'distribution_mode' => 'nullable|string|in:auto,manual',
+            'occupancy' => 'required_if:distribution_mode,manual|array',
             'requiredCurrency' => 'nullable|string|size:3',
             'requiredLanguage' => 'nullable|string|size:3',
         ], [
@@ -176,42 +186,50 @@ class HotelController extends Controller
         path: "/api/hotels/book",
         summary: "إتمام الحجز (Book a hotel)",
         operationId: "bookHotel",
-        description: "إنشاء حجز فندق حقيقي. يتطلب rateBasisId من دالة التحقق السابقة. (Create actual reservation. Requires rateBasisId from check-rates).",
+        description: "إنشاء حجز فندق حقيقي. ملاحظة هامة: يجب إرسال بيانات (كل) النزلاء في الغرفة بناءً على العدد الذي تم تحديده في البحث. إذا كانت الغرفة بها شخصين، يجب إرسال كائنين في مصفوفة pax داخل الغرفة. (Create reservation. Must send ALL guest details for each room).",
         tags: ["Hotels"],
         security: [["bearerAuth" => []]],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ["rateBasisId", "sessionId", "productId", "tokenId", "customerEmail", "customerPhone", "paxDetails"],
+                required: ["rateBasisId", "sessionId", "productId", "tokenId", "customerEmail", "customerPhone", "total_price", "currency", "paxDetails", "checkIn", "checkOut", "hotelId", "hotelName"],
                 properties: [
-                    new OA\Property(property: "rateBasisId", type: "string", description: "معرف الغرفة المؤكد من check-rates", example: "RB123"),
+                    new OA\Property(property: "rateBasisId", type: "string", description: "معرف السعر المختار", example: "RB123"),
                     new OA\Property(property: "sessionId", type: "string", example: "sess-abc-123"),
                     new OA\Property(property: "productId", type: "string"),
                     new OA\Property(property: "tokenId", type: "string"),
                     new OA\Property(property: "customerEmail", type: "string", format: "email", example: "guest@example.com"),
                     new OA\Property(property: "customerPhone", type: "string", example: "966500000000"),
-                    new OA\Property(property: "bookingNote", type: "string", description: "ملاحظات إضافية", example: "Quiet room please"),
-                    new OA\Property(property: "clientRef", type: "string", description: "مرجع خاص بنظامك (Unique Ref)", example: "MYTRIP-789"),
-                    new OA\Property(property: "paxDetails", type: "array", description: "تفاصيل الركاب لكل غرفة", items: new OA\Items(
+                    new OA\Property(property: "hotelId", type: "string", description: "معرف الفندق"),
+                    new OA\Property(property: "hotelName", type: "string", description: "اسم الفندق"),
+                    new OA\Property(property: "cityName", type: "string", description: "اسم المدينة"),
+                    new OA\Property(property: "countryName", type: "string", description: "اسم الدولة"),
+                    new OA\Property(property: "checkIn", type: "string", format: "date", description: "تاريخ الدخول YYYY-MM-DD", example: "2024-12-01"),
+                    new OA\Property(property: "checkOut", type: "string", format: "date", description: "تاريخ الخروج YYYY-MM-DD", example: "2024-12-10"),
+                    new OA\Property(property: "rooms", type: "integer", example: 1),
+                    new OA\Property(property: "total_price", type: "number", description: "السعر الإجمالي المؤكد"),
+                    new OA\Property(property: "currency", type: "string", description: "العملة (مثلاً SAR)"),
+                    new OA\Property(property: "roomName", type: "string", description: "اسم الغرفة"),
+                    new OA\Property(property: "boardType", type: "string", description: "نوع الوجبة"),
+                    new OA\Property(property: "paxDetails", type: "array", description: "مصفوفة الغرف، وبداخل كل غرفة مصفوفة pax للنزلاء.", items: new OA\Items(
                         properties: [
-                            new OA\Property(property: "room_no", type: "integer", example: 1),
-                            new OA\Property(property: "adult", type: "object", properties: [
-                                new OA\Property(property: "title", type: "array", items: new OA\Items(type: "string"), example: ["Mr"]),
-                                new OA\Property(property: "firstName", type: "array", items: new OA\Items(type: "string"), example: ["John"]),
-                                new OA\Property(property: "lastName", type: "array", items: new OA\Items(type: "string"), example: ["Doe"])
-                            ]),
-                            new OA\Property(property: "child", type: "object", properties: [
-                                new OA\Property(property: "title", type: "array", items: new OA\Items(type: "string"), example: ["Mr"]),
-                                new OA\Property(property: "firstName", type: "array", items: new OA\Items(type: "string"), example: ["Boy"]),
-                                new OA\Property(property: "lastName", type: "array", items: new OA\Items(type: "string"), example: ["Doe"])
-                            ])
+                            new OA\Property(property: "room_no", type: "integer", description: "رقم الغرفة", example: 1),
+                            new OA\Property(property: "pax", type: "array", description: "قائمة المسافرين في هذه الغرفة", items: new OA\Items(
+                                properties: [
+                                    new OA\Property(property: "type", type: "string", description: "AD للبالغ، CH للطفل", example: "AD"),
+                                    new OA\Property(property: "Title", type: "string", description: "Mr, Ms, Mrs, Master, Miss", example: "Mr"),
+                                    new OA\Property(property: "FirstName", type: "string", description: "الاسم الأول"),
+                                    new OA\Property(property: "LastName", type: "string", description: "اسم العائلة"),
+                                    new OA\Property(property: "Age", type: "integer", description: "العمر (مطلوب للأطفال)")
+                                ]
+                            ))
                         ]
                     ))
                 ]
             )
         ),
         responses: [
-            new OA\Response(response: 200, description: "تم طلب الحجز بنجاح. ابحث عن supplierConfirmationNum و referenceNum في النتيجة.")
+            new OA\Response(response: 200, description: "تم إتمام الحجز بنجاح.")
         ]
     )]
     public function book(Request $request)
@@ -221,11 +239,20 @@ class HotelController extends Controller
             'sessionId' => 'required|string',
             'productId' => 'required|string',
             'tokenId' => 'required|string',
+            'hotelId' => 'required|string',
+            'hotelName' => 'required|string',
+            'checkIn' => 'required|date_format:Y-m-d',
+            'checkOut' => 'required|date_format:Y-m-d',
+            'total_price' => 'required|numeric',
+            'currency' => 'required|string|size:3',
             'customerEmail' => 'required|email',
             'customerPhone' => 'required|string',
             'paxDetails' => 'required|array|min:1',
             'bookingNote' => 'nullable|string',
             'clientRef' => 'nullable|string',
+        ], [
+            'hotelId.required' => __('Hotel ID is required.'),
+            'paxDetails.required' => __('Passenger details are required for all rooms.'),
         ]);
 
         if ($validator->fails()) {
@@ -240,8 +267,13 @@ class HotelController extends Controller
                 'user_id' => Auth::id(),
                 'hotel_name' => $result['hotel_name'] ?? ($request->hotelName ?? 'Hotel Reservation'),
                 'hotel_id' => $request->hotelId,
-                'check_in' => $request->checkIn ?? now(), // Should ideally come from previous steps/session
+                'city_name' => $request->cityName,
+                'country_name' => $request->countryName,
+                'check_in' => $request->checkIn ?? now(),
                 'check_out' => $request->checkOut ?? now(),
+                'rooms' => (int) $request->rooms,
+                'adults' => (int) $request->adults,
+                'childs' => (int) $request->childs,
                 'total_price' => $result['total_price'] ?? 0,
                 'currency' => $result['currency'] ?? 'SAR',
                 'status' => 'pending',
@@ -250,41 +282,54 @@ class HotelController extends Controller
                 'session_id' => $request->sessionId,
                 'product_id' => $request->productId,
                 'token_id' => $request->tokenId,
+                'rate_basis_id' => $request->rateBasisId,
+                'room_name' => $request->roomName ? str_replace('|t|', ' & ', $request->roomName) : null,
+                'board_type' => $request->boardType,
                 'pax_details' => $request->paxDetails,
             ]);
 
             // Save detailed guests to booking_passengers table for unified access
             foreach ($request->paxDetails as $room) {
-                $roomNo = $room['room_no'] ?? 1;
+                $paxList = $room['pax'] ?? [];
                 
-                // Process Adults
-                if (isset($room['adult']) && is_array($room['adult']['firstName'])) {
-                    foreach ($room['adult']['firstName'] as $index => $firstName) {
-                        $lastName = $room['adult']['lastName'][$index] ?? '';
-                        $title = $room['adult']['title'][$index] ?? 'Mr';
-                        
-                        $hotelBooking->passengers()->create([
-                            'name' => "{$title} {$firstName} {$lastName}",
-                            'first_name' => $firstName,
-                            'last_name' => $lastName,
-                            'title' => $title,
-                            'passenger_type' => 'adult',
-                        ]);
+                // Compatibility for old structure if mobile app hasn't updated yet
+                if (empty($paxList)) {
+                    if (isset($room['adult']['firstName']) && is_array($room['adult']['firstName'])) {
+                        foreach ($room['adult']['firstName'] as $index => $firstName) {
+                            $paxList[] = [
+                                'type' => 'AD',
+                                'Title' => $room['adult']['title'][$index] ?? 'Mr',
+                                'FirstName' => $firstName,
+                                'LastName' => $room['adult']['lastName'][$index] ?? '',
+                            ];
+                        }
+                    }
+                    if (isset($room['child']['firstName']) && is_array($room['child']['firstName'])) {
+                        foreach ($room['child']['firstName'] as $index => $firstName) {
+                            $paxList[] = [
+                                'type' => 'CH',
+                                'Title' => $room['child']['title'][$index] ?? 'Mr',
+                                'FirstName' => $firstName,
+                                'LastName' => $room['child']['lastName'][$index] ?? '',
+                            ];
+                        }
                     }
                 }
-                
-                // Process Children
-                if (isset($room['child']) && is_array($room['child']['firstName'])) {
-                    foreach ($room['child']['firstName'] as $index => $firstName) {
-                        $lastName = $room['child']['lastName'][$index] ?? '';
-                        $title = $room['child']['title'][$index] ?? 'Mr';
-                        
+
+                foreach ($paxList as $pax) {
+                    $type = (isset($pax['type']) && $pax['type'] == 'CH') ? 'child' : 'adult';
+                    $title = $pax['Title'] ?? $pax['title'] ?? 'Mr';
+                    $fName = $pax['FirstName'] ?? $pax['firstName'] ?? '';
+                    $lName = $pax['LastName'] ?? $pax['lastName'] ?? '';
+
+                    // Only save if names are provided
+                    if (!empty($fName) && !empty($lName)) {
                         $hotelBooking->passengers()->create([
-                            'name' => "{$title} {$firstName} {$lastName}",
-                            'first_name' => $firstName,
-                            'last_name' => $lastName,
+                            'name' => "{$title} {$fName} {$lName}",
+                            'first_name' => $fName,
+                            'last_name' => $lName,
                             'title' => $title,
-                            'passenger_type' => 'child',
+                            'passenger_type' => $type,
                         ]);
                     }
                 }
