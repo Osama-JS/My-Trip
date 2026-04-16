@@ -426,11 +426,92 @@ class TraveloproHotelService
 
     /**
      * Create Hotel Booking.
+     *
+     * Transforms our internal paxDetails structure:
+     *   paxDetails[]{room_no, pax[]{type, Title, FirstName, LastName, Age}}
+     *
+     * Into the official Travelopro format:
+     *   paxDetails[]{room_no, adult:{title:[], firstName:[], lastName:[]}, child:{title:[], firstName:[], lastName:[]}}
      */
     public function book(array $data)
     {
-        return $this->sendRequest('hotel_book', $data, 'Hotel Booking');
+        $payload = $data;
+
+        // Transform paxDetails to match Travelopro's official spec
+        if (!empty($data['paxDetails']) && is_array($data['paxDetails'])) {
+            $transformedPax = [];
+
+            foreach ($data['paxDetails'] as $room) {
+                $roomNo = $room['room_no'] ?? 1;
+                $transformed = ['room_no' => $roomNo];
+
+                $adultTitles     = [];
+                $adultFirstNames = [];
+                $adultLastNames  = [];
+                $childTitles     = [];
+                $childFirstNames = [];
+                $childLastNames  = [];
+
+                // Handle our internal flat pax[] structure
+                if (!empty($room['pax']) && is_array($room['pax'])) {
+                    foreach ($room['pax'] as $pax) {
+                        $type      = strtoupper($pax['type'] ?? 'AD');
+                        $title     = $pax['Title']     ?? $pax['title']     ?? 'Mr';
+                        $firstName = $pax['FirstName'] ?? $pax['firstName'] ?? '';
+                        $lastName  = $pax['LastName']  ?? $pax['lastName']  ?? '';
+
+                        if ($type === 'CH') {
+                            $childTitles[]     = $title;
+                            $childFirstNames[] = $firstName;
+                            $childLastNames[]  = $lastName;
+                        } else {
+                            $adultTitles[]     = $title;
+                            $adultFirstNames[] = $firstName;
+                            $adultLastNames[]  = $lastName;
+                        }
+                    }
+                }
+
+                // Handle legacy adult/child object structure (already in Travelopro format)
+                if (!empty($room['adult']) && is_array($room['adult'])) {
+                    $adultTitles     = $room['adult']['title']     ?? [];
+                    $adultFirstNames = $room['adult']['firstName'] ?? [];
+                    $adultLastNames  = $room['adult']['lastName']  ?? [];
+                }
+                if (!empty($room['child']) && is_array($room['child'])) {
+                    $childTitles     = $room['child']['title']     ?? [];
+                    $childFirstNames = $room['child']['firstName'] ?? [];
+                    $childLastNames  = $room['child']['lastName']  ?? [];
+                }
+
+                // Build the official Travelopro paxDetails structure
+                if (!empty($adultFirstNames)) {
+                    $transformed['adult'] = [
+                        'title'     => $adultTitles,
+                        'firstName' => $adultFirstNames,
+                        'lastName'  => $adultLastNames,
+                    ];
+                }
+
+                if (!empty($childFirstNames)) {
+                    $transformed['child'] = [
+                        'title'     => $childTitles,
+                        'firstName' => $childFirstNames,
+                        'lastName'  => $childLastNames,
+                    ];
+                }
+
+                $transformedPax[] = $transformed;
+            }
+
+            $payload['paxDetails'] = $transformedPax;
+        }
+
+        Log::info('Travelopro Hotel Book - Final paxDetails payload', ['paxDetails' => $payload['paxDetails'] ?? []]);
+
+        return $this->sendRequest('hotel_book', $payload, 'Hotel Booking');
     }
+
 
     /**
      * Get Hotel Booking Details.

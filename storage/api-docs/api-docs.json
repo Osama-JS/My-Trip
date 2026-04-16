@@ -2946,8 +2946,8 @@
                 "tags": [
                     "Hotels"
                 ],
-                "summary": "البحث عن الفنادق (Search for hotels)",
-                "description": "البحث عن الفنادق المتاحة. يدعم النظام نمطين للتوزيع: التلقائي (auto) حيث يقوم النظام بتوزيع النزلاء على الغرف، واليدوي (manual) حيث يحدد المبرمج توزيع النزلاء لكل غرفة بدقة. (Search for hotels. Supports auto and manual guest distribution).",
+                "summary": "الخطوة 1: البحث عن الفنادق (Search)",
+                "description": "هذه هي الخطوة الأولى في عملية الحجز. \n\n**ماذا ترسل:** تاريخ الدخول، تاريخ الخروج، المدينة، وتوزيع النزلاء (auto أو manual).\n**ماذا تستقبل:** قائمة بالفنادق المتاحة. \n\n**هام جداً:** يجب استخراج وحفظ الـ `sessionId` والـ `tokenId` من نتيجة هذه الدالة، حيث ستحتاج لإرسالهما في كل الخطوات التالية.",
                 "operationId": "searchHotels",
                 "requestBody": {
                     "required": true,
@@ -2961,12 +2961,12 @@
                                 ],
                                 "properties": {
                                     "cityName": {
-                                        "description": "اسم المدينة بالإنجليزية (مثلاً Dubai)",
+                                        "description": "اسم المدينة بالإنجليزية",
                                         "type": "string",
                                         "example": "Dubai"
                                     },
                                     "countryName": {
-                                        "description": "اسم الدولة بالإنجليزية (مثلاً UAE)",
+                                        "description": "اسم الدولة بالإنجليزية",
                                         "type": "string",
                                         "example": "United Arab Emirates"
                                     },
@@ -2974,31 +2974,31 @@
                                         "description": "تاريخ الدخول (YYYY-MM-DD)",
                                         "type": "string",
                                         "format": "date",
-                                        "example": "2024-12-01"
+                                        "example": "2025-12-01"
                                     },
                                     "checkOut": {
                                         "description": "تاريخ الخروج (YYYY-MM-DD)",
                                         "type": "string",
                                         "format": "date",
-                                        "example": "2024-12-10"
+                                        "example": "2025-12-10"
                                     },
                                     "rooms": {
-                                        "description": "إجمالي عدد الغرف المطلوبة",
+                                        "description": "إجمالي عدد الغرف",
                                         "type": "integer",
                                         "example": 1
                                     },
                                     "adults": {
-                                        "description": "إجمالي عدد البالغين (مطلوب في النمط التلقائي auto فقط)",
+                                        "description": "إجمالي البالغين (لنمط auto)",
                                         "type": "integer",
                                         "example": 2
                                     },
                                     "childs": {
-                                        "description": "إجمالي عدد الأطفال (اختياري في النمط التلقائي)",
+                                        "description": "إجمالي الأطفال (لنمط auto)",
                                         "type": "integer",
                                         "example": 0
                                     },
                                     "childAge": {
-                                        "description": "مصفوفة أعمار الأطفال (تستخدم في النمط التلقائي)",
+                                        "description": "أعمار الأطفال (لنمط auto)",
                                         "type": "array",
                                         "items": {
                                             "type": "integer"
@@ -3006,27 +3006,27 @@
                                         "example": []
                                     },
                                     "distribution_mode": {
-                                        "description": "نمط التوزيع: 'auto' (تلقائي) أو 'manual' (يدوي).",
+                                        "description": "auto أو manual",
                                         "type": "string",
                                         "example": "auto"
                                     },
                                     "occupancy": {
-                                        "description": "مطلوب في النمط اليدوي فقط. مصفوفة تحتوي على تفاصيل كل غرفة (عدد البالغين، الأطفال وأعمارهم).",
+                                        "description": "توزيع الغرف (لنمط manual فقط)",
                                         "type": "array",
                                         "items": {
                                             "properties": {
                                                 "adult": {
-                                                    "description": "عدد البالغين في هذه الغرفة",
+                                                    "description": "بالغين هذه الغرفة",
                                                     "type": "integer",
                                                     "example": 2
                                                 },
                                                 "child": {
-                                                    "description": "عدد الأطفال في هذه الغرفة",
+                                                    "description": "أطفال هذه الغرفة",
                                                     "type": "integer",
                                                     "example": 1
                                                 },
                                                 "child_age": {
-                                                    "description": "أعمار الأطفال في هذه الغرفة (مثلاً [5, 8])",
+                                                    "description": "أعمار أطفال هذه الغرفة",
                                                     "type": "array",
                                                     "items": {
                                                         "type": "integer"
@@ -3038,21 +3038,6 @@
                                             },
                                             "type": "object"
                                         }
-                                    },
-                                    "requiredCurrency": {
-                                        "description": "رمز العملة المكون من 3 أحرف (مثل SAR)",
-                                        "type": "string",
-                                        "example": "SAR"
-                                    },
-                                    "residentNationality": {
-                                        "description": "جنسية المقيم (مثل SA)",
-                                        "type": "string",
-                                        "example": "SA"
-                                    },
-                                    "requiredLanguage": {
-                                        "description": "رمز اللغة (مثل ARA أو ENG)",
-                                        "type": "string",
-                                        "example": "ARA"
                                     }
                                 },
                                 "type": "object"
@@ -3062,7 +3047,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "تم استرجاع قائمة الفنادق بنجاح."
+                        "description": "ناجح: استخرج الـ sessionId والـ tokenId من هنا لاستخدامهما في الخطوة 2."
                     }
                 }
             }
@@ -3072,8 +3057,8 @@
                 "tags": [
                     "Hotels"
                 ],
-                "summary": "جلب أسعار الغرف (Get room rates)",
-                "description": "جلب قائمة الغرف والأسعار لفندق معين. البيانات تأتي من نتيجة البحث للفندق المختار. (Get room rates for a selected hotel. Data comes from search results).",
+                "summary": "الخطوة 2: جلب أسعار الغرف (Room Rates)",
+                "description": "بعدما يختار المستخدم فندقاً معيناً من نتائج البحث، استخدم هذه الدالة لجلب أنواع الغرف المتاحة بداخل هذا الفندق وأسعارها.\n\n**ماذا ترسل:** الـ `hotelId` من الفندق المختار بالإضافة للـ `sessionId` والـ `tokenId` من الخطوة 1.\n**ماذا تستقبل:** قائمة بجميع أنواع الغرف (مثلاً: Standard, Deluxe, etc) مع أسعارها.\n\n**هام جداً:** لكل غرفة في النتيجة يوجد حقل يسمى `rateBasisId` وحقل يسمى `productId`؛ يجب حفظهما لاستخدامهما في الخطوات التالية.",
                 "operationId": "getRoomRates",
                 "requestBody": {
                     "required": true,
@@ -3088,21 +3073,21 @@
                                 ],
                                 "properties": {
                                     "hotelId": {
-                                        "description": "معرف الفندق من نتيجة البحث (hotelId from search)",
+                                        "description": "معرف الفندق المختار",
                                         "type": "string",
                                         "example": "H12345"
                                     },
                                     "sessionId": {
-                                        "description": "معرف الجلسة من نتيجة البحث (sessionId from search)",
+                                        "description": "من خطوة البحث",
                                         "type": "string",
                                         "example": "sess-abc-123"
                                     },
                                     "productId": {
-                                        "description": "معرف المنتج من نتيجة البحث (productId from search)",
+                                        "description": "من خطوة البحث",
                                         "type": "string"
                                     },
                                     "tokenId": {
-                                        "description": "التوكن من نتيجة البحث (tokenId from search)",
+                                        "description": "من خطوة البحث",
                                         "type": "string"
                                     }
                                 },
@@ -3113,7 +3098,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "تم استرجاع أسعار الغرف بنجاح. ابحث عن rateBasisId في النتيجة للمتابعة."
+                        "description": "ناجح: اختر غرفة واستخلص منها الـ rateBasisId والـ productId للخطوة 3."
                     }
                 }
             }
@@ -3123,8 +3108,8 @@
                 "tags": [
                     "Hotels"
                 ],
-                "summary": "التحقق من السعر والشروط (Check/Revalidate rates)",
-                "description": "التحقق من السعر النهائي وشروط الإلغاء قبل الحجز. (Revalidate rates and rules before booking).",
+                "summary": "الخطوة 3: تأكيد السعر والشروط (Revalidate)",
+                "description": "قبل أن تطلب من المستخدم تعبئة بياناته، يجب استدعاء هذه الدالة للتأكد من أن السعر لا يزال متاحاً ولم يتغير (Revalidate).\n\n**ماذا ترسل:** الـ `rateBasisId` للغرفة المختارة + الـ IDs الأصلية.\n**ماذا تستقبل:** السعر النهائي المؤكد وشروط الإلغاء (Cancellation Policy).\n\n**هام:** لا تنتقل لخطوة الحجز إلا إذا أعادت هذه الدالة حالة نجاح واستعرض للمستخدم شروط الإلغاء.",
                 "operationId": "checkRoomRates",
                 "requestBody": {
                     "required": true,
@@ -3139,7 +3124,7 @@
                                 ],
                                 "properties": {
                                     "rateBasisId": {
-                                        "description": "معرف الغرفة من دالة room-rates",
+                                        "description": "معرف الغرفة من الخطوة 2",
                                         "type": "string",
                                         "example": "RB123"
                                     },
@@ -3164,7 +3149,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "تم التأكد من توفر السعر والشروط بنجاح."
+                        "description": "ناجح: السعر مؤكد، والآن يمكنك عرض نموذج تعبئة بيانات النزلاء للمستخدم."
                     }
                 }
             }
@@ -3174,8 +3159,8 @@
                 "tags": [
                     "Hotels"
                 ],
-                "summary": "إتمام الحجز (Book a hotel)",
-                "description": "إنشاء حجز فندق حقيقي. ملاحظة هامة: يجب إرسال بيانات (كل) النزلاء في الغرفة بناءً على العدد الذي تم تحديده في البحث. إذا كانت الغرفة بها شخصين، يجب إرسال كائنين في مصفوفة pax داخل الغرفة. (Create reservation. Must send ALL guest details for each room).",
+                "summary": "الخطوة الأخيرة: إتمام الحجز (Book)",
+                "description": "هذه الخطوة النهائية لإنشاء الحجز في النظام.\n\n**ماذا ترسل:** \n1. كافة الـ IDs المجمعة سابقاً.\n2. إجمالي السعر المؤكد والعملة.\n3. بيانات النزلاء (paxDetails) بهيكلية دقيقة (adult/child كائنات تضم مصفوفات).\n4. البريد والهاتف للمشتري.\n\n**ماذا تستقبل:** \n1. `booking_id`: رقم الحجز في قاعدة بياناتنا.\n2. `payment_url`: رابط الدفع (يوجه المستخدم لصفحة Visa/Mada).\n3. `supplierConfirmationNum`: رقم تأكيد المورد المبدئي.\n\n**بعد الدفع:** ستقوم الصفحة بتوجيه المستخدم لنتيجة الدفع وسيتحول حالة الحجز لـ Confirmed آلياً.",
                 "operationId": "bookHotel",
                 "requestBody": {
                     "required": true,
@@ -3189,6 +3174,8 @@
                                     "tokenId",
                                     "customerEmail",
                                     "customerPhone",
+                                    "clientRef",
+                                    "bookingNote",
                                     "total_price",
                                     "currency",
                                     "paxDetails",
@@ -3199,19 +3186,27 @@
                                 ],
                                 "properties": {
                                     "rateBasisId": {
-                                        "description": "معرف السعر المختار",
+                                        "description": "من خطوة revalidate",
                                         "type": "string",
-                                        "example": "RB123"
+                                        "example": "MTU3"
                                     },
                                     "sessionId": {
+                                        "description": "معرف الجلسة",
                                         "type": "string",
                                         "example": "sess-abc-123"
                                     },
                                     "productId": {
+                                        "description": "معرف المورد",
                                         "type": "string"
                                     },
                                     "tokenId": {
+                                        "description": "التوكن",
                                         "type": "string"
+                                    },
+                                    "clientRef": {
+                                        "description": "رقم مرجع من عندك",
+                                        "type": "string",
+                                        "example": "MYTRIP-001"
                                     },
                                     "customerEmail": {
                                         "type": "string",
@@ -3222,6 +3217,11 @@
                                         "type": "string",
                                         "example": "966500000000"
                                     },
+                                    "bookingNote": {
+                                        "description": "ملاحظة",
+                                        "type": "string",
+                                        "example": "Hotel Booking"
+                                    },
                                     "hotelId": {
                                         "description": "معرف الفندق",
                                         "type": "string"
@@ -3230,86 +3230,76 @@
                                         "description": "اسم الفندق",
                                         "type": "string"
                                     },
-                                    "cityName": {
-                                        "description": "اسم المدينة",
-                                        "type": "string"
-                                    },
-                                    "countryName": {
-                                        "description": "اسم الدولة",
-                                        "type": "string"
-                                    },
                                     "checkIn": {
-                                        "description": "تاريخ الدخول YYYY-MM-DD",
+                                        "description": "تاريخ الدخول",
                                         "type": "string",
                                         "format": "date",
-                                        "example": "2024-12-01"
+                                        "example": "2025-12-01"
                                     },
                                     "checkOut": {
-                                        "description": "تاريخ الخروج YYYY-MM-DD",
+                                        "description": "تاريخ الخروج",
                                         "type": "string",
                                         "format": "date",
-                                        "example": "2024-12-10"
+                                        "example": "2025-12-10"
                                     },
                                     "rooms": {
+                                        "description": "عدد الغرف",
                                         "type": "integer",
                                         "example": 1
                                     },
                                     "total_price": {
-                                        "description": "السعر الإجمالي المؤكد",
+                                        "description": "السعر المؤكد",
                                         "type": "number"
                                     },
                                     "currency": {
-                                        "description": "العملة (مثلاً SAR)",
-                                        "type": "string"
-                                    },
-                                    "roomName": {
-                                        "description": "اسم الغرفة",
-                                        "type": "string"
-                                    },
-                                    "boardType": {
-                                        "description": "نوع الوجبة",
-                                        "type": "string"
+                                        "description": "العملة",
+                                        "type": "string",
+                                        "example": "SAR"
                                     },
                                     "paxDetails": {
-                                        "description": "مصفوفة الغرف، وبداخل كل غرفة مصفوفة pax للنزلاء.",
+                                        "description": "بيانات النزلاء لكل غرفة. مثال: [{room_no:1, adult:{title:[Mr], firstName:[John], lastName:[Doe]}}]",
                                         "type": "array",
                                         "items": {
+                                            "required": [
+                                                "room_no",
+                                                "adult"
+                                            ],
                                             "properties": {
                                                 "room_no": {
-                                                    "description": "رقم الغرفة",
                                                     "type": "integer",
                                                     "example": 1
                                                 },
-                                                "pax": {
-                                                    "description": "قائمة المسافرين في هذه الغرفة",
-                                                    "type": "array",
-                                                    "items": {
-                                                        "properties": {
-                                                            "type": {
-                                                                "description": "AD للبالغ، CH للطفل",
-                                                                "type": "string",
-                                                                "example": "AD"
-                                                            },
-                                                            "Title": {
-                                                                "description": "Mr, Ms, Mrs, Master, Miss",
-                                                                "type": "string",
-                                                                "example": "Mr"
-                                                            },
-                                                            "FirstName": {
-                                                                "description": "الاسم الأول",
+                                                "adult": {
+                                                    "properties": {
+                                                        "title": {
+                                                            "type": "array",
+                                                            "items": {
                                                                 "type": "string"
                                                             },
-                                                            "LastName": {
-                                                                "description": "اسم العائلة",
-                                                                "type": "string"
-                                                            },
-                                                            "Age": {
-                                                                "description": "العمر (مطلوب للأطفال)",
-                                                                "type": "integer"
-                                                            }
+                                                            "example": [
+                                                                "Mr"
+                                                            ]
                                                         },
-                                                        "type": "object"
-                                                    }
+                                                        "firstName": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string"
+                                                            },
+                                                            "example": [
+                                                                "John"
+                                                            ]
+                                                        },
+                                                        "lastName": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string"
+                                                            },
+                                                            "example": [
+                                                                "Doe"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "type": "object"
                                                 }
                                             },
                                             "type": "object"
@@ -3323,7 +3313,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "تم إتمام الحجز بنجاح."
+                        "description": "ناجح: استلم الـ payment_url وقم بفتحه في WebView للمستخدم لإكمال الدفع."
                     }
                 },
                 "security": [
