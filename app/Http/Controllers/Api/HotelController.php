@@ -192,7 +192,7 @@ class HotelController extends Controller
         path: "/api/hotels/book",
         summary: "الخطوة الأخيرة: إتمام الحجز (Book)",
         operationId: "bookHotel",
-        description: "هذه الخطوة النهائية لإنشاء الحجز في النظام.\n\n**ماذا ترسل:** \n1. كافة الـ IDs المجمعة سابقاً.\n2. إجمالي السعر المؤكد والعملة.\n3. بيانات النزلاء (paxDetails) بهيكلية دقيقة (adult/child كائنات تضم مصفوفات).\n4. البريد والهاتف للمشتري.\n\n**ماذا تستقبل:** \n1. `booking_id`: رقم الحجز في قاعدة بياناتنا.\n2. `payment_url`: رابط الدفع (يوجه المستخدم لصفحة Visa/Mada).\n3. `supplierConfirmationNum`: رقم تأكيد المورد المبدئي.\n\n**بعد الدفع:** ستقوم الصفحة بتوجيه المستخدم لنتيجة الدفع وسيتحول حالة الحجز لـ Confirmed آلياً.",
+        description: "هذه الخطوة النهائية لإنشاء الحجز في النظام.\n\n**ماذا ترسل:** \n1. كافة الـ IDs المجمعة سابقاً.\n2. إجمالي السعر المؤكد والعملة.\n3. بيانات النزلاء (paxDetails) بهيكلية دقيقة.\n4. البريد والهاتف للمشتري.\n\n**ماذا تستقبل:** \n1. `booking_id`: رقم الحجز في قاعدة بياناتنا.\n2. `payment_info`: كائن يحتوي على روابط الدفع لكل وسيلة (Visa, Mada, Apple Pay, Tamara, Tabby).\n\n**كيف يتم التمييز أن الدفع للفندق؟**\n- الرابط يحتوي على بارامتر `type=hotel`. هذا يخبر نظام الدفع بالبحث داخل جدول حجوزات الفنادق وليس الرحلات أو الطيران.\n\n**كيفية التعامل مع الدفع (للمبرمج):**\n- اختر رابط الوسيلة التي حددها المستخدم من كائن `payment_info` وافتحه في **WebView**.\n- عند انتهاء الدفع بنجاح، سيقوم النظام بالخلفية بتأكيد الحجز مع المورد وإصدار الـ Voucher.\n- لمتابعة حالة الحجز، يمكنك استدعاء دالة 'عرض تفاصيل الحجز' وتفقد حقل الـ `status`.",
         tags: ["Hotels"],
         security: [["bearerAuth" => []]],
         requestBody: new OA\RequestBody(
@@ -241,7 +241,7 @@ class HotelController extends Controller
         responses: [
             new OA\Response(
                 response: 200, 
-                description: "ناجح: استلم الـ payment_url وقم بفتحه في WebView للمستخدم لإكمال الدفع."
+                description: "ناجح: استخدم الروابط في payment_info لفتح بوابة الدفع المناسبة."
             )
         ]
     )]
@@ -360,12 +360,17 @@ class HotelController extends Controller
             }
 
 
-            $result['payment_url'] = route('payments.web.checkout', [
-                'booking_id' => $hotelBooking->id,
-                'method' => 'visa_master', // Default selection
-                'type' => 'hotel'
-            ]);
-            $result['payment_api_url'] = url('/api/payment/initiate');
+            $result['payment_info'] = [
+                'default_url' => route('payments.web.checkout', ['booking_id' => $hotelBooking->id, 'method' => 'visa_master', 'type' => 'hotel']),
+                'methods' => [
+                    'visa_master' => route('payments.web.checkout', ['booking_id' => $hotelBooking->id, 'method' => 'visa_master', 'type' => 'hotel']),
+                    'mada' => route('payments.web.checkout', ['booking_id' => $hotelBooking->id, 'method' => 'mada', 'type' => 'hotel']),
+                    'apple_pay' => route('payments.web.checkout', ['booking_id' => $hotelBooking->id, 'method' => 'apple_pay', 'type' => 'hotel']),
+                    'tamara' => route('payments.web.checkout', ['booking_id' => $hotelBooking->id, 'method' => 'tamara', 'type' => 'hotel']),
+                    'tabby' => route('payments.web.checkout', ['booking_id' => $hotelBooking->id, 'method' => 'tabby', 'type' => 'hotel']),
+                    'bank_transfer' => route('payments.web.checkout', ['booking_id' => $hotelBooking->id, 'method' => 'bank_transfer', 'type' => 'hotel']),
+                ]
+            ];
             $result['booking_id'] = $hotelBooking->id;
 
         } catch (\Exception $e) {

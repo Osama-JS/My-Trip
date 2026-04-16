@@ -325,6 +325,11 @@ class PaymentWebController extends Controller
                         if ($booking) {
                             $booking->update(['status' => 'paid']);
                             Log::info("Tamara: Booking #{$bookingId} ({$type}) marked as PAID. Order: {$orderId}");
+                            
+                            // AUTO-FINALIZE HOTELS
+                            if ($type === 'hotel') {
+                                $this->finalizeHotelSupplierBooking($booking);
+                            }
                         }
                     }
                     return response()->json(['error' => false, 'message' => 'Payment successful', 'status' => $status, 'booking_id' => $bookingId, 'type' => $type]);
@@ -350,6 +355,11 @@ class PaymentWebController extends Controller
                         if ($booking) {
                             $booking->update(['status' => 'paid']);
                             Log::info("Tabby: Booking #{$bookingId} ({$type}) marked as PAID.");
+
+                            // AUTO-FINALIZE HOTELS
+                            if ($type === 'hotel') {
+                                $this->finalizeHotelSupplierBooking($booking);
+                            }
                         }
                     }
                     return response()->json(['error' => false, 'message' => 'Payment successful', 'status' => $status, 'booking_id' => $bookingId, 'type' => $type]);
@@ -374,6 +384,11 @@ class PaymentWebController extends Controller
                         if ($booking) {
                             $booking->update(['status' => 'paid']);
                             Log::info("Tap: Booking #{$bookingId} ({$type}) marked as PAID.");
+
+                            // AUTO-FINALIZE HOTELS
+                            if ($type === 'hotel') {
+                                $this->finalizeHotelSupplierBooking($booking);
+                            }
                         }
                     }
                     return response()->json(['error' => false, 'message' => 'Payment successful', 'status' => $status, 'booking_id' => $bookingId, 'type' => $type]);
@@ -398,6 +413,11 @@ class PaymentWebController extends Controller
                     if ($booking) {
                         $booking->update(['status' => 'paid']);
                         Log::info("HyperPay: Booking #{$bookingId} ({$type}) marked as PAID.");
+
+                        // AUTO-FINALIZE HOTELS
+                        if ($type === 'hotel') {
+                            $this->finalizeHotelSupplierBooking($booking);
+                        }
                     }
                 }
                 return response()->json(['error' => false, 'message' => 'Payment successful', 'booking_id' => $bookingId, 'type' => $type]);
@@ -516,20 +536,25 @@ class PaymentWebController extends Controller
             }
             $booking = $this->resolveBooking($request->booking_id, $type);
             
-            // If simulated success, update status and finalize supplier booking
-            if ($request->source === 'simulation') {
-                if ($booking && in_array($booking->status, ['pending', 'paid'])) {
-                    Log::info("Processing simulated success for {$type} Booking ID: {$booking->id}");
+            // Update status and finalize supplier booking
+            if ($booking && in_array($booking->status, ['pending', 'paid'])) {
+                Log::info("Processing success page finalization for {$type} Booking ID: {$booking->id}");
+                
+                if ($type === 'hotel') {
+                    // Update locally first
+                    $newStatus = !empty($booking->supplier_confirmation_num) ? 'confirmed' : 'paid';
+                    if ($booking->status !== 'confirmed') {
+                        $booking->update(['status' => $newStatus]);
+                    }
                     
-                    if ($type === 'hotel') {
-                        // If supplier ref already captured pre-payment → confirm directly
-                        if (!empty($booking->supplier_confirmation_num)) {
-                            $booking->update(['status' => 'confirmed']);
-                        } else {
-                            $booking->update(['status' => 'paid']);
-                        }
-                        $this->finalizeHotelSupplierBooking($booking);
-                    } else {
+                    // Trigger actual supplier finalization (Trait handles if already confirmed)
+                    $this->finalizeHotelSupplierBooking($booking);
+                } else if ($type === 'flight') {
+                    if ($booking->status === 'pending') {
+                         $booking->update(['status' => 'paid']);
+                    }
+                } else {
+                    if ($booking->status === 'pending') {
                         $booking->update(['status' => 'paid']);
                     }
                 }
