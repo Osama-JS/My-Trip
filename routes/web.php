@@ -144,6 +144,7 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/global-search', [App\Http\Controllers\Admin\GlobalSearchController::class, 'search'])->name('global-search');
 
     // User Management
     Route::get('users/data', [UserController::class, 'getData'])->name('users.data');
@@ -249,6 +250,7 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     Route::get('trips/data', [App\Http\Controllers\Admin\TripsController::class, 'getData'])->name('trips.data');
     Route::post('trips/{trip}/toggle-status', [App\Http\Controllers\Admin\TripsController::class, 'toggleStatus'])->name('trips.toggle-status');
     Route::post('/trips/{trip}/renew', [App\Http\Controllers\Admin\TripsController::class, 'renew'])->name('trips.renew');
+    Route::get('trips/{trip}/stats', [App\Http\Controllers\Admin\TripsController::class, 'stats'])->name('trips.stats');
     Route::resource('trips', App\Http\Controllers\Admin\TripsController::class);
     Route::post('/trips/{trip}/images', [App\Http\Controllers\Admin\TripsController::class, 'imagestore'])->name('trips.images-store');
     Route::get('/trips/{id}/get-images', [App\Http\Controllers\Admin\TripsController::class, 'getImages'])->name('trips.get-images');

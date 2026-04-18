@@ -600,6 +600,13 @@
 .filter-tag a { color: inherit; margin-inline-start: 4px; }
 .filter-tag-clear { background: var(--gray-100); color: var(--gray-500); }
 
+/* Grid View Base */
+.fe-trips-grid-v2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-6);
+}
+
 /* List View Support */
 .fe-trips-grid-v2.list-view { display: flex; flex-direction: column; gap: var(--space-4); }
 

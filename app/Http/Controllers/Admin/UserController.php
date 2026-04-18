@@ -69,16 +69,39 @@ class UserController extends Controller
      */
     public function activity($id)
     {
-        $user = User::with(['bookings' => function($q) {
-            $q->latest();
-        }])->findOrFail($id);
+        $user = User::with([
+            'tripBookings.trip',
+            'flightBookings',
+            'hotelBookings',
+            'favorites.trip',
+        ])->findOrFail($id);
 
         $searchLogs = \App\Models\FlightSearchLog::where('user_id', $id)->latest()->limit(50)->get();
 
+        // Calculate Stats
+        $confirmedTrips = $user->tripBookings->where('status', 'confirmed');
+        $confirmedFlights = $user->flightBookings->where('status', 'confirmed');
+        $confirmedHotels = $user->hotelBookings->where('status', 'confirmed');
+
+        $totalSpent = $confirmedTrips->sum('total_price') + 
+                      $confirmedFlights->sum('total_amount') + 
+                      $confirmedHotels->sum('total_price');
+
+        $totalBookingsCount = $user->tripBookings->count() + 
+                              $user->flightBookings->count() + 
+                              $user->hotelBookings->count();
+
+        $confirmedCount = $confirmedTrips->count() + 
+                          $confirmedFlights->count() + 
+                          $confirmedHotels->count();
+
         $stats = [
-            'total_bookings' => $user->bookings->count(),
-            'total_spent' => $user->bookings->where('status', 'confirmed')->sum('total_amount'),
-            'last_active' => $user->updated_at->diffForHumans()
+            'total_bookings' => $totalBookingsCount,
+            'confirmed_bookings' => $confirmedCount,
+            'total_spent' => $totalSpent,
+            'favorites_count' => $user->favorites->count(),
+            'last_active' => $user->updated_at->diffForHumans(),
+            'success_rate' => $totalBookingsCount > 0 ? round(($confirmedCount / $totalBookingsCount) * 100) : 0,
         ];
 
         return view('admin.users.activity', compact('user', 'searchLogs', 'stats'));

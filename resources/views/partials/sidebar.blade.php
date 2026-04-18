@@ -174,3 +174,37 @@
 </div>
 
 {{-- Sidebar end --}}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const menuItems = [];
+        const menu = document.querySelector('#menu');
+        
+        if (menu) {
+            const links = menu.querySelectorAll('a');
+            links.forEach(link => {
+                const url = link.getAttribute('href');
+                if (url && url !== 'javascript:void(0)' && url !== '#') {
+                    const textSpan = link.querySelector('.nav-text') || link;
+                    const text = textSpan.innerText.trim();
+                    const icon = link.querySelector('i')?.className || 'fas fa-link';
+                    
+                    let parentText = '';
+                    const parentLi = link.closest('ul')?.closest('li');
+                    if (parentLi) {
+                        parentText = parentLi.querySelector('.nav-text')?.innerText.trim() || '';
+                    }
+                    
+                    menuItems.push({
+                        title: text,
+                        parent: parentText,
+                        url: url,
+                        icon: icon,
+                        searchable: (parentText ? parentText + ' ' : '') + text
+                    });
+                }
+            });
+        }
+        window.adminMenus = menuItems;
+    });
+</script>

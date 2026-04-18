@@ -7,6 +7,18 @@
     <title>إتمام عملية الدفع - {{ config('app.name') }}</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .swal2-popup {
+            font-family: 'Cairo', sans-serif !important;
+            border-radius: 24px !important;
+            background: #1e293b !important;
+            color: #f8fafc !important;
+            border: 1px solid rgba(255,255,255,0.1) !important;
+        }
+        .swal2-title, .swal2-html-container { color: #f8fafc !important; }
+        .swal2-confirm { background: var(--primary) !important; border-radius: 12px !important; padding: 12px 30px !important; }
+    </style>
     <style>
         :root {
             --primary: #4f46e5;
@@ -480,19 +492,29 @@
                     if (response.checkout_url || response.redirect_url) {
                         window.location.href = response.checkout_url || response.redirect_url;
                     } else if (response.payment_id || response.order_id) {
-                         // Some services return just params if they don't redirect automatedly? 
-                         // Usually they do, check response structure.
-                         alert('تم إصدار رقم الدفع: ' + (response.payment_id || response.order_id));
                          $('#loader').hide();
+                         Swal.fire({
+                            icon: 'info',
+                            title: 'تم إصدار رقم الدفع',
+                            text: (response.payment_id || response.order_id),
+                         });
                     } else {
-                        alert('خطأ في استلام رابط الدفع');
                         $('#loader').hide();
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'خطأ',
+                            text: 'خطأ في استلام رابط الدفع',
+                        });
                         $btn.prop('disabled', false);
                     }
                 },
                 error: function(xhr) {
-                    alert('فشل الاتصال بالخادم: ' + (xhr.responseJSON?.message || 'خطأ غير معروف'));
                     $('#loader').hide();
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'فشل التشغيل',
+                        text: (xhr.responseJSON?.message || 'خطأ غير معروف في الاتصال بالخادم'),
+                    });
                     $btn.prop('disabled', false);
                 }
             });
@@ -516,16 +538,32 @@
                 success: function(response) {
                     $('#loader').hide();
                     if (!response.error) {
-                        alert(response.message);
-                        window.location.href = "{{ route('payments.web.success') }}?booking_id={{ $booking->id }}";
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'تم الإرسال بنجاح',
+                            text: response.message,
+                            confirmButtonText: 'حسناً',
+                            timer: 3000,
+                            timerProgressBar: true
+                        }).then(() => {
+                            window.location.href = "{{ route('payments.web.success') }}?booking_id={{ $booking->id }}&type={{ $booking_type }}";
+                        });
                     } else {
-                        alert(response.message);
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'تنبيه',
+                            text: response.message
+                        });
                         $btn.prop('disabled', false);
                     }
                 },
                 error: function(xhr) {
                     $('#loader').hide();
-                    alert(xhr.responseJSON?.message || 'حدث خطأ أثناء الإرسال');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'خطأ في النظام',
+                        text: (xhr.responseJSON?.message || 'حدث خطأ غير متوقع أثناء إرسال البيانات')
+                    });
                     $btn.prop('disabled', false);
                 }
             });

@@ -271,6 +271,27 @@ html[dir="rtl"] .timeline-step::after { right: 50%; }
 }
 
 .back-link:hover { color: var(--accent-color, #0f172a); }
+
+.receipt-thumb {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid #e5e7eb;
+    cursor: pointer;
+    transition: transform .2s;
+}
+.receipt-thumb:hover { transform: scale(1.05); }
+
+.payment-method-badge {
+    padding: 4px 10px;
+    background: #f1f5f9;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+}
 </style>
 @endpush
 
@@ -435,34 +456,106 @@ html[dir="rtl"] .timeline-step::after { right: 50%; }
             </div>
         </div>
 
-        {{-- Payment info (if exists) --}}
-        @if($booking->payments->count() > 0)
-            <div class="detail-card">
-                <div class="detail-card-header">
-                    <i class="fas fa-receipt"></i> {{ __('Payment Information') }}
-                </div>
-                <div class="detail-card-body">
-                    @foreach($booking->payments as $payment)
-                        <div class="info-row">
-                            <span class="info-label">{{ __('Payment Gateway') }}</span>
-                            <span class="info-value">{{ strtoupper($payment->payment_gateway) }}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">{{ __('Transaction No') }}</span>
-                            <span class="info-value" style="font-size:.8rem;">{{ $payment->transaction_id ?? '—' }}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">{{ __('Amount Paid') }}</span>
-                            <span class="info-value" style="color:#16a34a;">{{ number_format($payment->amount, 2) }} {{ __('SAR') }}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">{{ __('Payment Date') }}</span>
-                            <span class="info-value">{{ $payment->created_at->format('d/m/Y H:i') }}</span>
-                        </div>
-                    @endforeach
-                </div>
+        {{-- Enhanced Payment Information --}}
+        <div class="detail-card">
+            <div class="detail-card-header">
+                <i class="fas fa-credit-card"></i> {{ __('Payment Details') }}
             </div>
-        @endif
+            <div class="detail-card-body">
+                @php
+                    $mainPayment = $booking->payments->where('status', 'paid')->first() ?? $booking->payments->first();
+                @endphp
+
+                @if($mainPayment)
+                    {{-- Gateway / Method --}}
+                    <div class="info-row">
+                        <span class="info-label">{{ __('Payment Method') }}</span>
+                        <span class="info-value">
+                            <span class="payment-method-badge">
+                                <i class="fas fa-{{ $mainPayment->payment_gateway === 'bank_transfer' ? 'university' : 'wallet' }} me-1"></i>
+                                {{ str_replace('_', ' ', strtoupper($mainPayment->payment_gateway)) }}
+                            </span>
+                        </span>
+                    </div>
+
+                    {{-- Transaction ID --}}
+                    <div class="info-row">
+                        <span class="info-label">{{ __('Transaction No') }}</span>
+                        <span class="info-value" style="font-family: monospace; font-size: 0.85rem;">{{ $mainPayment->transaction_id ?? '—' }}</span>
+                    </div>
+
+                    {{-- Bank Transfer Specific Details --}}
+                    @if($mainPayment->payment_gateway === 'bank_transfer' && $latestTransfer)
+                        <div class="info-row">
+                            <span class="info-label">{{ __('Sender Name') }}</span>
+                            <span class="info-value">{{ $latestTransfer->sender_name }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">{{ __('Receipt Number') }}</span>
+                            <span class="info-value">{{ $latestTransfer->receipt_number ?? '—' }}</span>
+                        </div>
+
+                        @if($latestTransfer->bankAccount)
+                            <div class="info-row">
+                                <span class="info-label">{{ __('Transferred To') }}</span>
+                                <div class="info-value">
+                                    <div style="font-weight: 700;">{{ $latestTransfer->bankAccount->bank_name }}</div>
+                                    <div style="font-size: 0.75rem; color: #64748b;">{{ $latestTransfer->bankAccount->beneficiary_name }}</div>
+                                    <div style="font-size: 0.75rem; color: #64748b; font-family: monospace;">{{ $latestTransfer->bankAccount->iban }}</div>
+                                </div>
+                            </div>
+                        @endif
+
+                        @if($latestTransfer->receipt_image)
+                            <div class="info-row" style="align-items: center;">
+                                <span class="info-label">{{ __('Transfer Receipt') }}</span>
+                                <div class="info-value">
+                                    <a href="{{ asset('storage/' . $latestTransfer->receipt_image) }}" target="_blank">
+                                        <img src="{{ asset('storage/' . $latestTransfer->receipt_image) }}" class="receipt-thumb" alt="Receipt">
+                                    </a>
+                                </div>
+                            </div>
+                        @endif
+                    @endif
+
+                    {{-- Payment Summary --}}
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 2px dashed #f1f5f9;">
+                        <div class="info-row">
+                            <span class="info-label" style="font-weight: 700; color: #1e293b;">{{ __('Paid Amount') }}</span>
+                            <span class="info-value" style="font-size: 1.1rem; color: #16a34a; font-weight: 800;">
+                                {{ number_format($mainPayment->amount, 2) }} {{ __('SAR') }}
+                            </span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">{{ __('Payment Status') }}</span>
+                            <span class="info-value">
+                                <span class="badge {{ $mainPayment->status === 'paid' ? 'bg-success' : 'bg-warning' }}">
+                                    {{ strtoupper(__($mainPayment->status)) }}
+                                </span>
+                            </span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">{{ __('Date & Time') }}</span>
+                            <span class="info-value text-muted" style="font-size: 0.8rem;">
+                                {{ $mainPayment->created_at->format('d/m/Y H:i') }}
+                            </span>
+                        </div>
+                    </div>
+
+                @else
+                    {{-- No Payment Record Yet --}}
+                    <div class="text-center p-4">
+                        <i class="fas fa-exclamation-circle fa-2x text-warning mb-2 opacity-50"></i>
+                        <p class="text-muted mb-0">{{ __('No payment has been registered for this booking yet.') }}</p>
+                        @if($booking->status === 'pending')
+                            <a href="{{ route('customer.payments.checkout', $booking->id) }}" class="btn btn-primary btn-sm mt-3 px-4">
+                                {{ __('Pay Now') }}
+                            </a>
+                        @endif
+                    </div>
+                @endif
+            </div>
+        </div>
     </div>
 
     {{-- RIGHT COLUMN (Sidebar) --}}

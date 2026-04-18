@@ -95,7 +95,10 @@ class TripsController extends Controller
                         </a>
                         <button class="btn btn-sm btn-secondary" onclick="openImageUpload('.$trip->id.', \''.addslashes($trip->title).'\')" title="'.__('Upload Images').'">
                             <i class="fas fa-camera"></i>
-                        </button>';
+                        </button>
+                        <a href="'.route('admin.trips.stats', $trip->id).'" class="btn btn-sm btn-dark" title="'.__('Statistics').'">
+                            <i class="fas fa-chart-line"></i>
+                        </a>';
 
                 if ($isExpired) {
                     $actionButtons .= '
@@ -430,6 +433,55 @@ class TripsController extends Controller
         });
 
         return response()->json($data);
+    }
+
+    public function stats(Trip $trip)
+    {
+        $trip->load([
+            'company', 
+            'fromCountry', 'fromCity', 
+            'toCountry', 'toCity', 
+            'categories',
+            'itineraries',
+            'bookings.user', 
+            'bookings.passengers'
+        ])->loadCount('pageVisits');
+        
+        $bookings = $trip->bookings;
+        
+        // Advanced Analytics
+        $confirmedBookings = $bookings->where('status', 'confirmed');
+        $occupiedSeats = $confirmedBookings->sum('tickets_count');
+        $totalCapacity = (int) ($trip->personnel_capacity ?: 0);
+        $remainingSeats = $totalCapacity > 0 ? max(0, $totalCapacity - $occupiedSeats) : __('Unlimited');
+        $occupancyRate = $totalCapacity > 0 ? round(($occupiedSeats / $totalCapacity) * 100, 1) : 0;
+
+        $stats = [
+            'total_bookings' => $bookings->count(),
+            'confirmed_bookings' => $confirmedBookings->count(),
+            'cancelled_bookings' => $bookings->where('status', 'cancelled')->count(),
+            'total_revenue' => $confirmedBookings->sum('total_price'),
+            'total_passengers' => $bookings->sum(function($b) {
+                return $b->passengers->count() ?: $b->tickets_count;
+            }),
+            'pending_revenue' => $bookings->where('status', 'pending')->sum('total_price'),
+            'occupied_seats' => $occupiedSeats,
+            'remaining_seats' => $remainingSeats,
+            'occupancy_rate' => $occupancyRate,
+            'page_views' => $trip->page_visits_count,
+        ];
+
+        $recentBookings = $trip->bookings()->latest()->with(['user', 'passengers'])->limit(20)->get();
+        
+        // Group bookings by date for a simple trend (last 30 days)
+        $trends = $trip->bookings()
+            ->where('created_at', '>=', now()->subDays(30))
+            ->select(DB::raw('DATE(created_at) as date'), DB::raw('count(*) as count'))
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
+
+        return view('admin.trips.stats', compact('trip', 'stats', 'recentBookings', 'trends'));
     }
 
 }

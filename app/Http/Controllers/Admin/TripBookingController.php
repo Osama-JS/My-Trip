@@ -8,9 +8,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Notifications\TicketUploadedNotification;
+use App\Services\NotificationService;
+use App\Models\Notification;
 
 class TripBookingController extends Controller
 {
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
     /**
      * Display a listing of the resource.
      */
@@ -108,14 +116,27 @@ class TripBookingController extends Controller
              $newState = $request->status == 'cancelled' ? TripBooking::STATE_CANCELLED : $oldState;
              $booking->update(['booking_state' => $newState]);
              
-            \App\Models\BookingHistory::create([
+             \App\Models\BookingHistory::create([
                 'trip_booking_id' => $booking->id,
                 'user_id' => auth()->id(),
-                'action' => 'booking_status_updated',
-                'description' => __('Booking status was updated to :status by admin.', ['status' => __($request->status)]),
-                'previous_state' => $oldState,
+                'old_state' => $oldState,
                 'new_state' => $booking->booking_state,
             ]);
+
+            // SEND NOTIFICATION
+            $title = $request->status == 'cancelled' ? __('Booking Cancelled') : __('Booking Updated');
+            $type = $request->status == 'cancelled' ? Notification::TYPE_BOOKING_CANCELLED : Notification::TYPE_BOOKING_CONFIRMED;
+            
+            $this->notificationService->sendToUser(
+                $booking->user,
+                $type,
+                $title,
+                __('Your booking #:id status has been updated to :status by our team.', [
+                    'id' => $booking->id,
+                    'status' => __($request->status)
+                ]),
+                ['booking_id' => $booking->id, 'type' => 'trip']
+            );
         }
 
         return redirect()->back()->with('success', __('Booking status updated successfully.'));
@@ -183,15 +204,23 @@ class TripBookingController extends Controller
                 'ticket_file_path' => $path,
                 'booking_state' => \App\Models\TripBooking::STATE_TICKETS_SENT
             ]);
-
-            \App\Models\BookingHistory::create([
+             \App\Models\BookingHistory::create([
                 'trip_booking_id' => $booking->id,
                 'user_id' => auth()->id(),
-                'action' => 'ticket_uploaded',
-                'description' => __('Tickets file uploaded by admin.'),
-                'previous_state' => $oldState,
+                'old_state' => $oldState,
                 'new_state' => \App\Models\TripBooking::STATE_TICKETS_SENT,
             ]);
+
+            // SEND NOTIFICATION
+            $this->notificationService->sendToUser(
+                $booking->user,
+                Notification::TYPE_BOOKING_CONFIRMED,
+                __('Tickets Uploaded'),
+                __('Your tickets for :trip have been uploaded. You can download them from your dashboard.', [
+                    'trip' => $booking->trip->title
+                ]),
+                ['booking_id' => $booking->id, 'type' => 'trip', 'icon' => 'ticket-alt']
+            );
 
             // Optional: send email to customer
             if ($request->has('send_email') && $booking->user) {

@@ -15,6 +15,7 @@ use App\Traits\HotelBookingFinalizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Traits\PaymentLogTrait;
+use App\Services\NotificationService;
 
 class PaymentWebController extends Controller
 {
@@ -24,17 +25,20 @@ class PaymentWebController extends Controller
     protected $tabbyService;
     protected $tamaraService;
     protected $tapService;
+    protected $notificationService;
 
     public function __construct(
         HyperPayService $hyperPayService,
         TabbyPaymentService $tabbyService,
         TamaraPaymentService $tamaraService,
-        \App\Services\TapPaymentService $tapService
+        \App\Services\TapPaymentService $tapService,
+        NotificationService $notificationService
     ) {
         $this->hyperPayService = $hyperPayService;
         $this->tabbyService = $tabbyService;
         $this->tamaraService = $tamaraService;
         $this->tapService = $tapService;
+        $this->notificationService = $notificationService;
     }
 
     /**
@@ -418,6 +422,15 @@ class PaymentWebController extends Controller
                         if ($type === 'hotel') {
                             $this->finalizeHotelSupplierBooking($booking);
                         }
+
+                        // SEND NOTIFICATION
+                        $this->notificationService->sendToUser(
+                            $booking->user,
+                            \App\Models\Notification::TYPE_PAYMENT_SUCCESS,
+                            __('Payment Successful'),
+                            __('Your payment for booking #:id via HyperPay has been confirmed.', ['id' => $bookingId]),
+                            ['booking_id' => $bookingId, 'type' => $type]
+                        );
                     }
                 }
                 return response()->json(['error' => false, 'message' => 'Payment successful', 'booking_id' => $bookingId, 'type' => $type]);

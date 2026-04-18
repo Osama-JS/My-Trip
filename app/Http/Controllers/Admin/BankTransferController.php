@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BankTransfer;
 use App\Models\Payment;
 use App\Services\InvoiceService;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -100,8 +101,10 @@ class BankTransferController extends Controller
             ]);
 
             // 3. Create Payment Record
-            Payment::create([
+            $payment = Payment::create([
                 'trip_booking_id' => $booking->id,
+                'payable_id' => $booking->id,
+                'payable_type' => \App\Models\TripBooking::class,
                 'user_id' => $transfer->user_id,
                 'amount' => $booking->total_price,
                 'payment_gateway' => 'bank_transfer',
@@ -118,6 +121,10 @@ class BankTransferController extends Controller
             // 4. Generate Invoice & Send Notification
             $invoiceService = app(InvoiceService::class);
             $invoicePath = $invoiceService->generateInvoice($booking);
+            
+            if ($invoicePath) {
+                $payment->update(['invoice_path' => $invoicePath]);
+            }
 
             $notificationService = app(NotificationService::class);
             $notificationService->sendToUser(

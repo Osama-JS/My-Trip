@@ -24,6 +24,30 @@ class BankAccountController extends Controller
     }
 
     /**
+     * Display the specified bank account with statistics and transfers.
+     */
+    public function show(BankAccount $bank_account)
+    {
+        $transfers = $bank_account->transfers()
+            ->with(['user', 'booking'])
+            ->latest()
+            ->get();
+
+        $stats = [
+            'total_count' => $transfers->count(),
+            'approved_count' => $transfers->where('status', 'approved')->count(),
+            'total_received' => $transfers->where('status', 'approved')->sum(function($t) {
+                return $t->booking->total_price ?? 0;
+            }),
+            'pending_amount' => $transfers->where('status', 'pending')->sum(function($t) {
+                return $t->booking->total_price ?? 0;
+            }),
+        ];
+
+        return view('admin.bank_accounts.show', compact('bank_account', 'transfers', 'stats'));
+    }
+
+    /**
      * Get data for DataTables.
      */
     public function getData()
@@ -58,11 +82,12 @@ class BankAccountController extends Controller
      */
     private function getActionButtons($account): string
     {
+        $showBtn = '<a href="' . route('admin.bank-accounts.show', $account->id) . '" class="btn btn-info btn-sm me-1" title="' . __('View Details') . '"><i class="fas fa-eye"></i></a>';
         $editBtn = '<button class="btn btn-primary btn-sm me-1" onclick="editAccount(' . $account->id . ')" title="' . __('Edit') . '"><i class="fas fa-edit"></i></button>';
         $toggleBtn = '<button class="btn btn-' . ($account->is_active ? 'warning' : 'success') . ' btn-sm me-1" onclick="toggleAccountStatus(' . $account->id . ')" title="' . ($account->is_active ? __('Deactivate') : __('Activate')) . '"><i class="fas fa-' . ($account->is_active ? 'ban' : 'check') . '"></i></button>';
         $deleteBtn = '<button class="btn btn-danger btn-sm" onclick="deleteAccount(' . $account->id . ')" title="' . __('Delete') . '"><i class="fas fa-trash"></i></button>';
 
-        return '<div class="d-flex">' . $editBtn . $toggleBtn . $deleteBtn . '</div>';
+        return '<div class="d-flex">' . $showBtn . $editBtn . $toggleBtn . $deleteBtn . '</div>';
     }
 
     /**

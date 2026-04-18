@@ -14,15 +14,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use App\Services\NotificationService;
 
 class BookingController extends Controller
 {
     use HotelBookingFinalizer;
     protected InvoiceService $invoiceService;
+    protected NotificationService $notificationService;
 
-    public function __construct(InvoiceService $invoiceService)
+    public function __construct(InvoiceService $invoiceService, NotificationService $notificationService)
     {
         $this->invoiceService = $invoiceService;
+        $this->notificationService = $notificationService;
     }
 
     /**
@@ -236,6 +239,19 @@ class BookingController extends Controller
 
         if (isset($result['status']) && $result['status'] === 'success') {
             $booking->update(['status' => 'cancelled']);
+
+            // SEND NOTIFICATION
+            $this->notificationService->sendToUser(
+                Auth::user(),
+                \App\Models\Notification::TYPE_BOOKING_CANCELLED,
+                __('Booking Cancelled'),
+                __('Your hotel booking #:id for :hotel has been successfully cancelled.', [
+                    'id' => $booking->id,
+                    'hotel' => $booking->hotel_name
+                ]),
+                ['booking_id' => $booking->id, 'type' => 'hotel']
+            );
+
             return redirect()->route('customer.bookings.hotels')
                 ->with('success', __('تم إلغاء حجز الفندق بنجاح.'));
         }
