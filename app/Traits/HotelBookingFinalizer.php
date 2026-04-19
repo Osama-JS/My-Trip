@@ -31,6 +31,14 @@ trait HotelBookingFinalizer
             }
 
             Log::info("Finalizing HotelBooking ID: {$booking->id}. Status: {$booking->status}");
+            
+            // NEW SAFETY GUARD: Never trigger supplier book if payment is not verified
+            // We only allow proceeding if status is 'paid' OR 'confirmed'
+            $allowedStatuses = ['paid', 'confirmed'];
+            if (!in_array($booking->status, $allowedStatuses) && empty($booking->supplier_confirmation_num)) {
+                Log::warning("HotelFinalizer: Aborting supplier book attempt for ID {$booking->id}. Current status '{$booking->status}' is not authorized for booking.");
+                return false;
+            }
 
             // 2. Supplier ref was already captured before payment (ideal flow)
             if (!empty($booking->supplier_confirmation_num)) {

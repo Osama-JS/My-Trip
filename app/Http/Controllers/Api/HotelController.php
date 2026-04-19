@@ -668,16 +668,20 @@ class HotelController extends Controller
             $isAr = ($locale === 'ar');
             
             return [
-                'city_id'      => $city->id,
-                'city_code'    => $city->city_code,
-                'city_name'    => $isAr ? ($city->city_name_ar ?: $city->city_name_en) : $city->city_name_en,
-                'country_name' => $isAr ? ($city->country_name_ar ?: $city->country_name_en) : $city->country_name_en,
-                'country_code' => $city->country_code,
-                'display_name' => $isAr 
+                'city_id'         => $city->id,
+                'city_code'       => $city->city_code,
+                'city_name_en'    => $city->city_name_en,
+                'city_name_ar'    => $city->city_name_ar,
+                'country_name_en' => $city->country_name_en,
+                'country_name_ar' => $city->country_name_ar,
+                'country_code'    => $city->country_code,
+                // Localized fields for convenience
+                'city_name'       => $isAr ? ($city->city_name_ar ?: $city->city_name_en) : $city->city_name_en,
+                'country_name'    => $isAr ? ($city->country_name_ar ?: $city->country_name_en) : $city->country_name_en,
+                'display_name'    => $isAr 
                     ? ($city->city_name_ar ? "{$city->city_name_ar}, {$city->country_name_ar}" : "{$city->city_name_en}, {$city->country_name_en}")
                     : "{$city->city_name_en}, {$city->country_name_en}",
-                // Compatibility fields
-                'name'         => $isAr ? ($city->city_name_ar ?: $city->city_name_en) : $city->city_name_en,
+                'name'            => $isAr ? ($city->city_name_ar ?: $city->city_name_en) : $city->city_name_en,
             ];
         });
 
