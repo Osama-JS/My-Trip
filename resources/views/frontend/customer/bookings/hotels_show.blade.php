@@ -56,7 +56,7 @@
                 <h2 class="hotel-title">{{ $booking->hotel_name }}</h2>
                 <p class="hotel-loc"><i class="fas fa-map-marker-alt"></i> {{ $booking->city_name }}, {{ $booking->country_name }}</p>
                 <div class="hbd-tags">
-                    <span class="tag-status tag-{{ $booking->status }}">{{ __($booking->status) }}</span>
+                    <span class="tag-status tag-{{ $displayStatus }}">{{ __($displayStatus) }}</span>
                     <span class="tag-ref"><i class="fas fa-hashtag"></i>{{ $booking->reference_num ?? $booking->id }}</span>
                 </div>
             </div>
@@ -154,7 +154,7 @@
                     <div class="ref-label"><i class="fas fa-check-circle"></i> {{ __('Supplier Reference') }}</div>
                     <div class="ref-val">{{ $booking->supplier_confirmation_num }}</div>
                 </div>
-                @elseif($booking->status === 'paid')
+                @elseif($displayStatus === 'paid' || $displayStatus === 'confirmed')
                 <div class="ref-item ref-item-blue">
                     <div class="ref-label"><i class="fas fa-check-circle"></i> {{ __('Payment Confirmed') }}</div>
                     <div class="ref-val" style="font-size: 0.85rem;">{{ __('Finalizing with Provider...') }}</div>
@@ -168,13 +168,13 @@
             </div>
 
             <div class="actions-stack">
-                @if($booking->status === 'confirmed')
+                @if($displayStatus === 'confirmed')
                 <a href="{{ route('customer.bookings.hotels.voucher', $booking->id) }}" class="btn-action btn-green">
                     <i class="fas fa-download"></i> {{ __('Download Voucher') }}
                 </a>
                 @endif
 
-                <form action="{{ route('customer.bookings.hotels.sync-status', $booking->id) }}" method="POST">
+                <form id="sync-form" action="{{ route('customer.bookings.hotels.sync-status', $booking->id) }}" method="POST">
                     @csrf
                     <button type="submit" class="btn-action btn-ghost">
                         <i class="fas fa-sync-alt"></i> {{ __('Refresh Status') }}
@@ -188,19 +188,19 @@
             <div class="hbd-card-head"><i class="fas fa-stream"></i> {{ __('Booking Progress') }}</div>
             <div class="hbd-card-body">
                 <div class="timeline-v">
-                    <div class="tl-item {{ in_array($booking->status, ['pending','paid','confirmed']) ? 'done' : '' }}">
+                    <div class="tl-item {{ in_array($displayStatus, ['pending','paid','confirmed']) ? 'done' : '' }}">
                         <div class="tl-dot"><i class="fas fa-file-alt"></i></div>
                         <div class="tl-text"><strong>{{ __('Booking Created') }}</strong><small>{{ $booking->created_at->format('d M Y, H:i') }}</small></div>
                     </div>
-                    <div class="tl-item {{ in_array($booking->status, ['paid','confirmed']) ? 'done' : '' }}">
+                    <div class="tl-item {{ in_array($displayStatus, ['paid','confirmed']) ? 'done' : '' }}">
                         <div class="tl-dot"><i class="fas fa-credit-card"></i></div>
-                        <div class="tl-text"><strong>{{ __('Payment Verified') }}</strong><small>{{ in_array($booking->status, ['paid','confirmed']) ? __('Completed') : __('Awaiting...') }}</small></div>
+                        <div class="tl-text"><strong>{{ __('Payment Verified') }}</strong><small>{{ in_array($displayStatus, ['paid','confirmed']) ? __('Completed') : __('Awaiting...') }}</small></div>
                     </div>
-                    <div class="tl-item {{ $booking->status === 'confirmed' ? 'done' : ($booking->status === 'cancelled' ? 'cancelled' : '') }}">
+                    <div class="tl-item {{ $displayStatus === 'confirmed' ? 'done' : ($displayStatus === 'cancelled' ? 'cancelled' : '') }}">
                         <div class="tl-dot"><i class="fas fa-check-double"></i></div>
                         <div class="tl-text">
-                            <strong>{{ $booking->status === 'cancelled' ? __('Cancelled') : __('Confirmed by Supplier') }}</strong>
-                            <small>{{ $booking->status === 'confirmed' ? __('Ready for Stay') : ($booking->status === 'cancelled' ? __('Reservation Cancelled') : __('Processing...')) }}</small>
+                            <strong>{{ $displayStatus === 'cancelled' ? __('Cancelled') : __('Confirmed by Supplier') }}</strong>
+                            <small>{{ $displayStatus === 'confirmed' ? __('Ready for Stay') : ($displayStatus === 'cancelled' ? __('Reservation Cancelled') : __('Processing...')) }}</small>
                         </div>
                     </div>
                 </div>
@@ -238,6 +238,14 @@ document.getElementById('btn-cancel-hotel')?.addEventListener('click', function(
         document.getElementById('form-cancel-hotel').submit();
     }
 });
+
+// Auto-sync if status is inconsistent
+@if($booking->status === 'pending' && !empty($booking->supplier_confirmation_num))
+    console.log('Detected inconsistent status. Auto-refreshing...');
+    setTimeout(function() {
+        document.getElementById('sync-form').submit();
+    }, 1500); 
+@endif
 </script>
 @endpush
 
