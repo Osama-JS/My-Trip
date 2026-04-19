@@ -408,7 +408,7 @@
                     </div>
                 @elseif(isset($checkout_id))
                     <script src="https://{{ config('hyperpay.test_mode', true) ? 'eu-test.oppwa.com' : 'oppwa.com' }}/v1/paymentWidgets.js?checkoutId={{ $checkout_id }}"></script>
-                    <form action="{{ route('payments.web.callback', ['payment_type' => $method, 'source' => $source]) }}" class="paymentWidgets" data-brands="{{ $method === 'mada' ? 'MADA' : ($method === 'apple_pay' ? 'APPLEPAY' : 'VISA MASTER') }}"></form>
+                    <form action="{{ route('payments.web.callback', ['payment_type' => $method, 'source' => $source, 'booking_id' => $booking->id, 'type' => $booking_type]) }}" class="paymentWidgets" data-brands="{{ $method === 'mada' ? 'MADA' : ($method === 'apple_pay' ? 'APPLEPAY' : 'VISA MASTER') }}"></form>
                 @else
                     <div style="text-align:center; padding:20px;">
                         <p style="color:var(--danger)">فشل تحميل طلب الدفع. يرجى المحاولة لاحقاً.</p>

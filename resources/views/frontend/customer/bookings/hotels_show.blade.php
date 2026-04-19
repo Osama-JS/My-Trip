@@ -6,7 +6,16 @@
 @section('content')
 
 {{-- ─── Top Status Banner ─── --}}
-@if($booking->status === 'confirmed')
+@php
+    // HEALING LOGIC: If we have a supplier confirmation but status is still pending, 
+    // it means a callback race condition occurred. We treat it as confirmed visually.
+    $displayStatus = $booking->status;
+    if($booking->status === 'pending' && !empty($booking->supplier_confirmation_num)) {
+        $displayStatus = 'confirmed';
+    }
+@endphp
+
+@if($displayStatus === 'confirmed')
 <div class="alert-banner alert-confirmed">
     <i class="fas fa-check-circle"></i>
     <div>
@@ -17,7 +26,7 @@
     <div class="conf-badge">{{ $booking->supplier_confirmation_num }}</div>
     @endif
 </div>
-@elseif($booking->status === 'paid')
+@elseif($displayStatus === 'paid' || $displayStatus === 'processing')
 <div class="alert-banner alert-processing">
     <i class="fas fa-hourglass-half fa-spin-slow"></i>
     <div>
