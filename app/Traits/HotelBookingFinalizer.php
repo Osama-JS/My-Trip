@@ -60,6 +60,7 @@ trait HotelBookingFinalizer
                 'customerPhone' => $booking->user->phone ?? '0000000000',
                 'bookingNote'  => 'Paid Hotel Booking via Gateway',
                 'paxDetails'   => $booking->pax_details,
+                'requiredLanguage' => app()->getLocale() === 'ar' ? 'ARA' : 'ENG',
             ];
 
             Log::info("HotelFinalizer: Attempting late hotel_book via TraveloproService", [

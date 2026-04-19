@@ -272,13 +272,14 @@ class HotelController extends Controller
             return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
         }
 
-        $result = $this->hotelService->book($request->all());
+        $referenceNum = 'HTL-' . strtoupper(uniqid());
 
-        // Persist booking locally
+        // Skip early supplier booking to avoid liability for failed payments.
+        // The actual booking with Travelopro will happen in the post-payment finalization.
         try {
             $hotelBooking = HotelBooking::create([
                 'user_id' => Auth::id(),
-                'hotel_name' => $result['hotel_name'] ?? ($request->hotelName ?? 'Hotel Reservation'),
+                'hotel_name' => $request->hotelName ?? 'Hotel Reservation',
                 'hotel_id' => $request->hotelId,
                 'city_name' => $request->cityName,
                 'country_name' => $request->countryName,
@@ -287,11 +288,11 @@ class HotelController extends Controller
                 'rooms' => (int) $request->rooms,
                 'adults' => (int) $request->adults,
                 'childs' => (int) $request->childs,
-                'total_price' => $result['total_price'] ?? 0,
-                'currency' => $result['currency'] ?? 'SAR',
+                'total_price' => $request->total_price ?? 0,
+                'currency' => $request->currency ?? 'SAR',
                 'status' => 'pending',
-                'reference_num' => $result['reference_num'] ?? null,
-                'supplier_confirmation_num' => $result['supplierConfirmationNum'] ?? null,
+                'reference_num' => $referenceNum,
+                'supplier_confirmation_num' => null, 
                 'session_id' => $request->sessionId,
                 'product_id' => $request->productId,
                 'token_id' => $request->tokenId,
@@ -300,6 +301,14 @@ class HotelController extends Controller
                 'board_type' => $request->boardType,
                 'pax_details' => $request->paxDetails,
             ]);
+
+            $result = [
+                'status' => 'success',
+                'message' => 'Hotel booking initiated locally.',
+                'reference_num' => $referenceNum,
+                'total_price' => $hotelBooking->total_price,
+                'currency' => $hotelBooking->currency,
+            ];
 
             // Save detailed guests to booking_passengers table for unified access
             foreach ($request->paxDetails as $room) {
@@ -639,30 +648,36 @@ class HotelController extends Controller
     public function getCities(Request $request)
     {
         $q = $request->get('q', '');
-        $lang = $request->get('lang');
-        
-        if ($lang) {
-            app()->setLocale($lang);
-        }
+        $locale = app()->getLocale();
         
         $cities = \App\Models\HotelCity::where('is_active', true)
             ->when($q, function($query) use ($q) {
-                $query->where('city_name_en', 'like', "%{$q}%")
-                      ->orWhere('city_name_ar', 'like', "%{$q}%")
-                      ->orWhere('country_name_en', 'like', "%{$q}%")
-                      ->orWhere('country_name_ar', 'like', "%{$q}%");
+                $query->where(function($sub) use ($q) {
+                    $sub->where('city_name_en', 'like', "%{$q}%")
+                        ->orWhere('city_name_ar', 'like', "%{$q}%")
+                        ->orWhere('country_name_en', 'like', "%{$q}%")
+                        ->orWhere('country_name_ar', 'like', "%{$q}%")
+                        ->orWhere('city_code', 'like', "%{$q}%");
+                });
             })
-            ->limit(50)
+            ->orderBy($locale === 'ar' ? 'city_name_ar' : 'city_name_en', 'asc')
+            ->limit(100)
             ->get();
             
-        $formatted = $cities->map(function ($city) {
+        $formatted = $cities->map(function ($city) use ($locale) {
+            $isAr = ($locale === 'ar');
+            
             return [
-                'city_name' => $city->city_name_en,
-                'city_name_ar' => $city->city_name_ar,
-                'country_name' => $city->country_name_en,
-                'country_name_ar' => $city->country_name_ar,
-                'display_name' => "{$city->city_name_en}, {$city->country_name_en}",
-                'display_name_ar' => $city->city_name_ar ? "{$city->city_name_ar}, {$city->country_name_ar}" : null,
+                'city_id'      => $city->id,
+                'city_code'    => $city->city_code,
+                'city_name'    => $isAr ? ($city->city_name_ar ?: $city->city_name_en) : $city->city_name_en,
+                'country_name' => $isAr ? ($city->country_name_ar ?: $city->country_name_en) : $city->country_name_en,
+                'country_code' => $city->country_code,
+                'display_name' => $isAr 
+                    ? ($city->city_name_ar ? "{$city->city_name_ar}, {$city->country_name_ar}" : "{$city->city_name_en}, {$city->country_name_en}")
+                    : "{$city->city_name_en}, {$city->country_name_en}",
+                // Compatibility fields
+                'name'         => $isAr ? ($city->city_name_ar ?: $city->city_name_en) : $city->city_name_en,
             ];
         });
 

@@ -517,31 +517,11 @@ class FrontendController extends Controller
             'paxDetails'   => $paxDetails,
         ];
 
-        // ── STEP 1: Call hotel_book BEFORE payment while session is still fresh ──
-        $supplierResult = null;
+        // ── ACTUAL FIX: DO NOT call hotel_book before payment ──
+        // This avoids financial liability for abandoned or failed payments.
+        // Confirmation will happen in HotelBookingFinalizer after successful payment.
         $supplierConfirmationNum = null;
         $initialStatus = 'pending';
-
-        try {
-            $hotelService = app(\App\Services\TraveloproHotelService::class);
-            $supplierResult = $hotelService->book($bookingData);
-
-            if (isset($supplierResult['referenceNum']) || isset($supplierResult['supplierConfirmationNum'])) {
-                $supplierConfirmationNum = $supplierResult['supplierConfirmationNum'] ?? $supplierResult['referenceNum'] ?? null;
-                $initialStatus = 'pending';
-            } else {
-                $errMsg = $supplierResult['status']['error'] ?? $supplierResult['message'] ?? 'Unknown supplier error';
-                \Illuminate\Support\Facades\Log::warning("Supplier pre-booking failed: {$errMsg}", ['result' => $supplierResult]);
-                // If the supplier explicitly rejects (e.g. Sold Out), we should block the payment
-                if (isset($supplierResult['status']['error'])) {
-                     return back()->with('error', __('Supplier Error: :msg', ['msg' => $errMsg]))->withInput();
-                }
-            }
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Supplier book call exception: ' . $e->getMessage());
-            // Fail early if supplier call crashed
-            return back()->with('error', __('Connection error with hotel provider. Please try again.'))->withInput();
-        }
 
         try {
             $hotelBooking = \App\Models\HotelBooking::create([

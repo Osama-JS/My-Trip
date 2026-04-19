@@ -267,8 +267,8 @@ class BookingController extends Controller
     {
         $booking = \App\Models\HotelBooking::where('user_id', Auth::id())->findOrFail($id);
 
-        // AGGRESSIVE SYNC: If not confirmed, always try to finalize with supplier
-        if (empty($booking->supplier_confirmation_num)) {
+        // AGGRESSIVE SYNC: If status is not confirmed, always try to finalize or check status
+        if ($booking->status !== 'confirmed') {
             Log::info("Sync Status calling finalizer for booking {$id}");
             $finalized = $this->finalizeHotelSupplierBooking($booking);
             if ($finalized) {
@@ -344,7 +344,10 @@ class BookingController extends Controller
     public function downloadHotelVoucher($id)
     {
         $booking = \App\Models\HotelBooking::where('user_id', Auth::id())
-            ->where('status', 'confirmed')
+            ->where(function($q) {
+                $q->where('status', 'confirmed')
+                  ->orWhereNotNull('supplier_confirmation_num');
+            })
             ->findOrFail($id);
 
         if ($booking->invoice_path && Storage::disk('public')->exists($booking->invoice_path)) {
