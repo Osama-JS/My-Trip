@@ -62,6 +62,11 @@ trait HotelBookingFinalizer
                 'paxDetails'   => $booking->pax_details,
             ];
 
+            Log::info("HotelFinalizer: Attempting late hotel_book via TraveloproService", [
+                'booking_id' => $booking->id,
+                'clientRef'  => $bookingData['clientRef']
+            ]);
+
             $result = $hotelService->book($bookingData);
 
             // Check various success structures Travelopro might return
@@ -101,7 +106,9 @@ trait HotelBookingFinalizer
             return false;
 
         } catch (\Exception $e) {
-            Log::error("Travelopro Hotel Booking Exception: " . $e->getMessage());
+            Log::error("HotelFinalizer: Travelopro Hotel Booking Exception for Booking #{$booking->id}: " . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
             return false;
         }
     }

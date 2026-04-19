@@ -312,6 +312,10 @@ class PaymentWebController extends Controller
             $type        = $request->get('type', 'trip');
             $bookingId   = $request->booking_id;
 
+            Log::info("WebVerify: Initiating payment verification for {$type} Booking #{$bookingId} via {$paymentType}", [
+                'request' => $request->all()
+            ]);
+
             // ── Tamara ────────────────────────────────────────────────────────
             if ($paymentType === 'tamara') {
                 $orderId = $request->payment_id ?? $request->order_id;
@@ -327,7 +331,7 @@ class PaymentWebController extends Controller
                         $booking = $this->resolveBooking($bookingId, $type);
                         if ($booking) {
                             $booking->update(['status' => 'paid']);
-                            Log::info("Tamara: Booking #{$bookingId} ({$type}) marked as PAID. Order: {$orderId}");
+                            Log::info("WebVerify (Tamara): Booking #{$bookingId} marked as PAID. OrderId: {$orderId}");
 
                             // AUTO-FINALIZE based on type
                             $this->finalizeAfterPayment($booking, $type, 'tamara');
@@ -382,7 +386,7 @@ class PaymentWebController extends Controller
                         $booking = $this->resolveBooking($bookingId, $type);
                         if ($booking) {
                             $booking->update(['status' => 'paid']);
-                            Log::info("Tap: Booking #{$bookingId} ({$type}) marked as PAID.");
+                            Log::info("WebVerify (Tap): Booking #{$bookingId} marked as PAID. TapRef: {$paymentId}");
 
                             // AUTO-FINALIZE based on type
                             $this->finalizeAfterPayment($booking, $type, 'tap');
@@ -409,7 +413,7 @@ class PaymentWebController extends Controller
                     $booking = $this->resolveBooking($bookingId, $type);
                     if ($booking) {
                         $booking->update(['status' => 'paid']);
-                        Log::info("HyperPay: Booking #{$bookingId} ({$type}) marked as PAID.");
+                        Log::info("WebVerify (HyperPay): Booking #{$bookingId} marked as PAID. CheckoutId: {$checkoutId}");
 
                         // AUTO-FINALIZE based on type
                         $this->finalizeAfterPayment($booking, $type, 'hyperpay');
@@ -435,11 +439,13 @@ class PaymentWebController extends Controller
         try {
             // ── HOTEL: Confirm with Travelopro supplier ────────────────────
             if ($type === 'hotel') {
+                Log::info("FinalizeAfterPayment: Triggering Hotel finalizer for Booking #{$booking->id}");
                 $this->finalizeHotelSupplierBooking($booking);
             }
 
             // ── FLIGHT: Auto-issue ticket with Travelopro ──────────────────
             if ($type === 'flight') {
+                Log::info("FinalizeAfterPayment: Triggering Flight auto-issuance for Booking #{$booking->id}");
                 $this->autoIssueFlightTicket($booking);
             }
 

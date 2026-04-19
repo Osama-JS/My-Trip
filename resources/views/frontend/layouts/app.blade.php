@@ -80,9 +80,9 @@
                     <a href="{{ route('hotels') }}" class="{{ request()->routeIs('hotels') ? 'active' : '' }}">
                         <i class="fas fa-hotel"></i> {{ __('Hotels') }}
                     </a>
-                    <a href="{{ route('destinations') }}" class="{{ request()->routeIs('destinations') ? 'active' : '' }}">
+                    {{-- <a href="{{ route('destinations') }}" class="{{ request()->routeIs('destinations') ? 'active' : '' }}">
                         <i class="fas fa-map-marked-alt"></i> {{ __('Destinations') }}
-                    </a>
+                    </a> --}}
                     <a href="{{ route('about') }}" class="{{ request()->routeIs('about') ? 'active' : '' }}">
                         <i class="fas fa-info-circle"></i> {{ __('About Us') }}
                     </a>

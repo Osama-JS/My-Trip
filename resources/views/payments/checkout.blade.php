@@ -369,13 +369,22 @@
                         'tabby' => 'https://checkout.tabby.ai/images/logo.png',
                         default => null
                     };
+                    
+                    $methodName = match($method) {
+                        'mada' => __('Mada'),
+                        'visa_master' => __('Credit Card'),
+                        'apple_pay' => 'Apple Pay',
+                        'tamara' => 'Tamara',
+                        'tabby' => 'Tabby',
+                        default => strtoupper($method)
+                    };
                 @endphp
 
                 @if($logoUrl)
                     <img src="{{ $logoUrl }}" alt="{{ $method }}" class="gateway-logo">
                 @endif
                 <div class="payment-section-title">
-                    <span>إكمال الدفع عبر {{ strtoupper($method) }}</span>
+                    <span>{{ __('Finalize payment via') }} {{ $methodName }}</span>
                 </div>
             </div>
 
