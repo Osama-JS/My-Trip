@@ -412,14 +412,22 @@ class PaymentWebController extends Controller
                 if ($bookingId) {
                     $booking = $this->resolveBooking($bookingId, $type);
                     if ($booking) {
+                        // FORCE UPDATE: Mark as paid immediately to avoid UI lag
                         $booking->update(['status' => 'paid']);
-                        Log::info("WebVerify (HyperPay): Booking #{$bookingId} marked as PAID. CheckoutId: {$checkoutId}");
+                        Log::info("WebVerify (Success): Booking #{$bookingId} ({$type}) marked as PAID via {$paymentType}.");
 
                         // AUTO-FINALIZE based on type
-                        $this->finalizeAfterPayment($booking, $type, 'hyperpay');
+                        $this->finalizeAfterPayment($booking, $type, $paymentType);
+                    } else {
+                        Log::warning("WebVerify: Could not resolve booking for ID: {$bookingId}, Type: {$type}");
                     }
                 }
-                return response()->json(['error' => false, 'message' => 'Payment successful', 'booking_id' => $bookingId, 'type' => $type]);
+                return response()->json([
+                    'error' => false, 
+                    'message' => 'Payment successful', 
+                    'booking_id' => $bookingId, 
+                    'type' => $type
+                ]);
             }
 
             return response()->json(['error' => true, 'message' => $result['result']['description'] ?? 'Payment failed.'], 400);
@@ -670,13 +678,14 @@ class PaymentWebController extends Controller
                 Log::info("Processing success page finalization for {$type} Booking ID: {$booking->id}");
                 
                 if ($type === 'hotel') {
-                    // Update locally first
+                    // Logic for hotels: 'confirmed' if supplier ref exists, else 'paid'
                     $newStatus = !empty($booking->supplier_confirmation_num) ? 'confirmed' : 'paid';
                     if ($booking->status !== 'confirmed') {
                         $booking->update(['status' => $newStatus]);
+                        Log::info("SuccessPage: Hotel Booking #{$booking->id} state ensured as: {$newStatus}");
                     }
                     
-                    // Trigger actual supplier finalization (Trait handles if already confirmed)
+                    // Signal background finalization (Trait logic will skip if confirmed)
                     $this->finalizeHotelSupplierBooking($booking);
                 } else if ($type === 'flight') {
                     if ($booking->status === 'pending') {

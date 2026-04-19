@@ -145,10 +145,15 @@
                     <div class="ref-label"><i class="fas fa-check-circle"></i> {{ __('Supplier Reference') }}</div>
                     <div class="ref-val">{{ $booking->supplier_confirmation_num }}</div>
                 </div>
+                @elseif($booking->status === 'paid')
+                <div class="ref-item ref-item-blue">
+                    <div class="ref-label"><i class="fas fa-check-circle"></i> {{ __('Payment Confirmed') }}</div>
+                    <div class="ref-val" style="font-size: 0.85rem;">{{ __('Finalizing with Provider...') }}</div>
+                </div>
                 @else
                 <div class="ref-item ref-item-warn">
                     <div class="ref-label"><i class="fas fa-hourglass-half"></i> {{ __('Supplier Confirmation') }}</div>
-                    <div class="ref-val" style="font-size: 0.85rem;">{{ __('Pending...') }}</div>
+                    <div class="ref-val" style="font-size: 0.85rem;">{{ __('Pending Payment...') }}</div>
                 </div>
                 @endif
             </div>
