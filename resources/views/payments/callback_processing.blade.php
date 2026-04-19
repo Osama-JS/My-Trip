@@ -73,7 +73,7 @@
             };
 
             $.ajax({
-                url:    "/{{ ltrim(parse_url(config('app.url'), PHP_URL_PATH), '/') }}payments/verify",
+                url:    "{{ route('payments.web.verify') }}",
                 method: "POST",
                 data:   payload,
 

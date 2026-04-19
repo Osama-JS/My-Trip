@@ -12,6 +12,10 @@ class Booking extends Model
         'supplier_session_id',
         'status',
         'ticket_status',
+        'ticket_numbers',       // JSON array of eTicket numbers from Travelopro
+        'pnr_code',             // Airline PNR code for the passenger
+        'airline_name',         // e.g. "Saudia"
+        'airline_code',         // e.g. "SV"
         'total_amount',
         'currency',
         'contact_email',
@@ -20,7 +24,8 @@ class Booking extends Model
     ];
 
     protected $casts = [
-        'pnr_created_at' => 'datetime',
+        'pnr_created_at'  => 'datetime',
+        'ticket_numbers'  => 'array',
     ];
 
     public function user()

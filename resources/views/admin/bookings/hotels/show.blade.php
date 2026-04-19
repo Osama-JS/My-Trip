@@ -13,6 +13,31 @@
 
 @section('content')
 <div class="row">
+    <!-- Fallback Manual Intervention Alert -->
+    @if($hotelBooking->status === 'paid' && empty($hotelBooking->supplier_confirmation_num))
+    <div class="col-12 mb-4">
+        <div class="alert alert-warning border-start border-warning border-5 shadow-sm d-md-flex align-items-center justify-content-between p-4" style="background-color: #fff9e6;">
+            <div class="d-flex align-items-center mb-3 mb-md-0">
+                <div class="bg-warning text-white rounded-circle p-3 me-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                    <i class="fa fa-exclamation-triangle fa-2x"></i>
+                </div>
+                <div>
+                    <h5 class="text-warning mb-1 font-weight-bold">{{ __('Manual Intervention Required') }}</h5>
+                    <p class="mb-0 text-dark">{{ __('Payment succeeded but the supplier booking failed or session expired. User has NOT received a voucher.') }}</p>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-warning btn-sm text-dark font-weight-bold" onclick="retrySupplierBooking({{ $hotelBooking->id }})">
+                    <i class="fa fa-sync-alt me-1"></i> {{ __('Retry API Submission') }}
+                </button>
+                <button type="button" class="btn btn-outline-dark btn-sm font-weight-bold" data-bs-toggle="modal" data-bs-target="#forceConfirmModal">
+                    <i class="fa fa-check-double me-1"></i> {{ __('Force Confirm Manually') }}
+                </button>
+            </div>
+        </div>
+    </div>
+    @endif
+
     <!-- Hotel Info -->
     <div class="col-xl-9 col-lg-8">
         <div class="card">
@@ -35,6 +60,8 @@
                             <h6 class="text-muted mb-1">{{ __('Booking Status') }}</h6>
                             @if($hotelBooking->status == 'confirmed')
                                 <span class="badge badge-success">{{ __('Confirmed') }}</span>
+                            @elseif($hotelBooking->status == 'paid' && empty($hotelBooking->supplier_confirmation_num))
+                                <span class="badge badge-warning text-dark"><i class="fa fa-exclamation-circle"></i> {{ __('Paid - Awaiting Action') }}</span>
                             @elseif($hotelBooking->status == 'cancelled')
                                 <span class="badge badge-danger">{{ __('Cancelled') }}</span>
                             @else
@@ -152,3 +179,99 @@
     </div>
 </div>
 @endsection
+
+@push('modals')
+<!-- Force Confirm Modal -->
+<div class="modal fade" id="forceConfirmModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ __('Force Confirm Manually') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="forceConfirmForm">
+                @csrf
+                <div class="modal-body">
+                    <p class="text-muted small mb-3">{{ __('Use this only if you have confirmed the booking with Travelopro via phone or email.') }}</p>
+                    <div class="mb-3">
+                        <label class="form-label font-w600">{{ __('Supplier Confirmation Number') }} <span class="text-danger">*</span></label>
+                        <input type="text" name="supplier_ref" class="form-control" placeholder="e.g. TP-12345678" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger light" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ __('Save & Confirm') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endpush
+
+@push('scripts')
+<script>
+    function retrySupplierBooking(id) {
+        Swal.fire({
+            title: '{{ __("Are you sure?") }}',
+            text: '{{ __("This will attempt to book with Travelopro API again.") }}',
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonColor: '#ffbb00',
+            confirmButtonText: '{{ __("Yes, Retry") }}',
+            cancelButtonText: '{{ __("Cancel") }}',
+            showLoaderOnConfirm: true,
+            preConfirm: () => {
+                return fetch(`{{ url("admin/bookings/hotels") }}/${id}/retry`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error(response.statusText);
+                    return response.json();
+                })
+                .catch(error => {
+                    Swal.showValidationMessage(`Request failed: ${error}`);
+                });
+            },
+            allowOutsideClick: () => !Swal.isLoading()
+        }).then((result) => {
+            if (result.isConfirmed) {
+                if (result.value.success) {
+                    Swal.fire('{{ __("Success!") }}', result.value.message, 'success').then(() => location.reload());
+                } else {
+                    Swal.fire('{{ __("Failed") }}', result.value.message, 'error');
+                }
+            }
+        });
+    }
+
+    $('#forceConfirmForm').on('submit', function(e) {
+        e.preventDefault();
+        const btn = $(this).find('button[type="submit"]');
+        btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i>');
+
+        $.ajax({
+            url: "{{ route('admin.bookings.hotels.force_confirm', $hotelBooking->id) }}",
+            method: "POST",
+            data: $(this).serialize(),
+            success: function(response) {
+                if(response.success) {
+                    $('#forceConfirmModal').modal('hide');
+                    Swal.fire('{{ __("Success!") }}', response.message, 'success').then(() => location.reload());
+                } else {
+                    Swal.fire('{{ __("Error") }}', response.message, 'error');
+                }
+            },
+            error: function(err) {
+                Swal.fire('{{ __("Error") }}', '{{ __("Something went wrong.") }}', 'error');
+            },
+            complete: function() {
+                btn.prop('disabled', false).text('{{ __("Save & Confirm") }}');
+            }
+        });
+    });
+</script>
+@endpush

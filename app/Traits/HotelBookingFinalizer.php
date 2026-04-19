@@ -3,8 +3,11 @@
 namespace App\Traits;
 
 use App\Models\HotelBooking;
+use App\Models\Notification;
+use App\Models\User;
 use App\Services\TraveloproHotelService;
 use App\Services\InvoiceService;
+use App\Jobs\RetryHotelSupplierBookingJob;
 use Illuminate\Support\Facades\Log;
 
 trait HotelBookingFinalizer
@@ -84,16 +87,60 @@ trait HotelBookingFinalizer
 
             Log::error("Late hotel_book failed for ID {$booking->id}: {$errorMsg}");
 
-            // Keep as 'paid' so admin can retry
+            // ── FALLBACK ALERT: Notify Admin for MANUAL intervention ──────
+            // As requested, we do NOT auto-retry. We notify the admin immediately.
             if ($booking->status !== 'confirmed') {
-                $booking->update(['status' => 'paid']);
+                $booking->update(['status' => 'paid']); // Keep as paid, NOT failed
+                
+                // Immediate admin notification
+                $this->notifyAdminImmediately($booking, $errorMsg);
+                
+                Log::warning("HotelBooking #{$booking->id}: Fallback triggered. Admin notified for manual intervention.");
             }
 
             return false;
 
         } catch (\Exception $e) {
-            Log::error("Exception in finalizeHotelSupplierBooking for ID {$booking->id}: " . $e->getMessage());
+            Log::error("Travelopro Hotel Booking Exception: " . $e->getMessage());
             return false;
+        }
+    }
+
+    /**
+     * Immediately notify admins when the supplier booking attempt fails.
+     */
+    private function notifyAdminImmediately(HotelBooking $booking, string $errorMsg): void
+    {
+        try {
+            $admins = User::where(function ($q) {
+                $q->where('user_type', 'admin')
+                  ->orWhereHas('roles', fn($r) => $r->where('name', 'admin'));
+            })->get();
+
+            foreach ($admins as $admin) {
+                Notification::create([
+                    'type'    => 'admin_hotel_booking_failed',
+                    'title'   => '⚠️ تدخل يدوي مطلوب: دفع مكتمل وحجز معلق',
+                    'content' => "حجز الفندق #{$booking->id} ({$booking->hotel_name}) — تم استلام الدفع ولكن انتهت صلاحية جلسة Travelopro. " .
+                                 "يجب التدخل اليدوي الفوري لتأكيد الحجز.\n\nالخطأ: {$errorMsg}",
+                    'icon'    => 'hotel_error',
+                    'user_id' => $admin->id,
+                    'data'    => [
+                        'booking_id'  => $booking->id,
+                        'hotel_name'  => $booking->hotel_name,
+                        'total_price' => $booking->total_price,
+                        'currency'    => $booking->currency,
+                        'error'       => $errorMsg,
+                        'alert_level' => 'critical', // Set to critical
+                        'admin_url'   => route('admin.bookings.hotels.show_detail', $booking->id),
+                    ],
+                    'is_read' => false,
+                ]);
+            }
+
+            Log::info("HotelBookingFinalizer: Admin manual intervention notification sent for Booking #{$booking->id}");
+        } catch (\Exception $e) {
+            Log::error("HotelBookingFinalizer: Failed to notify admins: " . $e->getMessage());
         }
     }
 

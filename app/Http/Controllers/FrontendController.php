@@ -807,6 +807,18 @@ class FrontendController extends Controller
     }
 
     /**
+     * Display dynamic page
+     */
+    public function showPage($slug)
+    {
+        $page = \App\Models\Page::where('slug', $slug)
+            ->where('status', true)
+            ->firstOrFail();
+
+        return view('frontend.pages.show', compact('page'));
+    }
+
+    /**
      * Show passenger details form before booking a trip
      */
     public function tripBookingForm(Request $request)

@@ -100,13 +100,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/verify', [PaymentController::class, 'verify']);
     });
 
-    // User Bookings
-    Route::get('/user/bookings', [App\Http\Controllers\Api\UserBookingController::class, 'index']);
-    Route::get('/user/bookings/{reference}', [App\Http\Controllers\Api\UserBookingController::class, 'show']);
-    
-    // User Hotel Bookings
+    // User Bookings (Unified)
+    Route::get('/user/bookings', [App\Http\Controllers\Api\UserBookingController::class, 'index']); // Flights
+    Route::get('/user/bookings/{id}', [App\Http\Controllers\Api\UserBookingController::class, 'show']);
+
     Route::get('/user/hotel-bookings', [App\Http\Controllers\Api\UserBookingController::class, 'hotelBookings']);
     Route::get('/user/hotel-bookings/{id}', [App\Http\Controllers\Api\UserBookingController::class, 'hotelBookingDetails']);
+
+    Route::get('/user/trip-bookings', [App\Http\Controllers\Api\UserBookingController::class, 'tripBookings']);
+    Route::get('/user/trip-bookings/{id}', [App\Http\Controllers\Api\UserBookingController::class, 'tripBookingDetails']);
 
     Route::post('/logout', [AuthController::class, 'logout']);
 });

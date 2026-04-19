@@ -147,6 +147,11 @@
                         </a>
                     </li>
                     <li>
+                        <a href="{{ route('admin.pages.index') }}">
+                            <i class="fa fa-file-alt"></i>{{ __('Manage Pages') }}
+                        </a>
+                    </li>
+                    <li>
                         <a href="{{ route('admin.questions.index') }}">
                             <i class="fa fa-question-circle"></i>{{ __('Questions') }}
                         </a>

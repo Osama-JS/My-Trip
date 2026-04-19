@@ -88,17 +88,36 @@
                 { data: 'amount' },
                 { 
                     data: 'status',
-                    render: function(data) {
+                    render: function(data, type, row) {
                         let color = 'secondary';
-                        if (data === 'confirmed') color = 'success';
-                        if (data === 'pending') color = 'warning';
-                        if (data === 'cancelled') color = 'danger';
-                        return `<span class="badge badge-${color}">${data}</span>`;
+                        let label = data;
+                        let icon = '';
+
+                        if (data === 'confirmed') {
+                            color = 'success';
+                        } else if (data === 'paid' && row.requires_action) {
+                            color = 'warning text-dark';
+                            label = '⚠️ ' + '{{ __("Paid - Action Needed") }}';
+                        } else if (data === 'paid') {
+                            color = 'info';
+                        } else if (data === 'pending') {
+                            color = 'warning';
+                        } else if (data === 'cancelled') {
+                            color = 'danger';
+                        }
+                        
+                        return `<span class="badge badge-${color}">${label}</span>`;
                     }
                 },
                 { data: 'created_at' },
                 { data: 'actions', orderable: false, searchable: false }
             ],
+            createdRow: function(row, data, dataIndex) {
+                if (data.requires_action) {
+                    $(row).addClass('table-warning font-weight-bold');
+                    $(row).css('border-right', '5px solid #ffaA00');
+                }
+            },
             language: {
                 "url": "{{ asset('vendor/datatables/i18n/' . app()->getLocale() . '.json') }}"
             },

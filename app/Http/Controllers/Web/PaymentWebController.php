@@ -323,17 +323,14 @@ class PaymentWebController extends Controller
                 $status = $result['status'] ?? 'unknown';
 
                 if (in_array($status, ['authorised', 'fully_captured'])) {
-                    // Update booking if bookingId was passed
                     if ($bookingId) {
                         $booking = $this->resolveBooking($bookingId, $type);
                         if ($booking) {
                             $booking->update(['status' => 'paid']);
                             Log::info("Tamara: Booking #{$bookingId} ({$type}) marked as PAID. Order: {$orderId}");
-                            
-                            // AUTO-FINALIZE HOTELS
-                            if ($type === 'hotel') {
-                                $this->finalizeHotelSupplierBooking($booking);
-                            }
+
+                            // AUTO-FINALIZE based on type
+                            $this->finalizeAfterPayment($booking, $type, 'tamara');
                         }
                     }
                     return response()->json(['error' => false, 'message' => 'Payment successful', 'status' => $status, 'booking_id' => $bookingId, 'type' => $type]);
@@ -360,10 +357,8 @@ class PaymentWebController extends Controller
                             $booking->update(['status' => 'paid']);
                             Log::info("Tabby: Booking #{$bookingId} ({$type}) marked as PAID.");
 
-                            // AUTO-FINALIZE HOTELS
-                            if ($type === 'hotel') {
-                                $this->finalizeHotelSupplierBooking($booking);
-                            }
+                            // AUTO-FINALIZE based on type
+                            $this->finalizeAfterPayment($booking, $type, 'tabby');
                         }
                     }
                     return response()->json(['error' => false, 'message' => 'Payment successful', 'status' => $status, 'booking_id' => $bookingId, 'type' => $type]);
@@ -389,10 +384,8 @@ class PaymentWebController extends Controller
                             $booking->update(['status' => 'paid']);
                             Log::info("Tap: Booking #{$bookingId} ({$type}) marked as PAID.");
 
-                            // AUTO-FINALIZE HOTELS
-                            if ($type === 'hotel') {
-                                $this->finalizeHotelSupplierBooking($booking);
-                            }
+                            // AUTO-FINALIZE based on type
+                            $this->finalizeAfterPayment($booking, $type, 'tap');
                         }
                     }
                     return response()->json(['error' => false, 'message' => 'Payment successful', 'status' => $status, 'booking_id' => $bookingId, 'type' => $type]);
@@ -407,8 +400,8 @@ class PaymentWebController extends Controller
                 return response()->json(['error' => true, 'message' => 'Missing checkout_id for HyperPay'], 422);
             }
 
-            $result   = $this->hyperPayService->getPaymentStatus($checkoutId, $paymentType);
-            $code     = $result['result']['code'] ?? '';
+            $result    = $this->hyperPayService->getPaymentStatus($checkoutId, $paymentType);
+            $code      = $result['result']['code'] ?? '';
             $isSuccess = $this->hyperPayService->isSuccessful($code);
 
             if ($isSuccess) {
@@ -418,19 +411,8 @@ class PaymentWebController extends Controller
                         $booking->update(['status' => 'paid']);
                         Log::info("HyperPay: Booking #{$bookingId} ({$type}) marked as PAID.");
 
-                        // AUTO-FINALIZE HOTELS
-                        if ($type === 'hotel') {
-                            $this->finalizeHotelSupplierBooking($booking);
-                        }
-
-                        // SEND NOTIFICATION
-                        $this->notificationService->sendToUser(
-                            $booking->user,
-                            \App\Models\Notification::TYPE_PAYMENT_SUCCESS,
-                            __('Payment Successful'),
-                            __('Your payment for booking #:id via HyperPay has been confirmed.', ['id' => $bookingId]),
-                            ['booking_id' => $bookingId, 'type' => $type]
-                        );
+                        // AUTO-FINALIZE based on type
+                        $this->finalizeAfterPayment($booking, $type, 'hyperpay');
                     }
                 }
                 return response()->json(['error' => false, 'message' => 'Payment successful', 'booking_id' => $bookingId, 'type' => $type]);
@@ -441,6 +423,134 @@ class PaymentWebController extends Controller
         } catch (\Exception $e) {
             Log::error('webVerify Exception: ' . $e->getMessage());
             return response()->json(['error' => true, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Centralized post-payment finalization for all booking types.
+     * Called after any gateway confirms a successful payment.
+     */
+    protected function finalizeAfterPayment($booking, string $type, string $gateway): void
+    {
+        try {
+            // ── HOTEL: Confirm with Travelopro supplier ────────────────────
+            if ($type === 'hotel') {
+                $this->finalizeHotelSupplierBooking($booking);
+            }
+
+            // ── FLIGHT: Auto-issue ticket with Travelopro ──────────────────
+            if ($type === 'flight') {
+                $this->autoIssueFlightTicket($booking);
+            }
+
+            // ── TRIP: Mark as confirmed (admin reviews, no supplier API) ───
+            // Trip bookings are confirmed manually by admin after bank transfer review
+            // or automatically if payment gateway authorized the payment
+            if ($type === 'trip') {
+                Log::info("Trip Booking #{$booking->id}: Payment received; awaiting admin confirmation.");
+            }
+
+            // ── NOTIFICATION: Send push + email to user ────────────────────
+            $this->sendPaymentSuccessNotification($booking, $type, $gateway);
+
+        } catch (\Exception $e) {
+            Log::error("finalizeAfterPayment failed for {$type} Booking #{$booking->id}: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Automatically issue a flight ticket via Travelopro after payment.
+     * Saves eTicket numbers and updates the booking + passenger records.
+     */
+    protected function autoIssueFlightTicket($booking): void
+    {
+        Log::info("Auto-issuing ticket for Flight Booking #{$booking->id}, UniqueID: {$booking->booking_reference}");
+
+        $traveloproService = app(\App\Services\TraveloproService::class);
+        $result = $traveloproService->orderTicket($booking->booking_reference);
+
+        if (isset($result['status']) && $result['status'] === 'error') {
+            Log::error("Auto ticket issuance FAILED for Booking #{$booking->id}: " . ($result['message'] ?? 'Unknown error'));
+            // Keep as 'paid' so admin can retry manually
+            return;
+        }
+
+        // ── Parse eTicket numbers from Travelopro response ────────────────
+        $ticketResult = $result['OrderTicketResponse']['OrderTicketResult']
+                     ?? $result['TicketOrderResponse']['TicketOrderResult']
+                     ?? null;
+
+        $eTickets = [];
+        if ($ticketResult) {
+            // Travelopro returns eTickets under various keys; handle all formats
+            $rawTickets = $ticketResult['eTicketNumbers']
+                       ?? $ticketResult['ETicketNumbers']
+                       ?? $ticketResult['TicketNumbers']
+                       ?? [];
+
+            $eTickets = is_array($rawTickets) ? array_values($rawTickets) : [$rawTickets];
+        }
+
+        // ── Update main booking record ────────────────────────────────────
+        $booking->update([
+            'status'         => 'confirmed',
+            'ticket_status'  => 'ticketed',
+            'ticket_numbers' => $eTickets,
+        ]);
+
+        Log::info("Flight Booking #{$booking->id} CONFIRMED. eTickets: " . implode(', ', $eTickets));
+
+        // ── Assign individual eTicket numbers to each passenger ───────────
+        if (!empty($eTickets)) {
+            $passengers = $booking->passengers()->get();
+            foreach ($passengers as $index => $passenger) {
+                if (isset($eTickets[$index])) {
+                    $passenger->update(['e_ticket_no' => $eTickets[$index]]);
+                    Log::info("Passenger #{$passenger->id} assigned eTicket: {$eTickets[$index]}");
+                }
+            }
+        }
+
+        // ── Generate Invoice PDF ──────────────────────────────────────────
+        try {
+            $invoiceService = app(\App\Services\InvoiceService::class);
+            $invoiceService->generateInvoice($booking);
+            Log::info("Invoice generated for Flight Booking #{$booking->id}");
+        } catch (\Exception $e) {
+            Log::warning("Invoice generation failed for Booking #{$booking->id}: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Send payment success notification and email to the user.
+     */
+    protected function sendPaymentSuccessNotification($booking, string $type, string $gateway): void
+    {
+        try {
+            if (!$booking->user) return;
+
+            $typeLabels = [
+                'flight' => __('Flight'),
+                'hotel'  => __('Hotel'),
+                'trip'   => __('Trip Package'),
+            ];
+            $typeLabel = $typeLabels[$type] ?? ucfirst($type);
+
+            $this->notificationService->sendToUser(
+                $booking->user,
+                \App\Models\Notification::TYPE_PAYMENT_SUCCESS,
+                __('Payment Confirmed'),
+                __('Your :type booking #:id has been paid successfully via :gateway.', [
+                    'type'    => $typeLabel,
+                    'id'      => $booking->id,
+                    'gateway' => strtoupper($gateway),
+                ]),
+                ['booking_id' => $booking->id, 'type' => $type]
+            );
+
+            Log::info("Payment success notification sent to User #{$booking->user->id} for {$type} Booking #{$booking->id}");
+        } catch (\Exception $e) {
+            Log::warning("Could not send payment notification: " . $e->getMessage());
         }
     }
 

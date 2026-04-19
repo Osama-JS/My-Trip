@@ -24,8 +24,13 @@ class AppServiceProvider extends ServiceProvider
         // View Composer for notifications in header
         View::composer('partials.header', NotificationViewComposer::class);
 
+        // Share active pages with all views (for footer)
+        View::composer('frontend.layouts.app', function ($view) {
+            $footer_pages = \App\Models\Page::where('status', true)->select('id', 'slug', 'title_ar', 'title_en')->get();
+            $view->with('footer_pages', $footer_pages);
+        });
+
         // Implicitly grant "Super Admin" role all permissions
-        // This works in the app by using gate-related functions like auth()->user->can() and @can()
         \Illuminate\Support\Facades\Gate::before(function ($user, $ability) {
             return $user->hasRole('super-admin') ? true : null;
         });

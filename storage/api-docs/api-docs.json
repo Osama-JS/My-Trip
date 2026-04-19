@@ -4291,11 +4291,11 @@
         "/api/user/bookings": {
             "get": {
                 "tags": [
-                    "User"
+                    "User Bookings"
                 ],
-                "summary": "حجوزات المستخدم (User Bookings)",
-                "description": "عرض قائمة حجوزات المستخدم الحالي مع تفاصيل الحالة وأرقام التذاكر. (Get current user's bookings with status and ticket details).",
-                "operationId": "getUserBookings",
+                "summary": "قائمة حجوزات الطيران (Flight Bookings)",
+                "description": "عرض قائمة حجوزات الطيران للمستخدم الحالي مع إمكانية الفلترة حسب الحالة. (Get user's flight bookings with status filter).",
+                "operationId": "getUserFlightBookings",
                 "parameters": [
                     {
                         "name": "Accept-Language",
@@ -4304,6 +4304,15 @@
                         "schema": {
                             "type": "string",
                             "default": "en"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by status (pending, confirmed, cancelled)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
                         }
                     },
                     {
@@ -4327,99 +4336,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "تم استرجاع الحجوزات بنجاح",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Bookings retrieved successfully."
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer",
-                                                        "example": 1
-                                                    },
-                                                    "reference": {
-                                                        "type": "string",
-                                                        "example": "TR123456"
-                                                    },
-                                                    "status": {
-                                                        "type": "string",
-                                                        "example": "confirmed"
-                                                    },
-                                                    "ticket_status": {
-                                                        "type": "string",
-                                                        "example": "ticketed"
-                                                    },
-                                                    "total_amount": {
-                                                        "type": "number",
-                                                        "example": 1500
-                                                    },
-                                                    "currency": {
-                                                        "type": "string",
-                                                        "example": "USD"
-                                                    },
-                                                    "pnr_date": {
-                                                        "type": "string",
-                                                        "format": "date-time"
-                                                    },
-                                                    "passengers_count": {
-                                                        "type": "integer",
-                                                        "example": 2
-                                                    },
-                                                    "invoice_url": {
-                                                        "type": "string",
-                                                        "example": "https://mysite.com/invoice/1"
-                                                    }
-                                                },
-                                                "type": "object"
-                                            }
-                                        },
-                                        "pagination": {
-                                            "properties": {
-                                                "pageNumber": {
-                                                    "type": "integer"
-                                                },
-                                                "pageSize": {
-                                                    "type": "integer"
-                                                },
-                                                "count": {
-                                                    "type": "integer"
-                                                },
-                                                "totalPages": {
-                                                    "type": "integer"
-                                                },
-                                                "hasNextPage": {
-                                                    "type": "boolean"
-                                                },
-                                                "hasPreviousPage": {
-                                                    "type": "boolean"
-                                                },
-                                                "nextPage": {
-                                                    "type": "string",
-                                                    "nullable": true
-                                                },
-                                                "previousPage": {
-                                                    "type": "string",
-                                                    "nullable": true
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Success"
                     }
                 },
                 "security": [
@@ -4429,14 +4346,14 @@
                 ]
             }
         },
-        "/api/user/bookings/{reference}": {
+        "/api/user/trip-bookings": {
             "get": {
                 "tags": [
-                    "User"
+                    "User Bookings"
                 ],
-                "summary": "تفاصيل حجز المستخدم (User Booking Details)",
-                "description": "عرض تفاصيل حجز معين باستخدام المرجع (Reference/UniqueId) وجلب التفاصيل الحية من Travelopro. (Get specific booking details and live status).",
-                "operationId": "getUserBookingDetails",
+                "summary": "حجوزات البرامج السياحية (Trip/Package Bookings)",
+                "description": "عرض قائمة حجوزات البرامج السياحية للمستخدم الحالي. (Get user's trip package bookings).",
+                "operationId": "getUserTripBookings",
                 "parameters": [
                     {
                         "name": "Accept-Language",
@@ -4448,7 +4365,65 @@
                         }
                     },
                     {
-                        "name": "reference",
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by status (pending, confirmed, cancelled)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/user/bookings/{id}": {
+            "get": {
+                "tags": [
+                    "User Bookings"
+                ],
+                "summary": "تفاصيل حجز الطيران (Flight Booking Details)",
+                "description": "عرض تفاصيل حجز طيران معين. (Get specific flight booking details).",
+                "operationId": "getUserFlightBookingDetails",
+                "parameters": [
+                    {
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "en"
+                        }
+                    },
+                    {
+                        "name": "id",
                         "in": "path",
                         "required": true,
                         "schema": {
@@ -4468,13 +4443,52 @@
                 ]
             }
         },
+        "/api/user/trip-bookings/{id}": {
+            "get": {
+                "tags": [
+                    "User Bookings"
+                ],
+                "summary": "تفاصيل حجز البرنامج السياحي (Trip Booking Details)",
+                "description": "عرض تفاصيل حجز برنامج سياحي معين. (Get specific trip package booking details).",
+                "operationId": "getUserTripBookingDetails",
+                "parameters": [
+                    {
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "en"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/user/hotel-bookings": {
             "get": {
                 "tags": [
-                    "User"
+                    "User Bookings"
                 ],
                 "summary": "حجوزات الفنادق للمستخدم (User Hotel Bookings)",
-                "description": "عرض قائمة حجوزات الفنادق للمستخدم الحالي. (Get current user's hotel bookings).",
+                "description": "عرض قائمة حجوزات الفنادق للمستخدم الحالي مع إمكانية الفلترة. (Get user's hotel bookings).",
                 "operationId": "getUserHotelBookings",
                 "parameters": [
                     {
@@ -4484,6 +4498,15 @@
                         "schema": {
                             "type": "string",
                             "default": "en"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by status (pending, confirmed, cancelled)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
                         }
                     },
                     {
@@ -4507,64 +4530,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Success",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Hotel bookings retrieved successfully."
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer"
-                                                    },
-                                                    "hotel_name": {
-                                                        "type": "string"
-                                                    },
-                                                    "city": {
-                                                        "type": "string"
-                                                    },
-                                                    "country": {
-                                                        "type": "string"
-                                                    },
-                                                    "check_in": {
-                                                        "type": "string",
-                                                        "format": "date"
-                                                    },
-                                                    "check_out": {
-                                                        "type": "string",
-                                                        "format": "date"
-                                                    },
-                                                    "status": {
-                                                        "type": "string"
-                                                    },
-                                                    "total_price": {
-                                                        "type": "number"
-                                                    },
-                                                    "currency": {
-                                                        "type": "string"
-                                                    },
-                                                    "reference_num": {
-                                                        "type": "string"
-                                                    }
-                                                },
-                                                "type": "object"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Success"
                     }
                 },
                 "security": [
@@ -4577,7 +4543,7 @@
         "/api/user/hotel-bookings/{id}": {
             "get": {
                 "tags": [
-                    "User"
+                    "User Bookings"
                 ],
                 "summary": "تفاصيل حجز الفندق (User Hotel Booking Details)",
                 "description": "عرض التفاصيل الكاملة لحجز فندق معين. (Get specific hotel booking details).",
@@ -6614,8 +6580,8 @@
             "description": "Payment"
         },
         {
-            "name": "User",
-            "description": "User"
+            "name": "User Bookings",
+            "description": "User Bookings"
         },
         {
             "name": "Discovery",

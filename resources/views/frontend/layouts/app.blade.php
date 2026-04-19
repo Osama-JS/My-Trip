@@ -195,14 +195,20 @@
                     </ul>
                 </div>
 
-                {{-- Services --}}
+                {{-- Information --}}
                 <div>
-                    <h4 class="fe-footer-heading">{{ __('Services') }}</h4>
+                    <h4 class="fe-footer-heading">{{ __('Information') }}</h4>
                     <ul class="fe-footer-links">
-                        <li><a href="{{ route('trips.index') }}">{{ __('Tour Packages') }}</a></li>
-                        <li><a href="{{ route('flights') }}">{{ __('Flight Booking') }}</a></li>
-                        <li><a href="{{ route('hotels') }}">{{ __('Hotel Booking') }}</a></li>
-                        <li><a href="{{ route('about') }}">{{ __('About Us') }}</a></li>
+                        @foreach($footer_pages as $fpage)
+                            <li>
+                                <a href="{{ route('pages.show', $fpage->slug) }}">
+                                    {{ app()->getLocale() == 'ar' ? $fpage->title_ar : $fpage->title_en }}
+                                </a>
+                            </li>
+                        @endforeach
+                        @if($footer_pages->isEmpty())
+                            <li><a href="{{ route('about') }}">{{ __('About Us') }}</a></li>
+                        @endif
                     </ul>
                 </div>
 

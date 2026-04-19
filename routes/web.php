@@ -56,6 +56,9 @@ Route::get('/search', [FrontendController::class, 'search'])->name('search');
 Route::get('/book-trip/form', [FrontendController::class, 'tripBookingForm'])->name('trips.booking.form')->middleware('auth');
 Route::post('/book-trip', [FrontendController::class, 'bookTrip'])->name('book.trip')->middleware('auth');
 
+// Dynamic Pages
+Route::get('/p/{slug}', [FrontendController::class, 'showPage'])->name('pages.show');
+
 
 // =============================================================================
 // WEB VIEW PAYMENT ROUTES
@@ -187,8 +190,10 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
             Route::get('/{id}/show', [BookingController::class, 'showHotel'])->name('show_detail');
             Route::get('/{id}/invoice', [BookingController::class, 'invoice'])->name('invoice_detail');
 
-
-
+            // Fallback Management
+            Route::get('/paid-not-confirmed', [BookingController::class, 'getPaidHotelBookings'])->name('paid_not_confirmed');
+            Route::post('/{id}/retry', [BookingController::class, 'retryHotelSupplierBooking'])->name('retry_supplier');
+            Route::post('/{id}/force-confirm', [BookingController::class, 'forceConfirmHotelBooking'])->name('force_confirm');
         });
 
         // Common
@@ -245,6 +250,9 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     Route::post('banners/reorder', [App\Http\Controllers\Admin\BannerController::class, 'reorder'])->name('banners.reorder');
     Route::resource('banners', App\Http\Controllers\Admin\BannerController::class);
 
+    // Pages Management (CMS)
+    Route::post('pages/{page}/toggle-status', [App\Http\Controllers\Admin\PageController::class, 'toggleStatus'])->name('pages.toggle-status');
+    Route::resource('pages', App\Http\Controllers\Admin\PageController::class);
 
      // Trips Management
     Route::get('trips/data', [App\Http\Controllers\Admin\TripsController::class, 'getData'])->name('trips.data');

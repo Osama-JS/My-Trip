@@ -498,29 +498,52 @@ class FlightController extends Controller
 
                 Log::info('Local Booking Record Created', ['booking_id' => $booking->id]);
 
+                // ── Save FlightBooking details (route, class, pax counts) ──────
+                try {
+                    $originDest = $request->OriginDestinationInfo[0] ?? [];
+                    \App\Models\FlightBooking::create([
+                        'user_id'        => Auth::id(),
+                        'booking_id'     => $booking->id,
+                        'origin'         => $originDest['airportOriginCode'] ?? 'N/A',
+                        'destination'    => $originDest['airportDestinationCode'] ?? 'N/A',
+                        'departure_date' => $originDest['departureDate'] ?? now()->toDateString(),
+                        'return_date'    => $originDest['returnDate'] ?? null,
+                        'adults'         => (int)($request->adults ?? 1),
+                        'childs'         => (int)($request->childs ?? 0),
+                        'infants'        => (int)($request->infants ?? 0),
+                        'flight_class'   => $request->class ?? 'Economy',
+                        'itinerary_data' => $request->OriginDestinationInfo,
+                        'total_amount'   => $totalAmount,
+                        'currency'       => 'SAR',
+                    ]);
+                    Log::info('FlightBooking details saved.', ['booking_id' => $booking->id]);
+                } catch (\Exception $e) {
+                    Log::warning('Could not save FlightBooking details: ' . $e->getMessage());
+                }
+                // ─────────────────────────────────────────────────────────────
+
                 foreach ($request->passengers as $pax) {
                     $passenger = $booking->passengers()->create([
-                        'name' => ($pax['title'] ?? '') . ' ' . ($pax['first_name'] ?? '') . ' ' . ($pax['last_name'] ?? ''),
-                        'title' => $pax['title'],
-                        'first_name' => $pax['first_name'],
-                        'last_name' => $pax['last_name'],
+                        'name'           => ($pax['title'] ?? '') . ' ' . ($pax['first_name'] ?? '') . ' ' . ($pax['last_name'] ?? ''),
+                        'title'          => $pax['title'],
+                        'first_name'     => $pax['first_name'],
+                        'last_name'      => $pax['last_name'],
                         'passenger_type' => $pax['type'],
-                        'dob' => $pax['dob'],
-                        'nationality' => $pax['nationality'],
-                        'passport_number' => $pax['passport_no'] ?? null, // Synced with migration column name
+                        'dob'            => $pax['dob'],
+                        'nationality'    => $pax['nationality'],
+                        'passport_number' => $pax['passport_no'] ?? null,
                     ]);
                     Log::info('Passenger Saved', ['passenger_id' => $passenger->id]);
                 }
 
-
                 // Add Payment and Tracking details to response
                 $result['payment_url'] = route('payments.web.checkout', [
                     'booking_id' => $booking->id,
-                    'method' => 'visa_master', // Default selection
-                    'type' => 'flight'
+                    'method'     => 'visa_master',
+                    'type'       => 'flight'
                 ]);
                 $result['payment_api_url'] = url('/api/payment/initiate');
-                $result['booking_id'] = $booking->id;
+                $result['booking_id']      = $booking->id;
 
                 Log::info('Booking Persistence Successfully Completed', ['booking_id' => $booking->id]);
             } else {

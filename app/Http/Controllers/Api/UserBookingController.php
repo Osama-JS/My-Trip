@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\HotelBooking;
+use App\Models\TripBooking;
 use App\Services\TraveloproService;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
@@ -20,131 +21,159 @@ class UserBookingController extends Controller
 
     #[OA\Get(
         path: "/api/user/bookings",
-        summary: "حجوزات المستخدم (User Bookings)",
-        operationId: "getUserBookings",
-        description: "عرض قائمة حجوزات المستخدم الحالي مع تفاصيل الحالة وأرقام التذاكر. (Get current user's bookings with status and ticket details).",
-        tags: ["User"],
+        summary: "قائمة حجوزات الطيران (Flight Bookings)",
+        operationId: "getUserFlightBookings",
+        description: "عرض قائمة حجوزات الطيران للمستخدم الحالي مع إمكانية الفلترة حسب الحالة. (Get user's flight bookings with status filter).",
+        tags: ["User Bookings"],
         security: [["bearerAuth" => []]],
         parameters: [
             new OA\Parameter(name: "Accept-Language", in: "header", required: false, schema: new OA\Schema(type: "string", default: "en")),
+            new OA\Parameter(name: "status", in: "query", description: "Filter by status (pending, confirmed, cancelled)", required: false, schema: new OA\Schema(type: "string")),
             new OA\Parameter(name: "per_page", in: "query", required: false, schema: new OA\Schema(type: "integer", default: 10)),
             new OA\Parameter(name: "page", in: "query", required: false, schema: new OA\Schema(type: "integer", default: 1))
         ],
         responses: [
-            new OA\Response(
-                response: 200,
-                description: "تم استرجاع الحجوزات بنجاح",
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: "error", type: "boolean", example: false),
-                        new OA\Property(property: "message", type: "string", example: "Bookings retrieved successfully."),
-                        new OA\Property(property: "data", type: "array", items: new OA\Items(
-                            properties: [
-                                new OA\Property(property: "id", type: "integer", example: 1),
-                                new OA\Property(property: "reference", type: "string", example: "TR123456"),
-                                new OA\Property(property: "status", type: "string", example: "confirmed"),
-                                new OA\Property(property: "ticket_status", type: "string", example: "ticketed"),
-                                new OA\Property(property: "total_amount", type: "number", example: 1500.00),
-                                new OA\Property(property: "currency", type: "string", example: "USD"),
-                                new OA\Property(property: "pnr_date", type: "string", format: "date-time"),
-                                new OA\Property(property: "passengers_count", type: "integer", example: 2),
-                                new OA\Property(property: "invoice_url", type: "string", example: "https://mysite.com/invoice/1")
-                            ]
-                        )),
-                        new OA\Property(property: "pagination", type: "object", properties: [
-                            new OA\Property(property: "pageNumber", type: "integer"),
-                            new OA\Property(property: "pageSize", type: "integer"),
-                            new OA\Property(property: "count", type: "integer"),
-                            new OA\Property(property: "totalPages", type: "integer"),
-                            new OA\Property(property: "hasNextPage", type: "boolean"),
-                            new OA\Property(property: "hasPreviousPage", type: "boolean"),
-                            new OA\Property(property: "nextPage", type: "string", nullable: true),
-                            new OA\Property(property: "previousPage", type: "string", nullable: true)
-                        ])
-                    ]
-                )
-            )
+            new OA\Response(response: 200, description: "Success")
         ]
     )]
     public function index(Request $request)
     {
         $perPage = $request->input('per_page', 10);
-        $bookings = Booking::where('user_id', $request->user()->id)
-            ->latest()
-            ->paginate($perPage);
+        $status = $request->input('status');
+
+        $query = Booking::where('user_id', $request->user()->id);
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        $bookings = $query->latest()->paginate($perPage);
 
         $data = $bookings->getCollection()->transform(function ($booking) {
             return [
                 'id' => $booking->id,
-                'reference' => $booking->booking_reference, // UniqueId
+                'reference' => $booking->booking_reference,
                 'status' => $booking->status,
                 'ticket_status' => $booking->ticket_status,
                 'total_amount' => $booking->total_amount,
                 'currency' => $booking->currency,
-                'pnr_date' => $booking->pnr_created_at,
+                'booking_date' => $booking->created_at->format('Y-m-d'),
                 'passengers_count' => $booking->passengers->count(),
-                'route_summary' => $booking->flightBooking ? ($booking->flightBooking->origin . ' → ' . $booking->flightBooking->destination) : null,
-                'invoice_url' => $booking->ticket_status === 'ticketed' ? route('admin.bookings.invoice', $booking->id) : null,
+                'summary' => $booking->flightBooking ? ($booking->flightBooking->origin . ' → ' . $booking->flightBooking->destination) : __('Flight Booking'),
+                'service_type' => 'flight',
+                'invoice_url' => $booking->status === 'confirmed' ? route('customer.bookings.invoice', $booking->id) : null,
             ];
         });
 
         return $this->apiResponse(
             false,
-            __('Bookings retrieved successfully.'),
+            __('Flight bookings retrieved successfully.'),
+            $data,
+            $this->formatPagination($bookings)
+        );
+    }
+
+    /**
+     * Get Trip Bookings (Packages)
+     */
+    #[OA\Get(
+        path: "/api/user/trip-bookings",
+        summary: "حجوزات البرامج السياحية (Trip/Package Bookings)",
+        operationId: "getUserTripBookings",
+        description: "عرض قائمة حجوزات البرامج السياحية للمستخدم الحالي. (Get user's trip package bookings).",
+        tags: ["User Bookings"],
+        security: [["bearerAuth" => []]],
+        parameters: [
+            new OA\Parameter(name: "Accept-Language", in: "header", required: false, schema: new OA\Schema(type: "string", default: "en")),
+            new OA\Parameter(name: "status", in: "query", description: "Filter by status (pending, confirmed, cancelled)", required: false, schema: new OA\Schema(type: "string")),
+            new OA\Parameter(name: "per_page", in: "query", required: false, schema: new OA\Schema(type: "integer", default: 10)),
+            new OA\Parameter(name: "page", in: "query", required: false, schema: new OA\Schema(type: "integer", default: 1))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: "Success")
+        ]
+    )]
+    public function tripBookings(Request $request)
+    {
+        $perPage = $request->input('per_page', 10);
+        $status = $request->input('status');
+
+        $query = TripBooking::with(['trip.toCountry', 'trip.toCity'])
+            ->where('user_id', $request->user()->id);
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        $bookings = $query->latest()->paginate($perPage);
+
+        $data = $bookings->getCollection()->transform(function ($booking) {
+            $trip = $booking->trip;
+            return [
+                'id' => $booking->id,
+                'reference' => 'TR-' . $booking->id,
+                'status' => $booking->status,
+                'booking_state' => $booking->booking_state,
+                'total_amount' => $booking->total_price,
+                'currency' => 'SAR', // Trip bookings default to SAR
+                'booking_date' => $booking->booking_date ? $booking->booking_date->format('Y-m-d') : $booking->created_at->format('Y-m-d'),
+                'passengers_count' => $booking->tickets_count,
+                'summary' => $trip ? (app()->getLocale() == 'ar' ? $trip->title_ar : $trip->title_en) : __('Trip Booking'),
+                'image' => $trip ? $trip->image_url : null,
+                'service_type' => 'trip',
+                'invoice_url' => $booking->status === 'confirmed' ? route('customer.bookings.invoice', $booking->id) : null,
+            ];
+        });
+
+        return $this->apiResponse(
+            false,
+            __('Trip bookings retrieved successfully.'),
             $data,
             $this->formatPagination($bookings)
         );
     }
 
     #[OA\Get(
-        path: "/api/user/bookings/{reference}",
-        summary: "تفاصيل حجز المستخدم (User Booking Details)",
-        operationId: "getUserBookingDetails",
-        description: "عرض تفاصيل حجز معين باستخدام المرجع (Reference/UniqueId) وجلب التفاصيل الحية من Travelopro. (Get specific booking details and live status).",
-        tags: ["User"],
+        path: "/api/user/bookings/{id}",
+        summary: "تفاصيل حجز الطيران (Flight Booking Details)",
+        operationId: "getUserFlightBookingDetails",
+        description: "عرض تفاصيل حجز طيران معين. (Get specific flight booking details).",
+        tags: ["User Bookings"],
         security: [["bearerAuth" => []]],
         parameters: [
             new OA\Parameter(name: "Accept-Language", in: "header", required: false, schema: new OA\Schema(type: "string", default: "en")),
-            new OA\Parameter(name: "reference", in: "path", required: true, schema: new OA\Schema(type: "string"))
+            new OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "string"))
         ],
         responses: [
             new OA\Response(response: 200, description: "Success")
         ]
     )]
-    public function show(Request $request, $reference)
+    public function show(Request $request, $id)
     {
-        $booking = Booking::where('user_id', $request->user()->id)
-            ->where(function ($query) use ($reference) {
-                $query->where('booking_reference', $reference)
-                    ->orWhere('id', $reference);
+        $booking = Booking::with(['passengers', 'flightBooking', 'payments'])
+            ->where('user_id', $request->user()->id)
+            ->where(function ($query) use ($id) {
+                $query->where('id', $id)->orWhere('booking_reference', $id);
             })
-            ->with(['passengers', 'flightBooking'])
             ->firstOrFail();
 
-
-        // Fetch live details from Travelopro to sync status (Important for real-time status)
-        $liveDetails = null;
-        try {
-            $liveDetails = $this->traveloproService->getTripDetails($reference, $booking->id);
-        } catch (\Exception $e) {
-            \Log::error('Failed to fetch live trip details: ' . $e->getMessage());
-        }
-
         $formattedData = [
-            'booking_id' => $booking->id,
+            'id' => $booking->id,
             'reference' => $booking->booking_reference,
             'status' => $booking->status,
             'ticket_status' => $booking->ticket_status,
             'total_amount' => $booking->total_amount,
             'currency' => $booking->currency,
-            'created_at' => $booking->created_at->format('Y-m-d H:i'),
-            
-            'itinerary' => $booking->flightBooking ? [
+            'booking_date' => $booking->created_at->format('Y-m-d H:i'),
+            'service_type' => 'flight',
+
+            'flight_details' => $booking->flightBooking ? [
                 'origin' => $booking->flightBooking->origin,
                 'destination' => $booking->flightBooking->destination,
                 'departure_date' => $booking->flightBooking->departure_date,
                 'return_date' => $booking->flightBooking->return_date,
                 'flight_class' => $booking->flightBooking->flight_class,
+                'airline' => $booking->flightBooking->airline_name,
                 'passengers_counts' => [
                     'adults' => $booking->flightBooking->adults,
                     'childs' => $booking->flightBooking->childs,
@@ -152,83 +181,127 @@ class UserBookingController extends Controller
                 ]
             ] : null,
 
-            'passengers' => $booking->passengers->map(function($p) {
+            'passengers' => $booking->passengers->map(function ($p) {
                 return [
                     'name' => $p->name ?? ($p->first_name . ' ' . $p->last_name),
                     'type' => $p->passenger_type,
                     'passport' => $p->passport_number,
-                    'dob' => $p->dob ? $p->dob->format('Y-m-d') : null,
+                    'nationality' => $p->nationality,
+                ];
+            }),
+            
+            'invoice_url' => $booking->status === 'confirmed' ? route('customer.bookings.invoice', $booking->id) : null,
+        ];
+
+        return $this->apiResponse(false, __('Flight booking details retrieved successfully.'), $formattedData);
+    }
+
+    /**
+     * Get Trip Booking Details
+     */
+    #[OA\Get(
+        path: "/api/user/trip-bookings/{id}",
+        summary: "تفاصيل حجز البرنامج السياحي (Trip Booking Details)",
+        operationId: "getUserTripBookingDetails",
+        description: "عرض تفاصيل حجز برنامج سياحي معين. (Get specific trip package booking details).",
+        tags: ["User Bookings"],
+        security: [["bearerAuth" => []]],
+        parameters: [
+            new OA\Parameter(name: "Accept-Language", in: "header", required: false, schema: new OA\Schema(type: "string", default: "en")),
+            new OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "integer"))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: "Success")
+        ]
+    )]
+    public function tripBookingDetails(Request $request, $id)
+    {
+        $booking = TripBooking::with(['trip.images', 'trip.toCountry', 'trip.toCity', 'passengers', 'payments'])
+            ->where('user_id', $request->user()->id)
+            ->findOrFail($id);
+
+        $trip = $booking->trip;
+
+        $formattedData = [
+            'id' => $booking->id,
+            'reference' => 'TR-' . $booking->id,
+            'status' => $booking->status,
+            'booking_state' => $booking->booking_state,
+            'total_amount' => $booking->total_price,
+            'currency' => 'SAR',
+            'booking_date' => $booking->booking_date ? $booking->booking_date->format('Y-m-d') : $booking->created_at->format('Y-m-d'),
+            'service_type' => 'trip',
+
+            'trip_details' => $trip ? [
+                'id' => $trip->id,
+                'title' => app()->getLocale() == 'ar' ? $trip->title_ar : $trip->title_en,
+                'duration' => $trip->duration,
+                'image' => $trip->image_url,
+                'location' => [
+                    'country' => $trip->toCountry ? $trip->toCountry->name : null,
+                    'city' => $trip->toCity ? $trip->toCity->name : null,
+                ]
+            ] : null,
+
+            'passengers' => $booking->passengers->map(function ($p) {
+                return [
+                    'name' => $p->name,
+                    'phone' => $p->phone,
+                    'nationality' => $p->nationality,
+                    'passport' => $p->passport_number,
                 ];
             }),
 
-            'live_details' => $liveDetails
+            'invoice_url' => $booking->status === 'confirmed' ? route('customer.bookings.invoice', $booking->id) : null,
+            'ticket_url' => $booking->ticket_url,
         ];
 
-        return response()->json([
-            'error' => false,
-            'message' => __('Booking details retrieved successfully.'),
-            'data' => $formattedData
-        ]);
+        return $this->apiResponse(false, __('Trip booking details retrieved successfully.'), $formattedData);
     }
 
     #[OA\Get(
         path: "/api/user/hotel-bookings",
         summary: "حجوزات الفنادق للمستخدم (User Hotel Bookings)",
         operationId: "getUserHotelBookings",
-        description: "عرض قائمة حجوزات الفنادق للمستخدم الحالي. (Get current user's hotel bookings).",
-        tags: ["User"],
+        description: "عرض قائمة حجوزات الفنادق للمستخدم الحالي مع إمكانية الفلترة. (Get user's hotel bookings).",
+        tags: ["User Bookings"],
         security: [["bearerAuth" => []]],
         parameters: [
             new OA\Parameter(name: "Accept-Language", in: "header", required: false, schema: new OA\Schema(type: "string", default: "en")),
+            new OA\Parameter(name: "status", in: "query", description: "Filter by status (pending, confirmed, cancelled)", required: false, schema: new OA\Schema(type: "string")),
             new OA\Parameter(name: "per_page", in: "query", required: false, schema: new OA\Schema(type: "integer", default: 10)),
             new OA\Parameter(name: "page", in: "query", required: false, schema: new OA\Schema(type: "integer", default: 1))
         ],
         responses: [
-            new OA\Response(
-                response: 200,
-                description: "Success",
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: "error", type: "boolean", example: false),
-                        new OA\Property(property: "message", type: "string", example: "Hotel bookings retrieved successfully."),
-                        new OA\Property(property: "data", type: "array", items: new OA\Items(
-                            properties: [
-                                new OA\Property(property: "id", type: "integer"),
-                                new OA\Property(property: "hotel_name", type: "string"),
-                                new OA\Property(property: "city", type: "string"),
-                                new OA\Property(property: "country", type: "string"),
-                                new OA\Property(property: "check_in", type: "string", format: "date"),
-                                new OA\Property(property: "check_out", type: "string", format: "date"),
-                                new OA\Property(property: "status", type: "string"),
-                                new OA\Property(property: "total_price", type: "number"),
-                                new OA\Property(property: "currency", type: "string"),
-                                new OA\Property(property: "reference_num", type: "string"),
-                            ]
-                        ))
-                    ]
-                )
-            )
+            new OA\Response(response: 200, description: "Success")
         ]
     )]
     public function hotelBookings(Request $request)
     {
         $perPage = $request->input('per_page', 10);
-        $bookings = HotelBooking::where('user_id', $request->user()->id)
-            ->latest()
-            ->paginate($perPage);
+        $status = $request->input('status');
+
+        $query = HotelBooking::where('user_id', $request->user()->id);
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        $bookings = $query->latest()->paginate($perPage);
 
         $data = $bookings->getCollection()->transform(function ($booking) {
             return [
                 'id' => $booking->id,
-                'hotel_name' => $booking->hotel_name,
-                'city' => $booking->city_name,
-                'country' => $booking->country_name,
-                'check_in' => $booking->check_in->format('Y-m-d'),
-                'check_out' => $booking->check_out->format('Y-m-d'),
+                'reference' => $booking->reference_num ?? $booking->id,
                 'status' => $booking->status,
-                'total_price' => $booking->total_price,
+                'total_amount' => $booking->total_price,
                 'currency' => $booking->currency,
-                'reference_num' => $booking->reference_num ?? $booking->id,
+                'booking_date' => $booking->created_at->format('Y-m-d'),
+                'hotel_name' => $booking->hotel_name,
+                'location' => $booking->city_name . ', ' . $booking->country_name,
+                'summary' => $booking->hotel_name,
+                'service_type' => 'hotel',
+                'invoice_url' => $booking->status === 'confirmed' ? route('customer.bookings.hotels.voucher', $booking->id) : null,
             ];
         });
 
@@ -245,7 +318,7 @@ class UserBookingController extends Controller
         summary: "تفاصيل حجز الفندق (User Hotel Booking Details)",
         operationId: "getUserHotelBookingDetails",
         description: "عرض التفاصيل الكاملة لحجز فندق معين. (Get specific hotel booking details).",
-        tags: ["User"],
+        tags: ["User Bookings"],
         security: [["bearerAuth" => []]],
         parameters: [
             new OA\Parameter(name: "Accept-Language", in: "header", required: false, schema: new OA\Schema(type: "string", default: "en")),
