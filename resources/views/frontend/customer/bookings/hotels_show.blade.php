@@ -13,6 +13,16 @@
     if($booking->status === 'pending' && !empty($booking->supplier_confirmation_num)) {
         $displayStatus = 'confirmed';
     }
+
+    // EXPIRY LOGIC: If pending and older than 10 minutes, show as cancelled/expired
+    $isExpired = false;
+    if ($booking->status === 'pending' && $booking->created_at->diffInMinutes(now()) >= 10) {
+        $isExpired = true;
+        // Don't overwrite if it's already confirmed visually
+        if ($displayStatus !== 'confirmed') {
+            $displayStatus = 'cancelled';
+        }
+    }
 @endphp
 
 @if($displayStatus === 'confirmed')
@@ -149,7 +159,12 @@
                 </div>
                 @endif
 
-                @if($booking->supplier_confirmation_num)
+                @if($isExpired && $displayStatus === 'cancelled')
+                <div class="ref-item ref-item-red">
+                    <div class="ref-label"><i class="fas fa-clock"></i> {{ __('Session Expired') }}</div>
+                    <div class="ref-val">{{ __('Please search again') }}</div>
+                </div>
+                @elseif($booking->supplier_confirmation_num)
                 <div class="ref-item ref-item-green">
                     <div class="ref-label"><i class="fas fa-check-circle"></i> {{ __('Supplier Reference') }}</div>
                     <div class="ref-val">{{ $booking->supplier_confirmation_num }}</div>
@@ -174,12 +189,20 @@
                 </a>
                 @endif
 
+                @if($booking->status === 'pending' && !$isExpired)
+                <a href="{{ route('payments.web.checkout', ['booking_id' => $booking->id, 'type' => 'hotel', 'method' => 'visa_master']) }}" class="btn-action btn-primary">
+                    <i class="fas fa-credit-card"></i> {{ __('Complete Payment') }}
+                </a>
+                @endif
+
+                @if(!$isExpired)
                 <form id="sync-form" action="{{ route('customer.bookings.hotels.sync-status', $booking->id) }}" method="POST">
                     @csrf
                     <button type="submit" class="btn-action btn-ghost">
                         <i class="fas fa-sync-alt"></i> {{ __('Refresh Status') }}
                     </button>
                 </form>
+                @endif
             </div>
         </div>
 
@@ -238,14 +261,6 @@ document.getElementById('btn-cancel-hotel')?.addEventListener('click', function(
         document.getElementById('form-cancel-hotel').submit();
     }
 });
-
-// Auto-sync if status is inconsistent
-@if($booking->status === 'pending' && !empty($booking->supplier_confirmation_num))
-    console.log('Detected inconsistent status. Auto-refreshing...');
-    setTimeout(function() {
-        document.getElementById('sync-form').submit();
-    }, 1500); 
-@endif
 </script>
 @endpush
 

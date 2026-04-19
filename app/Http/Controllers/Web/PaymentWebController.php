@@ -59,6 +59,12 @@ class PaymentWebController extends Controller
                 return redirect()->route('payments.web.success', ['booking_id' => $booking_id]);
             }
 
+            // [STRICT] Hotel Expiry Check: Cannot pay for hotel bookings older than 10 minutes
+            if ($type === 'hotel' && $booking->status === 'pending' && $booking->created_at->diffInMinutes(now()) >= 10) {
+                return redirect()->route('customer.bookings.hotels.show', $booking_id)
+                    ->with('error', __('تنتهي صلاحية حجز الفندق بعد 10 دقائق من إنشائه. يرجى البحث والحجز من جديد. (Session Expired)'));
+            }
+
             $user = $booking->user;
 
             // Prepare dynamic data for the view
