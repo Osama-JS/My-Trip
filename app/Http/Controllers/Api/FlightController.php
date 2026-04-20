@@ -494,6 +494,9 @@ class FlightController extends Controller
                     'contact_email' => $request->customerEmail,
                     'contact_phone' => $request->customerPhone,
                     'pnr_created_at' => now(),
+                    'ticketing_time_limit' => isset($bookingResult['TicketingTimeLimit']) 
+                        ? \Carbon\Carbon::parse($bookingResult['TicketingTimeLimit']) 
+                        : now()->addMinutes(3),
                 ]);
 
                 Log::info('Local Booking Record Created', ['booking_id' => $booking->id]);

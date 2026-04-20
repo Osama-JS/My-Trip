@@ -103,6 +103,12 @@ class BookingController extends Controller
             $booking = \App\Models\HotelBooking::where('user_id', Auth::id())
                 ->findOrFail($id);
 
+            // AUTO-CANCEL: If pending and older than 10 minutes, update status in DB
+            if ($booking->status === 'pending' && $booking->created_at->diffInMinutes(now()) >= 10) {
+                $booking->update(['status' => 'cancelled']);
+                Log::info("HotelBooking #{$id} auto-cancelled due to 10-min expiry.");
+            }
+
             return view('frontend.customer.bookings.hotels_show', compact('booking'));
         }
 

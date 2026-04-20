@@ -680,6 +680,9 @@ class FrontendController extends Controller
                 'contact_email' => $request->get('customerEmail'),
                 'contact_phone' => $request->get('customerPhone'),
                 'pnr_created_at' => now(),
+                'ticketing_time_limit' => isset($result['AirBookingResponse']['AirBookingResult']['TicketingTimeLimit']) 
+                    ? \Carbon\Carbon::parse($result['AirBookingResponse']['AirBookingResult']['TicketingTimeLimit']) 
+                    : now()->addMinutes(3),
             ]);
 
             // 3. Save Flight Specific Details
@@ -699,7 +702,26 @@ class FrontendController extends Controller
                 'currency' => 'SAR',
             ]);
 
-            // 4. Redirect to flight-specific payment selection page
+            // 4. Save Passengers for detailed view and ticketing
+            $passengersInput = $request->get('passengers', []);
+            foreach ($passengersInput as $pax) {
+                \App\Models\BookingPassenger::create([
+                    'booking_id'      => $booking->id,
+                    'hotel_booking_id' => null,
+                    'passenger_type'  => $pax['type'] ?? 'adult',
+                    'title'           => $pax['title'] ?? 'Mr',
+                    'first_name'      => $pax['first_name'] ?? '',
+                    'last_name'       => $pax['last_name'] ?? '',
+                    'name'            => ($pax['title'] ?? 'Mr') . ' ' . ($pax['first_name'] ?? '') . ' ' . ($pax['last_name'] ?? ''),
+                    'dob'             => $pax['dob'] ?? null,
+                    'passport_no'     => $pax['passport_no'] ?? null,
+                    'nationality'      => $pax['nationality'] ?? null,
+                    'passport_issue_country' => $pax['passport_issue_country'] ?? null,
+                    'passport_expiry_date'   => $pax['passport_expiry_date'] ?? null,
+                ]);
+            }
+
+            // 5. Redirect to flight-specific payment selection page
             return redirect()->route('flights.payment.select', ['booking_id' => $booking->id]);
 
         } catch (\Exception $e) {

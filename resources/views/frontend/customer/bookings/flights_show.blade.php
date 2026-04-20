@@ -42,6 +42,13 @@
             <span>{{ $booking->pnr_code }}</span>
         </div>
         @endif
+
+        @if($booking->status === 'pending' && $booking->ticketing_time_limit)
+        <div class="expiry-timer-box" id="pnrTimer" data-expiry="{{ $booking->ticketing_time_limit->toIso8601String() }}">
+            <div class="timer-label"><i class="fas fa-hourglass-start fa-spin"></i> {{ __('Time remaining to pay') }}</div>
+            <div class="timer-value" id="timerDisplay">00:00</div>
+        </div>
+        @endif
     </div>
 
     <div class="fd-grid">
@@ -96,17 +103,21 @@
             <div class="fd-card">
                 <div class="fd-card-header">
                     <h5><i class="fas fa-users"></i> {{ __('Travelers') }}</h5>
-                    <span class="badge badge-primary">{{ $booking->passengers->count() }} {{ __('Total') }}</span>
+                    <span class="badge badge-primary" style="background: var(--fd-accent); color: white; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem;">
+                        {{ $booking->passengers->count() }} {{ __('Total') }}
+                    </span>
                 </div>
                 <div class="passengers-list">
-                    @foreach($booking->passengers as $pax)
+                    @forelse($booking->passengers as $pax)
                         <div class="passenger-item">
                             <div class="pax-avatar">
-                                <i class="fas {{ $pax->passenger_type === 'child' ? 'fa-child' : 'fa-user' }}"></i>
+                                <i class="fas {{ $pax->passenger_type === 'infant' ? 'fa-baby' : ($pax->passenger_type === 'child' ? 'fa-child' : 'fa-user') }}"></i>
                             </div>
                             <div class="pax-meta">
                                 <span class="pax-name">{{ $pax->title }} {{ $pax->first_name }} {{ $pax->last_name }}</span>
-                                <span class="pax-type">{{ __($pax->passenger_type ?? 'adult') }}</span>
+                                <span class="pax-type text-uppercase" style="font-size: 0.65rem; font-weight: 700; color: #94a3b8;">
+                                    {{ __($pax->passenger_type ?? 'adult') }}
+                                </span>
                             </div>
                             <div class="pax-docs">
                                 @if($pax->e_ticket_no)
@@ -115,15 +126,99 @@
                                         <strong>{{ $pax->e_ticket_no }}</strong>
                                     </div>
                                 @endif
-                                <div class="passport-tag">
-                                    <label>{{ __('Passport') }}</label>
-                                    <strong>{{ $pax->passport_no ?? 'N/A' }}</strong>
-                                </div>
+                                @if($pax->passport_no)
+                                    <div class="passport-tag">
+                                        <label>{{ __('Passport') }}</label>
+                                        <strong>{{ $pax->passport_no }}</strong>
+                                    </div>
+                                @endif
+                                @if($pax->nationality)
+                                    <div class="passport-tag">
+                                        <label>{{ __('Nationality') }}</label>
+                                        <strong>{{ $pax->nationality }}</strong>
+                                    </div>
+                                @endif
                             </div>
                         </div>
-                    @endforeach
+                    @empty
+                        <div class="p-4 text-center text-muted">
+                            <i class="fas fa-user-slash d-block mb-2"></i>
+                            {{ __('No passenger details found.') }}
+                        </div>
+                    @endforelse
                 </div>
             </div>
+
+            {{-- ─── Detailed Itinerary ─── --}}
+            @php
+                $itinData = $booking->flightBooking->itinerary_data ?? [];
+                // Normalize segments from Travelopro JSON
+                $segments = [];
+                if (isset($itinData['FareItineraries']['FareItinerary']['OriginDestinationOptions'])) {
+                    $options = $itinData['FareItineraries']['FareItinerary']['OriginDestinationOptions'];
+                    // could be single or array
+                    if (isset($options['OriginDestinationOption']['FlightSegment'])) {
+                        $options = [$options['OriginDestinationOption']];
+                    } else {
+                        $options = $options['OriginDestinationOption'] ?? [];
+                    }
+                    
+                    foreach($options as $opt) {
+                        $segs = $opt['FlightSegment'] ?? $opt;
+                        if (isset($segs['FlightNumber'])) { $segments[] = $segs; }
+                        else { foreach($segs as $s) { $segments[] = $s['FlightSegment'] ?? $s; } }
+                    }
+                }
+            @endphp
+
+            @if(!empty($segments))
+                <div class="fd-card">
+                    <div class="fd-card-header">
+                        <h5><i class="fas fa-route"></i> {{ __('Detailed Journey') }}</h5>
+                    </div>
+                    <div class="segment-timeline p-4">
+                        @foreach($segments as $idx => $seg)
+                            @php
+                                $depTime = \Carbon\Carbon::parse($seg['DepartureDateTime']);
+                                $arrTime = \Carbon\Carbon::parse($seg['ArrivalDateTime']);
+                                $airlineCode = $seg['MarketingAirlineCode'] ?? $seg['OperatedByAirlineCode'] ?? '';
+                            @endphp
+                            <div class="segment-step {{ $idx < count($segments) - 1 ? 'has-line' : '' }}">
+                                <div class="seg-airline">
+                                    <img src="https://travelnext.works/api/airlines/{{ $airlineCode }}.gif" 
+                                         onerror="this.src='https://via.placeholder.com/30?text={{ $airlineCode }}'"
+                                         alt="{{ $airlineCode }}">
+                                    <span>{{ $airlineCode }} {{ $seg['FlightNumber'] ?? '' }}</span>
+                                </div>
+                                <div class="seg-main">
+                                    <div class="seg-point">
+                                        <div class="time">{{ $depTime->format('H:i') }}</div>
+                                        <div class="airport"><strong>{{ $seg['DepartureAirportLocationCode'] }}</strong></div>
+                                        <div class="date">{{ $depTime->format('d M, Y') }}</div>
+                                    </div>
+                                    <div class="seg-path">
+                                        <div class="path-icon"><i class="fas fa-plane"></i></div>
+                                        <div class="path-dur">{{ $depTime->diff($arrTime)->format('%hh %im') }}</div>
+                                    </div>
+                                    <div class="seg-point text-end">
+                                        <div class="time">{{ $arrTime->format('H:i') }}</div>
+                                        <div class="airport"><strong>{{ $seg['ArrivalAirportLocationCode'] }}</strong></div>
+                                        <div class="date">{{ $arrTime->format('d M, Y') }}</div>
+                                    </div>
+                                </div>
+                                @if(isset($seg['ResBookDesigCode']))
+                                    <div class="seg-footer">
+                                        <span><i class="fas fa-couch"></i> {{ __('Class') }}: {{ $seg['ResBookDesigCode'] }}</span>
+                                        @if(isset($seg['AdjustmentTime']))
+                                            <span class="ms-3"><i class="fas fa-clock"></i> {{ __('Technical Stop') }}</span>
+                                        @endif
+                                    </div>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
 
         </div>
 
@@ -142,9 +237,22 @@
 
                 <div class="fd-actions">
                     @if($booking->status === 'pending')
-                        <a href="{{ route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'mada', 'type' => 'flight']) }}" class="btn-fd btn-fd-primary">
-                            <i class="fas fa-credit-card"></i> {{ __('Pay Now') }}
-                        </a>
+                        @php
+                            $isExpired = $booking->ticketing_time_limit && now()->greaterThan($booking->ticketing_time_limit);
+                        @endphp
+                        @if($isExpired)
+                            <div class="expired-msg-sidebar">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <span>{{ __('This PNR has expired. Please search again.') }}</span>
+                            </div>
+                            <a href="{{ route('flights') }}" class="btn-fd btn-fd-outline">
+                                <i class="fas fa-search"></i> {{ __('New Search') }}
+                            </a>
+                        @else
+                            <a href="{{ route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'mada', 'type' => 'flight']) }}" class="btn-fd btn-fd-primary" id="payButton">
+                                <i class="fas fa-credit-card"></i> {{ __('Pay Now') }}
+                            </a>
+                        @endif
                     @elseif($booking->status === 'confirmed')
                         <a href="{{ route('customer.bookings.invoice', $booking->id) }}" class="btn-fd btn-fd-success">
                             <i class="fas fa-file-invoice-dollar"></i> {{ __('Download Invoice') }}
@@ -189,6 +297,48 @@
         </div>
     </div>
 </div>
+
+@if($booking->status === 'pending' && $booking->ticketing_time_limit)
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const timerBox = document.getElementById('pnrTimer');
+        const display = document.getElementById('timerDisplay');
+        const payButton = document.getElementById('payButton');
+        const expiryDate = new Date(timerBox.dataset.expiry).getTime();
+
+        const x = setInterval(function() {
+            const now = new Date().getTime();
+            const distance = expiryDate - now;
+
+            if (distance < 0) {
+                clearInterval(x);
+                display.innerHTML = "00:00";
+                display.classList.add('expired');
+                if (payButton) {
+                    payButton.classList.add('disabled');
+                    payButton.style.opacity = '0.5';
+                    payButton.style.pointerEvents = 'none';
+                    payButton.innerHTML = '<i class="fas fa-times-circle"></i> {{ __("Expired") }}';
+                }
+                // Optional: Reload to show cancelled status
+                setTimeout(() => { window.location.reload(); }, 2000);
+                return;
+            }
+
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            display.innerHTML = (minutes < 10 ? "0" + minutes : minutes) + ":" + (seconds < 10 ? "0" + seconds : seconds);
+
+            if (distance < 60000) { // Last minute
+                display.style.color = 'var(--fd-danger)';
+            }
+        }, 1000);
+    });
+</script>
+@endpush
+@endif
 @endsection
 
 @push('styles')
@@ -239,9 +389,32 @@
     .status-info h3 { margin: 0; font-weight: 900; color: var(--fd-primary); font-size: 1.4rem; }
     .status-info p { margin: 5px 0 0; color: #64748b; font-size: 0.95rem; }
 
-    .pnr-badge { text-align: right; }
-    .pnr-badge label { display: block; font-size: 0.75rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; }
     .pnr-badge span { font-size: 1.6rem; font-weight: 900; color: var(--fd-accent); letter-spacing: 1px; }
+    
+    .expiry-timer-box { 
+        text-align: right; 
+        padding: 10px 20px; 
+        background: #f8fafc; 
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+    }
+    .timer-label { font-size: 0.7rem; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; }
+    .timer-value { font-size: 1.8rem; font-weight: 900; color: var(--fd-primary); font-family: monospace; }
+    .timer-value.expired { color: var(--fd-danger) !important; }
+
+    .expired-msg-sidebar {
+        background: #fef2f2;
+        color: var(--fd-danger);
+        padding: 12px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid #fee2e2;
+    }
 
     /* ─── Layout Grid ─── */
     .fd-grid { display: grid; grid-template-columns: 1fr 380px; gap: 30px; }

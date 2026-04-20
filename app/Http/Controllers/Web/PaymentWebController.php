@@ -61,8 +61,18 @@ class PaymentWebController extends Controller
 
             // [STRICT] Hotel Expiry Check: Cannot pay for hotel bookings older than 10 minutes
             if ($type === 'hotel' && $booking->status === 'pending' && $booking->created_at->diffInMinutes(now()) >= 10) {
+                $booking->update(['status' => 'cancelled']);
+                Log::info("HotelBooking #{$booking_id} marked as CANCELLED at checkout due to expiry.");
                 return redirect()->route('customer.bookings.hotels.show', $booking_id)
                     ->with('error', __('تنتهي صلاحية حجز الفندق بعد 10 دقائق من إنشائه. يرجى البحث والحجز من جديد. (Session Expired)'));
+            }
+
+            // [STRICT] Flight Expiry Check: Cannot pay if TicketingTimeLimit is reached
+            if ($type === 'flight' && $booking->status === 'pending' && $booking->ticketing_time_limit && now()->greaterThan($booking->ticketing_time_limit)) {
+                $booking->update(['status' => 'cancelled']);
+                Log::info("FlightBooking #{$booking_id} marked as CANCELLED at checkout due to ticketing time limit.");
+                return redirect()->route('customer.bookings.flights.show', $booking_id)
+                    ->with('error', __('انتهت مهلة الدفع الخاصة بحجز الطيران. يرجى البحث والحجز من جديد لضمان توافر السعر والمقاعد. (PNR Expired)'));
             }
 
             $user = $booking->user;
@@ -147,6 +157,15 @@ class PaymentWebController extends Controller
             
             if (!$booking) {
                 return response()->json(['error' => true, 'message' => 'Booking not found'], 404);
+            }
+
+            // [STRICT] Flight Expiry Check: Cannot initiate payment if expired
+            if ($type === 'flight' && $booking->status === 'pending' && $booking->ticketing_time_limit && now()->greaterThan($booking->ticketing_time_limit)) {
+                $booking->update(['status' => 'cancelled']);
+                return response()->json([
+                    'error' => true, 
+                    'message' => __('انتهت مهلة الدفع. يرجى إعادة الحجز. (PNR Expired)')
+                ], 403);
             }
 
             $method = $request->input('method');
@@ -694,8 +713,12 @@ class PaymentWebController extends Controller
                     // Signal background finalization (Trait logic will skip if confirmed)
                     $this->finalizeHotelSupplierBooking($booking);
                 } else if ($type === 'flight') {
-                    if ($booking->status === 'pending') {
-                         $booking->update(['status' => 'paid']);
+                    if ($booking->status === 'pending' || $booking->status === 'paid') {
+                        if ($booking->status === 'pending') {
+                            $booking->update(['status' => 'paid']);
+                        }
+                        // Trigger auto-issuance for flights
+                        $this->autoIssueFlightTicket($booking);
                     }
                 } else {
                     if ($booking->status === 'pending') {
