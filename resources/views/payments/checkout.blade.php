@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: gap: content: blob:; script-src * 'self' 'unsafe-inline' 'unsafe-eval' *.oppwa.com *.hyperpay.com https://code.jquery.com https://cdn.jsdelivr.net; style-src * 'self' 'unsafe-inline' *.oppwa.com *.hyperpay.com https://fonts.googleapis.com https://cdnjs.cloudflare.com; img-src * 'self' data: *.oppwa.com *.hyperpay.com; frame-src * 'self' *.oppwa.com *.hyperpay.com;">
     <title>إتمام عملية الدفع - {{ config('app.name') }}</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -407,7 +408,7 @@
                         </p>
                     </div>
                 @elseif(isset($checkout_id))
-                    <script src="https://{{ config('hyperpay.test_mode', true) ? 'eu-test.oppwa.com' : 'oppwa.com' }}/v1/paymentWidgets.js?checkoutId={{ $checkout_id }}"></script>
+                    <script src="https://{{ config('hyperpay.test_mode', true) ? 'eu-test.oppwa.com' : 'oppwa.com' }}/v1/paymentWidgets.js?checkoutId={{ $checkout_id }}" crossorigin="anonymous"></script>
                     <form action="{{ route('payments.web.callback', ['payment_type' => $method, 'source' => $source, 'booking_id' => $booking->id, 'type' => $booking_type]) }}" class="paymentWidgets" data-brands="{{ $method === 'mada' ? 'MADA' : ($method === 'apple_pay' ? 'APPLEPAY' : 'VISA MASTER') }}"></form>
                 @else
                     <div style="text-align:center; padding:20px;">

@@ -44,6 +44,8 @@ class HyperPayService
             'amount' => $this->testMode ? number_format(round($amount), 2, '.', '') : number_format($amount, 2, '.', ''),
             'currency' => config('hyperpay.currency', 'SAR'),
             'paymentType' => 'DB',
+            'merchant.url' => config('app.url'),
+            'merchant.phone' => \App\Models\Setting::get('contact_phone', '0555555555'), // Fallback if missing
         ];
 
         // Add test mode parameters (REQUIRED for test server & 3DS2)
