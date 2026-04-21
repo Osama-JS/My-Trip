@@ -197,7 +197,8 @@ class BookingController extends Controller
 
     /**
      * Utility endpoints for UI (Airports/Airlines)
-        public function getAirports()
+     */
+    public function getAirports()
     {
         return response()->json($this->traveloproService->getAirportList());
     }
