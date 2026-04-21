@@ -127,6 +127,26 @@ return [
             'path' => storage_path('logs/laravel.log'),
         ],
 
+        // ─── API Logging Channels ──────────────────────────────────────────────
+
+        // All API requests & responses (info, warning, error)
+        'api' => [
+            'driver'              => 'daily',
+            'path'                => storage_path('logs/api/requests.log'),
+            'level'               => 'info',
+            'days'                => 30,
+            'replace_placeholders' => true,
+        ],
+
+        // Only failed API requests (4xx + 5xx)
+        'api_errors' => [
+            'driver'              => 'daily',
+            'path'                => storage_path('logs/api/errors.log'),
+            'level'               => 'warning',
+            'days'                => 60,
+            'replace_placeholders' => true,
+        ],
+
     ],
 
 ];

@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->api(append: [
             \App\Http\Middleware\SetLocale::class,
+            \App\Http\Middleware\LogApiRequests::class,
         ]);
         $middleware->alias([
            'isAdmin' => \App\Http\Middleware\IsAdmin::class,
