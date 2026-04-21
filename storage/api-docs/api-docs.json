@@ -4579,6 +4579,39 @@
                 ]
             }
         },
+        "/api/user/hotel-bookings/{id}/voucher": {
+            "get": {
+                "tags": [
+                    "User Bookings"
+                ],
+                "summary": "تحميل قسيمة حجز الفندق (Download Hotel Voucher)",
+                "description": "يقوم بتوليد وإرجاع ملف PDF يحتوي على قسيمة الحجز الفندقي. (Returns a PDF voucher for a confirmed hotel booking).",
+                "operationId": "downloadHotelVoucher",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Returns PDF file"
+                    },
+                    "404": {
+                        "description": "Not Found or Not Confirmed"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/countries": {
             "get": {
                 "tags": [

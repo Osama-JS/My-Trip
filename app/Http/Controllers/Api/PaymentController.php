@@ -179,10 +179,10 @@ class PaymentController extends Controller
     public function initiate(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'amount' => 'required|numeric|min:1',
+            'amount' => 'nullable|numeric|min:1',
             'payment_type' => 'required|string|in:mada,visa_master,apple_pay,tabby,tamara,bank_transfer',
             'booking_id' => 'required',
-            'booking_type' => 'required|string|in:trip,hotel,flight',
+            'booking_type' => 'required|string|in:trip,hotel,hotels,flight,flights,trips',
             'order_id' => 'nullable|string',
         ]);
 
@@ -190,25 +190,42 @@ class PaymentController extends Controller
             return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
         }
 
+        // Normalize booking types
+        $rawBookingType = rtrim($request->booking_type, 's'); // 'flights' -> 'flight', 'hotels' -> 'hotel', 'trips' -> 'trip'
+        $bookingType = in_array($rawBookingType, ['trip', 'hotel', 'flight']) ? $rawBookingType : 'trip';
+
         // RESTRICTION: Bank Transfer only for Trips
-        if ($request->payment_type === 'bank_transfer' && $request->booking_type !== 'trip') {
+        if ($request->payment_type === 'bank_transfer' && $bookingType !== 'trip') {
             return $this->apiResponse(true, __('Bank transfer is only available for trip bookings.'), null, null, 403);
         }
 
         try {
             $user = $request->user();
             $paymentType = $request->payment_type;
-            $booking = $this->resolveBooking($request->booking_id, $request->booking_type);
+            
+            // Resolve booking FIRST to get the amount if not provided
+            $booking = $this->resolveBooking($request->booking_id, $bookingType);
 
             if (!$booking) {
                 return $this->apiResponse(true, __('Booking not found.'), null, null, 404);
             }
 
+            // Fallback Amount Logic
+            if (!$request->amount) {
+                $amount = $bookingType === 'flight' ? $booking->total_amount : ($booking->total_price ?? $booking->total_amount ?? 0);
+                $request->merge(['amount' => $amount]);
+                
+                // Final safety check
+                if ($amount <= 0) {
+                     return $this->apiResponse(true, __('Invalid booking amount. Unable to proceed.'), null, null, 422);
+                }
+            }
+
             // Consistent WebView URL return for all types if requested or default
             $paymentUrl = route('payments.web.checkout', [
-                'booking_id' => $request->booking_id,
+                'booking_id' => $booking->id, // use the resolved booking ID to ensure it is the database INT
                 'method' => $paymentType,
-                'type' => $request->booking_type,
+                'type' => $bookingType,
                 'source' => 'api'
             ]);
 

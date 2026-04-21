@@ -157,6 +157,10 @@ class UserBookingController extends Controller
             })
             ->firstOrFail();
 
+        $adultsCount = $booking->flightBooking->adults ?? $booking->passengers()->where('passenger_type', 'adult')->count();
+        $childsCount = $booking->flightBooking->childs ?? $booking->passengers()->where('passenger_type', 'child')->count();
+        $infantsCount = $booking->flightBooking->infants ?? $booking->passengers()->where('passenger_type', 'infant')->count();
+
         $formattedData = [
             'id' => $booking->id,
             'reference' => $booking->booking_reference,
@@ -167,19 +171,19 @@ class UserBookingController extends Controller
             'booking_date' => $booking->created_at->format('Y-m-d H:i'),
             'service_type' => 'flight',
 
-            'flight_details' => $booking->flightBooking ? [
-                'origin' => $booking->flightBooking->origin,
-                'destination' => $booking->flightBooking->destination,
-                'departure_date' => $booking->flightBooking->departure_date,
-                'return_date' => $booking->flightBooking->return_date,
-                'flight_class' => $booking->flightBooking->flight_class,
-                'airline' => $booking->flightBooking->airline_name,
+            'flight_details' => [
+                'origin' => $booking->flightBooking->origin ?? 'N/A',
+                'destination' => $booking->flightBooking->destination ?? 'N/A',
+                'departure_date' => $booking->flightBooking->departure_date ?? 'N/A',
+                'return_date' => $booking->flightBooking->return_date ?? null,
+                'flight_class' => $booking->flightBooking->flight_class ?? 'Economy',
+                'airline' => $booking->flightBooking->airline_name ?? 'Unknown',
                 'passengers_counts' => [
-                    'adults' => $booking->flightBooking->adults,
-                    'childs' => $booking->flightBooking->childs,
-                    'infants' => $booking->flightBooking->infants,
+                    'adults' => $adultsCount > 0 ? $adultsCount : 1,
+                    'childs' => $childsCount > 0 ? $childsCount : 0,
+                    'infants' => $infantsCount > 0 ? $infantsCount : 0,
                 ]
-            ] : null,
+            ],
 
             'passengers' => $booking->passengers->map(function ($p) {
                 return [
@@ -378,5 +382,39 @@ class UserBookingController extends Controller
         ];
 
         return $this->apiResponse(false, __('Hotel booking details retrieved successfully.'), $data);
+    }
+
+    #[OA\Get(
+        path: "/api/user/hotel-bookings/{id}/voucher",
+        summary: "تحميل قسيمة حجز الفندق (Download Hotel Voucher)",
+        operationId: "downloadHotelVoucher",
+        description: "يقوم بتوليد وإرجاع ملف PDF يحتوي على قسيمة الحجز الفندقي. (Returns a PDF voucher for a confirmed hotel booking).",
+        tags: ["User Bookings"],
+        security: [["bearerAuth" => []]],
+        parameters: [
+            new OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "integer"))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: "Returns PDF file"),
+            new OA\Response(response: 404, description: "Not Found or Not Confirmed")
+        ]
+    )]
+    public function downloadHotelVoucher(Request $request, $id, \App\Services\InvoiceService $invoiceService)
+    {
+        $booking = HotelBooking::where('user_id', $request->user()->id)
+            ->where('id', $id)
+            ->firstOrFail();
+
+        if ($booking->status !== 'confirmed') {
+            return $this->apiResponse(true, __('Voucher is only available for confirmed bookings.'), null, null, 403);
+        }
+
+        $filePath = $invoiceService->generateHotelVoucher($booking);
+
+        if (!$filePath || !\Illuminate\Support\Facades\Storage::disk('public')->exists($filePath)) {
+            return $this->apiResponse(true, __('Failed to generate voucher.'), null, null, 500);
+        }
+
+        return response()->download(storage_path('app/public/' . $filePath));
     }
 }
