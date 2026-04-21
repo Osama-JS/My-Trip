@@ -350,6 +350,9 @@
         </div>
     </div>
 </div>
+@endsection
+
+@push('scripts')
 <script>
     let countriesTable;
     const countriesDataUrl = "{{ route('admin.countries.data') }}";
@@ -569,6 +572,6 @@
         });
     }
 </script>
-@endsection
+@endpush
 
 

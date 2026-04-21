@@ -12,7 +12,7 @@ use App\Models\Booking;
 
 class BookingController extends Controller
 {
-     protected $traveloproService;
+    protected $traveloproService;
 
     public function __construct(TraveloproService $traveloproService)
     {
@@ -34,9 +34,12 @@ class BookingController extends Controller
     {
         $stats = [
             'total' => FlightBooking::count(),
-            'pending' => FlightBooking::whereHas('booking', function($q) { $q->where('status', 'pending'); })->count(),
-            'confirmed' => FlightBooking::whereHas('booking', function($q) { $q->where('status', 'confirmed'); })->count(),
-            'cancelled' => FlightBooking::whereHas('booking', function($q) { $q->where('status', 'cancelled'); })->count(),
+            'pending' => FlightBooking::whereHas('booking', function ($q) {
+                $q->where('status', 'pending'); })->count(),
+            'confirmed' => FlightBooking::whereHas('booking', function ($q) {
+                $q->where('status', 'confirmed'); })->count(),
+            'cancelled' => FlightBooking::whereHas('booking', function ($q) {
+                $q->where('status', 'cancelled'); })->count(),
         ];
         return view('admin.bookings.flights.index', compact('stats'));
     }
@@ -44,7 +47,7 @@ class BookingController extends Controller
     public function getFlightData()
     {
         $bookings = FlightBooking::with(['user', 'booking'])->latest()->get();
-        $data = $bookings->map(function($fb) {
+        $data = $bookings->map(function ($fb) {
             return [
                 'id' => $fb->id,
                 'user' => $fb->user->full_name ?? __('Guest'),
@@ -109,7 +112,7 @@ class BookingController extends Controller
             // Check if IsValid is true in response
             $isValid = $result['AirRevalidateResponse']['AirRevalidateResult']['IsValid'] ?? false;
             if ($isValid !== true && $isValid !== 'true') {
-                 return response()->json(['error' => true, 'message' => __('Fare is no longer valid or available.')], 422);
+                return response()->json(['error' => true, 'message' => __('Fare is no longer valid or available.')], 422);
             }
 
             return response()->json(['error' => false, 'data' => $result]);
@@ -141,10 +144,14 @@ class BookingController extends Controller
     public function flightRequests()
     {
         $stats = [
-            'total'     => FlightBooking::whereHas('booking', function($q) { $q->where('status', 'pending'); })->count(),
-            'pending'   => FlightBooking::whereHas('booking', function($q) { $q->where('status', 'pending'); })->count(),
-            'confirmed' => FlightBooking::whereHas('booking', function($q) { $q->where('status', 'confirmed'); })->count(),
-            'cancelled' => FlightBooking::whereHas('booking', function($q) { $q->where('status', 'cancelled'); })->count(),
+            'total' => FlightBooking::whereHas('booking', function ($q) {
+                $q->where('status', 'pending'); })->count(),
+            'pending' => FlightBooking::whereHas('booking', function ($q) {
+                $q->where('status', 'pending'); })->count(),
+            'confirmed' => FlightBooking::whereHas('booking', function ($q) {
+                $q->where('status', 'confirmed'); })->count(),
+            'cancelled' => FlightBooking::whereHas('booking', function ($q) {
+                $q->where('status', 'cancelled'); })->count(),
         ];
         return view('admin.bookings.flights.requests', compact('stats'));
     }
@@ -152,20 +159,20 @@ class BookingController extends Controller
     public function getFlightRequestsData()
     {
         $bookings = FlightBooking::with(['user', 'booking'])
-            ->whereHas('booking', function($q) {
+            ->whereHas('booking', function ($q) {
                 $q->where('status', 'pending');
             })
             ->latest()->get();
 
-        $data = $bookings->map(function($fb) {
+        $data = $bookings->map(function ($fb) {
             return [
-                'id'        => $fb->booking_reference ?? $fb->id,
+                'id' => $fb->booking_reference ?? $fb->id,
                 'passenger' => optional($fb->user)->full_name ?? __('Guest'),
-                'flight'    => $fb->flight_class ?? 'N/A',
-                'route'     => ($fb->origin ?? '') . ' â†’ ' . ($fb->destination ?? ''),
-                'price'     => number_format($fb->total_amount, 2) . ' ' . $fb->currency,
-                'status'    => optional($fb->booking)->status ?? 'pending',
-                'actions'   => view('admin.bookings.partials.actions', [
+                'flight' => $fb->flight_class ?? 'N/A',
+                'route' => ($fb->origin ?? '') . ' â†’ ' . ($fb->destination ?? ''),
+                'price' => number_format($fb->total_amount, 2) . ' ' . $fb->currency,
+                'status' => optional($fb->booking)->status ?? 'pending',
+                'actions' => view('admin.bookings.partials.actions', [
                     'id' => $fb->id,
                     'show_route' => 'admin.bookings.flights.show',
                     'invoice_route' => 'admin.bookings.invoice'
@@ -293,7 +300,7 @@ class BookingController extends Controller
         if ($booking && $booking->flightBooking) {
             return $this->showFlight($booking->flightBooking->id);
         }
-        
+
         $hotel = HotelBooking::find($id);
         if ($hotel) {
             return $this->showHotel($id);
@@ -346,13 +353,13 @@ class BookingController extends Controller
 
         return response()->json([
             'count' => $bookings->count(),
-            'data'  => $bookings->map(fn($b) => [
-                'id'          => $b->id,
-                'hotel_name'  => $b->hotel_name,
-                'user'        => optional($b->user)->full_name ?? 'Guest',
-                'user_email'  => optional($b->user)->email ?? 'N/A',
+            'data' => $bookings->map(fn($b) => [
+                'id' => $b->id,
+                'hotel_name' => $b->hotel_name,
+                'user' => optional($b->user)->full_name ?? 'Guest',
+                'user_email' => optional($b->user)->email ?? 'N/A',
                 'total_price' => $b->total_price . ' ' . $b->currency,
-                'created_at'  => $b->created_at->format('Y-m-d H:i'),
+                'created_at' => $b->created_at->format('Y-m-d H:i'),
                 'has_session' => !empty($b->session_id),
             ])
         ]);
@@ -372,33 +379,35 @@ class BookingController extends Controller
         Log::info("Admin manual retry for HotelBooking #{$id} by admin #" . auth()->id());
 
         try {
-            $hotelService   = app(\App\Services\TraveloproHotelService::class);
+            $hotelService = app(\App\Services\TraveloproHotelService::class);
             $invoiceService = app(\App\Services\InvoiceService::class);
 
             $bookingData = [
-                'sessionId'     => $booking->session_id,
-                'productId'     => $booking->product_id,
-                'tokenId'       => $booking->token_id,
-                'rateBasisId'   => $booking->rate_basis_id,
-                'clientRef'     => $booking->reference_num ?? ('HTL-' . $booking->id . '-' . time()),
+                'sessionId' => $booking->session_id,
+                'productId' => $booking->product_id,
+                'tokenId' => $booking->token_id,
+                'rateBasisId' => $booking->rate_basis_id,
+                'clientRef' => $booking->reference_num ?? ('HTL-' . $booking->id . '-' . time()),
                 'customerEmail' => optional($booking->user)->email ?? 'guest@mytrip.com',
                 'customerPhone' => optional($booking->user)->phone ?? '0000000000',
-                'bookingNote'   => 'Manual admin retry â€” Booking #' . $booking->id,
-                'paxDetails'    => $booking->pax_details ?? [],
+                'bookingNote' => 'Manual admin retry â€” Booking #' . $booking->id,
+                'paxDetails' => $booking->pax_details ?? [],
             ];
 
-            $result      = $hotelService->book($bookingData);
+            $result = $hotelService->book($bookingData);
             $supplierRef = $result['supplierConfirmationNum']
-                        ?? $result['referenceNum']
-                        ?? $result['bookingId']
-                        ?? null;
+                ?? $result['referenceNum']
+                ?? $result['bookingId']
+                ?? null;
 
             if ($supplierRef) {
                 $booking->update(['status' => 'confirmed', 'supplier_confirmation_num' => $supplierRef]);
 
                 try {
                     $voucherPath = $invoiceService->generateHotelVoucher($booking);
-                    if ($voucherPath) { $booking->update(['invoice_path' => $voucherPath]); }
+                    if ($voucherPath) {
+                        $booking->update(['invoice_path' => $voucherPath]);
+                    }
                 } catch (\Exception $e) {
                     \Illuminate\Support\Facades\Log::warning("Admin retry voucher failed: " . $e->getMessage());
                 }
@@ -441,13 +450,15 @@ class BookingController extends Controller
         }
 
         $booking->update([
-            'status'                   => 'confirmed',
+            'status' => 'confirmed',
             'supplier_confirmation_num' => $request->supplier_ref,
         ]);
 
         try {
             $voucherPath = app(\App\Services\InvoiceService::class)->generateHotelVoucher($booking);
-            if ($voucherPath) { $booking->update(['invoice_path' => $voucherPath]); }
+            if ($voucherPath) {
+                $booking->update(['invoice_path' => $voucherPath]);
+            }
         } catch (\Exception $e) {
             Log::warning("Force-confirm voucher failed: " . $e->getMessage());
         }

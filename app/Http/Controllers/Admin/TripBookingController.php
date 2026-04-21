@@ -119,7 +119,9 @@ class TripBookingController extends Controller
              \App\Models\BookingHistory::create([
                 'trip_booking_id' => $booking->id,
                 'user_id' => auth()->id(),
-                'old_state' => $oldState,
+                'action' => 'status_changed',
+                'description' => __('Booking status updated to :status', ['status' => __($request->status)]),
+                'previous_state' => $oldState,
                 'new_state' => $booking->booking_state,
             ]);
 
@@ -207,7 +209,9 @@ class TripBookingController extends Controller
              \App\Models\BookingHistory::create([
                 'trip_booking_id' => $booking->id,
                 'user_id' => auth()->id(),
-                'old_state' => $oldState,
+                'action' => 'ticket_uploaded',
+                'description' => __('Trip ticket uploaded by admin'),
+                'previous_state' => $oldState,
                 'new_state' => \App\Models\TripBooking::STATE_TICKETS_SENT,
             ]);
 

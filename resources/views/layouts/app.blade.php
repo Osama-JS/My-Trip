@@ -57,6 +57,102 @@
         };
     </script>
 
+    <!-- Global AJAX & Helper Functions -->
+    <script>
+        $(document).ready(function() {
+            $.ajaxSetup({
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                }
+            });
+        });
+
+        window.submitAjaxForm = function({
+            formId,
+            url,
+            method = "POST",
+            modalId = null,
+            table = null,
+            successMessage = "{{ __('Saved successfully') }}",
+            buttonText = "{{ __('Save') }}",
+            usePut = false,
+            resetSelect2 = true,
+            useSweetAlert = false
+        }) {
+            const form = document.getElementById(formId);
+            let formData = new FormData(form);
+
+            if (usePut) {
+                formData.append('_method', 'PUT');
+            }
+
+            $('#globalLoader').fadeIn(150);
+
+            $.ajax({
+                url: url,
+                type: method,
+                data: formData,
+                processData: false,
+                contentType: false,
+
+                beforeSend: function () {
+                    $(`#${formId}`).find('button[type="submit"]')
+                        .prop('disabled', true)
+                        .html('<i class="fas fa-spinner fa-spin"></i>');
+                },
+
+                success: function (response) {
+                    if (response.success) {
+                        if (modalId) {
+                            $(`#${modalId}`).modal('hide');
+                        }
+
+                        if (form) form.reset();
+
+                        if (resetSelect2) {
+                            $(`#${formId} .select2`).val(null).trigger('change');
+                        }
+
+                        if (table) {
+                            table.ajax.reload(null, false);
+                        }
+
+                        if (useSweetAlert) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: response.message ?? successMessage,
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+                        } else {
+                            toastr.success(response.message ?? successMessage);
+                        }
+                    } else {
+                        toastr.error(response.message || "{{ __('Something went wrong') }}");
+                    }
+                },
+
+                error: function (xhr) {
+                    if (xhr.status === 422) {
+                        let errors = xhr.responseJSON.errors;
+                        Object.values(errors).forEach(err => {
+                            toastr.error(err[0]);
+                        });
+                    } else {
+                        toastr.error("{{ __('Something went wrong') }}");
+                    }
+                },
+
+                complete: function () {
+                    $('#globalLoader').fadeOut(150);
+                    $(`#${formId}`).find('button[type="submit"]')
+                        .prop('disabled', false)
+                        .html(buttonText || "{{ __('Save') }}");
+                }
+            });
+        }
+    </script>
+
     <!-- Custom Stylesheet -->
     <link href="{{ asset('vendor/jquery-nice-select/css/nice-select.css') }}" rel="stylesheet">
 

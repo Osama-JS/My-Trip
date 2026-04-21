@@ -71,9 +71,11 @@
                                     <div class="col-md-6">
                                         <x-forms.select name="to_country_id" :label="__('To Country')" :options="$countries" searchable required />
                                     </div>
-                                    <div class="col-md-12">
-                                        <x-forms.select name="from_city_id" :label="__('From City')" :options="$cities"  searchable required />
-                                        
+                                    <div class="col-md-6 mt-2">
+                                        <x-forms.select name="from_city_id" id="from_city_id" :label="__('From City')" :options="$cities" searchable required />
+                                    </div>
+                                    <div class="col-md-6 mt-2">
+                                        <x-forms.select name="to_city_id" id="to_city_id" :label="__('To City')" :options="$cities" searchable required />
                                     </div>
                                     <div class="col-md-4">
                                         <x-forms.input-text name="price" :label="__('Current Price')" required icon="fa fa-dollar-sign" />
@@ -162,21 +164,27 @@
         });
 
     $(document).ready(function() {
-        // Dynamic city loading based on country could be added here if needed
-        $('#from_country_id').on('change', function() {
-            let countryId = $(this).val();
-            if (countryId) {
-                $.get("{{ route('admin.cities.by-country', ':id') }}".replace(':id', countryId), function(data) {
-                    let citySelect = $('#from_city_id');
-                    citySelect.empty();
-                    citySelect.append('<option value="">{{ __("Select City") }}</option>');
-                    $.each(data, function(key, value) {
-                        citySelect.append('<option value="' + value.id + '">' + value.name + '</option>');
-                    });
-                    if ($.fn.niceSelect) citySelect.niceSelect('update');
-                    if ($.fn.select2) citySelect.trigger('change.select2');
+        function loadCities(countryId, targetSelectId) {
+            if (!countryId) return;
+            
+            $.get("{{ route('admin.cities.by-country', ':id') }}".replace(':id', countryId), function(data) {
+                let citySelect = $('#' + targetSelectId);
+                citySelect.empty();
+                citySelect.append('<option value="">{{ __("Select City") }}</option>');
+                $.each(data, function(key, value) {
+                    citySelect.append('<option value="' + value.id + '">' + value.name + '</option>');
                 });
-            }
+                if ($.fn.niceSelect) citySelect.niceSelect('update');
+                if ($.fn.select2) citySelect.trigger('change.select2');
+            });
+        }
+
+        $('#from_country_id').on('change', function() {
+            loadCities($(this).val(), 'from_city_id');
+        });
+
+        $('#to_country_id').on('change', function() {
+            loadCities($(this).val(), 'to_city_id');
         });
     });
 </script>

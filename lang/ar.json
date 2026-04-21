@@ -1740,5 +1740,7 @@
     "Compare thousands of flights and find the best deals for your next adventure.": "قارن بين آلاف الرحلات الجوية واعثر على أفضل العروض لمغامرتك القادمة.",
     "Travelers & Class": "المسافرون والفئة",
     "Choose Airport": "اختر المطار",
-    "Please enter 2 or more characters": "الرجاء إدخال حرفين أو أكثر"
+    "Please enter 2 or more characters": "الرجاء إدخال حرفين أو أكثر",
+    "From City": "مدينة الانطلاق",
+    "To City": "مدينة الوصول"
 }

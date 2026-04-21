@@ -75,18 +75,16 @@ class BannerController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'title_ar' => 'nullable|string|max:255',
-            'title_en' => 'nullable|string|max:255',
+            'title_ar' => 'required|string|max:255',
+            'title_en' => 'required|string|max:255',
             'description_ar' => 'nullable|string|max:500',
             'description_en' => 'nullable|string|max:500',
-            'image_path' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            'image_path' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'link' => 'nullable|url|max:500',
             'sort_order' => 'nullable|integer|min:0',
-            'trip_id'            => 'required|exists:trips,id',
+            'trip_id'            => 'nullable|exists:trips,id',
             'active' => 'boolean',
         ]);
-         
-        //  return response()->json($request->all());
 
         if ($validator->fails()) {
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
@@ -97,16 +95,12 @@ class BannerController extends Controller
         $data['sort_order'] = $request->input('sort_order', Banner::max('sort_order') + 1);
         $data['admin_id'] = auth()->id();
 
-       
         // Handle image upload
         if ($request->hasFile('image_path')) {
             $data['image_path'] = $request->file('image_path')->store('banners', 'public');
         }
 
         Banner::create($data);
-
-         dd($data);
-
 
         return response()->json([
             'success' => true,
@@ -132,14 +126,14 @@ class BannerController extends Controller
     public function update(Request $request, Banner $banner)
     {
         $validator = Validator::make($request->all(), [
-            'title_ar' => 'nullable|string|max:255',
-            'title_en' => 'nullable|string|max:255',
+            'title_ar' => 'required|string|max:255',
+            'title_en' => 'required|string|max:255',
             'description_ar' => 'nullable|string|max:500',
             'description_en' => 'nullable|string|max:500',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp',
+            'image_path' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'link' => 'nullable|url|max:500',
             'sort_order' => 'nullable|integer|min:0',
-            'trip_id'            => 'required|exists:trips,id',
+            'trip_id'            => 'nullable|exists:trips,id',
             'active' => 'boolean',
         ]);
 
@@ -151,12 +145,12 @@ class BannerController extends Controller
         $data['active'] = $request->boolean('active', true);
 
         // Handle image upload
-        if ($request->hasFile('image')) {
+        if ($request->hasFile('image_path')) {
             // Delete old image
-            if ($banner->image) {
-                Storage::disk('public')->delete($banner->image);
+            if ($banner->image_path) {
+                Storage::disk('public')->delete($banner->image_path);
             }
-            $data['image'] = $request->file('image')->store('banners', 'public');
+            $data['image_path'] = $request->file('image_path')->store('banners', 'public');
         }
 
         $banner->update($data);
