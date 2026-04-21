@@ -11,4 +11,8 @@ return [
     ],
 
     'currency' => env('HYPERPAY_CURRENCY', 'SAR'),
+
+    'test_mode' => env('HYPERPAY_TEST_MODE', false),
+    'merchant_url' => env('HYPERPAY_MERCHANT_URL', env('APP_URL')),
+    'merchant_phone' => env('HYPERPAY_MERCHANT_PHONE'),
 ];

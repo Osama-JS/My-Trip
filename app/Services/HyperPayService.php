@@ -11,13 +11,17 @@ class HyperPayService
     protected $accessToken;
     protected $entityIds;
     protected $testMode;
+    protected $merchantUrl;
+    protected $merchantPhone;
 
     public function __construct()
     {
-        $this->baseUrl = config('hyperpay.base_url');
-        $this->accessToken = config('hyperpay.access_token');
-        $this->entityIds = config('hyperpay.entity_ids');
-        $this->testMode = config('hyperpay.test_mode', false);
+        $this->baseUrl       = config('hyperpay.base_url');
+        $this->accessToken   = config('hyperpay.access_token');
+        $this->entityIds     = config('hyperpay.entity_ids');
+        $this->testMode      = (bool) config('hyperpay.test_mode', false);
+        $this->merchantUrl   = config('hyperpay.merchant_url');
+        $this->merchantPhone = config('hyperpay.merchant_phone');
     }
 
     /**
@@ -39,26 +43,34 @@ class HyperPayService
 
         $url = $this->baseUrl . 'checkouts';
 
+        // Base parameters
         $params = [
-            'entityId' => $entityId,
-            'amount' => $this->testMode ? number_format(round($amount), 2, '.', '') : number_format($amount, 2, '.', ''),
-            'currency' => config('hyperpay.currency', 'SAR'),
-            'paymentType' => 'DB',
-            'merchant.url' => config('app.url'),
-            'merchant.phone' => \App\Models\Setting::get('contact_phone', '0555555555'), // Fallback if missing
+            'entityId'      => $entityId,
+            'amount'        => number_format($amount, 2, '.', ''),
+            'currency'      => config('hyperpay.currency', 'SAR'),
+            'paymentType'   => 'DB',
+            'merchant.url'  => $this->merchantUrl ?: config('app.url'),
+            'merchant.phone' => $this->merchantPhone ?: \App\Models\Setting::get('contact_phone', '0505741365'),
         ];
 
         // Add test mode parameters (REQUIRED for test server & 3DS2)
         if ($this->testMode) {
             $params['testMode'] = 'EXTERNAL';
             $params['customParameters[3DS2_enrolled]'] = 'true';
+            // integrity parameter is sometimes required for specific test scenarios
             $params['integrity'] = 'true';
         }
 
         // Merge additional params (merchantTransactionId, billing, customer, etc.)
         $params = array_merge($params, $additionalParams);
 
-        Log::info('HyperPay Prepare Checkout Request', ['url' => $url, 'params' => $params]);
+        // Extensive Logging: Critical for HyperPay integration verification
+        Log::info('HyperPay Outgoing Checkout Request', [
+            'timestamp' => now()->toDateTimeString(),
+            'url'       => $url,
+            'params'    => $this->sanitizeForLog($params),
+            'test_mode' => $this->testMode,
+        ]);
 
         $response = Http::withoutVerifying()
             ->timeout(30)
@@ -68,12 +80,34 @@ class HyperPayService
 
         if ($response->successful()) {
             $result = $response->json();
-            Log::info('HyperPay Prepare Checkout Success', ['checkout_id' => $result['id'] ?? 'N/A']);
+            Log::info('HyperPay Checkout Success', [
+                'checkout_id' => $result['id'] ?? 'N/A',
+                'result_code' => $result['result']['code'] ?? 'N/A',
+                'description' => $result['result']['description'] ?? 'N/A'
+            ]);
             return $result;
         }
 
-        Log::error("HyperPay Prepare Checkout Failed: " . $response->body());
+        Log::error("HyperPay Checkout Failed: Status {$response->status()}", [
+            'body'   => $response->body(),
+            'params' => $this->sanitizeForLog($params)
+        ]);
+
         return false;
+    }
+
+    /**
+     * Mask sensitive data in logs
+     */
+    protected function sanitizeForLog(array $params): array
+    {
+        $sensitiveKeys = ['customer.email', 'billing.postcode'];
+        foreach ($sensitiveKeys as $key) {
+             if (isset($params[$key])) {
+                 $params[$key] = '***MASKED***';
+             }
+        }
+        return $params;
     }
 
     /**
