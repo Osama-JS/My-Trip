@@ -408,7 +408,7 @@
                         </p>
                     </div>
                 @elseif(isset($checkout_id))
-                    <script src="https://{{ config('hyperpay.test_mode', true) ? 'eu-test.oppwa.com' : 'oppwa.com' }}/v1/paymentWidgets.js?checkoutId={{ $checkout_id }}" crossorigin="anonymous"></script>
+                    <script src="https://{{ config('hyperpay.widget_url', 'test.oppwa.com') }}/v1/paymentWidgets.js?checkoutId={{ $checkout_id }}" crossorigin="anonymous"></script>
                     <form action="{{ route('payments.web.callback', ['payment_type' => $method, 'source' => $source, 'booking_id' => $booking->id, 'type' => $booking_type]) }}" class="paymentWidgets" data-brands="{{ $method === 'mada' ? 'MADA' : ($method === 'apple_pay' ? 'APPLEPAY' : 'VISA MASTER') }}"></form>
                 @else
                     <div style="text-align:center; padding:20px;">

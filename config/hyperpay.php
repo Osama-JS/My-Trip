@@ -2,6 +2,7 @@
 
 return [
     'base_url' => env('HYPERPAY_BASE_URL', 'https://test.oppwa.com/v1/'),
+    'widget_url' => env('HYPERPAY_WIDGET_URL', 'test.oppwa.com'),
     'access_token' => env('HYPERPAY_ACCESS_TOKEN'),
 
     'entity_ids' => [
