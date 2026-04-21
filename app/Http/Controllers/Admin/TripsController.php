@@ -62,7 +62,7 @@ class TripsController extends Controller
 
     public function getData(Request $request)
     {
-         $query = Trip::with(['company','fromCountry','toCountry']);
+         $query = Trip::with(['company','fromCountry','toCountry', 'fromCity', 'toCity']);
 
          if ($request->company_id) {
             $query->where('company_id', $request->company_id);
@@ -124,8 +124,12 @@ class TripsController extends Controller
                           ?  '<span>'. $trip->company->name .'</span>' : '...',
                     'fromCountry' => $trip->fromCountry
                           ?  '<span>'. $trip->fromCountry->name .'</span>' : '...',
+                    'fromCity' => $trip->fromCity
+                          ?  '<span>'. $trip->fromCity->name .'</span>' : '...',
                     'toCountry' => $trip->toCountry
                           ?  '<span>'. $trip->toCountry->name .'</span>' : '...',
+                    'toCity' => $trip->toCity
+                          ?  '<span>'. $trip->toCity->name .'</span>' : '...',
                     'price'    => $trip->price,
                     'expiry_date' => $trip->expiry_date,
                     'status'      => $isExpired
@@ -141,7 +145,7 @@ class TripsController extends Controller
     {
         $companies = Company::active()->get();
         $countries = Country::active()->get();
-        $cities = City::active()->get();
+        $cities = collect(); // Load via AJAX to improve performance
         $categories = \App\Models\TripCategory::all();
 
         return view('admin.trips.create', compact('companies', 'countries', 'cities', 'categories'));
@@ -163,6 +167,7 @@ class TripsController extends Controller
             'from_country_id'       => 'required|exists:countries,id',
             'from_city_id'          => 'required|exists:cities,id',
             'to_country_id'         => 'required|exists:countries,id',
+            'to_city_id'            => 'required|exists:cities,id',
             'duration'              => 'nullable|string|max:100',
             'price'                 => 'required|numeric|min:0',
             'price_before_discount' => 'nullable|numeric|min:0',
@@ -235,7 +240,8 @@ class TripsController extends Controller
     {
         $companies = Company::active()->get();
         $countries = Country::active()->get();
-        $cities = City::active()->get();
+        // Load only cities strictly needed for the initial view
+        $cities = City::whereIn('country_id', [$trip->from_country_id, $trip->to_country_id])->active()->get();
         $categories = \App\Models\TripCategory::all();
 
         return view('admin.trips.edit', compact('trip', 'companies', 'countries', 'cities', 'categories'));
@@ -256,6 +262,7 @@ class TripsController extends Controller
             'from_country_id'       => 'required|exists:countries,id',
             'from_city_id'          => 'required|exists:cities,id',
             'to_country_id'         => 'required|exists:countries,id',
+            'to_city_id'            => 'required|exists:cities,id',
             'duration'              => 'nullable|string|max:100',
             'price'                 => 'required|numeric|min:0',
             'price_before_discount' => 'nullable|numeric|min:0',
@@ -279,7 +286,7 @@ class TripsController extends Controller
 
         // Recalculate profit
         if (!empty($data['price_before_discount'])) {
-            $data['profit'] = $data['price'] - $data['price_before_discount'];
+            $data['profit'] = max(0, $data['price_before_discount'] - $data['price']);
 
             $data['percentage_profit_margin'] =
                 $data['price_before_discount'] > 0

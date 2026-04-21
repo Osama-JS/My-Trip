@@ -1,5 +1,6 @@
 @props([
     'name',
+    'id' => null,
     'label' => null,
     'options' => [],
     'selected' => null,
@@ -14,9 +15,13 @@
     'optionLabel' => 'name',
 ])
 
+@php
+    $id = $id ?? $name;
+@endphp
+
 <div class="form-group mb-3">
     @if($label)
-        <label for="{{ $name }}" class="form-label {{ $required ? 'required' : '' }}">
+        <label for="{{ $id }}" class="form-label {{ $required ? 'required' : '' }}">
             {{ $label }}
             @if($required)
                 <span class="text-danger">*</span>
@@ -26,7 +31,7 @@
 
     <select
         name="{{ $name }}{{ $multiple ? '[]' : '' }}"
-        id="{{ $name }}"
+        id="{{ $id }}"
         class="form-select {{ $searchable ? 'select2' : '' }} {{ $errors->has($name) || $error ? 'is-invalid' : '' }} {{ $attributes->get('class') }}"
         {{ $required ? 'required' : '' }}
         {{ $disabled ? 'disabled' : '' }}
@@ -75,7 +80,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     if (typeof $.fn.select2 !== 'undefined') {
-        $('#{{ $name }}').select2({
+        $('#{{ $id }}').select2({
             theme: 'bootstrap-5',
             placeholder: '{{ $placeholder }}',
             allowClear: true,

@@ -176,8 +176,10 @@
                                     <th>{{ __('title (AR)') }}</th>
                                     <th>{{ __('title (EN)') }}</th>
                                     <th>{{ __('Company') }}</th>
-                                    <th>{{ __('From') }}</th>
-                                    <th>{{ __('To') }}</th>
+                                    <th>{{ __('From Country') }}</th>
+                                    <th>{{ __('From City') }}</th>
+                                    <th>{{ __('To Country') }}</th>
+                                    <th>{{ __('To City') }}</th>
                                     <th>{{ __('Price') }}</th>
                                     <th>{{ __('Expiry Date') }}</th>
                                     <th>{{ __('Status') }}</th>
@@ -269,7 +271,9 @@
                 {data: 'title_en'},
                 {data: 'company', defaultContent: "<i>Not Available</i>"},
                 {data: 'fromCountry', defaultContent: "<i>Not Available</i>"},
+                {data: 'fromCity', defaultContent: "<i>Not Available</i>"},
                 {data: 'toCountry' , defaultContent: "<i>Not Available</i>" },
+                {data: 'toCity' , defaultContent: "<i>Not Available</i>" },
                 {data: 'price'},
                 {data: 'expiry_date' },
                 {data: 'status', orderable:false, searchable:false},

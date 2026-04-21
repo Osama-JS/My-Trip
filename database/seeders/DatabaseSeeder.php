@@ -23,7 +23,7 @@ class DatabaseSeeder extends Seeder
             SettingSeeder::class,
             CompanySeeder::class,
             BannerSeeder::class,
-            LocationSeeder::class,
+            CountrySeeder::class,
             QuestionSeeder::class,
             TourPackageSeeder::class,
 

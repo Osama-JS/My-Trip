@@ -140,12 +140,14 @@ var Travl = (function () {
     var handleDzScroll = function () {
         jQuery(".dlab-scroll").each(function () {
             var scroolWidgetId = jQuery(this).attr("id");
-            const ps = new PerfectScrollbar("#" + scroolWidgetId, {
-                wheelSpeed: 2,
-                wheelPropagation: true,
-                minScrollbarLength: 20,
-            });
-            ps.isRtl = false;
+            if (scroolWidgetId && document.getElementById(scroolWidgetId)) {
+                const ps = new PerfectScrollbar(document.getElementById(scroolWidgetId), {
+                    wheelSpeed: 2,
+                    wheelPropagation: true,
+                    minScrollbarLength: 20,
+                });
+                ps.isRtl = false;
+            }
         });
     };
 
@@ -183,10 +185,8 @@ var Travl = (function () {
     };
 
     var handlePerfectScrollbar = function () {
-        if (jQuery(".dlabnav-scroll").length > 0) {
-            //const qs = new PerfectScrollbar('.dlabnav-scroll');
-            const qs = new PerfectScrollbar(".dlabnav-scroll");
-
+        if (jQuery(".dlabnav-scroll").length > 0 && document.querySelector(".dlabnav-scroll")) {
+            const qs = new PerfectScrollbar(document.querySelector(".dlabnav-scroll"));
             qs.isRtl = false;
         }
     };
@@ -325,8 +325,8 @@ var Travl = (function () {
     };
 
     var domoPanel = function () {
-        if (jQuery(".dlab-demo-content").length > 0) {
-            const ps = new PerfectScrollbar(".dlab-demo-content");
+        if (jQuery(".dlab-demo-content").length > 0 && document.querySelector(".dlab-demo-content")) {
+            const ps = new PerfectScrollbar(document.querySelector(".dlab-demo-content"));
         }
         $(".dlab-demo-trigger").on("click", function () {
             $(".dlab-demo-panel").addClass("show");

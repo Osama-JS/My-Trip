@@ -33,12 +33,15 @@ class City extends Model
     ];
 
 
+    protected $appends = ['name'];
+
     /**
      * Get localized name based on current locale.
      */
     public function getNameAttribute(): ?string
     {
-        return $this->title;
+        $locale = app()->getLocale();
+        return $this->{"title_{$locale}"} ?? $this->title_en;
     }
 
     /**
