@@ -34,7 +34,10 @@ class AgentTripController extends Controller
 
         // Apply Filters
         if ($request->filled('search')) {
-            $query->where('title', 'like', '%' . $request->search . '%');
+            $query->where(function($q) use ($request) {
+                $q->where('title_ar', 'like', '%' . $request->search . '%')
+                  ->orWhere('title_en', 'like', '%' . $request->search . '%');
+            });
         }
         if ($request->filled('country_id')) {
             $query->where('to_country_id', $request->country_id);
@@ -95,6 +98,12 @@ class AgentTripController extends Controller
         $data['company_id'] = $user->company_id;
         $data['user_id'] = $user->id;
 
+        // Map titles and descriptions for bilingual support in DB
+        $data['title_ar'] = $data['title'];
+        $data['title_en'] = $data['title'];
+        $data['description_ar'] = $data['description'];
+        $data['description_en'] = $data['description'];
+
         // Checkbox handling
         $data['is_public']   = $request->boolean('is_public');
         $data['active']      = $request->has('active') ? $request->boolean('active') : true;
@@ -147,6 +156,12 @@ class AgentTripController extends Controller
             'category_ids'          => 'nullable|array',
             'category_ids.*'        => 'exists:trip_categories,id',
         ]);
+
+        // Map titles and descriptions for bilingual support in DB
+        $data['title_ar'] = $data['title'];
+        $data['title_en'] = $data['title'];
+        $data['description_ar'] = $data['description'];
+        $data['description_en'] = $data['description'];
 
         // Checkbox handling
         $data['is_public']   = $request->boolean('is_public');
