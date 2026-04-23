@@ -187,8 +187,8 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
             Route::get('/data', [BookingController::class, 'getHotelData'])->name('data');
             Route::get('/requests', [BookingController::class, 'hotelRequests'])->name('requests');
             Route::get('/requests/data', [BookingController::class, 'getHotelRequestsData'])->name('requests.data');
-            Route::get('/{id}/show', [BookingController::class, 'showHotel'])->name('show_detail');
-            Route::get('/{id}/invoice', [BookingController::class, 'invoice'])->name('invoice_detail');
+            Route::get('/{id}/show', [BookingController::class, 'showHotel'])->name('show');
+            Route::get('/{id}/invoice', [BookingController::class, 'invoice'])->name('invoice');
 
             // Fallback Management
             Route::get('/paid-not-confirmed', [BookingController::class, 'getPaidHotelBookings'])->name('paid_not_confirmed');
@@ -270,6 +270,24 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     Route::put('/trips/itinerary/{itinerary}', [TripsController::class, 'updateItinerary'])->name('trips.itinerary.update');
     Route::post('/trips/itinerary/reorder', [TripsController::class, 'reorderItinerary'])->name('trips.itinerary.reorder');
     Route::delete('/trips/itinerary/{itinerary}', [TripsController::class, 'destroyItinerary'])->name('trips.itinerary.destroy');
+
+    // Trip Pricing Management View
+    Route::get('/trips/{trip}/pricing', [TripsController::class, 'pricing'])->name('trips.pricing');
+
+    // Trip Packages (multi-tier pricing)
+    Route::post('/trips/{trip}/packages', [App\Http\Controllers\Admin\TripPackageController::class, 'store'])->name('packages.store');
+    Route::put('/trips/{trip}/packages/{package}', [App\Http\Controllers\Admin\TripPackageController::class, 'update'])->name('packages.update');
+    Route::delete('/trips/{trip}/packages/{package}', [App\Http\Controllers\Admin\TripPackageController::class, 'destroy'])->name('packages.destroy');
+
+    // Trip Seasons (date-range pricing)
+    Route::post('/trips/{trip}/seasons', [App\Http\Controllers\Admin\TripSeasonController::class, 'store'])->name('seasons.store');
+    Route::put('/trips/{trip}/seasons/{season}', [App\Http\Controllers\Admin\TripSeasonController::class, 'update'])->name('seasons.update');
+    Route::delete('/trips/{trip}/seasons/{season}', [App\Http\Controllers\Admin\TripSeasonController::class, 'destroy'])->name('seasons.destroy');
+
+    // Trip Add-ons
+    Route::post('/trips/{trip}/addons', [App\Http\Controllers\Admin\TripAddonController::class, 'store'])->name('addons.store');
+    Route::put('/trips/{trip}/addons/{addon}', [App\Http\Controllers\Admin\TripAddonController::class, 'update'])->name('addons.update');
+    Route::delete('/trips/{trip}/addons/{addon}', [App\Http\Controllers\Admin\TripAddonController::class, 'destroy'])->name('addons.destroy');
 
 
     // Trip Categories

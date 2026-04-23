@@ -454,24 +454,8 @@
 </div>
 
 {{-- Premium Pagination --}}
-@if($bookings->hasPages())
-    <div class="pagination-wrapper">
-        <ul class="pagination">
-            @if (!$bookings->onFirstPage())
-                <li class="page-item"><a class="page-link" href="{{ $bookings->previousPageUrl() }}"><i class="fas fa-chevron-right"></i></a></li>
-            @endif
-
-            @foreach ($bookings->getUrlRange(1, $bookings->lastPage()) as $page => $url)
-                <li class="page-item {{ $page == $bookings->currentPage() ? 'active' : '' }}">
-                    <a class="page-link" href="{{ $url }}">{{ $page }}</a>
-                </li>
-            @endforeach
-
-            @if ($bookings->hasMorePages())
-                <li class="page-item"><a class="page-link" href="{{ $bookings->nextPageUrl() }}"><i class="fas fa-chevron-left"></i></a></li>
-            @endif
-        </ul>
-    </div>
-@endif
+<div class="pagination-wrapper">
+    {{ $bookings->links() }}
+</div>
 
 @endsection

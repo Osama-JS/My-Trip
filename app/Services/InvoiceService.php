@@ -65,7 +65,7 @@ class InvoiceService
                 $fileNamePrefix = 'flight_invoice_';
             }
 
-            $booking->load(['user', 'passengers']);
+            $booking->load(['user', 'passengers', 'package', 'season']);
 
             $mpdf = new \Mpdf\Mpdf([
                 'mode' => 'utf-8',

@@ -10,7 +10,7 @@
     },
     "servers": [
         {
-            "url": "http://localhost/my-trip/public",
+            "url": "https://flyvio.net",
             "description": "Development Server"
         },
         {
@@ -1924,6 +1924,18 @@
                                     "bookingNote": {
                                         "type": "string",
                                         "example": ""
+                                    },
+                                    "airline_code": {
+                                        "type": "string",
+                                        "example": "XY"
+                                    },
+                                    "airline_name": {
+                                        "type": "string",
+                                        "example": "Flynas"
+                                    },
+                                    "flight_number": {
+                                        "type": "string",
+                                        "example": "XY123"
                                     },
                                     "passengers": {
                                         "type": "array",
@@ -4316,6 +4328,52 @@
                         }
                     },
                     {
+                        "name": "reference",
+                        "in": "query",
+                        "description": "Filter by booking reference",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "passenger",
+                        "in": "query",
+                        "description": "Filter by passenger name or passport",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "departure_date",
+                        "in": "query",
+                        "description": "Filter by departure date (Y-m-d)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "airline_code",
+                        "in": "query",
+                        "description": "Filter by airline code",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "flight_number",
+                        "in": "query",
+                        "description": "Filter by flight number",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
                         "name": "per_page",
                         "in": "query",
                         "required": false,
@@ -4504,6 +4562,42 @@
                         "name": "status",
                         "in": "query",
                         "description": "Filter by status (pending, confirmed, cancelled)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "reference",
+                        "in": "query",
+                        "description": "Filter by booking reference or ID",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "guest",
+                        "in": "query",
+                        "description": "Filter by guest name",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "hotel",
+                        "in": "query",
+                        "description": "Filter by hotel name",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "city",
+                        "in": "query",
+                        "description": "Filter by city name",
                         "required": false,
                         "schema": {
                             "type": "string"

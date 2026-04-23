@@ -20,6 +20,7 @@ class FlightBooking extends Model
         'childs',
         'infants',
         'flight_class',
+        'flight_number',
         'itinerary_data',
         'total_amount',
         'currency',

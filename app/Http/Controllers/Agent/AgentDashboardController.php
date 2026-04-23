@@ -76,7 +76,7 @@ class AgentDashboardController extends Controller
             ->selectRaw('trip_id, count(*) as count')
             ->groupBy('trip_id')
             ->orderByDesc('count')
-            ->with('trip:id,title')
+            ->with('trip:id,title_ar,title_en')
             ->limit(5)
             ->get()
             ->map(function($b) {

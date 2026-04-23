@@ -240,18 +240,7 @@
     .btn-edit:hover { border-color: #3b82f6; color: #3b82f6; background: #eff6ff; }
     .btn-delete:hover { border-color: #ef4444; color: #ef4444; background: #fef2f2; }
 
-    /* Premium Pagination */
-    .pagination-wrapper { margin-top: 40px; }
-    .pagination {
-        display: flex; justify-content: center; gap: 8px; list-style: none; padding: 0;
-    }
-    .page-item .page-link {
-        width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
-        border-radius: 12px; background: #fff; border: 1.5px solid #f1f5f9;
-        color: #64748b; font-weight: 700; text-decoration: none; transition: all 0.2s;
-    }
-    .page-item.active .page-link { background: var(--accent-color); color: #fff; border-color: var(--accent-color); box-shadow: 0 5px 15px rgba(232, 83, 46, 0.3); }
-    .page-item:not(.active) .page-link:hover { border-color: var(--accent-color); color: var(--accent-color); }
+
 
     @media (max-width: 768px) {
         .trip-card { flex-direction: column; }
@@ -412,26 +401,9 @@
 @endforelse
 
 {{-- Premium Pagination --}}
-@if($trips->hasPages())
-    <div class="pagination-wrapper">
-        <ul class="pagination">
-            {{-- Simple implementation for demo/override --}}
-            @if (!$trips->onFirstPage())
-                <li class="page-item"><a class="page-link" href="{{ $trips->previousPageUrl() }}"><i class="fas fa-chevron-right"></i></a></li>
-            @endif
-
-            @foreach ($trips->getUrlRange(1, $trips->lastPage()) as $page => $url)
-                <li class="page-item {{ $page == $trips->currentPage() ? 'active' : '' }}">
-                    <a class="page-link" href="{{ $url }}">{{ $page }}</a>
-                </li>
-            @endforeach
-
-            @if ($trips->hasMorePages())
-                <li class="page-item"><a class="page-link" href="{{ $trips->nextPageUrl() }}"><i class="fas fa-chevron-left"></i></a></li>
-            @endif
-        </ul>
-    </div>
-@endif
+<div class="pagination-wrapper">
+    {{ $trips->links() }}
+</div>
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

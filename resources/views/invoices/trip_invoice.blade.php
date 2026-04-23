@@ -105,11 +105,32 @@
             </thead>
             <tbody>
                 <tr>
-                    <td>{{ $booking->trip->title ?? 'حجز رحلة سياحية' }}</td>
+                    <td>
+                        <div style="font-weight: bold; font-size: 14px;">{{ $booking->trip->title ?? 'حجز رحلة سياحية' }}</div>
+                        @if($booking->package || $booking->season || $booking->occupancy)
+                        <div style="margin-top: 5px; font-size: 11px; color: #555;">
+                            @if($booking->package) • {{ __('Package') }}: {{ app()->getLocale() == 'ar' ? $booking->package->name_ar : $booking->package->name_en }} @endif
+                            @if($booking->season) • {{ __('Season') }}: {{ app()->getLocale() == 'ar' ? $booking->season->name_ar : $booking->season->name_en }} @endif
+                            @if($booking->occupancy) • {{ __('Room') }}: {{ ucfirst($booking->occupancy) }} @endif
+                        </div>
+                        @endif
+                    </td>
                     <td>{{ $booking->tickets_count }}</td>
-                    <td>{{ number_format($booking->total_price / ($booking->tickets_count ?: 1), 2) }} ر.س</td>
-                    <td>{{ number_format($booking->total_price, 2) }} ر.س</td>
+                    <td>{{ number_format(($booking->total_price - (collect($booking->addons)->sum('price') * $booking->tickets_count)) / ($booking->tickets_count ?: 1), 2) }} ر.س</td>
+                    <td>{{ number_format($booking->total_price - (collect($booking->addons)->sum('price') * $booking->tickets_count), 2) }} ر.س</td>
                 </tr>
+                @if($booking->addons && count($booking->addons) > 0)
+                    @foreach($booking->addons as $addon)
+                    <tr style="background-color: #fcfcfc;">
+                        <td style="padding-right: 25px;">
+                            <i style="color: #0f4c81;">+</i> {{ $addon['name'] }} (إضافات / Add-on)
+                        </td>
+                        <td>{{ $booking->tickets_count }}</td>
+                        <td>{{ number_format($addon['price'], 2) }} ر.س</td>
+                        <td>{{ number_format($addon['price'] * $booking->tickets_count, 2) }} ر.س</td>
+                    </tr>
+                    @endforeach
+                @endif
             </tbody>
             <tfoot>
                 <tr class="total-row">

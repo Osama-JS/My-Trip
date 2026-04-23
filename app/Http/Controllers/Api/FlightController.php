@@ -364,6 +364,9 @@ class FlightController extends Controller
                     new OA\Property(property: "countryCode", type: "string", example: "966"),
                     new OA\Property(property: "fareType", type: "string", example: "Private"),
                     new OA\Property(property: "bookingNote", type: "string", example: ""),
+                    new OA\Property(property: "airline_code", type: "string", example: "XY"),
+                    new OA\Property(property: "airline_name", type: "string", example: "Flynas"),
+                    new OA\Property(property: "flight_number", type: "string", example: "XY123"),
                     new OA\Property(
                         property: "passengers",
                         type: "array",
@@ -438,6 +441,9 @@ class FlightController extends Controller
             'passengers.*.passport_no' => 'nullable|string',
             'passengers.*.passport_issue_country' => 'nullable|string|size:2',
             'passengers.*.passport_expiry_date' => 'nullable|date_format:Y-m-d',
+            'airline_code' => 'nullable|string',
+            'airline_name' => 'nullable|string',
+            'flight_number' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -497,6 +503,8 @@ class FlightController extends Controller
                     'ticketing_time_limit' => isset($bookingResult['TicketingTimeLimit']) 
                         ? \Carbon\Carbon::parse($bookingResult['TicketingTimeLimit']) 
                         : now()->addMinutes(3),
+                    'airline_code' => $request->airline_code,
+                    'airline_name' => $request->airline_name,
                 ]);
 
                 Log::info('Local Booking Record Created', ['booking_id' => $booking->id]);
@@ -515,6 +523,7 @@ class FlightController extends Controller
                         'childs'         => (int)($request->childs ?? 0),
                         'infants'        => (int)($request->infants ?? 0),
                         'flight_class'   => $request->class ?? 'Economy',
+                        'flight_number' => $request->flight_number,
                         'itinerary_data' => $request->OriginDestinationInfo,
                         'total_amount'   => $totalAmount,
                         'currency'       => 'SAR',

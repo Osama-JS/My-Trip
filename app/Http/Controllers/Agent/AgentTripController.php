@@ -34,7 +34,10 @@ class AgentTripController extends Controller
 
         // Apply Filters
         if ($request->filled('search')) {
-            $query->where('title', 'like', '%' . $request->search . '%');
+            $query->where(function($q) use ($request) {
+                $q->where('title_ar', 'like', '%' . $request->search . '%')
+                  ->orWhere('title_en', 'like', '%' . $request->search . '%');
+            });
         }
         if ($request->filled('country_id')) {
             $query->where('to_country_id', $request->country_id);

@@ -29,6 +29,11 @@ class UserBookingController extends Controller
         parameters: [
             new OA\Parameter(name: "Accept-Language", in: "header", required: false, schema: new OA\Schema(type: "string", default: "en")),
             new OA\Parameter(name: "status", in: "query", description: "Filter by status (pending, confirmed, cancelled)", required: false, schema: new OA\Schema(type: "string")),
+            new OA\Parameter(name: "reference", in: "query", description: "Filter by booking reference", required: false, schema: new OA\Schema(type: "string")),
+            new OA\Parameter(name: "passenger", in: "query", description: "Filter by passenger name or passport", required: false, schema: new OA\Schema(type: "string")),
+            new OA\Parameter(name: "departure_date", in: "query", description: "Filter by departure date (Y-m-d)", required: false, schema: new OA\Schema(type: "string", format: "date")),
+            new OA\Parameter(name: "airline_code", in: "query", description: "Filter by airline code", required: false, schema: new OA\Schema(type: "string")),
+            new OA\Parameter(name: "flight_number", in: "query", description: "Filter by flight number", required: false, schema: new OA\Schema(type: "string")),
             new OA\Parameter(name: "per_page", in: "query", required: false, schema: new OA\Schema(type: "integer", default: 10)),
             new OA\Parameter(name: "page", in: "query", required: false, schema: new OA\Schema(type: "integer", default: 1))
         ],
@@ -40,11 +45,46 @@ class UserBookingController extends Controller
     {
         $perPage = $request->input('per_page', 10);
         $status = $request->input('status');
+        $reference = $request->input('reference');
+        $passenger = $request->input('passenger');
+        $departureDate = $request->input('departure_date');
+        $airlineCode = $request->input('airline_code');
+        $flightNumber = $request->input('flight_number');
 
-        $query = Booking::where('user_id', $request->user()->id);
+        $query = Booking::with(['passengers', 'flightBooking'])
+            ->where('user_id', $request->user()->id);
 
         if ($status) {
             $query->where('status', $status);
+        }
+
+        if ($reference) {
+            $query->where('booking_reference', 'like', "%{$reference}%");
+        }
+
+        if ($passenger) {
+            $query->whereHas('passengers', function ($q) use ($passenger) {
+                $q->where('name', 'like', "%{$passenger}%")
+                  ->orWhere('first_name', 'like', "%{$passenger}%")
+                  ->orWhere('last_name', 'like', "%{$passenger}%")
+                  ->orWhere('passport_number', 'like', "%{$passenger}%");
+            });
+        }
+
+        if ($departureDate) {
+            $query->whereHas('flightBooking', function ($q) use ($departureDate) {
+                $q->whereDate('departure_date', $departureDate);
+            });
+        }
+
+        if ($airlineCode) {
+            $query->where('airline_code', $airlineCode);
+        }
+
+        if ($flightNumber) {
+            $query->whereHas('flightBooking', function ($q) use ($flightNumber) {
+                $q->where('flight_number', 'like', "%{$flightNumber}%");
+            });
         }
 
         $bookings = $query->latest()->paginate($perPage);
@@ -273,6 +313,10 @@ class UserBookingController extends Controller
         parameters: [
             new OA\Parameter(name: "Accept-Language", in: "header", required: false, schema: new OA\Schema(type: "string", default: "en")),
             new OA\Parameter(name: "status", in: "query", description: "Filter by status (pending, confirmed, cancelled)", required: false, schema: new OA\Schema(type: "string")),
+            new OA\Parameter(name: "reference", in: "query", description: "Filter by booking reference or ID", required: false, schema: new OA\Schema(type: "string")),
+            new OA\Parameter(name: "guest", in: "query", description: "Filter by guest name", required: false, schema: new OA\Schema(type: "string")),
+            new OA\Parameter(name: "hotel", in: "query", description: "Filter by hotel name", required: false, schema: new OA\Schema(type: "string")),
+            new OA\Parameter(name: "city", in: "query", description: "Filter by city name", required: false, schema: new OA\Schema(type: "string")),
             new OA\Parameter(name: "per_page", in: "query", required: false, schema: new OA\Schema(type: "integer", default: 10)),
             new OA\Parameter(name: "page", in: "query", required: false, schema: new OA\Schema(type: "integer", default: 1))
         ],
@@ -284,11 +328,39 @@ class UserBookingController extends Controller
     {
         $perPage = $request->input('per_page', 10);
         $status = $request->input('status');
+        $reference = $request->input('reference');
+        $guest = $request->input('guest');
+        $hotel = $request->input('hotel');
+        $city = $request->input('city');
 
-        $query = HotelBooking::where('user_id', $request->user()->id);
+        $query = HotelBooking::with(['passengers'])
+            ->where('user_id', $request->user()->id);
 
         if ($status) {
             $query->where('status', $status);
+        }
+
+        if ($reference) {
+            $query->where(function ($q) use ($reference) {
+                $q->where('id', $reference)
+                  ->orWhere('reference_num', 'like', "%{$reference}%");
+            });
+        }
+
+        if ($guest) {
+            $query->whereHas('passengers', function ($q) use ($guest) {
+                $q->where('name', 'like', "%{$guest}%")
+                  ->orWhere('first_name', 'like', "%{$guest}%")
+                  ->orWhere('last_name', 'like', "%{$guest}%");
+            });
+        }
+
+        if ($hotel) {
+            $query->where('hotel_name', 'like', "%{$hotel}%");
+        }
+
+        if ($city) {
+            $query->where('city_name', 'like', "%{$city}%");
         }
 
         $bookings = $query->latest()->paginate($perPage);

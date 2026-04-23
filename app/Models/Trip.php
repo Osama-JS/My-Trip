@@ -19,6 +19,12 @@ class Trip extends Model
        'tickets',
        'description_ar',
        'description_en',
+       'includes_ar',
+       'includes_en',
+       'excludes_ar',
+       'excludes_en',
+       'children_policy_ar',
+       'children_policy_en',
        'is_public',
        'company_id',
        'is_ad',
@@ -118,6 +124,23 @@ class Trip extends Model
         return $this->hasMany(TripBooking::class, 'trip_id');
     }
 
+    // ─── New Package System ────────────────────────────────────────
+
+    public function seasons()
+    {
+        return $this->hasMany(TripSeason::class)->orderBy('start_date');
+    }
+
+    public function packages()
+    {
+        return $this->hasMany(TripPackage::class)->orderBy('sort_order');
+    }
+
+    public function addons()
+    {
+        return $this->hasMany(TripAddon::class);
+    }
+
 
     /**
      * Get the trip page visits.
@@ -145,7 +168,7 @@ class Trip extends Model
     /**
      * Scope for active trips
      */
-      public function scopeActive($query)
+    public function scopeActive($query)
     {
         return $query->where('active', true)
                      ->where('is_public', true)
@@ -153,6 +176,63 @@ class Trip extends Model
                          $q->whereNull('expiry_date')
                            ->orWhere('expiry_date', '>=', now()->toDateString());
                      });
+    }
+
+    /**
+     * Localized Title Accessor
+     */
+    public function getTitleAttribute()
+    {
+        $locale = app()->getLocale();
+        return $locale === 'ar' ? ($this->title_ar ?? $this->title_en) : ($this->title_en ?? $this->title_ar);
+    }
+
+    /**
+     * Localized Description Accessor
+     */
+    public function getDescriptionAttribute()
+    {
+        $locale = app()->getLocale();
+        return $locale === 'ar' ? ($this->description_ar ?? $this->description_en) : ($this->description_en ?? $this->description_ar);
+    }
+
+    /**
+     * Starting Price Accessor (new package system-aware)
+     * Returns the minimum price across all packages, or falls back to legacy price.
+     */
+    public function getStartingPriceAttribute(): ?float
+    {
+        $packageMin = $this->packages()->with('prices')->get()
+            ->flatMap(fn($pkg) => $pkg->prices)->min('price');
+
+        return $packageMin ?? $this->price;
+    }
+
+    /**
+     * Localized Includes Accessor
+     */
+    public function getIncludesAttribute(): ?string
+    {
+        $locale = app()->getLocale();
+        return $locale === 'ar' ? ($this->includes_ar ?? $this->includes_en) : ($this->includes_en ?? $this->includes_ar);
+    }
+
+    /**
+     * Localized Excludes Accessor
+     */
+    public function getExcludesAttribute(): ?string
+    {
+        $locale = app()->getLocale();
+        return $locale === 'ar' ? ($this->excludes_ar ?? $this->excludes_en) : ($this->excludes_en ?? $this->excludes_ar);
+    }
+
+    /**
+     * Localized Children Policy Accessor
+     */
+    public function getChildrenPolicyAttribute(): ?string
+    {
+        $locale = app()->getLocale();
+        return $locale === 'ar' ? ($this->children_policy_ar ?? $this->children_policy_en) : ($this->children_policy_en ?? $this->children_policy_ar);
     }
 
 }

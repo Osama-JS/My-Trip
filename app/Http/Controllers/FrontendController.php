@@ -154,7 +154,11 @@ class FrontendController extends Controller
     public function tripDetails($id)
     {
         $trip = Trip::active()
-            ->with(['images', 'fromCountry', 'toCountry', 'toCity', 'fromCity', 'company', 'rates.user', 'categories', 'itineraries'])
+            ->with([
+                'images', 'fromCountry', 'toCountry', 'toCity', 'fromCity', 
+                'company', 'rates.user', 'categories', 'itineraries',
+                'seasons', 'packages.prices', 'addons'
+            ])
             ->findOrFail($id);
 
         // Increment page visits
@@ -828,15 +832,48 @@ class FrontendController extends Controller
         $request->validate([
             'trip_id' => 'required|exists:trips,id',
             'tickets_count' => 'required|integer|min:1',
-            'booking_date' => 'required|date',
-            'notes' => 'nullable|string|max:500',
+            'package_id' => 'nullable|exists:trip_packages,id',
+            'season_id' => 'nullable|exists:trip_seasons,id',
+            'occupancy_type' => 'nullable|in:single,double,triple,child',
+            'booking_date' => 'nullable|date',
         ]);
 
-        $trip = Trip::active()->findOrFail($request->trip_id);
+        $trip = Trip::active()->with(['seasons', 'packages.prices'])->findOrFail($request->trip_id);
         
+        $selectedPackage = $request->package_id ? \App\Models\TripPackage::find($request->package_id) : null;
+        $selectedSeason = $request->season_id ? \App\Models\TripSeason::find($request->season_id) : null;
+
+        $unitPrice = $trip->price;
+        if ($selectedPackage && $selectedSeason && $request->occupancy_type) {
+            $priceRecord = \App\Models\TripPackagePrice::where([
+                'trip_package_id' => $request->package_id,
+                'trip_season_id' => $request->season_id,
+                'occupancy_type' => $request->occupancy_type
+            ])->first();
+            if ($priceRecord) {
+                $unitPrice = $priceRecord->price;
+            }
+        }
+
+        // Handle Add-ons
+        $selectedAddons = [];
+        if ($request->has('addons') && is_array($request->addons)) {
+            $selectedAddons = \App\Models\TripAddon::whereIn('id', $request->addons)->get();
+            foreach ($selectedAddons as $addon) {
+                $unitPrice += $addon->extra_cost;
+            }
+        }
+
         return view('frontend.trips.booking', [
             'trip' => $trip,
             'tickets_count' => $request->tickets_count,
+            'package_id' => $request->package_id,
+            'season_id' => $request->season_id,
+            'occupancy_type' => $request->occupancy_type,
+            'selectedPackage' => $selectedPackage,
+            'selectedSeason' => $selectedSeason,
+            'selectedAddons' => $selectedAddons,
+            'unitPrice' => $unitPrice,
             'booking_date' => $request->booking_date,
             'notes' => $request->notes
         ]);
@@ -850,6 +887,11 @@ class FrontendController extends Controller
         $request->validate([
             'trip_id' => 'required|exists:trips,id',
             'tickets_count' => 'required|integer|min:1',
+            'package_id' => 'nullable|exists:trip_packages,id',
+            'season_id' => 'nullable|exists:trip_seasons,id',
+            'occupancy_type' => 'nullable|in:single,double,triple,child',
+            'addons' => 'nullable|array',
+            'addons.*' => 'exists:trip_addons,id',
             'passengers' => 'required|array|min:1',
             'passengers.*.name' => 'required|string|max:255',
             'passengers.*.phone' => 'required|string|max:50',
@@ -861,23 +903,59 @@ class FrontendController extends Controller
 
         $trip = Trip::active()->findOrFail($request->trip_id);
 
-        $totalPrice = $trip->price * $request->tickets_count;
+        // Price calculation logic
+        $unitPrice = $trip->price; // Default to legacy price
 
-        // Extra passenger pricing
-        if ($trip->base_capacity && $request->tickets_count > $trip->base_capacity && $trip->extra_passenger_price) {
+        if ($request->package_id && $request->season_id && $request->occupancy_type) {
+            // New Tiered Pricing
+            $priceRecord = \App\Models\TripPackagePrice::where([
+                'trip_package_id' => $request->package_id,
+                'trip_season_id' => $request->season_id,
+                'occupancy_type' => $request->occupancy_type
+            ])->first();
+
+            if ($priceRecord) {
+                $unitPrice = $priceRecord->price;
+            }
+        }
+
+        // Handle Add-ons Snapshot and Cost
+        $addonsSnapshot = [];
+        $addonsCostPerPax = 0;
+        if ($request->has('addons') && is_array($request->addons)) {
+            $selectedAddons = \App\Models\TripAddon::whereIn('id', $request->addons)->get();
+            foreach ($selectedAddons as $addon) {
+                $addonsCostPerPax += $addon->extra_cost;
+                $addonsSnapshot[] = [
+                    'id'    => $addon->id,
+                    'name'  => $addon->name, // uses accessor
+                    'price' => $addon->extra_cost,
+                ];
+            }
+        }
+
+        $totalPrice = ($unitPrice + $addonsCostPerPax) * $request->tickets_count;
+
+        // Legacy Extra passenger pricing (Only if not using packages or as a fallback)
+        if (!$request->package_id && $trip->base_capacity && $request->tickets_count > $trip->base_capacity && $trip->extra_passenger_price) {
             $extraPassengers = $request->tickets_count - $trip->base_capacity;
-            $totalPrice = ($trip->price * $trip->base_capacity) + ($trip->extra_passenger_price * $extraPassengers);
+            $baseTotal = ($trip->price * $trip->base_capacity) + ($trip->extra_passenger_price * $extraPassengers);
+            $totalPrice = $baseTotal + ($addonsCostPerPax * $request->tickets_count);
         }
 
         $booking = TripBooking::create([
             'user_id' => auth()->id(),
             'trip_id' => $trip->id,
+            'package_id' => $request->package_id,
+            'season_id' => $request->season_id,
+            'occupancy' => $request->occupancy_type,
             'status' => 'pending',
             'booking_state' => TripBooking::STATE_RECEIVED,
             'total_price' => $totalPrice,
             'booking_date' => $request->booking_date ?? $trip->expiry_date ?? now()->addDay(),
             'tickets_count' => $request->tickets_count,
             'notes' => $request->notes,
+            'addons' => $addonsSnapshot,
         ]);
 
         // Process Passengers

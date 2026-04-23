@@ -236,8 +236,8 @@ class BookingController extends Controller
                 'created_at'      => optional($hb->created_at)->format('Y-m-d H:i'),
                 'actions'         => view('admin.bookings.partials.actions', [
                     'id'            => $hb->id,
-                    'show_route'    => 'admin.bookings.hotels.show_detail',
-                    'invoice_route' => 'admin.bookings.hotels.invoice_detail'
+                    'show_route'    => 'admin.bookings.hotels.show',
+                    'invoice_route' => 'admin.bookings.hotels.invoice'
                 ])->render()
             ];
         });
@@ -284,8 +284,8 @@ class BookingController extends Controller
                 'status'  => $hb->status ?? 'pending',
                 'actions' => view('admin.bookings.partials.actions', [
                     'id' => $hb->id,
-                    'show_route' => 'admin.bookings.hotels.show_detail',
-                    'invoice_route' => 'admin.bookings.hotels.invoice_detail'
+                    'show_route' => 'admin.bookings.hotels.show',
+                    'invoice_route' => 'admin.bookings.hotels.invoice'
                 ])->render()
             ];
         });

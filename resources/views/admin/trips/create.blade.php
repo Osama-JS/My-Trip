@@ -53,7 +53,54 @@
                                         <x-forms.select name="company_id" :label="__('Company')" :options="$companies" searchable required />
                                     </div>
                                     <div class="col-md-6">
-                                        <x-forms.input-text name="duration" :label="__('Duration')" placeholder="e.g. 5 Days" icon="fa fa-clock" />
+                                        <x-forms.input-text name="duration" :label="__('Duration')" placeholder="e.g. 8 Days / 7 Nights" icon="fa fa-clock" />
+                                    </div>
+                                    
+                                    <!-- Program Details -->
+                                    <div class="col-md-12 mt-4">
+                                        <div class="form-section-title mb-3">
+                                            <h5 class="font-w600"><i class="fas fa-list-check me-2 text-primary"></i> {{ __('Program Details') }}</h5>
+                                            <hr>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label font-w600">{{ __('Includes (ar)') }}</label>
+                                            <textarea id="includes_ar" name="includes_ar" class="form-control" rows="5"></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label font-w600">{{ __('Includes (en)') }}</label>
+                                            <textarea id="includes_en" name="includes_en" class="form-control" rows="5"></textarea>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label font-w600">{{ __('Excludes (ar)') }}</label>
+                                            <textarea id="excludes_ar" name="excludes_ar" class="form-control" rows="5"></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label font-w600">{{ __('Excludes (en)') }}</label>
+                                            <textarea id="excludes_en" name="excludes_en" class="form-control" rows="5"></textarea>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label font-w600">{{ __('Children Policy (ar)') }}</label>
+                                            <textarea id="children_policy_ar" name="children_policy_ar" class="form-control" rows="5"></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label font-w600">{{ __('Children Policy (en)') }}</label>
+                                            <textarea id="children_policy_en" name="children_policy_en" class="form-control" rows="5"></textarea>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -78,13 +125,14 @@
                                         <x-forms.select name="to_city_id" id="to_city_id" :label="__('To City')" :options="$cities" searchable required />
                                     </div>
                                     <div class="col-md-4">
-                                        <x-forms.input-text name="price" :label="__('Current Price')" required icon="fa fa-dollar-sign" />
+                                        <x-forms.input-text name="price" :label="__('Base Price (Legacy)')" icon="fa fa-dollar-sign" />
+                                        <small class="text-muted">{{ __('Use if not using the package system') }}</small>
                                     </div>
                                     <div class="col-md-4">
-                                        <x-forms.input-text name="price_before_discount" :label="__('Old Price')" icon="fa fa-tag" />
+                                        <x-forms.input-text name="price_before_discount" :label="__('Old Price (Legacy)')" icon="fa fa-tag" />
                                     </div>
                                     <div class="col-md-4">
-                                        <x-forms.input-text name="tickets" :label="__('Tickets')" required icon="fa fa-ticket-alt" />
+                                        <x-forms.input-text name="tickets" :label="__('Tickets')" icon="fa fa-ticket-alt" />
                                     </div>
                                     <div class="col-md-4">
                                         <x-forms.input-text name="personnel_capacity" :label="__('Max Capacity')" icon="fa fa-users" />
@@ -96,8 +144,8 @@
                                         <x-forms.input-text name="extra_passenger_price" :label="__('Extra Pax Price')" icon="fa fa-money-bill-wave" />
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label font-w600">{{ __('Expiry Date') }} <span class="text-danger">*</span></label>
-                                        <input type="date" name="expiry_date" class="form-control" required>
+                                        <label class="form-label font-w600">{{ __('Expiry Date') }}</label>
+                                        <input type="date" name="expiry_date" class="form-control">
                                     </div>
                                 </div>
 
@@ -138,30 +186,20 @@
 @push('scripts')
 <script src="https://cdn.ckeditor.com/ckeditor5/35.0.1/classic/ckeditor.js"></script>
 <script>
-    ClassicEditor
-        .create(document.querySelector('#description_ar'), {
-            language: '{{ app()->getLocale() }}',
-            toolbar: [ 'heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', 'insertTable', 'undo', 'redo' ]
-        })
-        .then(editor => {
-            window.editor = editor;
-        })
-        .catch(error => {
-            console.error(error);
-        });
+    const editorConfig = {
+        language: '{{ app()->getLocale() }}',
+        toolbar: [ 'heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', 'insertTable', 'undo', 'redo' ]
+    };
 
+    ClassicEditor.create(document.querySelector('#description_ar'), editorConfig).catch(error => console.error(error));
+    ClassicEditor.create(document.querySelector('#description_en'), editorConfig).catch(error => console.error(error));
+    ClassicEditor.create(document.querySelector('#includes_ar'), editorConfig).catch(error => console.error(error));
+    ClassicEditor.create(document.querySelector('#includes_en'), editorConfig).catch(error => console.error(error));
+    ClassicEditor.create(document.querySelector('#excludes_ar'), editorConfig).catch(error => console.error(error));
+    ClassicEditor.create(document.querySelector('#excludes_en'), editorConfig).catch(error => console.error(error));
+    ClassicEditor.create(document.querySelector('#children_policy_ar'), editorConfig).catch(error => console.error(error));
+    ClassicEditor.create(document.querySelector('#children_policy_en'), editorConfig).catch(error => console.error(error));
 
-    ClassicEditor
-        .create(document.querySelector('#description_en'), {
-            language: '{{ app()->getLocale() }}',
-            toolbar: [ 'heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', 'insertTable', 'undo', 'redo' ]
-        })
-        .then(editor => {
-            window.editor = editor;
-        })
-        .catch(error => {
-            console.error(error);
-        });
 
     $(document).ready(function() {
         function loadCities(countryId, targetSelectId) {

@@ -7,305 +7,179 @@
 <style>
 /* ─── Welcome Banner ─── */
 .welcome-banner {
-    background: #ffffff;
-    border-radius: 16px;
-    padding: 32px 36px;
-    margin-bottom: 28px;
-    color: #1a2537;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.7)), url('{{ asset('agent_welcome_banner_bg_1776845528681.png') }}');
+    background-size: cover;
+    background-position: center;
+    border-radius: 24px;
+    padding: 45px 50px;
+    margin-bottom: 35px;
+    color: #ffffff;
     position: relative;
     overflow: hidden;
-    border: 1px solid #f1f5f9;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+    border: 1px solid rgba(255,255,255,0.1);
 }
 
-.welcome-banner::after {
-    content: '';
-    position: absolute;
-    top: -20px;
-    inset-inline-end: -20px;
-    width: 120px;
-    height: 120px;
-    background: #f8fafc;
-    border-radius: 50%;
-    z-index: 0;
-}
-
-.welcome-banner h2, .welcome-banner p {
+.welcome-banner .banner-content {
     position: relative;
-    z-index: 1;
+    z-index: 2;
+    max-width: 600px;
 }
 
 .welcome-banner h2 {
-    font-size: 1.5rem;
-    font-weight: 800;
-    margin: 0 0 8px;
-    color: #0f172a;
+    font-size: 2.2rem;
+    font-weight: 900;
+    margin: 0 0 12px;
+    color: #fff;
+    letter-spacing: -0.5px;
 }
 
 .welcome-banner p {
-    font-size: .95rem;
-    color: #64748b;
+    font-size: 1.1rem;
+    color: rgba(255,255,255,0.8);
     margin: 0;
     font-weight: 500;
+    line-height: 1.6;
 }
 
-/* ─── Stats Cards ─── */
+/* ─── Stats Cards (Glassmorphism) ─── */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
-    margin-bottom: 28px;
+    gap: 24px;
+    margin-bottom: 35px;
 }
 
-@media (max-width: 1100px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 520px)  { .stats-grid { grid-template-columns: 1fr; } }
+@media (max-width: 1200px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px)  { .stats-grid { grid-template-columns: 1fr; } }
 
 .stat-card {
-    background: #fff;
-    border-radius: 14px;
-    padding: 22px 20px;
+    background: var(--bg-card);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 28px 24px;
     display: flex;
-    align-items: center;
-    gap: 16px;
-    box-shadow: 0 2px 12px rgba(0,0,0,.06);
-    transition: transform .2s, box-shadow .2s;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid var(--border-soft);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .stat-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(0,0,0,.1);
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    border-color: var(--accent);
 }
 
 .stat-card .stat-icon {
-    width: 54px;
-    height: 54px;
-    border-radius: 12px;
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.3rem;
+    font-size: 1.4rem;
     flex-shrink: 0;
+    transition: transform 0.3s;
 }
 
-.stat-icon-blue   { background: #eff6ff; color: #2563eb; }
-.stat-icon-green  { background: #f0fdf4; color: #16a34a; }
-.stat-icon-orange { background: #fff7ed; color: #ea580c; }
-.stat-icon-red    { background: #fef2f2; color: #dc2626; }
-.stat-icon-purple { background: #f5f3ff; color: #7c3aed; }
-.stat-icon-cyan   { background: #ecfeff; color: #0891b2; }
-.stat-icon-indigo { background: #eef2ff; color: #4f46e5; }
-.stat-icon-amber  { background: #fffbeb; color: #d97706; }
+.stat-card:hover .stat-icon {
+    transform: scale(1.1) rotate(5deg);
+}
+
+.stat-icon-blue   { background: #eff6ff; color: #3b82f6; }
+.stat-icon-green  { background: #f0fdf4; color: #10b981; }
+.stat-icon-orange { background: #fff7ed; color: #f59e0b; }
+.stat-icon-red    { background: #fef2f2; color: #ef4444; }
+.stat-icon-purple { background: #f5f3ff; color: #8b5cf6; }
+.stat-icon-cyan   { background: #ecfeff; color: #06b6d4; }
+.stat-icon-indigo { background: #eef2ff; color: #6366f1; }
+.stat-icon-amber  { background: #fffbeb; color: #f59e0b; }
 
 .stat-card .stat-info .stat-label {
-    font-size: .78rem;
-    color: #6b7280;
-    margin-bottom: 2px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
 }
 
 .stat-card .stat-info .stat-value {
-    font-size: 1.65rem;
-    font-weight: 700;
-    color: #111827;
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--text-main);
     line-height: 1;
 }
 
-/* ─── Section Cards ─── */
+/* ─── Modern Dashboard Sections ─── */
 .dash-section {
-    background: #fff;
-    border-radius: 14px;
-    box-shadow: 0 2px 12px rgba(0,0,0,.06);
-    margin-bottom: 24px;
+    background: var(--bg-card);
+    border-radius: 24px;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid var(--border-soft);
+    margin-bottom: 30px;
+    overflow: hidden;
 }
 
 .dash-section-header {
-    padding: 18px 22px;
-    border-bottom: 1px solid #f3f4f6;
+    padding: 24px 30px;
+    border-bottom: 1px solid var(--border-soft);
     display: flex;
     align-items: center;
     justify-content: space-between;
 }
 
 .dash-section-header h3 {
-    font-size: 1rem;
-    font-weight: 700;
-    color: #111827;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.dash-section-header h3 i {
-    color: var(--accent-color, #0f172a);
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--text-main);
 }
 
 .dash-section-link {
-    font-size: .83rem;
-    color: var(--accent-color, #0f172a);
+    font-size: .85rem;
+    color: var(--accent);
+    padding: 8px 16px;
+    background: var(--accent-soft);
+    border-radius: 10px;
     text-decoration: none;
-    font-weight: 600;
+    font-weight: 700;
+    transition: 0.2s;
 }
+.dash-section-link:hover { background: var(--accent); color: #fff; }
 
-.dash-section-body {
-    padding: 16px 22px;
-}
-
-/* ─── Booking Row ─── */
+/* ─── Booking Row Refined ─── */
 .booking-row {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 14px 0;
-    border-bottom: 1px solid #f9fafb;
+    padding: 18px 30px;
+    transition: background 0.2s;
+    cursor: pointer;
 }
+.booking-row:hover { background: var(--bg-main); }
 
-.booking-row:last-child { border-bottom: none; }
-
-.booking-thumb {
-    width: 56px;
-    height: 56px;
-    border-radius: 10px;
-    object-fit: cover;
-    flex-shrink: 0;
-}
-
-.booking-thumb-placeholder {
-    width: 56px;
-    height: 56px;
-    border-radius: 10px;
-    background: #f3f4f6;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #9ca3af;
-    font-size: 1.3rem;
-    flex-shrink: 0;
-}
-
-.booking-info { flex: 1; min-width: 0; }
-
-.booking-title {
-    font-weight: 600;
-    font-size: .9rem;
-    color: #111827;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.booking-meta {
-    font-size: .78rem;
-    color: #6b7280;
-    margin-top: 2px;
-}
-
-.booking-price {
-    font-weight: 700;
-    font-size: .95rem;
-    color: #111827;
-    white-space: nowrap;
-}
-
-/* ─── Status Badge ─── */
-.status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 3px 10px;
-    border-radius: 20px;
-    font-size: .73rem;
-    font-weight: 600;
-    white-space: nowrap;
-}
-
-.status-pending   { background: #fff7ed; color: #c2410c; }
-.status-confirmed { background: #f0fdf4; color: #15803d; }
-.status-cancelled { background: #fef2f2; color: #b91c1c; }
-
-/* ─── Two-column layout ─── */
-.dash-two-cols {
-    display: grid;
-    grid-template-columns: 1.5fr 1fr;
-    gap: 24px;
-}
-
-@media (max-width: 992px) { .dash-two-cols { grid-template-columns: 1fr; } }
-
-/* ─── Quick Access Links ─── */
-.quick-link-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 16px;
-    background: #f8fafc;
-    border: 1px solid #f1f5f9;
-    border-radius: 12px;
-    text-decoration: none;
-    color: #334155;
-    font-weight: 600;
-    font-size: .88rem;
-    transition: all .2s;
-    margin-bottom: 12px;
-}
-
-.quick-link-item:hover {
-    background: var(--accent-color, #0f172a);
-    color: #fff;
-    border-color: var(--accent-color, #0f172a);
-    transform: translateX(5px);
-}
-
-.quick-link-item i {
-    width: 24px;
-    text-align: center;
-    font-size: 1.1rem;
-    opacity: .7;
-}
-
-.quick-link-item:hover i { opacity: 1; }
-
-/* ─── Charts Container ─── */
-.charts-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 24px;
-    margin-bottom: 28px;
-}
-
-@media (max-width: 992px) {
-    .charts-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
+/* ─── Chart Styling ─── */
 .chart-container {
-    background: #fff;
-    border-radius: 14px;
-    padding: 24px;
-    box-shadow: 0 2px 12px rgba(0,0,0,.06);
-    border: 1px solid #f1f5f9;
+    background: var(--bg-card);
+    border-radius: 24px;
+    padding: 30px;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid var(--border-soft);
 }
 
-.chart-header {
-    margin-bottom: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
+/* Dark Mode Overrides */
+body.dark-mode .stat-icon-blue { background: rgba(59, 130, 246, 0.1); }
+body.dark-mode .stat-icon-green { background: rgba(16, 185, 129, 0.1); }
+body.dark-mode .stat-icon-orange { background: rgba(245, 158, 11, 0.1); }
+body.dark-mode .stat-icon-red { background: rgba(239, 68, 68, 0.1); }
+body.dark-mode .stat-icon-purple { background: rgba(139, 92, 246, 0.1); }
+body.dark-mode .stat-icon-cyan { background: rgba(6, 182, 212, 0.1); }
+body.dark-mode .stat-icon-indigo { background: rgba(99, 102, 241, 0.1); }
+body.dark-mode .stat-icon-amber { background: rgba(245, 158, 11, 0.1); }
 
-.chart-header h4 {
-    margin: 0;
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: #1e293b;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.chart-canvas-wrapper {
-    position: relative;
-    height: 300px;
+@media (max-width: 768px) {
+    .welcome-banner { padding: 30px; }
+    .welcome-banner h2 { font-size: 1.5rem; }
 }
 </style>
 @endpush
@@ -314,8 +188,10 @@
 
 {{-- Welcome Banner --}}
 <div class="welcome-banner">
-    <h2>{{ __('Welcome Back') }}, {{ auth()->user()->first_name }}! 👋</h2>
-    <p>{{ __('Manage your company trips and view your latest bookings easily.') }}</p>
+    <div class="banner-content">
+        <h2>{{ __('Welcome Back') }}, {{ auth()->user()->first_name }}! 👋</h2>
+        <p>{{ __('Manage your company trips and view your latest bookings easily.') }}</p>
+    </div>
 </div>
 
 {{-- Stats Section --}}

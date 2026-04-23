@@ -98,6 +98,9 @@ class TripsController extends Controller
                         </button>
                         <a href="'.route('admin.trips.stats', $trip->id).'" class="btn btn-sm btn-dark" title="'.__('Statistics').'">
                             <i class="fas fa-chart-line"></i>
+                        </a>
+                        <a href="'.route('admin.trips.pricing', $trip->id).'" class="btn btn-sm btn-warning" title="'.__('Pricing & Packages').'">
+                            <i class="fas fa-tags"></i>
                         </a>';
 
                 if ($isExpired) {
@@ -163,15 +166,21 @@ class TripsController extends Controller
             'tickets'               => 'nullable|string',
             'description_ar'        => 'required|string',
             'description_en'        => 'required|string',
+            'includes_ar'           => 'nullable|string',
+            'includes_en'           => 'nullable|string',
+            'excludes_ar'           => 'nullable|string',
+            'excludes_en'           => 'nullable|string',
+            'children_policy_ar'    => 'nullable|string',
+            'children_policy_en'    => 'nullable|string',
             'company_id'            => 'required|exists:companies,id',
             'from_country_id'       => 'required|exists:countries,id',
             'from_city_id'          => 'required|exists:cities,id',
             'to_country_id'         => 'required|exists:countries,id',
             'to_city_id'            => 'required|exists:cities,id',
             'duration'              => 'nullable|string|max:100',
-            'price'                 => 'required|numeric|min:0',
+            'price'                 => 'nullable|numeric|min:0',  // now optional (packages may define price)
             'price_before_discount' => 'nullable|numeric|min:0',
-            'expiry_date'           => 'nullable|date|after_or_equal:today',
+            'expiry_date'           => 'nullable|date',
             'personnel_capacity'    => 'nullable|integer|min:1',
             'is_public'             => 'nullable|boolean',
             'is_featured'           => 'nullable|boolean',
@@ -192,14 +201,10 @@ class TripsController extends Controller
         // Admin ID
         $data['admin_id'] = auth()->id();
 
-        // Calculate profit
+        // Calculate profit (only when legacy price is set)
         $data['profit'] = 0;
-
-        if (!empty($data['price_before_discount'])) {
-            $data['profit'] = max(
-                0,
-                $data['price_before_discount'] - $data['price']
-            );
+        if (!empty($data['price_before_discount']) && !empty($data['price'])) {
+            $data['profit'] = max(0, $data['price_before_discount'] - $data['price']);
         }
 
         // Create Trip
@@ -218,8 +223,7 @@ class TripsController extends Controller
             ]);
         }
 
-        return redirect()->route('admin.trips.index')->with('success', __('Trip updated successfully')); 
-
+        return redirect()->route('admin.trips.index')->with('success', __('Trip created successfully'));
     }
 
     /**
@@ -255,27 +259,33 @@ class TripsController extends Controller
         $data = $request->validate([
             'title_ar'                 => 'required|string|max:255',
             'title_en'                 => 'required|string|max:255',
-            'tickets'               => 'nullable|string',
+            'tickets'                  => 'nullable|string',
             'description_ar'           => 'required|string',
             'description_en'           => 'required|string',
-            'company_id'            => 'required|exists:companies,id',
-            'from_country_id'       => 'required|exists:countries,id',
-            'from_city_id'          => 'required|exists:cities,id',
-            'to_country_id'         => 'required|exists:countries,id',
-            'to_city_id'            => 'required|exists:cities,id',
-            'duration'              => 'nullable|string|max:100',
-            'price'                 => 'required|numeric|min:0',
-            'price_before_discount' => 'nullable|numeric|min:0',
-            'expiry_date'           => 'nullable|date',
-            'personnel_capacity'    => 'nullable|integer|min:1',
-            'base_capacity'         => 'nullable|integer|min:0',
-            'extra_passenger_price' => 'nullable|numeric|min:0',
-            'is_public'             => 'nullable|boolean',
-            'is_featured'           => 'nullable|boolean',
-            'is_ad'                 => 'nullable|boolean',
-            'active'                => 'nullable|boolean',
-            'category_ids'          => 'nullable|array',
-            'category_ids.*'        => 'exists:trip_categories,id',
+            'includes_ar'              => 'nullable|string',
+            'includes_en'              => 'nullable|string',
+            'excludes_ar'              => 'nullable|string',
+            'excludes_en'              => 'nullable|string',
+            'children_policy_ar'       => 'nullable|string',
+            'children_policy_en'       => 'nullable|string',
+            'company_id'               => 'required|exists:companies,id',
+            'from_country_id'          => 'required|exists:countries,id',
+            'from_city_id'             => 'required|exists:cities,id',
+            'to_country_id'            => 'required|exists:countries,id',
+            'to_city_id'               => 'required|exists:cities,id',
+            'duration'                 => 'nullable|string|max:100',
+            'price'                    => 'nullable|numeric|min:0',
+            'price_before_discount'    => 'nullable|numeric|min:0',
+            'expiry_date'              => 'nullable|date',
+            'personnel_capacity'       => 'nullable|integer|min:1',
+            'base_capacity'            => 'nullable|integer|min:0',
+            'extra_passenger_price'    => 'nullable|numeric|min:0',
+            'is_public'                => 'nullable|boolean',
+            'is_featured'              => 'nullable|boolean',
+            'is_ad'                    => 'nullable|boolean',
+            'active'                   => 'nullable|boolean',
+            'category_ids'             => 'nullable|array',
+            'category_ids.*'           => 'exists:trip_categories,id',
         ]);
 
         // Checkbox handling
@@ -285,9 +295,8 @@ class TripsController extends Controller
         $data['active']      = $request->boolean('active');
 
         // Recalculate profit
-        if (!empty($data['price_before_discount'])) {
+        if (!empty($data['price_before_discount']) && !empty($data['price'])) {
             $data['profit'] = max(0, $data['price_before_discount'] - $data['price']);
-
             $data['percentage_profit_margin'] =
                 $data['price_before_discount'] > 0
                     ? round(($data['profit'] / $data['price_before_discount']) * 100, 2)
@@ -308,7 +317,7 @@ class TripsController extends Controller
         if ($request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' =>  __('Trip updated successfully'),
+                'message' => __('Trip updated successfully'),
             ]);
         }
 
@@ -440,6 +449,16 @@ class TripsController extends Controller
         });
 
         return response()->json($data);
+    }
+
+    /**
+     * Display the pricing & packages management view for a trip.
+     */
+    public function pricing(Trip $trip)
+    {
+        $trip->load(['seasons', 'packages.prices', 'addons']);
+        
+        return view('admin.trips.pricing', compact('trip'));
     }
 
     public function stats(Trip $trip)

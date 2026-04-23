@@ -13,14 +13,19 @@ class TripBooking extends Model
     public const STATE_AWAITING_PAYMENT = 'awaiting_payment';
     public const STATE_RECEIVED = 'awaiting_payment'; // Fallback
     public const STATE_PREPARING = 'preparing';
+    public const STATE_CONFIRMED = 'confirmed';
     public const STATE_ISSUING_TICKETS = 'issuing_tickets';
     public const STATE_TICKETS_UPLOADED = 'tickets_uploaded';
+    public const STATE_TICKETS_SENT = 'tickets_sent';
     public const STATE_COMPLETED = 'completed';
     public const STATE_CANCELLED = 'cancelled';
 
     protected $fillable = [
         'user_id',
         'trip_id',
+        'package_id',
+        'season_id',
+        'occupancy',
         'status', // pending, confirmed, cancelled
         'total_price',
         'booking_date',
@@ -29,6 +34,7 @@ class TripBooking extends Model
         'cancellation_reason',
         'ticket_file_path',
         'booking_state',
+        'addons',
     ];
 
     /**
@@ -45,6 +51,7 @@ class TripBooking extends Model
         'booking_date' => 'date',
         'tickets_count' => 'integer',
         'total_price' => 'decimal:2',
+        'addons' => 'array',
     ];
 
     public function user()
@@ -55,6 +62,16 @@ class TripBooking extends Model
     public function trip()
     {
         return $this->belongsTo(Trip::class);
+    }
+
+    public function package()
+    {
+        return $this->belongsTo(TripPackage::class, 'package_id');
+    }
+
+    public function season()
+    {
+        return $this->belongsTo(TripSeason::class, 'season_id');
     }
 
     public function passengers()

@@ -267,6 +267,61 @@ html[dir="rtl"] .cdash-main{
     }
 
 }
+
+/* Premium Pagination Styling */
+.pagination-wrapper {
+    margin-top: 40px;
+    display: flex;
+    justify-content: center;
+}
+
+.pagination {
+    display: flex;
+    gap: 8px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.page-item .page-link {
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: var(--bg-card);
+    border: 1.5px solid var(--border-soft);
+    color: var(--text-muted);
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 0.95rem;
+}
+
+.page-item.active .page-link {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+    box-shadow: 0 8px 20px rgba(232, 83, 46, 0.25);
+}
+
+.page-item.disabled .page-link {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--bg-main);
+}
+
+.page-item:not(.active):not(.disabled) .page-link:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-soft);
+    transform: translateY(-2px);
+}
+
+.page-item .page-link i {
+    font-size: 0.8rem;
+}
 </style>
 
 <style>
@@ -431,15 +486,119 @@ html[dir="rtl"] .cdash-main{
     .cdash-mini-widgets .widget { background: rgba(255,255,255,0.05); padding:10px; border-radius:10px; flex:1; text-align:center; font-size:0.85rem; transition:0.2s; }
     .cdash-mini-widgets .widget:hover { background: rgba(255,255,255,0.1); }
 
-    /* Footer & Buttons */
-    .cdash-footer { margin-top:auto; display:flex; flex-direction:column; gap:8px; }
-    .cdash-theme-btn, .cdash-logout { background:none; border:none; color:#cbd5e1; cursor:pointer; padding:8px 12px; border-radius:8px; text-align:left; transition:0.2s; }
-    .cdash-theme-btn:hover { background: rgba(255,255,255,0.08); }
-    .cdash-logout:hover { background: rgba(239,68,68,0.2); color: #f87171; }
+    /* Modern Topbar Controls */
+    .cdash-topbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
 
-    /* Dark/Light Mode */
-    body.light-mode .cdash-sidebar { background:#fff; color:#1e293b; }
-    body.light-mode .cdash-link { color:#1e293b; }
+    .topbar-control-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-main);
+        border: 1px solid var(--border-soft);
+        color: var(--text-main);
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none;
+        position: relative;
+    }
+
+    .topbar-control-btn:hover {
+        background: var(--accent-soft);
+        color: var(--accent);
+        border-color: var(--accent);
+        transform: translateY(-2px);
+    }
+
+    .lang-switcher-wrapper {
+        position: relative;
+    }
+
+    .lang-dropdown-menu {
+        display: none;
+        position: absolute;
+        top: calc(100% + 12px);
+        inset-inline-end: 0;
+        background: var(--bg-card);
+        border: 1px solid var(--border-soft);
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        min-width: 160px;
+        z-index: 1001;
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+    }
+
+    .lang-dropdown-menu.show {
+        display: block;
+        animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .lang-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 18px;
+        color: var(--text-main);
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+
+    .lang-item:hover {
+        background: var(--bg-main);
+        color: var(--accent);
+    }
+
+    .lang-item.active {
+        background: var(--accent-soft);
+        color: var(--accent);
+    }
+
+    .lang-flag {
+        width: 20px;
+        height: 15px;
+        border-radius: 2px;
+        object-fit: cover;
+    }
+
+    /* Theme Toggle Specifics */
+    body.dark-mode .fa-moon { display: none; }
+    body:not(.dark-mode) .fa-sun { display: none; }
+    body.dark-mode .fa-sun { color: #fbbf24; }
+
+    /* Fix for sidebar dark mode button too */
+    .cdash-theme-btn {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 12px;
+        color: #cbd5e1;
+        font-weight: 600;
+        width: 100%;
+        margin-bottom: 20px;
+        transition: 0.2s;
+    }
+    body.light-mode .cdash-theme-btn {
+        background: #f1f5f9;
+        border-color: #e2e8f0;
+        color: #1e293b;
+    }
 </style>
 </head>
 <body>
@@ -627,22 +786,26 @@ html[dir="rtl"] .cdash-main{
                 <span class="cdash-topbar-title">@yield('page-title', __('Dashboard'))</span>
             </div>
             <div class="cdash-topbar-actions">
+                {{-- Theme Toggle --}}
+                <button type="button" class="topbar-control-btn" onclick="toggleDark()" title="{{ __('Toggle Theme') }}">
+                    <i class="fas fa-moon"></i>
+                    <i class="fas fa-sun"></i>
+                </button>
+
                 {{-- Language Switcher --}}
-                <a href="#" class="cdash-topbar-link" onclick="toggleDark()">
-                 <i class="fas fa-moon"></i>
-                </a>
-                <div class="dropdown" style="position: relative; display: inline-block;">
-                    <a href="#" class="cdash-topbar-link" onclick="event.preventDefault(); this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'block' ? 'none' : 'block'">
-                        <i class="fas fa-globe"></i> {{ app()->getLocale() === 'ar' ? 'العربية' : 'English' }}
-                    </a>
-                    <div class="cdash-lang-dropdown" style="display: none; position: absolute; top: 100%; inset-inline-end: 0; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); min-width: 120px; z-index: 1000; margin-top: 8px;">
-                        <a href="{{ route('lang.switch', 'ar') }}" style="display: block; padding: 10px 16px; color: #1e293b; text-decoration: none; font-size: .85rem; @if(app()->getLocale() === 'ar') background: #f8fafc; font-weight: 700; @endif border-bottom: 1px solid #f1f5f9;">العربية</a>
-                        <a href="{{ route('lang.switch', 'en') }}" style="display: block; padding: 10px 16px; color: #1e293b; text-decoration: none; font-size: .85rem; @if(app()->getLocale() === 'en') background: #f8fafc; font-weight: 700; @endif">English</a>
+                <div class="lang-switcher-wrapper">
+                    <button type="button" class="topbar-control-btn" onclick="toggleLangMenu()" id="langBtn">
+                        <i class="fas fa-globe"></i>
+                    </button>
+                    <div class="lang-dropdown-menu" id="langMenu">
+                        <a href="{{ route('lang.switch', 'ar') }}" class="lang-item {{ app()->getLocale() === 'ar' ? 'active' : '' }}">
+                            <span class="lang-text">العربية</span>
+                        </a>
+                        <a href="{{ route('lang.switch', 'en') }}" class="lang-item {{ app()->getLocale() === 'en' ? 'active' : '' }}">
+                            <span class="lang-text">English</span>
+                        </a>
                     </div>
                 </div>
-                
-
-              
             </div>
         </div>
         <div class="cdash-content">
@@ -677,7 +840,21 @@ function closeSidebar() {
 
 function toggleDark(){
     document.body.classList.toggle('dark-mode');
+    // Save preference if needed
 }
+
+function toggleLangMenu() {
+    document.getElementById('langMenu').classList.toggle('show');
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    const langWrapper = document.querySelector('.lang-switcher-wrapper');
+    const langMenu = document.getElementById('langMenu');
+    if (!langWrapper.contains(event.target)) {
+        langMenu.classList.remove('show');
+    }
+});
 </script>
 <script>
 const sidebar = document.getElementById('cdashSidebar');
