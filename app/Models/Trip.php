@@ -166,23 +166,6 @@ class Trip extends Model
         return asset('images/trip-placeholder.png');
     }
 
-    /**
-     * Get the title based on current locale.
-     */
-    public function getTitleAttribute()
-    {
-        $locale = app()->getLocale();
-        return $this->{"title_{$locale}"} ?? $this->title_en ?? $this->title_ar;
-    }
-
-    /**
-     * Get the description based on current locale.
-     */
-    public function getDescriptionAttribute()
-    {
-        $locale = app()->getLocale();
-        return $this->{"description_{$locale}"} ?? $this->description_en ?? $this->description_ar;
-    }
 
     /**
      * Scope for active trips
