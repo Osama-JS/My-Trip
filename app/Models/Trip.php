@@ -27,6 +27,7 @@ class Trip extends Model
        'children_policy_en',
        'is_public',
        'company_id',
+       'user_id',
        'is_ad',
        'duration',
        'price',
@@ -163,6 +164,24 @@ class Trip extends Model
             return asset('storage/' . $image->image_path);
         }
         return asset('images/trip-placeholder.png');
+    }
+
+    /**
+     * Get the title based on current locale.
+     */
+    public function getTitleAttribute()
+    {
+        $locale = app()->getLocale();
+        return $this->{"title_{$locale}"} ?? $this->title_en ?? $this->title_ar;
+    }
+
+    /**
+     * Get the description based on current locale.
+     */
+    public function getDescriptionAttribute()
+    {
+        $locale = app()->getLocale();
+        return $this->{"description_{$locale}"} ?? $this->description_en ?? $this->description_ar;
     }
 
     /**

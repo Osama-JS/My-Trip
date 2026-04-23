@@ -303,10 +303,10 @@
     }
 
     /* Statuses */
-    .st-received { background: #eff6ff; color: #2563eb; }
+    .st-awaiting_payment { background: #eff6ff; color: #2563eb; }
     .st-preparing { background: #fff7ed; color: #ea580c; }
-    .st-confirmed { background: #f0fdf4; color: #16a34a; }
-    .st-tickets_sent { background: #f5f3ff; color: #7c3aed; }
+    .st-completed { background: #f0fdf4; color: #16a34a; }
+    .st-tickets_uploaded { background: #f5f3ff; color: #7c3aed; }
     .st-cancelled { background: #fef2f2; color: #dc2626; }
 </style>
 @endpush

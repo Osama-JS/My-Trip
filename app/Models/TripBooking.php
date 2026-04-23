@@ -11,10 +11,11 @@ class TripBooking extends Model
 
     // Booking states
     public const STATE_AWAITING_PAYMENT = 'awaiting_payment';
-    public const STATE_RECEIVED = 'awaiting_payment'; // Fallback
+    public const STATE_RECEIVED = 'awaiting_payment';
     public const STATE_PREPARING = 'preparing';
     public const STATE_CONFIRMED = 'confirmed';
     public const STATE_ISSUING_TICKETS = 'issuing_tickets';
+    public const STATE_TICKETS_SENT = 'tickets_uploaded';
     public const STATE_TICKETS_UPLOADED = 'tickets_uploaded';
     public const STATE_TICKETS_SENT = 'tickets_sent';
     public const STATE_COMPLETED = 'completed';

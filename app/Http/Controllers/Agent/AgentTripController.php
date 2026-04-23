@@ -98,6 +98,12 @@ class AgentTripController extends Controller
         $data['company_id'] = $user->company_id;
         $data['user_id'] = $user->id;
 
+        // Map titles and descriptions for bilingual support in DB
+        $data['title_ar'] = $data['title'];
+        $data['title_en'] = $data['title'];
+        $data['description_ar'] = $data['description'];
+        $data['description_en'] = $data['description'];
+
         // Checkbox handling
         $data['is_public']   = $request->boolean('is_public');
         $data['active']      = $request->has('active') ? $request->boolean('active') : true;
@@ -150,6 +156,12 @@ class AgentTripController extends Controller
             'category_ids'          => 'nullable|array',
             'category_ids.*'        => 'exists:trip_categories,id',
         ]);
+
+        // Map titles and descriptions for bilingual support in DB
+        $data['title_ar'] = $data['title'];
+        $data['title_en'] = $data['title'];
+        $data['description_ar'] = $data['description'];
+        $data['description_en'] = $data['description'];
 
         // Checkbox handling
         $data['is_public']   = $request->boolean('is_public');
