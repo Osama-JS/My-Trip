@@ -20,13 +20,13 @@
     $pricingJson = $trip->packages->map(function($p) {
         return [
             'id' => $p->id,
-            'type' => $p->type,
-            'hotel' => $p->hotel,
+            'tier' => strtolower($p->tier),
+            'hotel_name' => $p->hotel_name,
             'stars' => $p->hotel_stars,
             'hotel_website' => $p->hotel_website,
             'prices' => $p->prices->map(function($pr) {
                 return [
-                    'season_id' => $pr->trip_season_id,
+                    'season_id' => $pr->season_id,
                     'occupancy' => $pr->occupancy_type,
                     'price' => $pr->price
                 ];
@@ -110,16 +110,26 @@
         margin-bottom: 20px;
     }
     .fe-pkg-card {
-        border: 2px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 15px;
+        border: 2px solid var(--gray-200);
+        border-radius: 16px;
+        padding: 18px;
         cursor: pointer;
-        transition: all 0.2s;
-        margin-bottom: 10px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        margin-bottom: 12px;
         position: relative;
+        background: white;
     }
-    .fe-pkg-card:hover { border-color: var(--primary-light); background: #f8fafc; }
-    .fe-pkg-card.active { border-color: var(--primary); background: #eff6ff; }
+    .fe-pkg-card:hover { 
+        border-color: var(--primary-light); 
+        background: var(--gray-50);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+    .fe-pkg-card.active { 
+        border-color: var(--primary); 
+        background: var(--primary-50);
+        box-shadow: 0 0 0 1px var(--primary);
+    }
     .fe-pkg-card.active::before {
         content: '\f058';
         font-family: 'Font Awesome 6 Free';
@@ -128,8 +138,23 @@
         position: absolute;
         top: 15px;
         right: 15px;
+        font-size: 1.2rem;
     }
     [dir="rtl"] .fe-pkg-card.active::before { left: 15px; right: auto; }
+
+    .fe-pkg-badge {
+        font-size: 0.65rem;
+        font-weight: 800;
+        padding: 4px 10px;
+        border-radius: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+        display: inline-block;
+    }
+    .badge-vip { background: #fef3c7; color: #92400e; }
+    .badge-gold { background: #e0f2fe; color: #075985; }
+    .badge-economy { background: #f1f5f9; color: #475569; }
 
     .fe-occ-grid {
         display: grid;
@@ -357,18 +382,26 @@
                                     <label class="font-w700 text-dark mb-3 d-block"><i class="fas fa-hotel text-primary me-2"></i>{{ __('Select Package') }}</label>
                                     <div class="fe-pkg-selector">
                                         @foreach($trip->packages as $pkg)
+                                            @php 
+                                                $tierKey = strtolower($pkg->tier);
+                                                $pkgName = $locale == 'ar' ? $pkg->name_ar : $pkg->name_en;
+                                            @endphp
                                             <div class="fe-pkg-card package-option {{ $loop->first ? 'active' : '' }}" data-id="{{ $pkg->id }}">
-                                                <div class="d-flex align-items-center gap-2 mb-1">
-                                                    <span class="badge {{ $pkg->tier == 'VIP' ? 'bg-warning text-dark' : ($pkg->tier == 'Gold' ? 'bg-primary' : 'bg-secondary') }} text-uppercase fs-10">{{ $pkg->tier }}</span>
-                                                    <h6 class="m-0 font-w700 text-dark" style="white-space: pre-line;">{!! nl2br(e($pkg->hotel_name)) !!}</h6>
-                                                </div>
+                                                <span class="fe-pkg-badge badge-{{ $tierKey }}">
+                                                    {{ \App\Models\TripPackage::TIER_LABELS[$tierKey][$locale] ?? $pkg->tier }}
+                                                </span>
+                                                <h6 class="m-0 font-w800 text-dark mb-1">{{ $pkgName ?: __('Standard Package') }}</h6>
+                                                <p class="text-muted small mb-2 lh-sm" style="font-size: 0.75rem;">
+                                                    <i class="fas fa-hotel me-1"></i> {{ $pkg->hotel_name }}
+                                                </p>
                                                 <div class="d-flex justify-content-between align-items-center">
                                                     <div class="text-warning fs-10">
                                                         @for($i=0; $i<$pkg->hotel_stars; $i++)<i class="fas fa-star"></i>@endfor
+                                                        @for($i=$pkg->hotel_stars; $i<5; $i++)<i class="far fa-star op-30"></i>@endfor
                                                     </div>
                                                     @if($pkg->hotel_website)
-                                                        <a href="{{ $pkg->hotel_website }}" target="_blank" class="text-primary fs-11 font-w600" onclick="event.stopPropagation();">
-                                                            <i class="fas fa-external-link-alt me-1"></i> {{ __('Visit Hotel') }}
+                                                        <a href="{{ $pkg->hotel_website }}" target="_blank" class="text-primary fs-11 font-w700" onclick="event.stopPropagation();">
+                                                            <i class="fas fa-external-link-alt me-1"></i> {{ __('View Details') }}
                                                         </a>
                                                     @endif
                                                 </div>

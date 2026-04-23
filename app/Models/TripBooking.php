@@ -15,7 +15,6 @@ class TripBooking extends Model
     public const STATE_PREPARING = 'preparing';
     public const STATE_CONFIRMED = 'confirmed';
     public const STATE_ISSUING_TICKETS = 'issuing_tickets';
-    public const STATE_TICKETS_SENT = 'tickets_uploaded';
     public const STATE_TICKETS_UPLOADED = 'tickets_uploaded';
     public const STATE_TICKETS_SENT = 'tickets_sent';
     public const STATE_COMPLETED = 'completed';

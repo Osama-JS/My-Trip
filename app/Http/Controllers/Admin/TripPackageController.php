@@ -55,11 +55,17 @@ class TripPackageController extends Controller
      */
     public function update(Request $request, Trip $trip, TripPackage $package)
     {
+        // If it's a partial price update from the grid
+        if ($request->has('prices') && !$request->has('tier')) {
+            $this->syncPrices($package, $request->input('prices', []), true);
+            return response()->json(['success' => true, 'message' => __('Price updated successfully')]);
+        }
+
         $data = $request->validate([
             'name_ar'     => 'required|string|max:255',
             'name_en'     => 'required|string|max:255',
             'hotel_name'  => 'nullable|string',
-            'hotel_stars' => 'required|integer|between:1,5',
+            'hotel_stars' => 'required|integer|between:0,5',
             'hotel_website' => 'nullable|url|max:500',
             'tier'        => 'required|in:economy,gold,vip',
             'sort_order'  => 'nullable|integer',
@@ -78,7 +84,8 @@ class TripPackageController extends Controller
                     'sort_order'  => $data['sort_order'] ?? $package->sort_order,
                 ]);
 
-                $this->syncPrices($package, $request->input('prices', []));
+                // Full sync for modal update
+                $this->syncPrices($package, $request->input('prices', []), false);
             });
 
             return response()->json(['success' => true, 'message' => __('Package updated successfully')]);
@@ -102,9 +109,11 @@ class TripPackageController extends Controller
      * Sync prices for a package from the submitted matrix.
      * Input format: [ 'season_id|default' => [ 'occupancy_type' => price ] ]
      */
-    private function syncPrices(TripPackage $package, array $pricesMatrix): void
+    private function syncPrices(TripPackage $package, array $pricesMatrix, bool $isPartial = false): void
     {
-        $package->prices()->delete();
+        if (!$isPartial) {
+            $package->prices()->delete();
+        }
 
         $validOccupancies = ['single', 'double', 'triple', 'child'];
 
@@ -113,14 +122,23 @@ class TripPackageController extends Controller
 
             foreach ($occupancies as $occupancyType => $price) {
                 if (!in_array($occupancyType, $validOccupancies)) continue;
-                if ($price === null || $price === '') continue;
+                
+                if ($price === null || $price === '') {
+                    if ($isPartial) {
+                        $package->prices()->where('trip_season_id', $seasonId)->where('occupancy_type', $occupancyType)->delete();
+                    }
+                    continue;
+                }
 
-                TripPackagePrice::create([
-                    'package_id'     => $package->id,
-                    'season_id'      => $seasonId,
-                    'occupancy_type' => $occupancyType,
-                    'price'          => (float) $price,
-                ]);
+                $package->prices()->updateOrCreate(
+                    [
+                        'trip_season_id' => $seasonId,
+                        'occupancy_type' => $occupancyType,
+                    ],
+                    [
+                        'price' => (float) $price,
+                    ]
+                );
             }
         }
     }

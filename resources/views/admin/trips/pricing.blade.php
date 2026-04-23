@@ -95,10 +95,10 @@
                                 @forelse($trip->addons as $addon)
                                     <tr>
                                         <td>
-                                            <div class="font-w600">{{ $addon->title }}</div>
-                                            <small class="text-muted">{{ $addon->type == 'replacement' ? __('Replacement') : __('Addition') }}</small>
+                                            <div class="font-w600">{{ $addon->name }}</div>
+                                            <small class="text-muted">{{ $addon->is_replacement ? __('Replacement') : __('Addition') }}</small>
                                         </td>
-                                        <td class="text-primary font-w600">${{ $addon->price }}</td>
+                                        <td class="text-primary font-w600">{{ number_format($addon->extra_cost, 2) }} {{ __('SAR') }}</td>
                                         <td class="text-end">
                                             <button class="btn btn-xs btn-info sharp me-1" onclick="openAddonModal({{ $addon }})"><i class="fa fa-pencil"></i></button>
                                             <button class="btn btn-xs btn-danger sharp" onclick="deleteAddon({{ $addon->id }})"><i class="fa fa-trash"></i></button>
@@ -128,14 +128,18 @@
             </div>
 
             @forelse($trip->packages as $package)
-                <div class="card shadow-sm mb-4 border-start border-4 {{ $package->type == 'VIP' ? 'border-warning' : ($package->type == 'Gold' ? 'border-primary' : 'border-secondary') }}">
+                @php $tierKey = strtolower($package->tier); @endphp
+                <div class="card shadow-sm mb-4 border-start border-4 {{ $tierKey == 'vip' ? 'border-warning' : ($tierKey == 'gold' ? 'border-primary' : 'border-secondary') }}">
                     <div class="card-header d-flex justify-content-between align-items-center bg-white py-3 border-bottom">
                         <div>
-                            <span class="badge {{ $package->type == 'VIP' ? 'bg-warning text-dark' : ($package->type == 'Gold' ? 'bg-primary' : 'bg-secondary') }} me-2 fs-12 px-3">{{ strtoupper($package->type) }}</span>
-                            <h5 class="card-title d-inline-block mb-0">{{ $package->hotel }}</h5>
-                            <span class="ms-2 text-warning">
-                                @for($i=0; $i<$package->hotel_stars; $i++) <i class="fas fa-star fs-10"></i> @endfor
-                            </span>
+                            <span class="badge {{ $tierKey == 'vip' ? 'bg-warning text-dark' : ($tierKey == 'gold' ? 'bg-primary' : 'bg-secondary') }} me-2 fs-12 px-3">{{ strtoupper($package->tier) }}</span>
+                            <h5 class="card-title d-inline-block mb-0">{{ $package->name }}</h5>
+                            <div class="mt-1">
+                                <small class="text-muted"><i class="fas fa-hotel me-1"></i> {{ $package->hotel_name }}</small>
+                                <span class="ms-2 text-warning">
+                                    @for($i=0; $i<$package->hotel_stars; $i++) <i class="fas fa-star fs-10"></i> @endfor
+                                </span>
+                            </div>
                         </div>
                         <div>
                             <button class="btn btn-sm btn-info light me-1 btn-rounded" onclick="openPackageModal({{ $package }})"><i class="fa fa-edit me-1"></i> {{ __('Edit') }}</button>
