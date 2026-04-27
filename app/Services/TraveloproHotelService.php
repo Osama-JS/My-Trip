@@ -565,25 +565,39 @@ class TraveloproHotelService
             $cities = [];
             $attempts = 0;
 
+            Log::info("SYNC_PROCESS: Fetching English Batch [{$from} to {$to}]");
+
             while ($attempts < $retryLimit) {
                 try {
                     $response = $this->getCities(['from' => $from, 'to' => $to, 'requiredLanguage' => 'ENG']);
-                    $cities = $response['cities'] ?? $response['Cities'] ?? [];
-                    if (!empty($cities)) break;
                     
-                    // If response is successful but empty, it might be the end
+                    // The response structure might vary (cities vs Cities)
+                    $cities = $response['cities'] ?? $response['Cities'] ?? [];
+                    
+                    if (!empty($cities)) {
+                        Log::info("SYNC_PROCESS: Received " . count($cities) . " cities for batch {$from}-{$to}");
+                        break;
+                    }
+                    
                     if (isset($response['cities']) || isset($response['Cities'])) {
+                        Log::info("SYNC_PROCESS: Successfully reached the end of the list at index {$from}");
                         break; 
                     }
+                    
+                    // If we get a response but no cities key, it might be an error or different format
+                    Log::warning("SYNC_PROCESS: Batch {$from}-{$to} returned success but no 'cities' key found.", ['response_keys' => array_keys($response ?? [])]);
+                    break;
+
                 } catch (\Exception $e) {
                     $attempts++;
-                    Log::warning("Batch sync (EN) attempt {$attempts} failed for range {$from}-{$to}: " . $e->getMessage());
-                    sleep(2);
+                    Log::warning("SYNC_PROCESS: Batch sync (EN) attempt {$attempts} failed for range {$from}-{$to}: " . $e->getMessage());
+                    if ($attempts >= $retryLimit) break;
+                    sleep(1);
                 }
             }
 
             if (empty($cities)) {
-                Log::info("No more cities found at index {$from}. Ending English pass.");
+                Log::info("SYNC_PROCESS: No more cities found or error occurred at index {$from}. Ending English pass.");
                 break;
             }
 
@@ -613,13 +627,18 @@ class TraveloproHotelService
             }
 
             if (!empty($data)) {
-                // Use city_code as the unique key for upserting
+                // Use city_code as the unique key for upserting to avoid duplicates
                 \App\Models\HotelCity::upsert($data, ['city_code'], ['city_name_en', 'country_name_en', 'country_code', 'latitude', 'longitude', 'updated_at']);
                 $totalSynced += count($data);
-                Log::info("Synced batch {$from}-{$to}. Total EN synced: {$totalSynced}");
+                Log::info("SYNC_PROCESS: Upserted " . count($data) . " cities. Total so far: {$totalSynced}");
             }
 
-            if (count($cities) < $batchSize) break;
+            // If we got fewer items than requested, we've reached the end
+            if (count($cities) < $batchSize) {
+                Log::info("SYNC_PROCESS: Batch size " . count($cities) . " is less than {$batchSize}. Finishing English pass.");
+                break;
+            }
+
             $from += $batchSize;
         }
 
