@@ -62,8 +62,9 @@ class HotelController extends Controller
         $validator = Validator::make($request->all(), [
             'cityName' => 'required_without:latitude|string',
             'countryName' => 'required_without:latitude|string',
-            'latitude' => 'required_without:cityName|numeric',
-            'longitude' => 'required_without:cityName|numeric',
+            'cityCode' => 'nullable|string',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
             'radius' => 'nullable|integer',
             'checkIn' => 'required|date_format:Y-m-d|after_or_equal:today',
             'checkOut' => 'required|date_format:Y-m-d|after:checkIn',
