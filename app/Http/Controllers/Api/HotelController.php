@@ -668,7 +668,7 @@ class HotelController extends Controller
             $isAr = ($locale === 'ar');
 
             return [
-                'city_id' => $city->id,
+                'id' => $city->id,
                 'city_code' => $city->city_code,
                 'city_name_en' => $city->city_name_en,
                 'city_name_ar' => $city->city_name_ar,
