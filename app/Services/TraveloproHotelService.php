@@ -567,55 +567,36 @@ class TraveloproHotelService
             $cities = [];
             $attempts = 0;
 
-            Log::info("SYNC_PROCESS: Requesting batch range {$from} to {$to} (Page: {$currentPage})");
+            Log::info("SYNC_PROCESS: Syncing cities starting from index {$from}...");
 
             while ($attempts < $retryLimit) {
                 try {
-                    $payload = [
-                        'from' => $from,
-                        'to' => $to,
-                        'page' => $currentPage,
-                        'limit' => $batchSize,
-                        'requiredLanguage' => 'ENG'
-                    ];
+                    $response = $this->getCities(['from' => $from, 'to' => $to, 'requiredLanguage' => 'ENG']);
+                    $cities = $response['cities'] ?? $response['Cities'] ?? [];
+                    
+                    if (!empty($cities)) break;
+                    
+                    if (isset($response['cities']) || isset($response['Cities'])) break;
 
-                    $response = $this->getCities($payload);
-                    
-                    // Debug: Log the keys of the response to see where cities are hidden
-                    Log::info("SYNC_PROCESS: Response keys for batch {$from}: " . implode(', ', array_keys($response ?? [])));
-
-                    // Try multiple possible keys for cities
-                    $cities = $response['cities'] ?? $response['Cities'] ?? $response['data']['cities'] ?? $response['data']['Cities'] ?? [];
-                    
-                    if (!empty($cities)) {
-                        Log::info("SYNC_PROCESS: Success! Received " . count($cities) . " cities.");
-                        break;
-                    }
-                    
-                    // Check if it's an empty successful response
-                    if (isset($response['status']) && $response['status'] == 200) {
-                         Log::info("SYNC_PROCESS: Received empty but successful status. Potentially end of list.");
-                    }
-                    
-                    break;
-
+                    Log::warning("SYNC_PROCESS: Empty response for range {$from}-{$to}. Retrying...");
+                    $attempts++;
+                    sleep(1);
                 } catch (\Exception $e) {
                     $attempts++;
-                    Log::warning("SYNC_PROCESS: Attempt {$attempts} failed: " . $e->getMessage());
+                    Log::warning("SYNC_PROCESS: Error at index {$from}: " . $e->getMessage());
                     if ($attempts >= $retryLimit) break;
                     sleep(1);
                 }
             }
 
-            // Only break if we REALLY got nothing after retries
             if (empty($cities)) {
-                Log::info("SYNC_PROCESS: No more cities found at index {$from}. Stopping loop.");
+                Log::info("SYNC_PROCESS: Completed English pass at index {$from}.");
                 break;
             }
 
             $data = [];
             foreach ($cities as $city) {
-                $cityCode = $city['id'] ?? $city['CityCode'] ?? $city['city_id'] ?? null;
+                $cityCode = $city['id'] ?? $city['CityCode'] ?? null;
                 $cityName = $city['city_name'] ?? $city['CityName'] ?? null;
                 $countryName = $city['country_name'] ?? $city['CountryName'] ?? null;
                 $countryCode = $city['country_code'] ?? $city['CountryCode'] ?? null;
@@ -641,18 +622,16 @@ class TraveloproHotelService
             if (!empty($data)) {
                 \App\Models\HotelCity::upsert($data, ['city_code'], ['city_name_en', 'country_name_en', 'country_code', 'latitude', 'longitude', 'updated_at']);
                 $totalSynced += count($data);
-                Log::info("SYNC_PROCESS: Total DB Items: " . \App\Models\HotelCity::count() . " (Synced this run: {$totalSynced})");
+                Log::info("SYNC_PROCESS: Total Synced: {$totalSynced}");
             }
 
-            // Move to next batch
-            $from += $batchSize;
-            $currentPage++;
-            
-            // Safety break to prevent infinite loop if API keeps returning same data
-            if ($currentPage > 1000) { // Max 500,000 cities
-                Log::error("SYNC_PROCESS: Reached safety limit of 1000 pages. Breaking.");
-                break;
+            // Standard advance logic
+            if (count($cities) < $batchSize) {
+                 Log::info("SYNC_PROCESS: Finalizing English pass.");
+                 break;
             }
+            
+            $from += $batchSize;
         }
 
         // --- SECOND PASS: Arabic Names (For all synced codes) ---
