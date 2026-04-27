@@ -724,7 +724,6 @@ class TraveloproHotelService
      */
     public function getCities(array $data = [])
     {
-        $data = array_merge(['from' => 1, 'to' => 100], $data);
         return $this->sendRequest('cities', $data, 'Get Cities', 'GET');
     }
 
