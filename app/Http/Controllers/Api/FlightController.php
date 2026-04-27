@@ -441,6 +441,7 @@ class FlightController extends Controller
             'passengers.*.passport_no' => 'nullable|string',
             'passengers.*.passport_issue_country' => 'nullable|string|size:2',
             'passengers.*.passport_expiry_date' => 'nullable|date_format:Y-m-d',
+            'passengers.*.passport_image' => 'nullable|string',
             'airline_code' => 'nullable|string',
             'airline_name' => 'nullable|string',
             'flight_number' => 'nullable|string',
@@ -544,16 +545,46 @@ class FlightController extends Controller
                         'dob'            => $pax['dob'],
                         'nationality'    => $pax['nationality'],
                         'passport_number' => $pax['passport_no'] ?? null,
+                        'passport_image' => $pax['passport_image'] ?? null,
                     ]);
                     Log::info('Passenger Saved', ['passenger_id' => $passenger->id]);
                 }
 
                 // Add Payment and Tracking details to response
-                $result['payment_url'] = route('payments.web.checkout', [
+                $payment_info = [
                     'booking_id' => $booking->id,
-                    'method'     => 'visa_master',
-                    'type'       => 'flight'
-                ]);
+                    'amount' => $totalAmount,
+                    'currency' => 'SAR',
+                    'methods' => [
+                        [
+                            'id' => 'visa_master',
+                            'name' => 'Visa / Master',
+                            'logo' => asset('assets/images/payments/visa_master.png'),
+                            'url' => route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'visa_master', 'type' => 'flight'])
+                        ],
+                        [
+                            'id' => 'mada',
+                            'name' => 'Mada',
+                            'logo' => asset('assets/images/payments/mada.png'),
+                            'url' => route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'mada', 'type' => 'flight'])
+                        ],
+                        [
+                            'id' => 'tamara',
+                            'name' => 'Tamara',
+                            'logo' => asset('assets/images/payments/tamara.png'),
+                            'url' => route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'tamara', 'type' => 'flight'])
+                        ],
+                        [
+                            'id' => 'tabby',
+                            'name' => 'Tabby',
+                            'logo' => asset('assets/images/payments/tabby.png'),
+                            'url' => route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'tabby', 'type' => 'flight'])
+                        ]
+                    ]
+                ];
+
+                $result['payment_info'] = $payment_info;
+                $result['payment_url'] = $payment_info['methods'][0]['url']; // Legacy support
                 $result['payment_api_url'] = url('/api/payment/initiate');
                 $result['booking_id']      = $booking->id;
 

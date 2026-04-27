@@ -164,7 +164,7 @@
                                         $prices = $package->prices->groupBy('trip_season_id');
                                     @endphp
                                     @forelse($trip->seasons as $season)
-                                        @php $seasonPrices = $prices->get($season->id)?->keyBy('occupancy_type'); @endphp
+                                        @php $seasonPrices = ($prices->get($season->id) ?? collect())->keyBy('occupancy_type'); @endphp
                                         <tr>
                                             <td class="bg-light-info text-start px-3">
                                                 <div class="font-w600 text-dark">{{ $season->title }}</div>

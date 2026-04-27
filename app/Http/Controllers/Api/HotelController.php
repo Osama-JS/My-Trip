@@ -52,7 +52,7 @@ class HotelController extends Controller
         ),
         responses: [
             new OA\Response(
-                response: 200, 
+                response: 200,
                 description: "ناجح: استخرج الـ sessionId والـ tokenId من هنا لاستخدامهما في الخطوة 2."
             )
         ]
@@ -114,7 +114,7 @@ class HotelController extends Controller
         ),
         responses: [
             new OA\Response(
-                response: 200, 
+                response: 200,
                 description: "ناجح: اختر غرفة واستخلص منها الـ rateBasisId والـ productId للخطوة 3."
             )
         ]
@@ -161,7 +161,7 @@ class HotelController extends Controller
         ),
         responses: [
             new OA\Response(
-                response: 200, 
+                response: 200,
                 description: "ناجح: السعر مؤكد، والآن يمكنك عرض نموذج تعبئة بيانات النزلاء للمستخدم."
             )
         ]
@@ -240,7 +240,7 @@ class HotelController extends Controller
         ),
         responses: [
             new OA\Response(
-                response: 200, 
+                response: 200,
                 description: "ناجح: استخدم الروابط في payment_info لفتح بوابة الدفع المناسبة."
             )
         ]
@@ -292,7 +292,7 @@ class HotelController extends Controller
                 'currency' => $request->currency ?? 'SAR',
                 'status' => 'pending',
                 'reference_num' => $referenceNum,
-                'supplier_confirmation_num' => null, 
+                'supplier_confirmation_num' => null,
                 'session_id' => $request->sessionId,
                 'product_id' => $request->productId,
                 'token_id' => $request->tokenId,
@@ -319,10 +319,10 @@ class HotelController extends Controller
                     $adults = $room['adult'];
                     foreach (($adults['firstName'] ?? []) as $index => $firstName) {
                         $paxList[] = [
-                            'type'      => 'AD',
-                            'Title'     => $adults['title'][$index] ?? 'Mr',
+                            'type' => 'AD',
+                            'Title' => $adults['title'][$index] ?? 'Mr',
                             'FirstName' => $firstName,
-                            'LastName'  => $adults['lastName'][$index] ?? '',
+                            'LastName' => $adults['lastName'][$index] ?? '',
                         ];
                     }
                 }
@@ -330,10 +330,10 @@ class HotelController extends Controller
                     $children = $room['child'];
                     foreach (($children['firstName'] ?? []) as $index => $firstName) {
                         $paxList[] = [
-                            'type'      => 'CH',
-                            'Title'     => $children['title'][$index] ?? 'Master',
+                            'type' => 'CH',
+                            'Title' => $children['title'][$index] ?? 'Master',
                             'FirstName' => $firstName,
-                            'LastName'  => $children['lastName'][$index] ?? '',
+                            'LastName' => $children['lastName'][$index] ?? '',
                         ];
                     }
                 }
@@ -342,26 +342,26 @@ class HotelController extends Controller
                 if (empty($paxList) && !empty($room['pax']) && is_array($room['pax'])) {
                     foreach ($room['pax'] as $pax) {
                         $paxList[] = [
-                            'type'      => $pax['type'] ?? 'AD',
-                            'Title'     => $pax['Title'] ?? $pax['title'] ?? 'Mr',
+                            'type' => $pax['type'] ?? 'AD',
+                            'Title' => $pax['Title'] ?? $pax['title'] ?? 'Mr',
                             'FirstName' => $pax['FirstName'] ?? $pax['firstName'] ?? '',
-                            'LastName'  => $pax['LastName'] ?? $pax['lastName'] ?? '',
+                            'LastName' => $pax['LastName'] ?? $pax['lastName'] ?? '',
                         ];
                     }
                 }
 
                 foreach ($paxList as $pax) {
-                    $type  = (isset($pax['type']) && strtoupper($pax['type']) === 'CH') ? 'child' : 'adult';
+                    $type = (isset($pax['type']) && strtoupper($pax['type']) === 'CH') ? 'child' : 'adult';
                     $title = $pax['Title'] ?? 'Mr';
                     $fName = $pax['FirstName'] ?? '';
                     $lName = $pax['LastName'] ?? '';
 
                     if (!empty($fName) && !empty($lName)) {
                         $hotelBooking->passengers()->create([
-                            'name'           => "{$title} {$fName} {$lName}",
-                            'first_name'     => $fName,
-                            'last_name'      => $lName,
-                            'title'          => $title,
+                            'name' => "{$title} {$fName} {$lName}",
+                            'first_name' => $fName,
+                            'last_name' => $lName,
+                            'title' => $title,
                             'passenger_type' => $type,
                         ]);
                     }
@@ -649,10 +649,10 @@ class HotelController extends Controller
     {
         $q = $request->get('q', '');
         $locale = app()->getLocale();
-        
+
         $cities = \App\Models\HotelCity::where('is_active', true)
-            ->when($q, function($query) use ($q) {
-                $query->where(function($sub) use ($q) {
+            ->when($q, function ($query) use ($q) {
+                $query->where(function ($sub) use ($q) {
                     $sub->where('city_name_en', 'like', "%{$q}%")
                         ->orWhere('city_name_ar', 'like', "%{$q}%")
                         ->orWhere('country_name_en', 'like', "%{$q}%")
@@ -661,27 +661,26 @@ class HotelController extends Controller
                 });
             })
             ->orderBy($locale === 'ar' ? 'city_name_ar' : 'city_name_en', 'asc')
-            ->limit(100)
             ->get();
-            
+
         $formatted = $cities->map(function ($city) use ($locale) {
             $isAr = ($locale === 'ar');
-            
+
             return [
-                'city_id'         => $city->id,
-                'city_code'       => $city->city_code,
-                'city_name_en'    => $city->city_name_en,
-                'city_name_ar'    => $city->city_name_ar,
+                'city_id' => $city->id,
+                'city_code' => $city->city_code,
+                'city_name_en' => $city->city_name_en,
+                'city_name_ar' => $city->city_name_ar,
                 'country_name_en' => $city->country_name_en,
                 'country_name_ar' => $city->country_name_ar,
-                'country_code'    => $city->country_code,
+                'country_code' => $city->country_code,
                 // Localized fields for convenience
-                'city_name'       => $isAr ? ($city->city_name_ar ?: $city->city_name_en) : $city->city_name_en,
-                'country_name'    => $isAr ? ($city->country_name_ar ?: $city->country_name_en) : $city->country_name_en,
-                'display_name'    => $isAr 
+                'city_name' => $isAr ? ($city->city_name_ar ?: $city->city_name_en) : $city->city_name_en,
+                'country_name' => $isAr ? ($city->country_name_ar ?: $city->country_name_en) : $city->country_name_en,
+                'display_name' => $isAr
                     ? ($city->city_name_ar ? "{$city->city_name_ar}, {$city->country_name_ar}" : "{$city->city_name_en}, {$city->country_name_en}")
                     : "{$city->city_name_en}, {$city->country_name_en}",
-                'name'            => $isAr ? ($city->city_name_ar ?: $city->city_name_en) : $city->city_name_en,
+                'name' => $isAr ? ($city->city_name_ar ?: $city->city_name_en) : $city->city_name_en,
             ];
         });
 

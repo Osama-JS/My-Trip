@@ -286,7 +286,7 @@
                                                     <span class="badge badge-{{ $class }} badge-pill">{{ strtoupper($booking->status) }}</span>
                                                 </td>
                                                 <td>
-                                                    <a href="{{ route('admin.bookings.hotels.show_detail', $booking->id) }}" class="btn btn-primary btn-xs sharp shadow"><i class="fas fa-eye text-white"></i></a>
+                                                    <a href="{{ route('admin.bookings.hotels.show', $booking->id) }}" class="btn btn-primary btn-xs sharp shadow"><i class="fas fa-eye text-white"></i></a>
                                                 </td>
                                             </tr>
                                             @empty
