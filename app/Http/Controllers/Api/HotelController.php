@@ -674,6 +674,8 @@ class HotelController extends Controller
                 'country_name_en' => $city->country_name_en,
                 'country_name_ar' => $city->country_name_ar,
                 'country_code' => $city->country_code,
+                'latitude' => $city->latitude,
+                'longitude' => $city->longitude,
                 // Localized fields for convenience
                 'city_name' => $isAr ? ($city->city_name_ar ?: $city->city_name_en) : $city->city_name_en,
                 'country_name' => $isAr ? ($city->country_name_ar ?: $city->country_name_en) : $city->country_name_en,

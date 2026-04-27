@@ -116,6 +116,7 @@ class TraveloproHotelService
             'checkin' => $data['checkIn'] ?? null,
             'checkout' => $data['checkOut'] ?? null,
             'city_name' => $data['cityName'] ?? null,
+            'city_id' => $data['cityCode'] ?? null,
             'country_name' => $data['countryName'] ?? null,
             'latitude' => $data['latitude'] ?? null,
             'longitude' => $data['longitude'] ?? null,
@@ -172,6 +173,13 @@ class TraveloproHotelService
         }
 
         $response = $this->sendRequest('hotel_search', $payload, 'Hotel Search');
+        
+        $hotelCount = 0;
+        if (isset($response['hotels'])) $hotelCount = count($response['hotels']);
+        elseif (isset($response['HotelResults'])) $hotelCount = count($response['HotelResults']);
+        elseif (isset($response['HotelList'])) $hotelCount = count($response['HotelList']);
+
+        Log::info("Hotel Search Response received. Count: {$hotelCount}");
         
         // The API 'status' field may be an object containing sessionId
         $statusField = $response['status'] ?? null;

@@ -47,13 +47,25 @@ class TraveloproService
         ];
 
         // Log request for debugging (remove sensitive data in production)
+        // Log request for debugging
         Log::info('Travelopro Search Request', ['payload' => $payload]);
 
+        $startTime = microtime(true);
         try {
             $response = Http::timeout(60)->post($this->url, $payload);
+            $executionTime = microtime(true) - $startTime;
 
             if ($response->successful()) {
                 $results = $response->json();
+                
+                $itineraryCount = 0;
+                if (isset($results['AirSearchResponse']['AirSearchResult']['FareItineraries']['FareItinerary'])) {
+                    $itineraryCount = count($results['AirSearchResponse']['AirSearchResult']['FareItineraries']['FareItinerary']);
+                } elseif (isset($results['AirSearchResponse']['AirSearchResult']['FareItineraries'])) {
+                    $itineraryCount = count($results['AirSearchResponse']['AirSearchResult']['FareItineraries']);
+                }
+
+                Log::info("Travelopro Search Response received in {$executionTime}s. Count: {$itineraryCount}");
                 
                 // Apply Profit Margin
                 $margin     = floatval(\App\Models\Setting::get('flight_margin', 0));
