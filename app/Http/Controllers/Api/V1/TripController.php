@@ -1209,45 +1209,51 @@ class TripController extends Controller
     )]
     public function featured(Request $request): JsonResponse
     {
-        $trips = Trip::active()->where('is_featured', true)
-            ->with(['images', 'toCountry', 'toCity', 'categories'])
-            ->latest()
-            ->paginate($request->per_page ?? 10);
+        try {
+            $trips = Trip::active()->where('is_featured', true)
+                ->with(['images', 'toCountry', 'toCity', 'categories'])
+                ->latest()
+                ->take(10)
+                ->get();
 
-        // Get user favorites if logged in (for identical structure to index)
-        $userFavoriteIds = [];
-        $user = Auth::guard('sanctum')->user();
-        if ($user) {
-            $userFavoriteIds = Favorite::where('user_id', $user->id)->pluck('trip_id')->toArray();
+            // Get user favorites if logged in
+            $userFavoriteIds = [];
+            $user = Auth::guard('sanctum')->user();
+            if ($user) {
+                $userFavoriteIds = \App\Models\Favorite::where('user_id', $user->id)->pluck('trip_id')->toArray();
+            }
+
+            // Transform collection to match index structure
+            $transformedData = $trips->map(function ($trip) use ($userFavoriteIds) {
+                return [
+                    'id' => $trip->id,
+                    'title' => app()->getLocale() == 'ar' ? $trip->title_ar : $trip->title_en,
+                    'description' => app()->getLocale() == 'ar' ? $trip->description_ar : $trip->description_en,
+                    'price' => $trip->price,
+                    'price_before_discount' => $trip->price_before_discount,
+                    'duration' => $trip->duration,
+                    'tickets' => $trip->tickets,
+                    'image' => $trip->image_url,
+                    'to_country' => $trip->toCountry ? $trip->toCountry->name : null,
+                    'to_city' => $trip->toCity ? $trip->toCity->name : null,
+                    'is_active' => $trip->active,
+                    'expiry_date' => $trip->expiry_date,
+                    'is_favorite' => in_array($trip->id, $userFavoriteIds),
+                    'is_featured' => (bool)$trip->is_featured,
+                    'base_capacity' => $trip->base_capacity ?? 2,
+                    'extra_passenger_price' => $trip->extra_passenger_price ?? 0,
+                    'categories' => $trip->categories->map(function ($cat) {
+                        return [
+                            'id' => $cat->id,
+                            'name' => $cat->name_attribute,
+                        ];
+                    }),
+                ];
+            });
+
+            return $this->apiResponse(false, __('Featured trips retrieved successfully'), $transformedData);
+        } catch (\Exception $e) {
+            return $this->apiResponse(true, $e->getMessage(), []);
         }
-
-        $trips->getCollection()->transform(function ($trip) use ($userFavoriteIds) {
-            return [
-                'id' => $trip->id,
-                'title' => app()->getLocale() == 'ar' ? $trip->title_ar : $trip->title_en,
-                'description' => app()->getLocale() == 'ar' ? $trip->description_ar : $trip->description_en,
-                'price' => $trip->price,
-                'price_before_discount' => $trip->price_before_discount,
-                'duration' => $trip->duration,
-                'tickets' => $trip->tickets,
-                'image' => $trip->image_url,
-                'to_country' => $trip->toCountry ? $trip->toCountry->name : null,
-                'to_city' => $trip->toCity ? $trip->toCity->name : null,
-                'is_active' => $trip->active,
-                'expiry_date' => $trip->expiry_date,
-                'is_favorite' => in_array($trip->id, $userFavoriteIds),
-                'is_featured' => (bool)$trip->is_featured,
-                'base_capacity' => $trip->base_capacity ?? 2,
-                'extra_passenger_price' => $trip->extra_passenger_price ?? 0,
-                'categories' => $trip->categories->map(function ($cat) {
-                    return [
-                        'id' => $cat->id,
-                        'name' => $cat->name_attribute,
-                    ];
-                }),
-            ];
-        });
-
-        return $this->apiResponse(false, __('Featured trips retrieved successfully'), $trips);
     }
 }

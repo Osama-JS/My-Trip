@@ -648,6 +648,10 @@ class HotelController extends Controller
     )]
     public function getCities(Request $request)
     {
+        // Increase memory limit for large city lists
+        ini_set('memory_limit', '512M');
+        set_time_limit(120);
+
         $q = $request->get('q', '');
         $locale = app()->getLocale();
 
