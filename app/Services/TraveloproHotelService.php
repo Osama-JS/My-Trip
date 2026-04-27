@@ -593,6 +593,8 @@ class TraveloproHotelService
                 $cityName = $city['city_name'] ?? $city['CityName'] ?? null;
                 $countryName = $city['country_name'] ?? $city['CountryName'] ?? null;
                 $countryCode = $city['country_code'] ?? $city['CountryCode'] ?? null;
+                $latitude = $city['latitude'] ?? $city['Latitude'] ?? null;
+                $longitude = $city['longitude'] ?? $city['Longitude'] ?? null;
 
                 if (!$cityCode || !$cityName) continue;
 
@@ -601,6 +603,8 @@ class TraveloproHotelService
                     'city_name_en' => $cityName,
                     'country_code' => $countryCode,
                     'country_name_en' => $countryName,
+                    'latitude' => $latitude,
+                    'longitude' => $longitude,
                     'is_active' => true,
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -609,7 +613,8 @@ class TraveloproHotelService
             }
 
             if (!empty($data)) {
-                \App\Models\HotelCity::upsert($data, ['city_name_en', 'country_name_en'], ['city_code', 'country_code', 'updated_at']);
+                // Use city_code as the unique key for upserting
+                \App\Models\HotelCity::upsert($data, ['city_code'], ['city_name_en', 'country_name_en', 'country_code', 'latitude', 'longitude', 'updated_at']);
                 $totalSynced += count($data);
                 Log::info("Synced batch {$from}-{$to}. Total EN synced: {$totalSynced}");
             }
@@ -642,7 +647,7 @@ class TraveloproHotelService
                 if (empty($citiesAr)) break;
 
                 foreach ($citiesAr as $city) {
-                    $id = $city['id'] ?? null;
+                    $id = $city['id'] ?? $city['CityCode'] ?? null;
                     $cityNameAr = $city['city_name'] ?? $city['CityName'] ?? null;
                     $countryNameAr = $city['country_name'] ?? $city['CountryName'] ?? null;
 
@@ -660,17 +665,15 @@ class TraveloproHotelService
             }
         }
 
-        // --- FALLBACK: Standard prominent cities ---
+        // --- FALLBACK: Standard prominent cities (Optional, but using real IDs if possible) ---
+        // Note: In a real environment, you'd want these IDs to match the supplier's actual IDs.
         $prominentCities = [
-            ['city_code' => 'SA_1', 'city_name_en' => 'Makkah', 'city_name_ar' => 'مكة المكرمة', 'country_code' => 'SA', 'country_name_en' => 'Saudi Arabia', 'country_name_ar' => 'المملكة العربية السعودية'],
-            ['city_code' => 'SA_2', 'city_name_en' => 'Madinah', 'city_name_ar' => 'المدينة المنورة', 'country_code' => 'SA', 'country_name_en' => 'Saudi Arabia', 'country_name_ar' => 'المملكة العربية السعودية'],
-            ['city_code' => 'SA_3', 'city_name_en' => 'Riyadh', 'city_name_ar' => 'الرياض', 'country_code' => 'SA', 'country_name_en' => 'Saudi Arabia', 'country_name_ar' => 'المملكة العربية السعودية'],
-            ['city_code' => 'SA_4', 'city_name_en' => 'Jeddah', 'city_name_ar' => 'جدة', 'country_code' => 'SA', 'country_name_en' => 'Saudi Arabia', 'country_name_ar' => 'المملكة العربية السعودية'],
-            ['city_code' => 'SA_5', 'city_name_en' => 'Dammam', 'city_name_ar' => 'الدمام', 'country_code' => 'SA', 'country_name_en' => 'Saudi Arabia', 'country_name_ar' => 'المملكة العربية السعودية'],
-            ['city_code' => 'AE_1', 'city_name_en' => 'Dubai', 'city_name_ar' => 'دبي', 'country_code' => 'AE', 'country_name_en' => 'United Arab Emirates', 'country_name_ar' => 'الإمارات العربية المتحدة'],
-            ['city_code' => 'EG_1', 'city_name_en' => 'Cairo', 'city_name_ar' => 'القاهرة', 'country_code' => 'EG', 'country_name_en' => 'Egypt', 'country_name_ar' => 'مصر'],
-            ['city_code' => 'TR_1', 'city_name_en' => 'Istanbul', 'city_name_ar' => 'اسطنبول', 'country_code' => 'TR', 'country_name_en' => 'Turkey', 'country_name_ar' => 'تركيا'],
-            ['city_code' => 'GB_1', 'city_name_en' => 'London', 'city_name_ar' => 'لندن', 'country_code' => 'GB', 'country_name_en' => 'United Kingdom', 'country_name_ar' => 'المملكة المتحدة'],
+            ['city_code' => '13217', 'city_name_en' => 'Makkah', 'city_name_ar' => 'مكة المكرمة', 'country_code' => 'SA', 'country_name_en' => 'Saudi Arabia', 'country_name_ar' => 'المملكة العربية السعودية'],
+            ['city_code' => '13191', 'city_name_en' => 'Madinah', 'city_name_ar' => 'المدينة المنورة', 'country_code' => 'SA', 'country_name_en' => 'Saudi Arabia', 'country_name_ar' => 'المملكة العربية السعودية'],
+            ['city_code' => '13233', 'city_name_en' => 'Riyadh', 'city_name_ar' => 'الرياض', 'country_code' => 'SA', 'country_name_en' => 'Saudi Arabia', 'country_name_ar' => 'المملكة العربية السعودية'],
+            ['city_code' => '13184', 'city_name_en' => 'Jeddah', 'city_name_ar' => 'جدة', 'country_code' => 'SA', 'country_name_en' => 'Saudi Arabia', 'country_name_ar' => 'المملكة العربية السعودية'],
+            ['city_code' => '13158', 'city_name_en' => 'Dammam', 'city_name_ar' => 'الدمام', 'country_code' => 'SA', 'country_name_en' => 'Saudi Arabia', 'country_name_ar' => 'المملكة العربية السعودية'],
+            ['city_code' => '1792',  'city_name_en' => 'Dubai', 'city_name_ar' => 'دبي', 'country_code' => 'AE', 'country_name_en' => 'United Arab Emirates', 'country_name_ar' => 'الإمارات العربية المتحدة'],
         ];
 
         foreach ($prominentCities as $city) {
@@ -680,7 +683,7 @@ class TraveloproHotelService
         return [
             'status' => 'success',
             'count' => max($totalSynced, count($prominentCities)),
-            'message' => $totalSynced > 0 ? "Full sync complete. Synced {$totalSynced} cities." : "API Timeout. Fallback major cities seeded."
+            'message' => $totalSynced > 0 ? "Full sync complete. Synced {$totalSynced} cities." : "API Timeout or no cities found. Fallback major cities seeded."
         ];
     }
 
