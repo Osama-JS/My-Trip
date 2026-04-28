@@ -378,15 +378,33 @@ class DiscoveryController extends Controller
             )
         ]
     )]
-    public function getCategories(): JsonResponse
+    public function getCategories(Request $request): JsonResponse
     {
-        $categories = \App\Models\TripCategory::all()->map(function ($category) {
+        $countryIds = $request->input('country_ids');
+        if (is_string($countryIds)) {
+            $countryIds = explode(',', $countryIds);
+        }
+
+        $categories = \App\Models\TripCategory::query();
+
+        if (!empty($countryIds)) {
+            $categories->withCount(['trips' => function($q) use ($countryIds) {
+                $q->active()->whereIn('to_country_id', $countryIds);
+            }]);
+        } else {
+            $categories->withCount(['trips' => function($q) {
+                $q->active();
+            }]);
+        }
+
+        $data = $categories->get()->map(function ($category) {
             return [
                 'id' => $category->id,
-                'name' => app()->getLocale() === 'ar' ? $category->name_ar : $category->name_en,
+                'name' => $category->name_attribute,
+                'trips_count' => $category->trips_count ?? 0,
             ];
         });
 
-        return $this->apiResponse(false, __('Categories retrieved successfully'), $categories);
+        return $this->apiResponse(false, __('Categories retrieved successfully'), $data);
     }
 }

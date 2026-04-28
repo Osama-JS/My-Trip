@@ -130,10 +130,18 @@ class TripController extends Controller
             });
         }
 
-        if ($request->has('destination_id')) {
-            $query->where(function($q) use ($request) {
-                $q->where('to_city_id', $request->destination_id)
-                  ->orWhere('to_country_id', $request->destination_id);
+        if ($request->has('destination_ids') || $request->has('destination_id')) {
+            $ids = $request->input('destination_ids');
+            if (empty($ids)) {
+                $ids = [$request->input('destination_id')];
+            }
+            if (is_string($ids)) {
+                $ids = explode(',', $ids);
+            }
+            
+            $query->where(function($q) use ($ids) {
+                $q->whereIn('to_city_id', $ids)
+                  ->orWhereIn('to_country_id', $ids);
             });
         }
 
