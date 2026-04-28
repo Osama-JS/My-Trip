@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Country extends Model
 {
@@ -81,7 +82,22 @@ class Country extends Model
     public function getLandmarkImageUrlAttribute(): string
     {
         if ($this->landmark_image) {
-            return asset('storage/' . $this->landmark_image);
+            $imagePath = $this->landmark_image;
+            
+            // If it's already a full URL, return it
+            if (Str::startsWith($imagePath, ['http://', 'https://'])) {
+                return $imagePath;
+            }
+
+            // If it's an absolute file path, try to make it relative to storage
+            $imagePath = str_replace('\\', '/', $imagePath);
+            $storagePublicPath = str_replace('\\', '/', storage_path('app/public/'));
+            $publicPath = str_replace('\\', '/', public_path('storage/'));
+            
+            $imagePath = str_replace($storagePublicPath, '', $imagePath);
+            $imagePath = str_replace($publicPath, '', $imagePath);
+
+            return asset('storage/' . ltrim($imagePath, '/'));
         }
 
         // Fallback to ISO-based image if available, otherwise placeholder

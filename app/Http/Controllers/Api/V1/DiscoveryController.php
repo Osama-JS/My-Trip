@@ -60,7 +60,9 @@ class DiscoveryController extends Controller
 
     public function getCountries(): JsonResponse
     {
-        $countries = Country::active()->has('toTrips')->get()->map(function ($country) {
+        $countries = Country::active()->has('toTrips')->withCount(['toTrips as active_trips_count' => function($query) {
+            $query->active();
+        }])->get()->map(function ($country) {
             return [
                 'id' => $country->id,
                 'name' => app()->getLocale() == 'ar' ? $country->name : $country->nicename,
@@ -71,6 +73,7 @@ class DiscoveryController extends Controller
                 'flag' => $country->flag_url,
                 'landmark_image' => $country->landmark_image_url,
                 'image' => $country->landmark_image_url, // Added for frontend compatibility
+                'trips_count' => $country->active_trips_count,
             ];
         });
 
@@ -153,7 +156,7 @@ class DiscoveryController extends Controller
 
         return $this->apiResponse(false, __('Cities retrieved successfully'), $cities);
     }
-     /**
+    /**
      * Get all active banners ordered by priority.
      */
     #[OA\Get(
@@ -266,9 +269,11 @@ class DiscoveryController extends Controller
     )]
     public function getLocations(): JsonResponse
     {
-        $locations = Country::active()->with(['cities' => function($query) {
-            $query->active();
-        }])->get()->map(function ($country) {
+        $locations = Country::active()->with([
+            'cities' => function ($query) {
+                $query->active();
+            }
+        ])->get()->map(function ($country) {
             return [
                 'id' => $country->id,
                 'name' => app()->getLocale() == 'ar' ? $country->name : $country->nicename,
