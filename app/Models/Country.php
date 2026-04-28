@@ -94,4 +94,12 @@ class Country extends Model
 
         return asset('images/demo/destination-placeholder.jpg');
     }
+
+    /**
+     * Get the tourist trips going to this country.
+     */
+    public function toTrips()
+    {
+        return $this->hasMany(Trip::class, 'to_country_id');
+    }
 }

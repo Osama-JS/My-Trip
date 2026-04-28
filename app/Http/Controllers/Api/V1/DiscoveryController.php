@@ -60,7 +60,7 @@ class DiscoveryController extends Controller
 
     public function getCountries(): JsonResponse
     {
-        $countries = Country::active()->get()->map(function ($country) {
+        $countries = Country::active()->has('toTrips')->get()->map(function ($country) {
             return [
                 'id' => $country->id,
                 'name' => app()->getLocale() == 'ar' ? $country->name : $country->nicename,
@@ -70,6 +70,7 @@ class DiscoveryController extends Controller
                 'phone_code' => $country->phonecode,
                 'flag' => $country->flag_url,
                 'landmark_image' => $country->landmark_image_url,
+                'image' => $country->landmark_image_url, // Added for frontend compatibility
             ];
         });
 
