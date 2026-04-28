@@ -275,6 +275,7 @@ class TripController extends Controller
     )]
     public function show($id): JsonResponse
     {
+        $start = microtime(true);
         $trip = Trip::with(['images', 'toCountry', 'toCity', 'itineraries', 'company', 'categories'])
             ->active()
             ->find($id);
@@ -321,6 +322,9 @@ class TripController extends Controller
             }),
             'is_favorite' => Auth::guard('sanctum')->check() && Favorite::where('user_id', Auth::guard('sanctum')->id())->where('trip_id', $trip->id)->exists(),
         ];
+
+        $end = microtime(true);
+        Log::info("Trip details fetch time for ID $id: " . ($end - $start) . " seconds");
 
         return $this->apiResponse(false, __('Trip details retrieved successfully'), $data);
     }
