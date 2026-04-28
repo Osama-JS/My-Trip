@@ -400,7 +400,7 @@ class DiscoveryController extends Controller
         $data = $categories->get()->map(function ($category) {
             return [
                 'id' => $category->id,
-                'name' => $category->name_attribute,
+                'name' => app()->getLocale() == 'ar' ? $category->name_ar : $category->name_en,
                 'trips_count' => $category->trips_count ?? 0,
             ];
         });
