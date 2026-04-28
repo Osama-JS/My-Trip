@@ -160,6 +160,7 @@ class TripController extends Controller
         }
 
         $trips = $query->with(['images', 'toCountry', 'toCity', 'categories'])
+            ->active()
             ->latest()
             ->paginate($request->per_page ?? 10);
 
