@@ -49,7 +49,7 @@
                             <tbody id="seasons-list">
                                 @forelse($trip->seasons as $season)
                                     <tr>
-                                        <td class="font-w600">{{ $season->title }}</td>
+                                        <td class="font-w600">{{ $season->name }}</td>
                                         <td>
                                             <span class="badge badge-outline-primary fs-12">{{ $season->start_date }}</span>
                                             <i class="fas fa-arrow-right mx-1 fs-10 text-muted"></i>
@@ -161,13 +161,13 @@
                                 <tbody>
                                     @php
                                         $occupancyTypes = ['single', 'double', 'triple', 'child'];
-                                        $prices = $package->prices->groupBy('trip_season_id');
+                                        $prices = $package->prices->groupBy('season_id');
                                     @endphp
                                     @forelse($trip->seasons as $season)
                                         @php $seasonPrices = ($prices->get($season->id) ?? collect())->keyBy('occupancy_type'); @endphp
                                         <tr>
                                             <td class="bg-light-info text-start px-3">
-                                                <div class="font-w600 text-dark">{{ $season->title }}</div>
+                                                <div class="font-w600 text-dark">{{ $season->name }}</div>
                                                 <small class="text-muted">{{ $season->start_date }} - {{ $season->end_date }}</small>
                                             </td>
                                             @foreach($occupancyTypes as $type)
@@ -231,9 +231,15 @@
             </div>
             <div class="modal-body">
                 <input type="hidden" name="id" id="s_id">
-                <div class="mb-3">
-                    <label class="form-label font-w600">{{ __('Season Title') }} <span class="text-danger">*</span></label>
-                    <input type="text" name="title" id="s_title" class="form-control" required placeholder="e.g. Summer 2024">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label font-w600">{{ __('Season Name (AR)') }}</label>
+                        <input type="text" name="name_ar" id="s_name_ar" class="form-control" placeholder="e.g. صيف 2024">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label font-w600">{{ __('Season Name (EN)') }} <span class="text-danger">*</span></label>
+                        <input type="text" name="name_en" id="s_name_en" class="form-control" required placeholder="e.g. Summer 2024">
+                    </div>
                 </div>
                 <div class="row">
                     <div class="col-md-6 mb-3">
@@ -381,7 +387,8 @@
     function openSeasonModal(season = null) {
         if (season) {
             $('#s_id').val(season.id);
-            $('#s_title').val(season.title);
+            $('#s_name_ar').val(season.name_ar);
+            $('#s_name_en').val(season.name_en);
             $('#s_start').val(season.start_date);
             $('#s_end').val(season.end_date);
         } else {

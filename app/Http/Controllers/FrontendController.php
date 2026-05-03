@@ -846,8 +846,8 @@ class FrontendController extends Controller
         $unitPrice = $trip->price;
         if ($selectedPackage && $selectedSeason && $request->occupancy_type) {
             $priceRecord = \App\Models\TripPackagePrice::where([
-                'trip_package_id' => $request->package_id,
-                'trip_season_id' => $request->season_id,
+                'package_id' => $request->package_id,
+                'season_id' => $request->season_id,
                 'occupancy_type' => $request->occupancy_type
             ])->first();
             if ($priceRecord) {
@@ -909,8 +909,8 @@ class FrontendController extends Controller
         if ($request->package_id && $request->season_id && $request->occupancy_type) {
             // New Tiered Pricing
             $priceRecord = \App\Models\TripPackagePrice::where([
-                'trip_package_id' => $request->package_id,
-                'trip_season_id' => $request->season_id,
+                'package_id' => $request->package_id,
+                'season_id' => $request->season_id,
                 'occupancy_type' => $request->occupancy_type
             ])->first();
 

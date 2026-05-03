@@ -40,19 +40,32 @@
 
                     <div class="pay-methods">
 
-                        {{-- Card --}}
+                        {{-- Mada --}}
+                        <a href="{{ route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'mada', 'type' => 'trip']) }}" class="pay-method">
+                            <div class="pay-method__left">
+                                <div class="pay-method__img-wrap" style="background:#ffffff;">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/f/fb/Mada_Logo.svg" alt="Mada" style="height:20px;">
+                                </div>
+                                <div class="pay-method__info">
+                                    <span class="pay-method__name">{{ __('Mada Card') }}</span>
+                                    <span class="pay-method__desc">{{ __('Local debit cards — instant confirmation') }}</span>
+                                </div>
+                            </div>
+                            <span class="pay-method__arrow"><i class="fas fa-chevron-right"></i></span>
+                        </a>
+
+                        {{-- Credit Card (Visa / Mastercard) --}}
                         <a href="{{ route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'visa_master', 'type' => 'trip']) }}" class="pay-method">
                             <div class="pay-method__left">
                                 <div class="pay-method__img-wrap card-wrap">
                                     <div class="card-chips">
                                         <img src="https://www.logo.wine/a/logo/Visa_Inc./Visa_Inc.-Logo.wine.svg" alt="Visa">
                                         <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard">
-                                        <img src="https://upload.wikimedia.org/wikipedia/commons/f/fb/Mada_Logo.svg" alt="Mada">
                                     </div>
                                 </div>
                                 <div class="pay-method__info">
-                                    <span class="pay-method__name">{{ __('Credit / Debit Card') }}</span>
-                                    <span class="pay-method__desc">{{ __('Visa, Mastercard, Mada — instant confirmation') }}</span>
+                                    <span class="pay-method__name">{{ __('Credit Card') }}</span>
+                                    <span class="pay-method__desc">{{ __('Visa, Mastercard — instant confirmation') }}</span>
                                 </div>
                             </div>
                             <span class="pay-method__arrow"><i class="fas fa-chevron-right"></i></span>

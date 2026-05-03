@@ -125,14 +125,14 @@ class TripPackageController extends Controller
                 
                 if ($price === null || $price === '') {
                     if ($isPartial) {
-                        $package->prices()->where('trip_season_id', $seasonId)->where('occupancy_type', $occupancyType)->delete();
+                        $package->prices()->where('season_id', $seasonId)->where('occupancy_type', $occupancyType)->delete();
                     }
                     continue;
                 }
 
                 $package->prices()->updateOrCreate(
                     [
-                        'trip_season_id' => $seasonId,
+                        'season_id' => $seasonId,
                         'occupancy_type' => $occupancyType,
                     ],
                     [

@@ -13,10 +13,10 @@ return new class extends Migration
             $table->foreignId('package_id')->constrained('trip_packages')->onDelete('cascade');
             $table->foreignId('season_id')->nullable()->constrained('trip_seasons')->onDelete('cascade');
             $table->enum('occupancy_type', [
-                '2pax_1room',    // شخصان في غرفة واحدة
-                '3pax_1room',    // 3 أشخاص في غرفة واحدة
-                '3_4pax_2rooms', // 3 أو 4 أشخاص في غرفتين
-                '5pax_2rooms',   // 5 أشخاص في غرفتين
+                'single',
+                'double',
+                'triple',
+                'child',
             ]);
             $table->decimal('price', 10, 2)->comment('Total price for the whole group');
             $table->timestamps();
