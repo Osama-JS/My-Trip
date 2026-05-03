@@ -18,6 +18,10 @@ use OpenApi\Attributes as OA;
     url: "https://flyvio.net",
     description: "Production Server"
 )]
+#[OA\Server(
+    url: "http://localhost/my-trip/public",
+    description: "Local Server (XAMPP)"
+)]
 #[OA\SecurityScheme(
     securityScheme: "bearerAuth",
     type: "http",

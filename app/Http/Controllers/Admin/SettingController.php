@@ -27,6 +27,8 @@ class SettingController extends Controller
                 'instagram_url' => 'nullable|url',
                 'android_url' => 'nullable|url',
                 'ios_url' => 'nullable|url',
+                'snapchat_url' => 'nullable|url',
+                'tiktok_url' => 'nullable|url',
                 'maintenance_mode' => 'nullable|in:0,1',
                 'flight_margin'      => 'nullable|numeric|min:0',
                 'flight_margin_type' => 'nullable|in:percentage,fixed',

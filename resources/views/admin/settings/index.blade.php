@@ -507,6 +507,13 @@
                                         <input type="url" class="form-control" name="snapchat_url" value="{{ \App\Models\Setting::get('snapchat_url') }}" placeholder="https://snapchat.com/...">
                                     </div>
                                 </div>
+                                <div class="col-md-4 mb-4 form-group">
+                                    <label>{{ __('TikTok') }}</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fab fa-tiktok text-dark"></i></span>
+                                        <input type="url" class="form-control" name="tiktok_url" value="{{ \App\Models\Setting::get('tiktok_url') }}" placeholder="https://tiktok.com/@...">
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

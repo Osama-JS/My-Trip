@@ -16,6 +16,10 @@
         {
             "url": "https://flyvio.net",
             "description": "Production Server"
+        },
+        {
+            "url": "http://localhost/my-trip/public",
+            "description": "Local Server (XAMPP)"
         }
     ],
     "paths": {
@@ -5201,6 +5205,95 @@
                                                 },
                                                 "type": "object"
                                             }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/settings": {
+            "get": {
+                "tags": [
+                    "Discovery"
+                ],
+                "summary": "Get contact settings",
+                "description": "Retrieve social media links, phone numbers, and email addresses from settings.",
+                "operationId": "getContactSettings",
+                "parameters": [
+                    {
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "description": "The language of the response (ar, en)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "en",
+                            "enum": [
+                                "en",
+                                "ar"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Settings retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Settings retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "phone": {
+                                                    "type": "string",
+                                                    "example": "+966500000000"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "info@flyvio.net"
+                                                },
+                                                "whatsapp": {
+                                                    "type": "string",
+                                                    "example": "https://wa.me/966500000000"
+                                                },
+                                                "facebook": {
+                                                    "type": "string",
+                                                    "example": "https://facebook.com/flyvio"
+                                                },
+                                                "twitter": {
+                                                    "type": "string",
+                                                    "example": "https://twitter.com/flyvio"
+                                                },
+                                                "instagram": {
+                                                    "type": "string",
+                                                    "example": "https://instagram.com/flyvio"
+                                                },
+                                                "linkedin": {
+                                                    "type": "string",
+                                                    "example": "https://linkedin.com/company/flyvio"
+                                                },
+                                                "snapchat": {
+                                                    "type": "string",
+                                                    "example": "https://snapchat.com/add/flyvio"
+                                                },
+                                                "tiktok": {
+                                                    "type": "string",
+                                                    "example": "https://tiktok.com/@flyvio"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"

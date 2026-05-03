@@ -22,6 +22,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/locations', [\App\Http\Controllers\Api\V1\DiscoveryController::class, 'getLocations']);
     Route::get('/faqs', [\App\Http\Controllers\Api\V1\DiscoveryController::class, 'getFaqs']);
     Route::get('/categories', [\App\Http\Controllers\Api\V1\DiscoveryController::class, 'getCategories']);
+    Route::get('/settings', [\App\Http\Controllers\Api\V1\DiscoveryController::class, 'getContactSettings']);
 
     // Trips
     Route::get('/trips/featured', [\App\Http\Controllers\Api\V1\TripController::class, 'featured']);

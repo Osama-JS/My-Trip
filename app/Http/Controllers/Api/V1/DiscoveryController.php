@@ -7,6 +7,7 @@ use App\Models\Banner;
 use App\Models\City;
 use App\Models\Country;
 use App\Traits\ApiResponseTrait;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use OpenApi\Attributes as OA;
@@ -406,5 +407,75 @@ class DiscoveryController extends Controller
         });
 
         return $this->apiResponse(false, __('Categories retrieved successfully'), $data);
+    }
+
+    /**
+     * Get contact and social media settings.
+     */
+    #[OA\Get(
+        path: "/api/v1/settings",
+        summary: "Get contact settings",
+        operationId: "getContactSettings",
+        description: "Retrieve social media links, phone numbers, and email addresses from settings.",
+        tags: ["Discovery"],
+        parameters: [
+            new OA\Parameter(
+                name: "Accept-Language",
+                in: "header",
+                description: "The language of the response (ar, en)",
+                required: false,
+                schema: new OA\Schema(type: "string", default: "en", enum: ["en", "ar"])
+            )
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "Settings retrieved successfully",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "error", type: "boolean", example: false),
+                        new OA\Property(property: "message", type: "string", example: "Settings retrieved successfully"),
+                        new OA\Property(property: "data", type: "object", properties: [
+                            new OA\Property(property: "phone", type: "string", example: "+966500000000"),
+                            new OA\Property(property: "email", type: "string", example: "info@flyvio.net"),
+                            new OA\Property(property: "whatsapp", type: "string", example: "https://wa.me/966500000000"),
+                            new OA\Property(property: "facebook", type: "string", example: "https://facebook.com/flyvio"),
+                            new OA\Property(property: "twitter", type: "string", example: "https://twitter.com/flyvio"),
+                            new OA\Property(property: "instagram", type: "string", example: "https://instagram.com/flyvio"),
+                            new OA\Property(property: "linkedin", type: "string", example: "https://linkedin.com/company/flyvio"),
+                            new OA\Property(property: "snapchat", type: "string", example: "https://snapchat.com/add/flyvio"),
+                            new OA\Property(property: "tiktok", type: "string", example: "https://tiktok.com/@flyvio"),
+                        ])
+                    ]
+                )
+            )
+        ]
+    )]
+    public function getContactSettings(): JsonResponse
+    {
+        $keys = [
+            'contact_phone' => 'phone',
+            'contact_email' => 'email',
+            'facebook_url'  => 'facebook',
+            'twitter_url'   => 'twitter',
+            'instagram_url' => 'instagram',
+            'linkedin_url'  => 'linkedin',
+            'snapchat_url'  => 'snapchat',
+            'tiktok_url'    => 'tiktok',
+            'whatsapp_url'  => 'whatsapp',
+        ];
+        
+        $settings = [];
+        foreach ($keys as $dbKey => $outputKey) {
+            $settings[$outputKey] = Setting::get($dbKey);
+        }
+
+        // Fallback for WhatsApp if no URL but phone exists
+        if (empty($settings['whatsapp']) && !empty($settings['phone'])) {
+            $phone = preg_replace('/[^0-9]/', '', $settings['phone']);
+            $settings['whatsapp'] = "https://wa.me/" . $phone;
+        }
+
+        return $this->apiResponse(false, __('Settings retrieved successfully'), $settings);
     }
 }
