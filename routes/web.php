@@ -205,6 +205,30 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     Route::get('settings', [App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
     Route::post('settings', [App\Http\Controllers\Admin\SettingController::class, 'update'])->name('settings.update');
 
+    // Wallets Management
+    Route::get('wallets', [App\Http\Controllers\Admin\WalletController::class, 'index'])->name('wallets.index');
+    Route::get('wallets/{id}', [App\Http\Controllers\Admin\WalletController::class, 'show'])->name('wallets.show');
+    Route::post('wallets/{id}/add-transaction', [App\Http\Controllers\Admin\WalletController::class, 'addTransaction'])->name('wallets.add-transaction');
+
+    // Support Tickets
+    Route::prefix('support')->name('support.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\SupportTicketController::class, 'index'])->name('index');
+        Route::get('/{id}', [App\Http\Controllers\Admin\SupportTicketController::class, 'show'])->name('show');
+        Route::post('/{id}/reply', [App\Http\Controllers\Admin\SupportTicketController::class, 'reply'])->name('reply');
+        Route::post('/{id}/status', [App\Http\Controllers\Admin\SupportTicketController::class, 'updateStatus'])->name('status');
+        Route::post('/{id}/assign', [App\Http\Controllers\Admin\SupportTicketController::class, 'assign'])->name('assign');
+    });
+
+    // Customer Support Routes
+    Route::prefix('customer')->name('customer.')->middleware(['auth', 'verified'])->group(function() {
+        Route::get('/support', [App\Http\Controllers\Customer\SupportTicketController::class, 'index'])->name('support.index');
+        Route::get('/support/create', [App\Http\Controllers\Customer\SupportTicketController::class, 'create'])->name('support.create');
+        Route::post('/support', [App\Http\Controllers\Customer\SupportTicketController::class, 'store'])->name('support.store');
+        Route::get('/support/{id}', [App\Http\Controllers\Customer\SupportTicketController::class, 'show'])->name('support.show');
+        Route::post('/support/{id}/reply', [App\Http\Controllers\Customer\SupportTicketController::class, 'reply'])->name('support.reply');
+        Route::post('/support/{id}/rate', [App\Http\Controllers\Customer\SupportTicketController::class, 'rate'])->name('support.rate');
+    });
+
     // Question Management
     Route::get('questions/data', [App\Http\Controllers\Admin\QuestionController::class, 'getData'])->name('questions.data');
     Route::post('questions/{question}/toggle-status', [App\Http\Controllers\Admin\QuestionController::class, 'toggleStatus'])->name('questions.toggle-status');
@@ -433,6 +457,9 @@ Route::middleware(['auth', 'isCustomer'])->prefix('customer')->name('customer.')
     Route::get('/payments', [CustomerPaymentController::class, 'index'])->name('payments.index');
     Route::get('/payments/checkout/{bookingId}', [CustomerPaymentController::class, 'checkout'])->name('payments.checkout');
     Route::get('/payments/{bookingId}/invoice', [CustomerPaymentController::class, 'downloadInvoice'])->name('payments.invoice');
+
+    // Wallet
+    Route::get('/wallet', [\App\Http\Controllers\Customer\WalletController::class, 'index'])->name('wallet.index');
 
     // Notifications
     Route::get('/notifications', [CustomerNotificationController::class, 'index'])->name('notifications.index');

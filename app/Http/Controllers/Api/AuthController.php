@@ -213,6 +213,9 @@ class AuthController extends Controller
         $user->device_type = $request->device_type;
         $user->save();
 
+        // Create wallet for the newly verified user
+        app(\App\Services\WalletService::class)->getOrCreateWallet($user);
+
         // Send Welcome Email
         $this->mailService->sendWelcomeEmail($user);
 

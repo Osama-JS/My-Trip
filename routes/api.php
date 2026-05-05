@@ -112,5 +112,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user/trip-bookings', [App\Http\Controllers\Api\UserBookingController::class, 'tripBookings']);
     Route::get('/user/trip-bookings/{id}', [App\Http\Controllers\Api\UserBookingController::class, 'tripBookingDetails']);
 
+    // Wallet Routes
+    Route::get('/user/wallet', [App\Http\Controllers\Api\WalletController::class, 'getWallet']);
+    Route::get('/user/wallet/transactions', [App\Http\Controllers\Api\WalletController::class, 'getTransactions']);
+
+    // Support Routes
+    Route::get('/user/tickets', [App\Http\Controllers\Api\SupportTicketController::class, 'index']);
+    Route::post('/user/tickets', [App\Http\Controllers\Api\SupportTicketController::class, 'store']);
+    Route::get('/user/tickets/{id}', [App\Http\Controllers\Api\SupportTicketController::class, 'show']);
+    Route::post('/user/tickets/{id}/reply', [App\Http\Controllers\Api\SupportTicketController::class, 'reply']);
+    Route::post('/user/tickets/{id}/rate', [App\Http\Controllers\Api\SupportTicketController::class, 'rate']);
+
     Route::post('/logout', [AuthController::class, 'logout']);
 });

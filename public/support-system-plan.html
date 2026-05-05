@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>خطة نظام التذاكر والدعم الفني | Support Ticket System Plan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-light: #818cf8;
+            --secondary: #0f172a;
+            --accent: #f59e0b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding-bottom: 50px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--secondary) 0%, #1e293b 100%);
+            color: white;
+            padding: 60px 20px;
+            text-align: center;
+            border-bottom: 5px solid var(--primary);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .container { max-width: 1000px; margin: -40px auto 0; padding: 0 20px; }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+            border: 1px solid rgba(0,0,0,0.02);
+        }
+
+        h1 { font-size: 2.5rem; font-weight: 900; margin-bottom: 10px; }
+        h2 { color: var(--primary); font-size: 1.8rem; font-weight: 800; margin-bottom: 25px; display: flex; align-items: center; gap: 15px; }
+        h2 i { font-size: 1.5rem; background: rgba(79, 70, 229, 0.1); padding: 12px; border-radius: 12px; }
+
+        .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 20px; }
+        .feature-item {
+            background: #f1f5f9;
+            padding: 25px;
+            border-radius: 15px;
+            transition: 0.3s;
+            border-inline-start: 5px solid var(--primary);
+        }
+        .feature-item:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        .feature-item i { color: var(--primary); font-size: 1.5rem; margin-bottom: 15px; display: block; }
+        .feature-item h3 { font-size: 1.2rem; margin-bottom: 10px; font-weight: 700; }
+        .feature-item p { color: var(--text-muted); font-size: 0.95rem; }
+
+        .tech-box {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .tech-badge {
+            background: rgba(79, 70, 229, 0.05);
+            color: var(--primary);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 700;
+            border: 1px solid rgba(79, 70, 229, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .schema-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        .schema-table th { background: var(--secondary); color: white; padding: 15px; text-align: start; }
+        .schema-table td { padding: 15px; border-bottom: 1px solid #e2e8f0; background: #fff; }
+        .schema-table tr:last-child td { border-bottom: none; }
+
+        .step-list { list-style: none; counter-reset: my-counter; }
+        .step-list li {
+            padding: 20px 60px 20px 20px;
+            position: relative;
+            background: #fff;
+            margin-bottom: 15px;
+            border-radius: 15px;
+            border: 1px solid #e2e8f0;
+        }
+        .step-list li::before {
+            content: counter(my-counter);
+            counter-increment: my-counter;
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            width: 30px;
+            height: 30px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+        }
+
+        .badge-status {
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .bg-open { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+        .bg-pending { background: rgba(245, 158, 11, 0.1); color: var(--accent); }
+        .bg-closed { background: rgba(100, 116, 139, 0.1); color: var(--text-muted); }
+
+        footer { text-align: center; margin-top: 40px; color: var(--text-muted); font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>نظام التذاكر والدعم الفني الذكي</h1>
+        <p>خطة تطوير متكاملة لربط العملاء بفريق الدعم الفني وتقييم الجودة</p>
+    </header>
+
+    <div class="container">
+        
+        <!-- 1. تحليل النظام -->
+        <div class="card">
+            <h2><i class="fas fa-microscope"></i> تحليل النظام والمتطلبات</h2>
+            <p>يهدف النظام إلى توفير قناة اتصال مباشرة ورسمية بين العميل وفريق الدعم، تضمن توثيق المشكلات وحلها بشكل منظم مع قياس أداء فريق العمل.</p>
+            
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <i class="fas fa-ticket-alt"></i>
+                    <h3>إدارة التذاكر</h3>
+                    <p>إمكانية إنشاء تذاكر بمواضيع وتصنيفات مختلفة (تقني، مالي، اقتراح) مع تحديد الأولوية.</p>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-comments"></i>
+                    <h3>محادثات فورية</h3>
+                    <p>نظام دردشة داخل التذكرة يسمح بتبادل الرسائل والمرفقات بين العميل والأدمن.</p>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-star-half-alt"></i>
+                    <h3>تقييم الخدمة</h3>
+                    <p>بعد إغلاق التذكرة، يطلب من العميل تقييم التجربة (1-5 نجوم) مع ترك تعليق لتحسين الأداء.</p>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-user-shield"></i>
+                    <h3>توزيع المهام</h3>
+                    <p>تخصيص تذكرة معينة لموظف دعم محدد لمتابعة الحالة حتى الإغلاق.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. هيكلة البيانات -->
+        <div class="card">
+            <h2><i class="fas fa-database"></i> هيكلة قاعدة البيانات (Database Schema)</h2>
+            
+            <h3>1. جدول التذاكر (Support Tickets)</h3>
+            <table class="schema-table">
+                <thead>
+                    <tr>
+                        <th>الحقل</th>
+                        <th>النوع</th>
+                        <th>الوصف</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>user_id</td><td>Foreign Key</td><td>العميل الذي أنشأ التذكرة</td></tr>
+                    <tr><td>assigned_to</td><td>Foreign Key</td><td>الموظف المسؤول عن الحل</td></tr>
+                    <tr><td>subject</td><td>String</td><td>موضوع المشكلة</td></tr>
+                    <tr><td>category</td><td>Enum</td><td>(تقني، مالي، حجز، عام)</td></tr>
+                    <tr><td>status</td><td>Enum</td><td>(Open, Pending, Closed)</td></tr>
+                    <tr><td>priority</td><td>Enum</td><td>(Low, Medium, High, Urgent)</td></tr>
+                </tbody>
+            </table>
+
+            <h3 style="margin-top: 30px;">2. جدول الرسائل (Ticket Messages)</h3>
+            <table class="schema-table">
+                <thead>
+                    <tr>
+                        <th>الحقل</th>
+                        <th>النوع</th>
+                        <th>الوصف</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>ticket_id</td><td>Foreign Key</td><td>التذكرة المرتبطة</td></tr>
+                    <tr><td>sender_id</td><td>Foreign Key</td><td>مرسل الرسالة (عميل أو أدمن)</td></tr>
+                    <tr><td>message</td><td>Text</td><td>محتوى الرسالة</td></tr>
+                    <tr><td>attachments</td><td>JSON/Array</td><td>مسارات الملفات المرفقة إن وجدت</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 3. رحلة المستخدم -->
+        <div class="card">
+            <h2><i class="fas fa-route"></i> رحلة المستخدم (User Workflow)</h2>
+            <ul class="step-list">
+                <li>
+                    <strong>إنشاء التذكرة:</strong> يقوم العميل بملء نموذج يحدد فيه نوع المشكلة ووصفها.
+                </li>
+                <li>
+                    <strong>المراجعة من الإدارة:</strong> تظهر التذكرة في لوحة تحكم الأدمن، ويتم تعيينها لموظف مختص.
+                </li>
+                <li>
+                    <strong>بدء المحادثة:</strong> يقوم الأدمن بالرد على التذكرة، ويصل إشعار للعميل بذلك لبدء النقاش.
+                </li>
+                <li>
+                    <strong>الحل والإغلاق:</strong> بمجرد حل المشكلة، يقوم الأدمن (أو العميل) بإغلاق التذكرة.
+                </li>
+                <li>
+                    <strong>التقييم النهائي:</strong> يظهر خيار للعميل لتقييم الدعم الذي تلقاه، ويتم تخزين التقييم وربطه بالموظف الذي حل المشكلة.
+                </li>
+            </ul>
+        </div>
+
+        <!-- 4. التقنيات المستخدمة -->
+        <div class="card">
+            <h2><i class="fas fa-code"></i> التقنيات والأدوات</h2>
+            <div class="tech-box">
+                <div class="tech-badge"><i class="fab fa-laravel"></i> Laravel Framework</div>
+                <div class="tech-badge"><i class="fas fa-bolt"></i> Laravel Echo / WebSockets (للإشعارات الفورية)</div>
+                <div class="tech-badge"><i class="fas fa-file-export"></i> Spatie MediaLibrary (للمرفقات)</div>
+                <div class="tech-badge"><i class="fas fa-paint-brush"></i> Blade & Vanilla CSS / Tailwind</div>
+            </div>
+        </div>
+
+        <!-- 5. ميزات إضافية (Premium Features) -->
+        <div class="card">
+            <h2><i class="fas fa-gem"></i> لمسات احترافية</h2>
+            <p>لجعل النظام يتفوق على الأنظمة التقليدية، سنقوم بإضافة:</p>
+            <ul style="margin-right: 30px; margin-top: 15px;">
+                <li><strong>نظام إشعارات ذكي:</strong> تنبيهات عبر البريد وداخل التطبيق عند كل رد جديد.</li>
+                <li><strong>حالات التذكرة الملونة:</strong> واجهة بصرية جذابة تعكس حالة التذكرة فوراً.</li>
+                <li><strong>لوحة إحصائيات للإدارة:</strong> تقارير عن متوسط وقت الرد، وأكثر الموظفين تقييماً.</li>
+                <li><strong>دعم المرفقات المتعددة:</strong> إمكانية رفع صور أو ملفات PDF لتوضيح المشكلة.</li>
+            </ul>
+        </div>
+
+        <footer>
+            نظام الدعم الفني المقترح لمشروع My-Trip &copy; 2024
+        </footer>
+    </div>
+
+</body>
+</html>

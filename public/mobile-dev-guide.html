@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دليل مطور الموبايل - آلية الحجز والدفع</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --secondary: #3b82f6;
+            --accent: #10b981;
+            --bg: #f8fafc;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+        }
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        .header h1 {
+            color: var(--primary);
+            font-weight: 800;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        .header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border);
+        }
+        .card-title {
+            color: var(--primary);
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 2px solid var(--bg);
+            padding-bottom: 15px;
+        }
+        .card-title i {
+            color: var(--secondary);
+        }
+        h3 {
+            color: var(--secondary);
+            font-weight: 700;
+            margin-top: 25px;
+        }
+        pre {
+            background-color: #0f172a;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            direction: ltr;
+            text-align: left;
+            font-family: monospace;
+            font-size: 0.9rem;
+            border-left: 4px solid var(--secondary);
+        }
+        code {
+            background-color: #e2e8f0;
+            color: #be123c;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+        }
+        .alert {
+            background-color: #eff6ff;
+            border-right: 4px solid var(--secondary);
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+        }
+        .alert-warning {
+            background-color: #fffbeb;
+            border-right-color: #f59e0b;
+        }
+        .alert-success {
+            background-color: #f0fdf4;
+            border-right-color: #10b981;
+        }
+        .alert i {
+            font-size: 1.5rem;
+            margin-top: 3px;
+        }
+        .alert-warning i { color: #f59e0b; }
+        .alert-success i { color: #10b981; }
+        .alert-primary i { color: var(--secondary); }
+        
+        .step-list {
+            list-style: none;
+            padding: 0;
+        }
+        .step-list li {
+            position: relative;
+            padding-right: 40px;
+            margin-bottom: 20px;
+        }
+        .step-list li::before {
+            content: attr(data-step);
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 28px;
+            height: 28px;
+            background-color: var(--secondary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: right;
+            border-bottom: 1px solid var(--border);
+        }
+        th {
+            background-color: var(--bg);
+            font-weight: 700;
+            color: var(--text);
+        }
+        tr:hover {
+            background-color: #f8fafc;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>دليل التكامل - تطبيق الموبايل</h1>
+        <p>شرح تفصيلي لآلية حجز الطيران والفنادق وعمليات الدفع الموحدة</p>
+    </div>
+
+    <!-- Overview Section -->
+    <div class="card">
+        <h2 class="card-title"><i class="fas fa-sitemap"></i> نظرة عامة على الهيكلية</h2>
+        <p>تم توحيد بنية الدفع في الـ API لتكون <strong>مستقلة تماماً</strong> عن التطبيق (Decoupled). هذا يعني أن التطبيق <strong>لا يحتاج</strong> إلى دمج حزم دفع معقدة (SDKs) مثل HyperPay أو Tamara. كل شيء يتم من خلال الـ API وإعادة التوجيه (WebView).</p>
+        
+        <div class="alert alert-success">
+            <i class="fas fa-check-circle"></i>
+            <div>
+                <strong>الهدف الرئيسي:</strong> توفير تجربة دفع موحدة لجميع الخدمات (طيران، فنادق، رحلات) وتسهيل إضافة وسائل دفع جديدة مستقبلاً دون الحاجة لرفع تحديث جديد للتطبيق على المتاجر.
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking Flow Section -->
+    <div class="card">
+        <h2 class="card-title"><i class="fas fa-plane-departure"></i> مسار عمليات الحجز (الطيران والفنادق)</h2>
+        <p>سواء كان المستخدم يحجز رحلة طيران عبر <code>/api/flights/book</code> أو فندقاً عبر <code>/api/hotels/book</code>، فإن الاستجابة الناجحة (Response) ستحتوي دائماً على كائن <code>payment_info</code>.</p>
+        
+        <h3>شكل الاستجابة (JSON Response)</h3>
+        <pre><code>{
+  "error": false,
+  "message": "Booking successful",
+  "data": {
+    "booking_id": 1052,
+    "payment_url": "https://api.my-trip.com/payments/checkout?...", // للدعم الرجعي
+    "payment_info": {
+      "booking_id": 1052,
+      "amount": 1500.50,
+      "currency": "SAR",
+      "methods": [
+        {
+          "id": "visa_master",
+          "name": "Visa / Master",
+          "logo": "https://api.my-trip.com/assets/images/payments/visa_master.png",
+          "url": "https://api.my-trip.com/payments/checkout?booking_id=1052&method=visa_master&type=flight"
+        },
+        {
+          "id": "mada",
+          "name": "Mada",
+          "logo": "https://api.my-trip.com/assets/images/payments/mada.png",
+          "url": "https://api.my-trip.com/payments/checkout?booking_id=1052&method=mada&type=flight"
+        },
+        {
+          "id": "tamara",
+          "name": "Tamara",
+          "logo": "https://api.my-trip.com/assets/images/payments/tamara.png",
+          "url": "https://api.my-trip.com/payments/checkout?booking_id=1052&method=tamara&type=flight"
+        }
+      ]
+    }
+  }
+}</code></pre>
+    </div>
+
+    <!-- Mobile Developer Action Section -->
+    <div class="card">
+        <h2 class="card-title"><i class="fas fa-mobile-alt"></i> المطلوب من مطور الموبايل (الخطوات)</h2>
+        
+        <ul class="step-list">
+            <li data-step="1">
+                <strong>استقبال الطلب:</strong> بعد نجاح طلب الـ API للحجز، قم بالتحقق من وجود الكائن <code>data.payment_info.methods</code>.
+            </li>
+            <li data-step="2">
+                <strong>عرض وسائل الدفع:</strong> قم بعرض قائمة منسدلة من الأسفل (مثلاً <code>BottomSheet</code> في Flutter/GetX) تحتوي على وسائل الدفع المتاحة بناءً على مصفوفة <code>methods</code>. استخدم الـ <code>logo</code> لرمز وسيلة الدفع والـ <code>name</code> للاسم.
+            </li>
+            <li data-step="3">
+                <strong>فتح نافذة الدفع (WebView):</strong> عند ضغط المستخدم على إحدى وسائل الدفع، قم بفتح الرابط الموجود في الـ <code>url</code> الخاص بتلك الوسيلة داخل <code>WebView</code> مدمج في التطبيق.
+            </li>
+            <li data-step="4">
+                <strong>مراقبة مسار الرابط (URL Interception):</strong> داخل الـ WebView، يجب مراقبة الروابط التي يتم إعادة التوجيه إليها لاكتشاف نجاح أو فشل العملية.
+            </li>
+        </ul>
+
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            <div>
+                <strong>دعم النسخ القديمة (Backward Compatibility):</strong> إذا كان التطبيق يستخدم الإصدار القديم، سيعتمد على متغير <code>payment_url</code> المباشر والذي يوجه المستخدم للبطاقة الائتمانية بشكل افتراضي.
+            </div>
+        </div>
+    </div>
+
+    <!-- WebView Callbacks Section -->
+    <div class="card">
+        <h2 class="card-title"><i class="fas fa-link"></i> مراقبة الروابط (WebView Callbacks)</h2>
+        <p>عندما يكمل المستخدم عملية الدفع بنجاح أو تفشل العملية، سيقوم السيرفر بإعادة توجيهه إلى روابط محددة. يجب على التطبيق (WebView) التقاط هذه الروابط لإغلاق النافذة وإظهار رسالة للمستخدم.</p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>الحالة</th>
+                    <th>الرابط المتوقع (URL pattern to match)</th>
+                    <th>الإجراء في التطبيق</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>النجاح (Success)</strong></td>
+                    <td dir="ltr"><code>/payments/success</code> أو <code>status=success</code></td>
+                    <td>إغلاق الـ WebView وإظهار صفحة "تم الحجز بنجاح"</td>
+                </tr>
+                <tr>
+                    <td><strong>الفشل (Failed/Error)</strong></td>
+                    <td dir="ltr"><code>/payments/error</code> أو <code>status=failed</code></td>
+                    <td>إغلاق الـ WebView وإظهار رسالة "فشلت عملية الدفع"</td>
+                </tr>
+                <tr>
+                    <td><strong>الإلغاء (Cancel)</strong></td>
+                    <td dir="ltr"><code>/payments/cancel</code></td>
+                    <td>إغلاق الـ WebView والعودة لشاشة تفاصيل الحجز</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>مثال برمجي مبسط (Flutter / webview_flutter)</h3>
+        <pre><code>NavigationDecision _interceptNavigation(NavigationRequest request) {
+  if (request.url.contains('/payments/success')) {
+    // 1. Close WebView
+    Get.back();
+    // 2. Show Success Screen
+    Get.to(() => BookingSuccessScreen());
+    return NavigationDecision.prevent;
+  }
+  
+  if (request.url.contains('/payments/error') || request.url.contains('/payments/cancel')) {
+    Get.back();
+    Get.snackbar('Error', 'Payment failed or was cancelled');
+    return NavigationDecision.prevent;
+  }
+  
+  return NavigationDecision.navigate;
+}</code></pre>
+    </div>
+
+    <!-- Summary Section -->
+    <div class="card">
+        <h2 class="card-title"><i class="fas fa-clipboard-check"></i> ملخص القواعد الذهبية لمطور التطبيق</h2>
+        <ol style="line-height: 2;">
+            <li>لا تبرمج واجهات الدفع (UI) الخاص ببيانات البطاقة داخل التطبيق نهائياً. استخدم دائماً الـ <code>WebView</code>.</li>
+            <li>اعتمد دائماً على مصفوفة <code>methods</code> المرسلة من الـ API لبناء خيارات الدفع، فلا تقم بتثبيت (Hardcode) أي وسيلة دفع في كود التطبيق.</li>
+            <li>تأكد من تمرير لغة التطبيق الصحيحة في الهيدر <code>Accept-Language: ar/en</code> لضمان ظهور واجهة الدفع في الويب بنفس لغة التطبيق.</li>
+            <li>الـ <code>type</code> المدمج في الرابط يعالج مسألة التفريق بين حجز الفنادق أو الطيران من طرف السيرفر، فلا تشغل بالك بتتبعه كمتغير مستقل.</li>
+        </ol>
+    </div>
+
+</div>
+
+</body>
+</html>

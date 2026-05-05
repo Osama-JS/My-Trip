@@ -230,4 +230,20 @@ class User extends Authenticatable
     {
         return $this->hasMany(BankTransfer::class);
     }
+
+    /**
+     * Get user support tickets (as client)
+     */
+    public function supportTickets()
+    {
+        return $this->hasMany(SupportTicket::class, 'user_id');
+    }
+
+    /**
+     * Get assigned support tickets (as admin)
+     */
+    public function assignedTickets()
+    {
+        return $this->hasMany(SupportTicket::class, 'assigned_to');
+    }
 }

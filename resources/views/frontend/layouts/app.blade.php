@@ -6,24 +6,29 @@
 @endphp
 <!DOCTYPE html>
 <html lang="{{ $locale }}" dir="{{ $locale == 'ar' ? 'rtl' : 'ltr' }}">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', __('Tourism Platform')) - {{ $siteName }}</title>
-    <meta name="description" content="@yield('meta_description', __('Discover amazing travel experiences. Book tours, flights, and hotels with the best prices.'))">
+    <meta name="description"
+        content="@yield('meta_description', __('Discover amazing travel experiences. Book tours, flights, and hotels with the best prices.'))">
 
     <!-- Favicon -->
-    <link rel="shortcut icon" type="image/png" href="{{ asset(\App\Models\Setting::get('site_favicon', 'images/favicon.png')) }}">
+    <link rel="shortcut icon" type="image/png"
+        href="{{ asset(\App\Models\Setting::get('site_favicon', 'images/favicon.png')) }}">
 
     {{-- Google Fonts --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=Tajawal:wght@300;400;500;700;800;900&display=swap"
+        rel="stylesheet">
 
     {{-- Font Awesome --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
+
     {{-- Premium Frontend CSS --}}
     <link rel="stylesheet" href="{{ asset('css/frontend.css') }}?v={{ filemtime(public_path('css/frontend.css')) }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
@@ -31,6 +36,7 @@
 
     @stack('styles')
 </head>
+
 <body class="frontend-body">
 
     {{-- ═══ HEADER ═══ --}}
@@ -40,7 +46,8 @@
             <a href="{{ route('home') }}" class="fe-logo">
                 <div class="fe-logo-icon">
                     @if($footerLogo)
-                        <img src="{{ asset($footerLogo) }}" alt="{{ $siteName }}" style="height: 32px; width: auto; object-fit: contain;">
+                        <img src="{{ asset($footerLogo) }}" alt="{{ $siteName }}"
+                            style="height: 32px; width: auto; object-fit: contain;">
                     @else
                         <i class="fas fa-plane"></i>
                     @endif
@@ -49,38 +56,44 @@
             </a>
 
             {{-- Navigation (Becomes Mobile Drawer) --}}
-            <div class="fe-nav-overlay" id="feNavOverlay" onclick="document.getElementById('feNav').classList.remove('open'); document.getElementById('feNavOverlay').classList.remove('active'); document.body.style.overflow='';"></div>
+            <div class="fe-nav-overlay" id="feNavOverlay"
+                onclick="document.getElementById('feNav').classList.remove('open'); document.getElementById('feNavOverlay').classList.remove('active'); document.body.style.overflow='';">
+            </div>
             <nav class="fe-nav" id="feNav">
                 <div class="fe-nav-header-mobile">
                     <div class="fe-logo">
                         <div class="fe-logo-icon">
                             @if($footerLogo)
-                                <img src="{{ asset($footerLogo) }}" alt="{{ $siteName }}" style="height: 32px; width: auto; object-fit: contain;">
+                                <img src="{{ asset($footerLogo) }}" alt="{{ $siteName }}"
+                                    style="height: 32px; width: auto; object-fit: contain;">
                             @else
                                 <i class="fas fa-plane"></i>
                             @endif
                         </div>
                         <span>{{ $siteName }}</span>
                     </div>
-                    <button class="fe-nav-close" onclick="document.getElementById('feNav').classList.remove('open'); document.getElementById('feNavOverlay').classList.remove('active'); document.body.style.overflow='';">
+                    <button class="fe-nav-close"
+                        onclick="document.getElementById('feNav').classList.remove('open'); document.getElementById('feNavOverlay').classList.remove('active'); document.body.style.overflow='';">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
-                
+
                 <div class="fe-nav-links">
                     <a href="{{ route('home') }}" class="{{ request()->routeIs('home') ? 'active' : '' }}">
                         <i class="fas fa-home"></i> {{ __('Home') }}
                     </a>
-                    <a href="{{ route('trips.index') }}" class="{{ request()->routeIs('trips.*') ? 'active' : '' }}">
-                        <i class="fas fa-suitcase-rolling"></i> {{ __('Tour Packages') }}
-                    </a>
+
                     <a href="{{ route('flights') }}" class="{{ request()->routeIs('flights') ? 'active' : '' }}">
                         <i class="fas fa-plane-departure"></i> {{ __('Flights') }}
                     </a>
                     <a href="{{ route('hotels') }}" class="{{ request()->routeIs('hotels') ? 'active' : '' }}">
                         <i class="fas fa-hotel"></i> {{ __('Hotels') }}
                     </a>
-                    {{-- <a href="{{ route('destinations') }}" class="{{ request()->routeIs('destinations') ? 'active' : '' }}">
+                    <a href="{{ route('trips.index') }}" class="{{ request()->routeIs('trips.*') ? 'active' : '' }}">
+                        <i class="fas fa-suitcase-rolling"></i> {{ __('Tour Packages') }}
+                    </a>
+                    {{-- <a href="{{ route('destinations') }}"
+                        class="{{ request()->routeIs('destinations') ? 'active' : '' }}">
                         <i class="fas fa-map-marked-alt"></i> {{ __('Destinations') }}
                     </a> --}}
                     <a href="{{ route('about') }}" class="{{ request()->routeIs('about') ? 'active' : '' }}">
@@ -91,15 +104,18 @@
                 {{-- Mobile Auth & Lang inside Drawer --}}
                 <div class="fe-nav-bottom-mobile">
                     @auth
-                        <a href="{{ auth()->user()->isAdmin() ? route('admin.dashboard') : route('customer.dashboard') }}" class="fe-btn fe-btn-primary w-full" style="justify-content: center;">
+                        <a href="{{ auth()->user()->isAdmin() ? route('admin.dashboard') : route('customer.dashboard') }}"
+                            class="fe-btn fe-btn-primary w-full" style="justify-content: center;">
                             <i class="fas fa-user"></i> {{ __('Dashboard') }}
                         </a>
                     @else
                         <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                            <a href="{{ route('login') }}" class="fe-btn fe-btn-outline" style="justify-content: center; padding: 10px;">
+                            <a href="{{ route('login') }}" class="fe-btn fe-btn-outline"
+                                style="justify-content: center; padding: 10px;">
                                 {{ __('Login') }}
                             </a>
-                            <a href="{{ route('register') }}" class="fe-btn fe-btn-primary" style="justify-content: center; padding: 10px;">
+                            <a href="{{ route('register') }}" class="fe-btn fe-btn-primary"
+                                style="justify-content: center; padding: 10px;">
                                 {{ __('Register') }}
                             </a>
                         </div>
@@ -122,7 +138,8 @@
 
                 <div class="fe-desktop-actions">
                     @auth
-                        <a href="{{ auth()->user()->isAdmin() ? route('admin.dashboard') : route('customer.dashboard') }}" class="fe-btn fe-btn-primary fe-btn-sm">
+                        <a href="{{ auth()->user()->isAdmin() ? route('admin.dashboard') : route('customer.dashboard') }}"
+                            class="fe-btn fe-btn-primary fe-btn-sm">
                             <i class="fas fa-user"></i> {{ __('Dashboard') }}
                         </a>
                     @else
@@ -136,7 +153,8 @@
                 </div>
 
                 {{-- Mobile menu Toggle --}}
-                <button class="fe-menu-toggle" onclick="document.getElementById('feNav').classList.add('open'); document.getElementById('feNavOverlay').classList.add('active'); document.body.style.overflow='hidden';">
+                <button class="fe-menu-toggle"
+                    onclick="document.getElementById('feNav').classList.add('open'); document.getElementById('feNavOverlay').classList.add('active'); document.body.style.overflow='hidden';">
                     <i class="fas fa-bars" style="font-size:1.2rem"></i>
                 </button>
             </div>
@@ -146,7 +164,8 @@
     {{-- ═══ MAIN CONTENT ═══ --}}
     <main>
         @if(session('success'))
-            <div style="position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:9999;background:var(--success);color:white;padding:12px 24px;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.15);font-weight:600;animation:fadeInUp 0.4s ease">
+            <div
+                style="position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:9999;background:var(--success);color:white;padding:12px 24px;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.15);font-weight:600;animation:fadeInUp 0.4s ease">
                 {{ session('success') }}
             </div>
         @endif
@@ -154,9 +173,9 @@
     </main>
 
     {{-- ═══ FOOTER ═══ --}}
-     @php
+    @php
         $facebookUrl = \App\Models\Setting::get('facebook_url');
-        $twitterUrl = \App\Models\Setting::get('twitter_url' );
+        $twitterUrl = \App\Models\Setting::get('twitter_url');
         $instagramUrl = \App\Models\Setting::get('instagram_url');
     @endphp
     <footer class="fe-footer">
@@ -167,7 +186,8 @@
                     <a href="{{ route('home') }}" class="fe-logo">
                         <div class="fe-logo-icon">
                             @if($footerLogo)
-                                <img src="{{ asset($footerLogo) }}" alt="{{ $siteName }}" style="height: 32px; width: auto; object-fit: contain;">
+                                <img src="{{ asset($footerLogo) }}" alt="{{ $siteName }}"
+                                    style="height: 32px; width: auto; object-fit: contain;">
                             @else
                                 <i class="fas fa-plane"></i>
                             @endif
@@ -213,16 +233,19 @@
                 </div>
 
                 {{-- Contact --}}
-                  @php
+                @php
                     $contactPhone = \App\Models\Setting::get('contact_phone');
                     $contactEmail = \App\Models\Setting::get('contact_email');
                 @endphp
                 <div>
                     <h4 class="fe-footer-heading">{{ __('Contact Us') }}</h4>
                     <ul class="fe-footer-links">
-                        <li><i class="fas fa-envelope" style="margin-inline-end:8px;color:var(--accent)"></i> {{$contactEmail}}</li>
-                        <li><i class="fas fa-phone" style="margin-inline-end:8px;color:var(--accent)"></i> {{$contactPhone}}</li>
-                        <li><i class="fas fa-map-marker-alt" style="margin-inline-end:8px;color:var(--accent)"></i> {{ __('Saudi Arabia') }}</li>
+                        <li><i class="fas fa-envelope" style="margin-inline-end:8px;color:var(--accent)"></i>
+                            {{$contactEmail}}</li>
+                        <li><i class="fas fa-phone" style="margin-inline-end:8px;color:var(--accent)"></i>
+                            {{$contactPhone}}</li>
+                        <li><i class="fas fa-map-marker-alt" style="margin-inline-end:8px;color:var(--accent)"></i>
+                            {{ __('Saudi Arabia') }}</li>
                     </ul>
                 </div>
             </div>
@@ -241,16 +264,16 @@
         // Header scroll effect
         window.addEventListener('scroll', () => {
             const header = document.getElementById('feHeader');
-            if(header) header.classList.toggle('scrolled', window.scrollY > 50);
+            if (header) header.classList.toggle('scrolled', window.scrollY > 50);
         });
 
         // Favorite Toggle (Global)
         function toggleFavorite(btn) {
             const tripId = btn.dataset.tripId;
             const icon = btn.querySelector('i');
-            
+
             btn.disabled = true;
-            
+
             fetch(`{{ url('customer/favorites') }}/${tripId}/toggle`, {
                 method: 'POST',
                 headers: {
@@ -259,26 +282,26 @@
                     'X-Requested-With': 'XMLHttpRequest'
                 }
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'added') {
-                    btn.classList.add('active');
-                    if(icon) icon.className = 'fas fa-heart';
-                    // Optional: toaster notification
-                } else {
-                    btn.classList.remove('active');
-                    if(icon) icon.className = 'far fa-heart';
-                }
-            })
-            .catch(err => console.error('Favorite toggle failed:', err))
-            .finally(() => {
-                btn.disabled = false;
-            });
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'added') {
+                        btn.classList.add('active');
+                        if (icon) icon.className = 'fas fa-heart';
+                        // Optional: toaster notification
+                    } else {
+                        btn.classList.remove('active');
+                        if (icon) icon.className = 'far fa-heart';
+                    }
+                })
+                .catch(err => console.error('Favorite toggle failed:', err))
+                .finally(() => {
+                    btn.disabled = false;
+                });
         }
 
         // Scroll animations
         const animateElements = document.querySelectorAll('.fe-animate');
-// ... rest of the script
+        // ... rest of the script
         const observer = new IntersectionObserver((entries) => {
             entries.forEach((entry, index) => {
                 if (entry.isIntersecting) {
@@ -312,4 +335,5 @@
 
     @stack('scripts')
 </body>
+
 </html>

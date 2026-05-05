@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>خطة عمل: نظام المحافظ الإلكترونية (E-Wallet System)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #0f172a;
+            --secondary: #3b82f6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --bg: #f8fafc;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+        }
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.8;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+            background: linear-gradient(135deg, var(--primary), #1e1b4b);
+            color: white;
+            padding: 40px 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            font-weight: 900;
+            font-size: 2.8rem;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+        .header p {
+            font-size: 1.2rem;
+            color: #cbd5e1;
+            margin: 0;
+        }
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            padding: 35px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--secondary);
+        }
+        .card-title {
+            color: var(--primary);
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin-top: 0;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 2px solid var(--bg);
+            padding-bottom: 15px;
+        }
+        .card-title i { color: var(--secondary); }
+        h3 {
+            color: var(--primary);
+            font-weight: 800;
+            font-size: 1.3rem;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 15px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        th, td {
+            padding: 15px;
+            text-align: right;
+            border-bottom: 1px solid var(--border);
+        }
+        th {
+            background-color: #f1f5f9;
+            font-weight: 800;
+            color: var(--primary);
+        }
+        tr:last-child td { border-bottom: none; }
+        .type-badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            font-family: monospace;
+        }
+        .bg-blue { background: #eff6ff; color: #2563eb; }
+        .bg-green { background: #f0fdf4; color: #16a34a; }
+        .bg-orange { background: #fff7ed; color: #ea580c; }
+        .bg-gray { background: #f1f5f9; color: #475569; }
+        
+        .alert {
+            background-color: #eff6ff;
+            border-right: 4px solid var(--secondary);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 25px 0;
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+        }
+        .alert-danger { background-color: #fef2f2; border-right-color: var(--danger); }
+        .alert-warning { background-color: #fffbeb; border-right-color: var(--warning); }
+        .alert-success { background-color: #f0fdf4; border-right-color: var(--success); }
+        .alert i { font-size: 1.8rem; margin-top: 2px; }
+        .alert-danger i { color: var(--danger); }
+        .alert-warning i { color: var(--warning); }
+        .alert-success i { color: var(--success); }
+        
+        .checklist { list-style: none; padding: 0; }
+        .checklist li {
+            position: relative;
+            padding-right: 35px;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        .checklist li i {
+            position: absolute;
+            right: 0;
+            top: 5px;
+            color: var(--secondary);
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>خطة تطوير نظام المحافظ الإلكترونية</h1>
+        <p>تصميم دقيق، آمن، وقابل للتوسع (E-Wallet System Architecture)</p>
+    </div>
+
+    <!-- DB Schema Section -->
+    <div class="card" style="border-right-color: var(--primary);">
+        <h2 class="card-title"><i class="fas fa-database"></i> 1. هيكلية قواعد البيانات (Database Schema)</h2>
+        <p>لضمان الدقة المطلقة وعدم ضياع أي هللة، سيتم إنشاء جدولين أساسيين: جدول المحفظة (الرصيد الكلي)، وجدول العمليات (سجل الحركات المالي الغير قابل للتعديل).</p>
+
+        <h3>الجدول الأول: المحافظ (wallets)</h3>
+        <table>
+            <tr><th>اسم الحقل</th><th>النوع</th><th>الوصف والهدف</th></tr>
+            <tr><td><code>id</code></td><td><span class="type-badge bg-gray">BIGINT</span></td><td>المعرف الفريد للمحفظة.</td></tr>
+            <tr><td><code>user_id</code></td><td><span class="type-badge bg-blue">FOREIGN KEY</span></td><td>مربوط بجدول المستخدمين (لكل مستخدم محفظة واحدة).</td></tr>
+            <tr><td><code>balance</code></td><td><span class="type-badge bg-green">DECIMAL(14,4)</span></td><td>الرصيد الحالي. الدقة 4 خانات عشرية (0.0000) لمنع أخطاء التقريب المالي.</td></tr>
+            <tr><td><code>currency</code></td><td><span class="type-badge bg-orange">VARCHAR</span></td><td>عملة المحفظة (افتراضياً 'SAR').</td></tr>
+            <tr><td><code>status</code></td><td><span class="type-badge bg-gray">ENUM</span></td><td>حالة المحفظة: <code>active</code>, <code>frozen</code> (مجمدة لأسباب أمنية).</td></tr>
+        </table>
+
+        <h3>الجدول الثاني: العمليات المالية (wallet_transactions)</h3>
+        <div class="alert alert-warning">
+            <i class="fas fa-shield-alt"></i>
+            <div>
+                <strong>قاعدة التدقيق المالي (Audit Trail):</strong> هذا الجدول يعمل بنظام (Append-Only) أي لا يتم تعديل أو حذف أي عملية بعد إضافتها نهائياً.
+            </div>
+        </div>
+        <table>
+            <tr><th>اسم الحقل</th><th>النوع</th><th>الوصف والهدف</th></tr>
+            <tr><td><code>id</code></td><td><span class="type-badge bg-gray">BIGINT</span></td><td>المعرف الفريد للعملية.</td></tr>
+            <tr><td><code>wallet_id</code></td><td><span class="type-badge bg-blue">FOREIGN KEY</span></td><td>معرف المحفظة المرتبطة.</td></tr>
+            <tr><td><code>type</code></td><td><span class="type-badge bg-orange">ENUM</span></td><td>نوع العملية: <code>credit</code> (إيداع/استرجاع)، <code>debit</code> (سحب/شراء).</td></tr>
+            <tr><td><code>amount</code></td><td><span class="type-badge bg-green">DECIMAL(14,4)</span></td><td>قيمة العملية المالية.</td></tr>
+            <tr><td><code>balance_before</code></td><td><span class="type-badge bg-gray">DECIMAL(14,4)</span></td><td>الرصيد <strong>قبل</strong> العملية (مهم جداً للمراجعة المحاسبية).</td></tr>
+            <tr><td><code>balance_after</code></td><td><span class="type-badge bg-gray">DECIMAL(14,4)</span></td><td>الرصيد <strong>بعد</strong> العملية. يجب دائماً أن يكون (قبل ± المبلغ = بعد).</td></tr>
+            <tr><td><code>reference_type</code></td><td><span class="type-badge bg-blue">VARCHAR</span></td><td>نوع المرجع (مثال: App\Models\TripBooking).</td></tr>
+            <tr><td><code>reference_id</code></td><td><span class="type-badge bg-blue">BIGINT</span></td><td>رقم الحجز أو الطلب المرتبط بهذه العملية (لتتبع مصدر الأموال).</td></tr>
+            <tr><td><code>description</code></td><td><span class="type-badge bg-gray">TEXT</span></td><td>وصف نصي للعملية (مثال: "استرجاع مبلغ حجز الفندق رقم #102").</td></tr>
+        </table>
+    </div>
+
+    <!-- Security & Concurrency Section -->
+    <div class="card" style="border-right-color: var(--danger);">
+        <h2 class="card-title"><i class="fas fa-lock"></i> 2. الحماية ومنع تضارب البيانات (Concurrency & Security)</h2>
+        <p>أكبر مشكلة تواجه المحافظ الإلكترونية هي الـ <strong>Race Conditions</strong> (قيام المستخدم بعمليتي شراء في نفس اللحظة من جهازين لسحب نفس الرصيد المتاح). سيتم حل ذلك برمجياً كالتالي:</p>
+        
+        <ul class="checklist">
+            <li><i class="fas fa-check-square"></i> <strong>Pessimistic Locking (قفل الصفوف):</strong> استخدام <code>lockForUpdate()</code> على صف المحفظة في قاعدة البيانات عند أي عملية سحب أو إيداع، بحيث تُمنع أي عملية أخرى من قراءة أو تعديل الرصيد حتى تنتهي العملية الحالية.</li>
+            <li><i class="fas fa-check-square"></i> <strong>Database Transactions (المعاملات):</strong> استخدام <code>DB::transaction()</code> لضمان أنه إما أن تتم العملية بالكامل (خصم الرصيد وتسجيل الحركة) أو تُلغى بالكامل (Rollback) في حال حدوث أي خطأ برمجي أو انقطاع في السيرفر.</li>
+            <li><i class="fas fa-check-square"></i> <strong>التحقق قبل السحب:</strong> منع وصول الرصيد إلى السالب نهائياً <code>if (amount > balance) throw Exception</code>.</li>
+        </ul>
+    </div>
+
+    <!-- Execution Plan Section -->
+    <div class="card" style="border-right-color: var(--success);">
+        <h2 class="card-title"><i class="fas fa-cogs"></i> 3. خطوات التنفيذ القادمة (Action Plan)</h2>
+        <ul class="checklist">
+            <li><i class="fas fa-code-branch"></i> <strong>الخطوة الأولى:</strong> إنشاء ملفات التهجير (Migrations) للجدولين بالخصائص المذكورة أعلاه بدقة عالية.</li>
+            <li><i class="fas fa-code-branch"></i> <strong>الخطوة الثانية:</strong> إنشاء الـ Models (<code>Wallet</code> و <code>WalletTransaction</code>) وتعريف العلاقات البرمجية مع نموذج المستخدم (<code>User</code>) والنماذج المرجعية عبر (Polymorphic relations).</li>
+            <li><i class="fas fa-code-branch"></i> <strong>الخطوة الثالثة:</strong> برمجة خدمة مخصصة <code>WalletService.php</code> تحتوي على دالتين مركزيتين فقط للتعامل مع الأموال: <code>credit()</code> للإيداع، و <code>debit()</code> للسحب. بحيث لا يتم تعديل الأرصدة يدوياً من الـ Controllers أبداً لضمان المركزية والأمان.</li>
+            <li><i class="fas fa-code-branch"></i> <strong>الخطوة الرابعة:</strong> تحديث توثيق الـ API (Swagger) وإضافة مسارات (Routes) تمكن المستخدم من استعراض رصيده وسجل عملياته وتصديرها.</li>
+        </ul>
+        
+        <div class="alert alert-success">
+            <i class="fas fa-play-circle"></i>
+            <div>
+                <strong>في انتظار موافقتك:</strong> هل هذه الخطة وهذا التصميم يغطيان كافة متطلباتك؟ إذا كان الجواب نعم، أعطني الموافقة للبدء في كتابة الأكواد وتطبيق النظام في المشروع.
+            </div>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

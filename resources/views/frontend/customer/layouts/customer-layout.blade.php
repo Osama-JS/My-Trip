@@ -341,8 +341,18 @@
                     <span>{{ __('Profile Settings') }}</span>
                 </a>
 
-                <a href="{{ route('customer.payments.index') }}" class="cdash-link {{ request()->routeIs('customer.payments.*') ? 'active' : '' }}">
+                <a href="{{ route('customer.wallet.index') }}" class="cdash-link {{ request()->routeIs('customer.wallet.*') ? 'active' : '' }}">
                     <i class="fas fa-wallet"></i>
+                    <span>{{ __('My Wallet') }}</span>
+                </a>
+
+                <a href="{{ route('customer.support.index') }}" class="cdash-link {{ request()->routeIs('customer.support.*') ? 'active' : '' }}">
+                    <i class="fas fa-headset"></i>
+                    <span>{{ __('My Tickets') }}</span>
+                </a>
+
+                <a href="{{ route('customer.payments.index') }}" class="cdash-link {{ request()->routeIs('customer.payments.*') ? 'active' : '' }}">
+                    <i class="fas fa-receipt"></i>
                     <span>{{ __('Payments') }}</span>
                 </a>
             </nav>
