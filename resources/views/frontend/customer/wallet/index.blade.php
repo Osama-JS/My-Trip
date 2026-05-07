@@ -1,18 +1,10 @@
-@extends('frontend.layouts.app')
+@extends('frontend.customer.layouts.customer-layout')
 
 @section('title', __('My Wallet'))
 
 @section('content')
-<div class="fe-container py-5">
-    <div class="row">
-        <!-- Sidebar -->
-        <div class="col-lg-3 mb-4">
-            @include('frontend.customer.layouts.sidebar')
-        </div>
-
-        <!-- Main Content -->
-        <div class="col-lg-9">
-            <h2 class="mb-4 font-w800"><i class="fas fa-wallet text-primary me-2"></i> {{ __('My Wallet') }}</h2>
+<div class="fade-in-up">
+    <h2 class="mb-4 font-w800"><i class="fas fa-wallet text-primary me-2"></i> {{ __('My Wallet') }}</h2>
 
             <div class="row mb-4">
                 <div class="col-md-6">
@@ -80,7 +72,5 @@
                 </div>
             </div>
 
-        </div>
-    </div>
 </div>
 @endsection
