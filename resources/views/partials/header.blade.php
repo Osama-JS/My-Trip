@@ -168,6 +168,12 @@
                 </div>
 
                 <ul class="navbar-nav header-right">
+                    <li class="nav-item">
+                        <a class="nav-link lang-switcher-btn" href="{{ route('admin.notifications.index') }}" title="{{ __('Send Notification') }}">
+                            <i class="fas fa-paper-plane"></i>
+                        </a>
+                    </li>
+
                     <li class="nav-item dropdown">
                         <a class="nav-link lang-switcher-btn" href="javascript:void(0);" role="button" data-bs-toggle="dropdown">
                             <i class="fa fa-globe"></i>

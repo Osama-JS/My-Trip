@@ -21,6 +21,13 @@
             </li>
 
             <li>
+                <a href="{{ route('admin.notifications.index') }}" aria-expanded="false">
+                    <i class="fas fa-bell"></i>
+                    <span class="nav-text">{{ __('Notifications') }}</span>
+                </a>
+            </li>
+
+            <li>
                 <a href="{{ route('admin.subscribers.index') }}" aria-expanded="false">
                     <i class="fa fa-users"></i>
                     <span class="nav-text">{{ __('Subscribers') }}</span>
@@ -143,11 +150,6 @@
                     <span class="nav-text">{{ __('Settings & Administration') }}</span>
                 </a>
                 <ul aria-expanded="false">
-                    <li>
-                        <a href="{{ route('admin.notifications.index') }}">
-                            <i class="fas fa-bell"></i>{{ __('Notifications') }}
-                        </a>
-                    </li>
                     <li>
                         <a href="{{ route('admin.pages.index') }}">
                             <i class="fa fa-file-alt"></i>{{ __('Manage Pages') }}
