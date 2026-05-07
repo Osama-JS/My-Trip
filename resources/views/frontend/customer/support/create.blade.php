@@ -2,7 +2,7 @@
 
 @section('title', __('Create Support Ticket'))
 
-@section('customer_content')
+@section('content')
 <div class="row">
     <div class="col-12">
         <div class="card card-custom">

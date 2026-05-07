@@ -2,7 +2,7 @@
 
 @section('title', __('Ticket Details'))
 
-@section('customer_content')
+@section('content')
 <div class="row">
     <div class="col-xl-4 col-lg-5">
         <div class="card card-custom">
