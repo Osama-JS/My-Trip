@@ -61,4 +61,9 @@ return [
         'base_url' => env('TAP_BASE_URL', 'https://api.tap.company/v2'),
     ],
 
+    'firebase' => [
+        'project_id' => env('FIREBASE_PROJECT_ID'),
+        'credentials_path' => env('FIREBASE_CREDENTIALS_PATH', 'storage/app/firebase/service-account.json'),
+    ],
+
 ];

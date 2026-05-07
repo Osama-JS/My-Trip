@@ -35,6 +35,7 @@ class Notification extends Model
     const TYPE_PAYMENT_FAILED      = 'payment_failed';
     const TYPE_BOOKING_REMINDER    = 'booking_reminder';
     const TYPE_FAVORITE_TRIP_UPDATE = 'favorite_trip_update';
+    const TYPE_SUPPORT_REPLY       = 'support_reply';
 
     // Non-storable types (push only, no database record)
     const TYPE_NEW_TRIP   = 'new_trip';
@@ -51,6 +52,7 @@ class Notification extends Model
         self::TYPE_PAYMENT_FAILED,
         self::TYPE_BOOKING_REMINDER,
         self::TYPE_FAVORITE_TRIP_UPDATE,
+        self::TYPE_SUPPORT_REPLY,
     ];
 
     // ─── Relationships ─────────────────────────────────────
@@ -101,6 +103,7 @@ class Notification extends Model
             self::TYPE_FAVORITE_TRIP_UPDATE => 'favorite_update',
             self::TYPE_NEW_TRIP            => 'new_trip',
             self::TYPE_PROMOTION           => 'promotion',
+            self::TYPE_SUPPORT_REPLY       => 'support',
             default                        => 'general',
         };
     }

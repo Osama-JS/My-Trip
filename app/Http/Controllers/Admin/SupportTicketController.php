@@ -5,10 +5,18 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\SupportTicket;
 use App\Models\TicketMessage;
+use App\Models\Notification;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 
 class SupportTicketController extends Controller
 {
+    protected NotificationService $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
     public function index(Request $request)
     {
         $query = SupportTicket::with(['user', 'assignedAdmin'])->latest();
@@ -76,6 +84,21 @@ class SupportTicketController extends Controller
         // If ticket was closed, re-opening it is usually not standard for admins unless explicit
         if ($ticket->status === 'open') {
             $ticket->update(['status' => 'pending', 'assigned_to' => auth()->id()]);
+        }
+
+        // Send notification to user
+        try {
+            $title = __('رد جديد على تذكرتك');
+            $body = __('تم الرد على تذكرتك: ') . $ticket->subject;
+            $this->notificationService->sendToUser(
+                $ticket->user,
+                Notification::TYPE_SUPPORT_REPLY,
+                $title,
+                $body,
+                ['ticket_id' => $ticket->id]
+            );
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Failed to send support reply notification: " . $e->getMessage());
         }
 
         return back()->with('success', __('Reply sent successfully.'));
