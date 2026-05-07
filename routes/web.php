@@ -219,16 +219,6 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
         Route::post('/{id}/assign', [App\Http\Controllers\Admin\SupportTicketController::class, 'assign'])->name('assign');
     });
 
-    // Customer Support Routes
-    Route::prefix('customer')->name('customer.')->middleware(['auth', 'verified'])->group(function() {
-        Route::get('/support', [App\Http\Controllers\Customer\SupportTicketController::class, 'index'])->name('support.index');
-        Route::get('/support/create', [App\Http\Controllers\Customer\SupportTicketController::class, 'create'])->name('support.create');
-        Route::post('/support', [App\Http\Controllers\Customer\SupportTicketController::class, 'store'])->name('support.store');
-        Route::get('/support/{id}', [App\Http\Controllers\Customer\SupportTicketController::class, 'show'])->name('support.show');
-        Route::post('/support/{id}/reply', [App\Http\Controllers\Customer\SupportTicketController::class, 'reply'])->name('support.reply');
-        Route::post('/support/{id}/rate', [App\Http\Controllers\Customer\SupportTicketController::class, 'rate'])->name('support.rate');
-    });
-
     // Question Management
     Route::get('questions/data', [App\Http\Controllers\Admin\QuestionController::class, 'getData'])->name('questions.data');
     Route::post('questions/{question}/toggle-status', [App\Http\Controllers\Admin\QuestionController::class, 'toggleStatus'])->name('questions.toggle-status');
@@ -465,6 +455,16 @@ Route::middleware(['auth', 'isCustomer'])->prefix('customer')->name('customer.')
     Route::get('/notifications', [CustomerNotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/{id}/read', [CustomerNotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/notifications/read-all', [CustomerNotificationController::class, 'markAllRead'])->name('notifications.read-all');
+
+    // Support Tickets
+    Route::prefix('support')->name('support.')->group(function() {
+        Route::get('/', [App\Http\Controllers\Customer\SupportTicketController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\Customer\SupportTicketController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\Customer\SupportTicketController::class, 'store'])->name('store');
+        Route::get('/{id}', [App\Http\Controllers\Customer\SupportTicketController::class, 'show'])->name('show');
+        Route::post('/{id}/reply', [App\Http\Controllers\Customer\SupportTicketController::class, 'reply'])->name('reply');
+        Route::post('/{id}/rate', [App\Http\Controllers\Customer\SupportTicketController::class, 'rate'])->name('rate');
+    });
 });
 
 
