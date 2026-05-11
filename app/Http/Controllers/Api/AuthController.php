@@ -214,7 +214,7 @@ class AuthController extends Controller
         $user->save();
 
         // Create wallet for the newly verified user
-        app(\App\Services\WalletService::class)->getOrCreateWallet($user);
+        app(\App\Services\WalletService::class)->getOrCreateWallet($user->id);
 
         // Send Welcome Email
         $this->mailService->sendWelcomeEmail($user);

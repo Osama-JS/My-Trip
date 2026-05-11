@@ -38,7 +38,7 @@ class WalletController extends Controller
     )]
     public function getWallet(Request $request)
     {
-        $wallet = app(\App\Services\WalletService::class)->getOrCreateWallet($request->user());
+        $wallet = app(\App\Services\WalletService::class)->getOrCreateWallet($request->user()->id);
 
         $totalCredit = $wallet->transactions()->where('type', 'credit')->sum('amount');
         $totalDebit = $wallet->transactions()->where('type', 'debit')->sum('amount');
@@ -123,7 +123,7 @@ class WalletController extends Controller
     )]
     public function getTransactions(Request $request)
     {
-        $wallet = app(\App\Services\WalletService::class)->getOrCreateWallet($request->user());
+        $wallet = app(\App\Services\WalletService::class)->getOrCreateWallet($request->user()->id);
 
         $query = $wallet->transactions()->orderBy('created_at', 'desc');
 

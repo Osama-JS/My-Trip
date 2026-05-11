@@ -22,7 +22,7 @@ class VerifyEmailController extends Controller
             event(new Verified($request->user()));
             
             // Create wallet for the newly verified user
-            app(\App\Services\WalletService::class)->getOrCreateWallet($request->user());
+            app(\App\Services\WalletService::class)->getOrCreateWallet($request->user()->id);
         }
 
         return redirect()->intended(route('dashboard', absolute: false).'?verified=1');
