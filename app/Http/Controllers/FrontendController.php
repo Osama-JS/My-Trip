@@ -718,10 +718,11 @@ class FrontendController extends Controller
                     'last_name'       => $pax['last_name'] ?? '',
                     'name'            => ($pax['title'] ?? 'Mr') . ' ' . ($pax['first_name'] ?? '') . ' ' . ($pax['last_name'] ?? ''),
                     'dob'             => $pax['dob'] ?? null,
-                    'passport_no'     => $pax['passport_no'] ?? null,
+                    'passport_number' => $pax['passport_no'] ?? null,
                     'nationality'      => $pax['nationality'] ?? null,
                     'passport_issue_country' => $pax['passport_issue_country'] ?? null,
-                    'passport_expiry_date'   => $pax['passport_expiry_date'] ?? null,
+                    'passport_expiry'   => $pax['passport_expiry_date'] ?? null,
+                    'passport_image'   => $pax['passport_image'] ?? null,
                 ]);
             }
 

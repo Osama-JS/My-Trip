@@ -545,6 +545,8 @@ class FlightController extends Controller
                         'dob'            => $pax['dob'],
                         'nationality'    => $pax['nationality'],
                         'passport_number' => $pax['passport_no'] ?? null,
+                        'passport_expiry' => $pax['passport_expiry_date'] ?? null,
+                        'passport_issue_country' => $pax['passport_issue_country'] ?? null,
                         'passport_image' => $pax['passport_image'] ?? null,
                     ]);
                     Log::info('Passenger Saved', ['passenger_id' => $passenger->id]);

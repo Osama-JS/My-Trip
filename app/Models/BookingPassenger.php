@@ -24,6 +24,7 @@ class BookingPassenger extends Model
         'passport_expiry',
         'passport_image',
         'nationality',
+        'passport_issue_country',
     ];
 
 

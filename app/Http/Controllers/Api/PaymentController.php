@@ -635,8 +635,21 @@ class PaymentController extends Controller
                     <p style='font-size: 0.8rem; color: #64748b;'>ID: {$paymentId}</p>
                 </div>
                 <script>
-                    // This script is a fallback. The mobile app should intercept the URL before/at this point.
-                    console.log('Payment ID identified: {$paymentId}');
+                    // Communicate with Flutter mobile app
+                    setTimeout(function() {
+                        if (window.FlutterBridge) {
+                            window.FlutterBridge.postMessage(JSON.stringify({
+                                'success': true,
+                                'status': '{$status}',
+                                'payment_id': '{$paymentId}',
+                                'gateway': '{$gateway}',
+                                'message': 'تمت عملية الدفع بنجاح'
+                            }));
+                        } else {
+                            // Fallback for browser testing or if bridge not yet ready
+                            console.log('Payment completed. FlutterBridge not found.');
+                        }
+                    }, 1500);
                 </script>
             </body>
             </html>
