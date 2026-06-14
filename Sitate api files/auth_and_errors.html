@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sitata API - المصادقة والأخطاء</title>
+    <style>
+        :root {
+            --primary-color: #d69d43;
+            --bg-color: #f8f9fa;
+            --text-color: #333;
+            --card-bg: #fff;
+            --border-radius: 8px;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        header {
+            background-color: #2f2e41;
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            border-bottom: 5px solid var(--primary-color);
+        }
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        .card {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        h1, h2, h3 {
+            color: #2f2e41;
+        }
+        h1 { color: white; }
+        .code-block {
+            background-color: #f6f8fa;
+            padding: 1rem;
+            border-radius: 6px;
+            direction: ltr;
+            text-align: left;
+            font-family: Consolas, monospace;
+            border: 1px solid #e1e4e8;
+            margin: 1rem 0;
+        }
+        .alert {
+            padding: 1rem;
+            background-color: #fff3cd;
+            border-right: 4px solid #ffecb5;
+            margin: 1rem 0;
+            color: #856404;
+        }
+        .nav-links {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            transition: 0.3s;
+        }
+        .nav-links a:hover {
+            background: var(--primary-color);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 12px;
+            text-align: right;
+        }
+        th {
+            background-color: #f6f8fa;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>تعليمات واجهة Sitata API</h1>
+    <p>آلية المصادقة، الرموز المميزة (Tokens)، والأخطاء الشائعة</p>
+    <div class="nav-links">
+        <a href="index.html">المقدمة</a>
+        <a href="auth_and_errors.html">المصادقة والأخطاء</a>
+        <a href="insurance_integration.html">دليل دمج التأمين</a>
+    </div>
+</header>
+
+<div class="container">
+    <div class="card">
+        <h2>آلية المصادقة (Authentication)</h2>
+        <p>تستخدم Sitata مفاتيح API (API Keys) للسماح بالوصول. يجب إدراج مفتاح الـ API في ترويسة الطلب (Header) كالتالي:</p>
+        <div class="code-block">
+            Authorization: TKN API_KEY_HERE
+        </div>
+        
+        <p>بالإضافة لذلك، بصفتك طرفاً ثالثاً، يجب عليك إرفاق <strong>معرف الشركة (Company ID)</strong> في جميع الطلبات كالتالي:</p>
+        <div class="code-block">
+            Organization: COMPANY_ID_HERE
+        </div>
+        
+        <div class="alert">
+            <strong>تحذير أمني:</strong> إياك أن تكشف مفتاح الـ API السري الخاص بشركتك في التطبيقات التي يواجهها المستخدم (مثل تطبيق الجوال). استخدم مفتاح الـ API فقط في الـ Backend الخاص بك (السيرفر).
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>استخدام المستخدم النهائي مقابل الشركة (Company vs. End User)</h2>
+        <p>يتم تصميم بعض نقاط النهاية للشركة (تُعامل عبر النطاق <code>org</code>) وتتطلب توثيقاً بمفتاح الشركة. أما النقاط الأخرى فمصممة لتستخدم من قبل <strong>المسافر</strong> باستخدام الـ Token الخاص به.</p>
+        <p><strong>حالة الاستخدام النموذجية (Typical Use Case):</strong></p>
+        <ol>
+            <li>قم بإنشاء سجل مسافر (Traveller Record) باستخدام نقطة نهاية الشركة، واحتفظ بـ <code>authentication_token</code> الخاص به في قاعدة بياناتك.</li>
+            <li>قم بإنشاء رحلة (Trip) باستخدام نقطة نهاية الشركة والمسافر الذي تم إنشاؤه.</li>
+            <li>استخدم <code>authentication_token</code> الخاص بالمسافر للوصول إلى بقية الخدمات مثل تفاصيل الأمراض، التنبيهات، وغيرها وعرضها في التطبيق.</li>
+        </ol>
+    </div>
+
+    <div class="card">
+        <h2>دعم اللغات (Language)</h2>
+        <p>تدعم Sitata اللغة الإنجليزية والإسبانية بشكل رسمي، وهناك دعم جزئي للغات أخرى. لتغيير لغة الاستجابة، يجب إرسال الترويسة التالية استناداً إلى معيار ISO_639-1 (مثل ar للعربية إن وجدت، أو en للإنجليزية):</p>
+        <div class="code-block">
+            Accept-Language: en
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>رموز الأخطاء الشائعة (Error Codes)</h2>
+        <p>أثناء التعامل مع الـ API، قد تواجه الأخطاء التالية:</p>
+        <table>
+            <tr>
+                <th>كود الخطأ</th>
+                <th>المعنى والتوضيح</th>
+            </tr>
+            <tr>
+                <td>400</td>
+                <td><strong>طلب غير صالح (Bad Request):</strong> البيانات المرسلة غير صحيحة أو ناقصة.</td>
+            </tr>
+            <tr>
+                <td>401</td>
+                <td><strong>غير مصرح (Unauthorized):</strong> مفتاح الـ API خاطئ أو منتهي الصلاحية.</td>
+            </tr>
+            <tr>
+                <td>403</td>
+                <td><strong>ممنوع (Forbidden):</strong> ليس لديك الصلاحية للوصول إلى هذا المورد.</td>
+            </tr>
+            <tr>
+                <td>404</td>
+                <td><strong>غير موجود (Not Found):</strong> المورد المطلوب غير موجود في النظام.</td>
+            </tr>
+            <tr>
+                <td>429</td>
+                <td><strong>طلبات كثيرة (Too Many Requests):</strong> قمت بتخطي الحد المسموح به من الطلبات. يرجى الإبطاء.</td>
+            </tr>
+            <tr>
+                <td>500</td>
+                <td><strong>خطأ في السيرفر (Internal Server Error):</strong> مشكلة من جهة خوادم Sitata.</td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+</body>
+</html>

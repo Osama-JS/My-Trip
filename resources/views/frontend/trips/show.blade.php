@@ -34,7 +34,7 @@
         ];
     })->values();
 
-    $addonsJson = $trip->addons->map(function($a) {
+    $addonsJson = $trip->addons->map(function($a) use ($locale) {
         return [
             'id' => $a->id,
             'cost' => $a->extra_cost,
@@ -79,6 +79,43 @@
         letter-spacing: 1px;
         box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
     }
+
+    /* Layout & Utilities */
+    .fe-container {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+    .fe-trips-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 30px;
+    }
+    
+    /* Missing Typography Utilities */
+    .fs-10 { font-size: 0.625rem !important; }
+    .fs-12 { font-size: 0.75rem !important; }
+    .fs-13 { font-size: 0.8125rem !important; }
+    .fs-15 { font-size: 0.9375rem !important; }
+    .fs-30 { font-size: 1.875rem !important; }
+    .fs-40 { font-size: 2.5rem !important; }
+    
+    .font-w500 { font-weight: 500 !important; }
+    .font-w600 { font-weight: 600 !important; }
+    .font-w700 { font-weight: 700 !important; }
+    .font-w800 { font-weight: 800 !important; }
+    .font-w900 { font-weight: 900 !important; }
+    
+    .letter-spacing-1 { letter-spacing: 1px !important; }
+    .lh-base { line-height: 1.6 !important; }
+    .lh-sm { line-height: 1.2 !important; }
+    .italic { font-style: italic !important; }
+    
+    .op-40 { opacity: 0.4 !important; }
+    .op-80 { opacity: 0.8 !important; }
+    
+    .bg-light-warning { background-color: #fffbeb !important; color: #92400e !important; }
+    .cursor-pointer { cursor: pointer !important; }
 
     /* Tabs Styling */
     .fe-details-tabs {
@@ -205,6 +242,16 @@
         border-radius: 50px; font-weight: 600; font-size: 0.9rem; backdrop-filter: blur(4px);
     }
     [dir="rtl"] .fe-gallery-badge { right: auto; left: 20px; }
+    .swiper-nav-glass {
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(8px);
+        border-radius: 50%;
+        color: white !important;
+        width: 50px !important;
+        height: 50px !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .swiper-nav-glass:after { font-size: 1.2rem !important; font-weight: bold; }
 
     /* Itinerary */
     .fe-itinerary-premium { position: relative; padding-left: 10px; }

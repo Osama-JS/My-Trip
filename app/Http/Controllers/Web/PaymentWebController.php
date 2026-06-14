@@ -486,7 +486,19 @@ class PaymentWebController extends Controller
             // Trip bookings are confirmed manually by admin after bank transfer review
             // or automatically if payment gateway authorized the payment
             if ($type === 'trip') {
-                Log::info("Trip Booking #{$booking->id}: Payment received; awaiting admin confirmation.");
+                $booking->update(['booking_state' => \App\Models\TripBooking::STATE_PREPARING]);
+                
+                if (class_exists(\App\Models\BookingHistory::class)) {
+                    \App\Models\BookingHistory::create([
+                        'trip_booking_id' => $booking->id,
+                        'user_id' => $booking->user_id ?? null,
+                        'action' => 'payment_received',
+                        'description' => __('Payment received via :gateway', ['gateway' => $gateway]),
+                        'new_state' => \App\Models\TripBooking::STATE_PREPARING,
+                    ]);
+                }
+                
+                Log::info("Trip Booking #{$booking->id}: Payment received; booking state set to preparing.");
             }
 
             // ── NOTIFICATION: Send push + email to user ────────────────────

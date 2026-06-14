@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sitata API - مقدمة عامة</title>
+    <style>
+        :root {
+            --primary-color: #d69d43;
+            --bg-color: #f8f9fa;
+            --text-color: #333;
+            --card-bg: #fff;
+            --border-radius: 8px;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        header {
+            background-color: #2f2e41;
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            border-bottom: 5px solid var(--primary-color);
+        }
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        .card {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        h1, h2, h3 {
+            color: #2f2e41;
+        }
+        h1 { color: white; }
+        .highlight {
+            background-color: #ffecd2;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #d64343;
+        }
+        .nav-links {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            transition: 0.3s;
+        }
+        .nav-links a:hover {
+            background: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>تعليمات واجهة Sitata API</h1>
+    <p>دليلك الشامل لدمج خدمات السفر والتأمين</p>
+    <div class="nav-links">
+        <a href="index.html">المقدمة</a>
+        <a href="auth_and_errors.html">المصادقة والأخطاء</a>
+        <a href="insurance_integration.html">دليل دمج التأمين</a>
+    </div>
+</header>
+
+<div class="container">
+    <div class="card">
+        <h2>عن واجهة Sitata API</h2>
+        <p>تعتبر واجهة برمجة تطبيقات Sitata الطريقة الأسهل لتلبية احتياجات المسافرين في عالم ما بعد جائحة COVID-19. تتيح لك هذه الواجهة (API) القيام بالعديد من العمليات الهامة:</p>
+        <ul>
+            <li><strong>متطلبات الدخول:</strong> إعلام عملائك بأحدث متطلبات الدخول لرحلتهم.</li>
+            <li><strong>قيود السفر:</strong> مساعدة المسافرين على فهم قيود السفر والترفيه المحلية المطبقة.</li>
+            <li><strong>التهديدات والاضطرابات:</strong> تحديث عملائك بشأن أي تهديد أو اضطراب محتمل (إضرابات، كوارث، إلخ).</li>
+            <li><strong>تأمين السفر:</strong> تسجيل المسافرين في عضوية Sitata Travel Safe وتوفير تأمين سفر مدمج ضمن رحلة الشراء الخاصة بك.</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h2>أسلوب بناء الواجهة (RESTful & JSON)</h2>
+        <p>تم بناء واجهة Sitata لتعمل بنظام <span class="highlight">RESTful</span>، مما يعني أنها تستخدم أوامر HTTP القياسية مثل (GET, POST, PATCH, DELETE) للتعامل مع الموارد.</p>
+        <p>كما أن النظام يعتمد حصرياً على تنسيق <span class="highlight">JSON</span> لتبادل البيانات، لذلك يجب التأكد من إرسال واستقبال البيانات بترميز <code>application/json</code>.</p>
+    </div>
+
+    <div class="card">
+        <h2>حالة التوفر وإعادة المحاولة (Exponential Backoff)</h2>
+        <p>في حالات نادرة قد تكون واجهة Sitata غير متاحة. لذا، <strong>يُنصح بشدة</strong> بتصميم نظامك (Backend) بحيث يعتمد على معالجة المهام في الخلفية (Background Jobs) مع نظام تأخير تدريجي (Exponential Backoff) لإعادة المحاولة في حال فشل الاتصال، خاصة عند إنشاء سجلات الركاب أو التأمين حيث لا يجب أن تضيع البيانات.</p>
+    </div>
+</div>
+
+</body>
+</html>

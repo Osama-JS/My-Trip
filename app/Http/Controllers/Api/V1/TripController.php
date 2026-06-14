@@ -15,6 +15,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use OpenApi\Attributes as OA;
 
 class TripController extends Controller
@@ -275,7 +276,7 @@ class TripController extends Controller
     )]
     public function show($id): JsonResponse
     {
-        $trip = Trip::with(['images', 'toCountry', 'toCity', 'itineraries', 'company', 'categories'])
+        $trip = Trip::with(['images', 'toCountry', 'toCity', 'itineraries', 'company', 'categories', 'packages.prices', 'seasons', 'addons'])
             ->active()
             ->find($id);
 
@@ -317,6 +318,38 @@ class TripController extends Controller
                 return [
                     'id' => $cat->id,
                     'name' => $cat->name_attribute,
+                ];
+            }),
+            'packages' => $trip->packages->map(function ($pkg) {
+                return [
+                    'id' => $pkg->id,
+                    'name' => $pkg->name,
+                    'tier' => $pkg->tier,
+                    'hotel_name' => $pkg->hotel_name,
+                    'hotel_stars' => $pkg->hotel_stars,
+                    'prices' => $pkg->prices->map(function ($price) {
+                        return [
+                            'id' => $price->id,
+                            'season_id' => $price->season_id,
+                            'occupancy_type' => $price->occupancy_type,
+                            'price' => $price->price,
+                        ];
+                    }),
+                ];
+            }),
+            'seasons' => $trip->seasons->map(function ($season) {
+                return [
+                    'id' => $season->id,
+                    'name' => $season->name,
+                    'start_date' => $season->start_date,
+                    'end_date' => $season->end_date,
+                ];
+            }),
+            'addons' => $trip->addons->map(function ($addon) {
+                return [
+                    'id' => $addon->id,
+                    'name' => $addon->name,
+                    'extra_cost' => $addon->extra_cost,
                 ];
             }),
             'is_favorite' => Auth::guard('sanctum')->check() && Favorite::where('user_id', Auth::guard('sanctum')->id())->where('trip_id', $trip->id)->exists(),
@@ -389,6 +422,11 @@ class TripController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'trip_id' => 'required|exists:trips,id',
+            'package_id' => 'nullable|exists:trip_packages,id',
+            'season_id' => 'nullable|exists:trip_seasons,id',
+            'occupancy_type' => 'nullable|in:single,double,triple,child',
+            'addons' => 'nullable|array',
+            'addons.*' => 'exists:trip_addons,id',
             'tickets_count' => 'required|integer|min:1',
             'notes' => 'nullable|string|max:500',
             'passengers' => 'required|array|min:' . $request->tickets_count . '|max:' . $request->tickets_count,
@@ -419,61 +457,137 @@ class TripController extends Controller
              return $this->apiResponse(true, __('Unauthenticated'), null, null, 401);
         }
 
-        // Calculate dynamic price
-        $passengersCount = count($request->passengers);
-        $basePrice = $trip->price;
-        $baseCapacity = $trip->base_capacity ?? 2;
-        $extraPrice = $trip->extra_passenger_price ?? 0;
+        try {
+            DB::beginTransaction();
 
-        $totalPrice = $basePrice;
-        if ($passengersCount > $baseCapacity) {
-            $extraPassengers = $passengersCount - $baseCapacity;
-            $totalPrice += ($extraPassengers * $extraPrice);
-        }
+            // Calculate dynamic price
+            $passengersCount = count($request->passengers);
+            $unitPrice = $trip->price;
 
-        $booking = TripBooking::create([
-            'user_id' => $user->id,
-            'trip_id' => $trip->id,
-            'tickets_count' => $passengersCount,
-            'total_price' => $totalPrice,
-            'booking_state' => TripBooking::STATE_AWAITING_PAYMENT, // Use new state
-            'notes' => $request->notes,
-            'booking_date' => now(),
-        ]);
+            if ($request->package_id && $request->season_id && $request->occupancy_type) {
+                $priceRecord = \App\Models\TripPackagePrice::where([
+                    'package_id' => $request->package_id,
+                    'season_id' => $request->season_id,
+                    'occupancy_type' => $request->occupancy_type
+                ])->first();
 
-        // Save passengers
-        foreach ($request->passengers as $index => $passengerData) {
-            
-            $passportImagePath = null;
-            if ($request->hasFile("passengers.{$index}.passport_image")) {
-                $file = $request->file("passengers.{$index}.passport_image");
-                $passportImagePath = $file->store('passports', 'public');
+                if ($priceRecord) {
+                    $unitPrice = $priceRecord->price;
+                }
             }
 
-            $booking->passengers()->create([
-                'name' => $passengerData['name'] ?? '',
-                'phone' => $passengerData['phone'] ?? null,
-                'nationality' => $passengerData['nationality'] ?? null,
-                'passport_number' => $passengerData['passport_number'] ?? null,
-                'passport_expiry' => $passengerData['passport_expiry'] ?? null,
-                'passport_image' => $passportImagePath,
-                // Assign dummy title/name split 
-                'first_name' => isset($passengerData['name']) ? explode(' ', $passengerData['name'])[0] : '',
-                'last_name' => isset($passengerData['name']) && count(explode(' ', $passengerData['name'])) > 1 ? explode(' ', $passengerData['name'])[1] : '',
-                'title' => 'Mr',
+            $addonsSnapshot = [];
+            $addonsCostPerPax = 0;
+            if ($request->has('addons') && is_array($request->addons)) {
+                $selectedAddons = \App\Models\TripAddon::whereIn('id', $request->addons)->get();
+                foreach ($selectedAddons as $addon) {
+                    $addonsCostPerPax += $addon->extra_cost;
+                    $addonsSnapshot[] = [
+                        'id'    => $addon->id,
+                        'name'  => $addon->name,
+                        'price' => $addon->extra_cost,
+                    ];
+                }
+            }
+
+            $totalPrice = ($unitPrice + $addonsCostPerPax) * $passengersCount;
+
+            // Legacy Extra passenger pricing fallback
+            if (!$request->package_id && $trip->base_capacity && $passengersCount > $trip->base_capacity && $trip->extra_passenger_price) {
+                $extraPassengers = $passengersCount - $trip->base_capacity;
+                $baseTotal = ($trip->price * $trip->base_capacity) + ($trip->extra_passenger_price * $extraPassengers);
+                $totalPrice = $baseTotal + ($addonsCostPerPax * $passengersCount);
+            }
+
+            $booking = TripBooking::create([
+                'user_id' => $user->id,
+                'trip_id' => $trip->id,
+                'package_id' => $request->package_id,
+                'season_id' => $request->season_id,
+                'occupancy' => $request->occupancy_type,
+                'tickets_count' => $passengersCount,
+                'total_price' => $totalPrice,
+                'status' => 'pending',
+                'booking_state' => TripBooking::STATE_AWAITING_PAYMENT,
+                'notes' => $request->notes,
+                'addons' => $addonsSnapshot,
+                'booking_date' => now(),
             ]);
+
+            // Save passengers
+            foreach ($request->passengers as $index => $passengerData) {
+                $passportImagePath = null;
+                if ($request->hasFile("passengers.{$index}.passport_image")) {
+                    $file = $request->file("passengers.{$index}.passport_image");
+                    $passportImagePath = $file->store('passports', 'public');
+                }
+
+                $booking->passengers()->create([
+                    'name' => $passengerData['name'] ?? '',
+                    'phone' => $passengerData['phone'] ?? null,
+                    'nationality' => $passengerData['nationality'] ?? null,
+                    'passport_number' => $passengerData['passport_number'] ?? null,
+                    'passport_expiry' => $passengerData['passport_expiry'] ?? null,
+                    'passport_image' => $passportImagePath,
+                    'first_name' => isset($passengerData['name']) ? explode(' ', $passengerData['name'])[0] : '',
+                    'last_name' => isset($passengerData['name']) && count(explode(' ', $passengerData['name'])) > 1 ? explode(' ', $passengerData['name'])[1] : '',
+                    'title' => 'Mr',
+                ]);
+            }
+
+            // Add history
+            \App\Models\BookingHistory::create([
+                'trip_booking_id' => $booking->id,
+                'user_id' => $user->id,
+                'action' => 'booking_created',
+                'description' => __('Customer created a new booking.'),
+                'new_state' => TripBooking::STATE_AWAITING_PAYMENT,
+            ]);
+
+            DB::commit();
+
+            $payment_info = [
+                'booking_id' => $booking->id,
+                'amount' => $totalPrice,
+                'currency' => 'SAR',
+                'methods' => [
+                    [
+                        'id' => 'visa_master',
+                        'name' => 'Visa / Master',
+                        'logo' => asset('assets/images/payments/visa_master.png'),
+                        'url' => route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'visa_master', 'type' => 'trip'])
+                    ],
+                    [
+                        'id' => 'mada',
+                        'name' => 'Mada',
+                        'logo' => asset('assets/images/payments/mada.png'),
+                        'url' => route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'mada', 'type' => 'trip'])
+                    ],
+                    [
+                        'id' => 'tamara',
+                        'name' => 'Tamara',
+                        'logo' => asset('assets/images/payments/tamara.png'),
+                        'url' => route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'tamara', 'type' => 'trip'])
+                    ],
+                    [
+                        'id' => 'tabby',
+                        'name' => 'Tabby',
+                        'logo' => asset('assets/images/payments/tabby.png'),
+                        'url' => route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'tabby', 'type' => 'trip'])
+                    ]
+                ]
+            ];
+
+            return $this->apiResponse(false, __('Booking created successfully'), [
+                'booking' => $booking->load('passengers'),
+                'payment_info' => $payment_info
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Trip Booking Error: ' . $e->getMessage());
+            return $this->apiResponse(true, __('An error occurred while creating the booking'), null, null, 500);
         }
-
-        // Add history
-        \App\Models\BookingHistory::create([
-            'trip_booking_id' => $booking->id,
-            'user_id' => $user->id,
-            'action' => 'booking_created',
-            'description' => __('Customer created a new booking.'),
-            'new_state' => TripBooking::STATE_AWAITING_PAYMENT,
-        ]);
-
-        return $this->apiResponse(false, __('Booking created successfully'), $booking->load('passengers'));
     }
 
     /**
@@ -584,6 +698,128 @@ class TripController extends Controller
         $bookings->setCollection($transformed);
 
         return $this->apiResponse(false, __('Bookings retrieved successful'), $bookings);
+    }
+
+    /**
+     * Get details for a specific trip booking.
+     */
+    #[OA\Get(
+        path: "/api/v1/bookings/{id}",
+        summary: "Get booking details",
+        operationId: "getBookingDetails",
+        description: "Retrieve full details of a specific trip booking. Requires authentication.",
+        tags: ["Trips"],
+        security: [["bearerAuth" => []]],
+        parameters: [
+            new OA\Parameter(
+                name: "id",
+                in: "path",
+                description: "Booking ID",
+                required: true,
+                schema: new OA\Schema(type: "integer")
+            )
+        ],
+        responses: [
+            new OA\Response(response: 200, description: "Booking retrieved successfully"),
+            new OA\Response(response: 404, description: "Booking not found"),
+        ]
+    )]
+    public function bookingDetails($id): JsonResponse
+    {
+        $user = Auth::guard('sanctum')->user();
+        if (!$user) {
+            return $this->apiResponse(true, __('Unauthenticated'), null, null, 401);
+        }
+
+        $booking = TripBooking::with(['trip.toCountry', 'trip.toCity', 'trip.images', 'passengers', 'package', 'season'])
+            ->where('user_id', $user->id)
+            ->find($id);
+
+        if (!$booking) {
+            return $this->apiResponse(true, __('Booking not found'), null, null, 404);
+        }
+
+        $trip = $booking->trip;
+
+        $payment_info = null;
+        if ($booking->booking_state === TripBooking::STATE_AWAITING_PAYMENT || $booking->status === 'pending') {
+            $payment_info = [
+                'booking_id' => $booking->id,
+                'amount' => $booking->total_price,
+                'currency' => 'SAR',
+                'methods' => [
+                    [
+                        'id' => 'visa_master',
+                        'name' => 'Visa / Master',
+                        'logo' => asset('assets/images/payments/visa_master.png'),
+                        'url' => route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'visa_master', 'type' => 'trip'])
+                    ],
+                    [
+                        'id' => 'mada',
+                        'name' => 'Mada',
+                        'logo' => asset('assets/images/payments/mada.png'),
+                        'url' => route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'mada', 'type' => 'trip'])
+                    ],
+                    [
+                        'id' => 'tamara',
+                        'name' => 'Tamara',
+                        'logo' => asset('assets/images/payments/tamara.png'),
+                        'url' => route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'tamara', 'type' => 'trip'])
+                    ],
+                    [
+                        'id' => 'tabby',
+                        'name' => 'Tabby',
+                        'logo' => asset('assets/images/payments/tabby.png'),
+                        'url' => route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'tabby', 'type' => 'trip'])
+                    ]
+                ]
+            ];
+        }
+
+        $data = [
+            'id' => $booking->id,
+            'trip_id' => $booking->trip_id,
+            'tickets_count' => $booking->tickets_count,
+            'total_price' => $booking->total_price,
+            'booking_state' => $booking->booking_state,
+            'status' => $booking->status,
+            'booking_date' => $booking->booking_date,
+            'addons' => $booking->addons,
+            'occupancy' => $booking->occupancy,
+            'notes' => $booking->notes,
+            'trip' => [
+                'id' => $trip->id,
+                'title' => app()->getLocale() == 'ar' ? $trip->title_ar : $trip->title_en,
+                'image' => $trip->image_url,
+                'location' => [
+                    'country' => $trip->toCountry ? $trip->toCountry->name : null,
+                    'city' => $trip->toCity ? $trip->toCity->name : null,
+                ],
+            ],
+            'package' => $booking->package ? [
+                'id' => $booking->package->id,
+                'name' => $booking->package->name,
+                'tier' => $booking->package->tier,
+                'hotel_name' => $booking->package->hotel_name,
+                'hotel_stars' => $booking->package->hotel_stars,
+            ] : null,
+            'season' => $booking->season ? [
+                'id' => $booking->season->id,
+                'name' => $booking->season->name,
+                'start_date' => $booking->season->start_date,
+                'end_date' => $booking->season->end_date,
+            ] : null,
+            'passengers' => $booking->passengers->map(function($p) {
+                return [
+                    'id' => $p->id,
+                    'name' => $p->name,
+                    'passport_number' => $p->passport_number,
+                ];
+            }),
+            'payment_info' => $payment_info,
+        ];
+
+        return $this->apiResponse(false, __('Booking retrieved successfully'), $data);
     }
 
     /**
