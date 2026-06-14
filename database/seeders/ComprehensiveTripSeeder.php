@@ -26,26 +26,29 @@ class ComprehensiveTripSeeder extends Seeder
     public function run()
     {
         // Try to find a country and city to attach to the trip
-        $country = Country::firstOrCreate(
-            ['code' => 'TR'],
-            [
-                'name_en' => 'Turkey',
-                'name_ar' => 'تركيا',
-                'is_active' => 1
-            ]
-        );
+        $country = Country::first();
+        if (!$country) {
+            $country = new Country();
+            $country->save();
+        }
 
-        $city = City::firstOrCreate(
-            ['country_id' => $country->id, 'name_en' => 'Istanbul'],
-            [
-                'name_en' => 'Istanbul',
-                'name_ar' => 'اسطنبول',
-                'is_active' => 1
-            ]
-        );
+        $city = City::first();
+        if (!$city) {
+            $city = new City();
+            $city->country_id = $country->id;
+            $city->save();
+        }
+
+        $company = \App\Models\Company::first();
+        if (!$company) {
+            $company = new \App\Models\Company();
+            $company->name = 'Wjhtak Tourism';
+            $company->save();
+        }
 
         // 1. Create the Main Trip (Package)
         $trip = Trip::create([
+            'company_id' => $company->id,
             'title_en' => 'Ultimate Istanbul & Cappadocia Experience',
             'title_ar' => 'التجربة الشاملة في اسطنبول وكابادوكيا',
             'description_en' => 'Discover the magic of Turkey with this comprehensive package including hot air balloon rides, historical tours, and luxury stays.',
@@ -54,6 +57,8 @@ class ComprehensiveTripSeeder extends Seeder
             'price_before_discount' => 1800.00,
             'tickets' => 50,
             'duration' => '7 Days',
+            'from_country_id' => $country->id,
+            'from_city_id' => $city->id,
             'to_country_id' => $country->id,
             'to_city_id' => $city->id,
             'active' => 1,
@@ -66,7 +71,7 @@ class ComprehensiveTripSeeder extends Seeder
         // 2. Attach a Category
         $category = TripCategory::firstOrCreate(
             ['name_en' => 'Luxury Packages'],
-            ['name_ar' => 'بكجات فاخرة', 'is_active' => 1]
+            ['name_ar' => 'بكجات فاخرة']
         );
         $trip->categories()->attach($category->id);
 
@@ -96,7 +101,7 @@ class ComprehensiveTripSeeder extends Seeder
             'name_ar' => 'البكج الاقتصادي (4 نجوم)',
             'hotel_name' => 'City Center Hotel Istanbul',
             'hotel_stars' => 4,
-            'tier' => 'standard',
+            'tier' => 'economy',
             'sort_order' => 1,
         ]);
 
@@ -106,7 +111,7 @@ class ComprehensiveTripSeeder extends Seeder
             'name_ar' => 'بكج كبار الشخصيات (5 نجوم)',
             'hotel_name' => 'Bosphorus Luxury Palace',
             'hotel_stars' => 5,
-            'tier' => 'premium',
+            'tier' => 'vip',
             'sort_order' => 2,
         ]);
 
@@ -167,7 +172,6 @@ class ComprehensiveTripSeeder extends Seeder
             'name_en' => 'Hot Air Balloon in Cappadocia',
             'name_ar' => 'ركوب المنطاد في كابادوكيا',
             'extra_cost' => 250.00,
-            'is_active' => 1,
         ]);
 
         TripAddon::create([
@@ -175,7 +179,6 @@ class ComprehensiveTripSeeder extends Seeder
             'name_en' => 'Bosphorus Dinner Cruise',
             'name_ar' => 'عشاء بحري في مضيق البوسفور',
             'extra_cost' => 80.00,
-            'is_active' => 1,
         ]);
 
         TripAddon::create([
@@ -183,7 +186,6 @@ class ComprehensiveTripSeeder extends Seeder
             'name_en' => 'Airport VIP Transfer',
             'name_ar' => 'نقل VIP من المطار',
             'extra_cost' => 120.00,
-            'is_active' => 1,
         ]);
 
         // 7. Create Itineraries
