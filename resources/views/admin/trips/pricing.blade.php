@@ -3,7 +3,7 @@
 @section('title', __('Pricing & Packages') . ' - ' . $trip->title)
 
 @section('content')
-<div class="container-fluid">
+<div class="container-fluid pb-5 mb-5" style="min-height: 100vh;">
     <div class="row page-titles">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{{ route('admin.trips.index') }}">{{ __('Trips') }}</a></li>
