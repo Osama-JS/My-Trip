@@ -7,8 +7,8 @@
     $count = $tripCount ?? $destination->trips_count ?? 0;
 @endphp
 
-<a href="{{ route('trips.index', ['destination' => $destination->id ?? '']) }}" class="fe-dest-card fe-animate">
-    <img src="{{ $image }}" alt="{{ $name }}" loading="lazy">
+<a href="{{ route('trips.index', ['destination' => $destination->id ?? '']) }}" class="fe-dest-card fe-animate fe-hover-float">
+    <img src="{{ $image }}" alt="{{ $name }}" loading="lazy" style="transition: transform var(--transition-slow);">
     <div class="fe-dest-card-overlay"></div>
     <div class="fe-dest-card-info">
         <h3 class="fe-dest-card-name">{{ $name }}</h3>

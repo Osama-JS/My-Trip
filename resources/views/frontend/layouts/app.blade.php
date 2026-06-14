@@ -27,13 +27,14 @@
         rel="stylesheet">
 
     {{-- Font Awesome --}}
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ asset('icons/font-awesome/css/all.min.css') }}">
 
     {{-- Premium Frontend CSS --}}
     <link rel="stylesheet" href="{{ asset('css/frontend.css') }}?v={{ filemtime(public_path('css/frontend.css')) }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     @stack('styles')
 </head>
 
@@ -97,7 +98,10 @@
                         <i class="fas fa-map-marked-alt"></i> {{ __('Destinations') }}
                     </a> --}}
                     <a href="{{ route('about') }}" class="{{ request()->routeIs('about') ? 'active' : '' }}">
-                        <i class="fas fa-info-circle"></i> {{ __('About Us') }}
+                        <i class="fas fa-info-circle"></i> {{ __('About') }}
+                    </a>
+                    <a href="{{ route('contact') }}" class="{{ request()->routeIs('contact') ? 'active' : '' }}">
+                        <i class="fas fa-envelope"></i> {{ __('Contact Us') }}
                     </a>
                 </div>
 
@@ -172,86 +176,139 @@
         @yield('content')
     </main>
 
-    {{-- ═══ FOOTER ═══ --}}
+    {{-- ═══ HYBRID PREMIUM FOOTER ═══ --}}
     @php
         $facebookUrl = \App\Models\Setting::get('facebook_url');
         $twitterUrl = \App\Models\Setting::get('twitter_url');
         $instagramUrl = \App\Models\Setting::get('instagram_url');
+        $linkedinUrl = \App\Models\Setting::get('linkedin_url');
+        $snapchatUrl = \App\Models\Setting::get('snapchat_url');
+        $tiktokUrl = \App\Models\Setting::get('tiktok_url');
+        $whatsappUrl = \App\Models\Setting::get('whatsapp_url');
+        $contactPhone = \App\Models\Setting::get('contact_phone');
+        $contactEmail = \App\Models\Setting::get('contact_email');
+        $contactAddress = app()->getLocale() == 'ar'
+            ? (\App\Models\Setting::get('contact_address_ar') ?: __('Saudi Arabia'))
+            : (\App\Models\Setting::get('contact_address_en') ?: \App\Models\Setting::get('contact_address_ar') ?: __('Saudi Arabia'));
     @endphp
-    <footer class="fe-footer">
-        <div class="fe-container">
-            <div class="fe-footer-grid">
-                {{-- Brand --}}
-                <div class="fe-footer-brand">
-                    <a href="{{ route('home') }}" class="fe-logo">
-                        <div class="fe-logo-icon">
-                            @if($footerLogo)
-                                <img src="{{ asset($footerLogo) }}" alt="{{ $siteName }}"
-                                    style="height: 32px; width: auto; object-fit: contain;">
-                            @else
-                                <i class="fas fa-plane"></i>
-                            @endif
-                        </div>
-                        <span>{{ $siteName }}</span>
-                    </a>
-                    <p>{{ $siteDescription }}</p>
-                    <div class="fe-footer-social">
-                        <a href="{{ $facebookUrl }}"><i class="fab fa-facebook-f"></i></a>
-                        <a href="{{ $twitterUrl }}"><i class="fab fa-twitter"></i></a>
-                        <a href="{{ $instagramUrl }}"><i class="fab fa-instagram"></i></a>
-                        <a href="#"><i class="fab fa-whatsapp"></i></a>
+    <footer class="fe-footer-premium">
+        {{-- Top CTA / Newsletter Section --}}
+        <div class="fe-footer-cta">
+            <div class="fe-container">
+                <div class="cta-inner" data-aos="fade-up">
+                    <div class="cta-text">
+                        <h2 class="font-w900 text-white">{{ __('Ready for your next adventure?') }}</h2>
+                        <p class="op-70 text-white mt-2">{{ __('Subscribe to our newsletter and get exclusive deals.') }}</p>
+                    </div>
+                    <div class="cta-form">
+                        <form action="#" method="POST" class="fe-newsletter-form" onsubmit="event.preventDefault(); alert('Subscribed!');">
+                            <input type="email" placeholder="{{ __('Your email address') }}" required>
+                            <button type="submit" class="fe-btn fe-btn-primary pill-btn">{{ __('Subscribe') }}</button>
+                        </form>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                {{-- Quick Links --}}
-                <div>
-                    <h4 class="fe-footer-heading">{{ __('Quick Links') }}</h4>
-                    <ul class="fe-footer-links">
-                        <li><a href="{{ route('home') }}">{{ __('Home') }}</a></li>
-                        <li><a href="{{ route('trips.index') }}">{{ __('Tour Packages') }}</a></li>
-                        <li><a href="{{ route('flights') }}">{{ __('Flights') }}</a></li>
-                        <li><a href="{{ route('hotels') }}">{{ __('Hotels') }}</a></li>
-                        <li><a href="{{ route('destinations') }}">{{ __('Destinations') }}</a></li>
-                    </ul>
-                </div>
+        {{-- Main Footer Content --}}
+        <div class="fe-footer-main">
+            <div class="fe-container">
+                <div class="fe-footer-split">
+                    {{-- Left: Brand & Social --}}
+                    <div class="fe-footer-left" data-aos="fade-up" data-aos-delay="50">
+                        <a href="{{ route('home') }}" class="fe-footer-logo">
+                            @if($footerLogo)
+                                <img src="{{ asset($footerLogo) }}" alt="{{ $siteName }}">
+                            @else
+                                <i class="fas fa-plane"></i> <span>{{ $siteName }}</span>
+                            @endif
+                        </a>
+                        <p class="fe-footer-desc">{{ $siteDescription ?? __('Your ultimate travel partner for creating unforgettable memories around the world.') }}</p>
+                        
+                        <div class="fe-social-glow">
+                            @if(!empty($facebookUrl))
+                                <a href="{{ $facebookUrl }}" target="_blank" class="facebook" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                            @endif
+                            @if(!empty($twitterUrl))
+                                <a href="{{ $twitterUrl }}" target="_blank" class="twitter" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                            @endif
+                            @if(!empty($instagramUrl))
+                                <a href="{{ $instagramUrl }}" target="_blank" class="instagram" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                            @endif
+                            @if(!empty($linkedinUrl))
+                                <a href="{{ $linkedinUrl }}" target="_blank" class="linkedin" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                            @endif
+                            @if(!empty($snapchatUrl))
+                                <a href="{{ $snapchatUrl }}" target="_blank" class="snapchat" aria-label="Snapchat"><i class="fab fa-snapchat"></i></a>
+                            @endif
+                            @if(!empty($tiktokUrl))
+                                <a href="{{ $tiktokUrl }}" target="_blank" class="tiktok" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+                            @endif
+                            @if(!empty($whatsappUrl))
+                                <a href="{{ $whatsappUrl }}" target="_blank" class="whatsapp" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                            @elseif(!empty($contactPhone))
+                                @php
+                                    $waPhone = preg_replace('/[^0-9]/', '', $contactPhone);
+                                @endphp
+                                <a href="https://wa.me/{{ $waPhone }}" target="_blank" class="whatsapp" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                            @endif
+                        </div>
+                    </div>
 
-                {{-- Information --}}
-                <div>
-                    <h4 class="fe-footer-heading">{{ __('Information') }}</h4>
-                    <ul class="fe-footer-links">
-                        @foreach($footer_pages as $fpage)
-                            <li>
-                                <a href="{{ route('pages.show', $fpage->slug) }}">
-                                    {{ app()->getLocale() == 'ar' ? $fpage->title_ar : $fpage->title_en }}
-                                </a>
-                            </li>
-                        @endforeach
-                        @if($footer_pages->isEmpty())
-                            <li><a href="{{ route('about') }}">{{ __('About Us') }}</a></li>
-                        @endif
-                    </ul>
-                </div>
+                    {{-- Right: Links & Contact --}}
+                    <div class="fe-footer-right">
+                        <div class="fe-footer-links-group" data-aos="fade-up" data-aos-delay="150">
+                            <h4 class="fe-footer-heading">{{ __('Quick Links') }}</h4>
+                            <ul>
+                                <li><a href="{{ route('home') }}"><i class="fas fa-home"></i> {{ __('Home') }}</a></li>
+                                <li><a href="{{ route('trips.index') }}"><i class="fas fa-suitcase-rolling"></i> {{ __('Tour Packages') }}</a></li>
+                                <li><a href="{{ route('flights') }}"><i class="fas fa-plane-departure"></i> {{ __('Flights') }}</a></li>
+                                <li><a href="{{ route('hotels') }}"><i class="fas fa-hotel"></i> {{ __('Hotels') }}</a></li>
+                                <li><a href="{{ route('destinations') }}"><i class="fas fa-map-marked-alt"></i> {{ __('Destinations') }}</a></li>
+                            </ul>
+                        </div>
 
-                {{-- Contact --}}
-                @php
-                    $contactPhone = \App\Models\Setting::get('contact_phone');
-                    $contactEmail = \App\Models\Setting::get('contact_email');
-                @endphp
-                <div>
-                    <h4 class="fe-footer-heading">{{ __('Contact Us') }}</h4>
-                    <ul class="fe-footer-links">
-                        <li><i class="fas fa-envelope" style="margin-inline-end:8px;color:var(--accent)"></i>
-                            {{$contactEmail}}</li>
-                        <li><i class="fas fa-phone" style="margin-inline-end:8px;color:var(--accent)"></i>
-                            {{$contactPhone}}</li>
-                        <li><i class="fas fa-map-marker-alt" style="margin-inline-end:8px;color:var(--accent)"></i>
-                            {{ __('Saudi Arabia') }}</li>
-                    </ul>
+                        <div class="fe-footer-links-group" data-aos="fade-up" data-aos-delay="250">
+                            <h4 class="fe-footer-heading">{{ __('Information') }}</h4>
+                            <ul>
+                                @foreach($footer_pages as $fpage)
+                                    <li>
+                                        <a href="{{ route('pages.show', $fpage->slug) }}">
+                                            <i class="fas fa-file-alt"></i> {{ app()->getLocale() == 'ar' ? $fpage->title_ar : $fpage->title_en }}
+                                        </a>
+                                    </li>
+                                @endforeach
+                                @if($footer_pages->isEmpty())
+                                    <li><a href="{{ route('about') }}"><i class="fas fa-info-circle"></i> {{ __('About Us') }}</a></li>
+                                @endif
+                            </ul>
+                        </div>
+
+                        <div class="fe-footer-links-group" data-aos="fade-up" data-aos-delay="350">
+                            <h4 class="fe-footer-heading">{{ __('Contact Us') }}</h4>
+                            <ul class="fe-contact-list">
+                                <li><i class="fas fa-envelope"></i> <span>{{$contactEmail}}</span></li>
+                                <li><i class="fas fa-phone"></i> <span>{{$contactPhone}}</span></li>
+                                <li><i class="fas fa-map-marker-alt"></i> <span>{{ $contactAddress }}</span></li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
+        </div>
 
-            <div class="fe-footer-bottom">
-                <p>© {{ date('Y') }} {{ $siteName }} - {{ __('All Rights Reserved') }}</p>
+        {{-- Bottom Bar --}}
+        <div class="fe-footer-bottom-bar">
+            <div class="fe-container">
+                <div class="bottom-bar-inner">
+                    <p class="copyright">© {{ date('Y') }} {{ $siteName }} - {{ __('All Rights Reserved') }}</p>
+                    <div class="payment-methods">
+                        <i class="fab fa-cc-visa"></i>
+                        <i class="fab fa-cc-mastercard"></i>
+                        <i class="fab fa-cc-paypal"></i>
+                        <i class="fab fa-cc-apple-pay"></i>
+                    </div>
+                </div>
             </div>
         </div>
     </footer>
@@ -333,6 +390,34 @@
         document.addEventListener('DOMContentLoaded', initSlider);
     </script>
 
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Automatically add AOS fade-up to premium elements
+            document.querySelectorAll('.fe-animate, .fe-trip-card, .fe-dest-card, .fe-feature-card, .fe-stat-card').forEach(el => {
+                if(!el.hasAttribute('data-aos')) {
+                    el.setAttribute('data-aos', 'fade-up');
+                }
+            });
+
+            // Parallax Effect for Images
+            const parallaxElements = document.querySelectorAll('.fe-hero-image img, .fe-banner-slide img, .fe-page-header img');
+            if(parallaxElements.length > 0) {
+                window.addEventListener('scroll', function() {
+                    let scrolled = window.pageYOffset;
+                    parallaxElements.forEach(el => {
+                        el.style.transform = `translateY(${scrolled * 0.3}px) scale(1.1)`;
+                    });
+                });
+            }
+
+            AOS.init({
+                duration: 800,
+                once: true,
+                offset: 50
+            });
+        });
+    </script>
     @stack('scripts')
 </body>
 

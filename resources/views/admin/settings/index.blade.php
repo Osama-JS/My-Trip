@@ -338,7 +338,7 @@
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="our-mission-tab" data-bs-toggle="tab" data-bs-target="#our-mission" type="button" role="tab">
-                            <i class="flaticon-381-smartphone"></i> {{ __('Our Mission') }}
+                            <i class="flaticon-381-smartphone"></i> {{ __('About Page') }}
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
@@ -468,6 +468,20 @@
                                         <input type="text" class="form-control" name="contact_phone" value="{{ \App\Models\Setting::get('contact_phone') }}">
                                     </div>
                                 </div>
+                                <div class="col-md-6 mb-4 form-group">
+                                    <label>{{ __('Address (English)') }}</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fa fa-map-marker-alt"></i></span>
+                                        <input type="text" class="form-control" name="contact_address_en" value="{{ \App\Models\Setting::get('contact_address_en') }}">
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-4 form-group">
+                                    <label>{{ __('Address (Arabic)') }}</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fa fa-map-marker-alt"></i></span>
+                                        <input type="text" class="form-control" name="contact_address_ar" value="{{ \App\Models\Setting::get('contact_address_ar') }}">
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="form-section-title mt-3">{{ __('Social Media Links') }}</div>
@@ -548,6 +562,58 @@
 
                          <!--Our Mission Tab -->
                         <div class="tab-pane fade" id="our-mission" role="tabpanel">
+                            <div class="form-section-title">{{ __('Our Story') }}</div>
+                            <div class="row">
+                                <div class="col-md-6 mb-4 form-group">
+                                    <label>{{ __('Story Title (EN)') }}</label>
+                                    <input type="text" class="form-control" name="about_story_title_en" value="{{ \App\Models\Setting::get('about_story_title_en') }}" >
+                                </div>
+                                <div class="col-md-6 mb-4 form-group">
+                                    <label>{{ __('Story Title (AR)') }}</label>
+                                    <input type="text" class="form-control" name="about_story_title_ar" value="{{ \App\Models\Setting::get('about_story_title_ar') }}" >
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-4 form-group">
+                                    <label>{{ __('Story Description 1 (EN)') }}</label>
+                                    <textarea class="form-control" name="about_story_desc_1_en" rows="3">{{ \App\Models\Setting::get('about_story_desc_1_en') }}</textarea>
+                                </div>
+                                <div class="col-md-6 mb-4 form-group">
+                                    <label>{{ __('Story Description 1 (AR)') }}</label>
+                                    <textarea class="form-control" name="about_story_desc_1_ar" rows="3">{{ \App\Models\Setting::get('about_story_desc_1_ar') }}</textarea>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-4 form-group">
+                                    <label>{{ __('Story Description 2 (EN)') }}</label>
+                                    <textarea class="form-control" name="about_story_desc_2_en" rows="3">{{ \App\Models\Setting::get('about_story_desc_2_en') }}</textarea>
+                                </div>
+                                <div class="col-md-6 mb-4 form-group">
+                                    <label>{{ __('Story Description 2 (AR)') }}</label>
+                                    <textarea class="form-control" name="about_story_desc_2_ar" rows="3">{{ \App\Models\Setting::get('about_story_desc_2_ar') }}</textarea>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12 mb-4">
+                                    <div class="form-group">
+                                        <label>{{ __('Story Image') }}</label>
+                                        <div class="image-upload-wrapper">
+                                            <div class="image-preview-container" style="max-width: 320px; height: 180px; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0;">
+                                                <img id="about-story-preview" src="{{ \App\Models\Setting::get('about_story_image') ? asset(\App\Models\Setting::get('about_story_image')) : 'https://placehold.co/320x180/f8fafc/94a3b8?text=No+Story+Image' }}" alt="Story Image" style="width: 100%; height: 100%; object-fit: cover;">
+                                            </div>
+                                            <div class="image-upload-controls">
+                                                <label for="about_story_image_input" class="upload-btn-label" style="background: var(--primary); color: white; padding: 10px 20px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-weight: 500;">
+                                                    <i class="fa fa-camera"></i> {{ __('Change Story Image') }}
+                                                </label>
+                                                <input type="file" id="about_story_image_input" name="about_story_image" class="file-input-hidden" data-preview="#about-story-preview" accept="image/*">
+                                                <span class="upload-info-text" style="display: block; font-size: 0.85rem; color: #64748b; margin-top: 8px;">{{ __('PNG or JPG preferred (Max 2MB, recommended 1000x800px)') }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <hr class="my-4">
+
                             <div class="form-section-title">{{ __('Our Mission') }}</div>
                             <div class="row">
                                 <div class="col-md-6 mb-4 form-group">

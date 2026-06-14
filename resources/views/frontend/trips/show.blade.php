@@ -16,6 +16,17 @@
     $hasPackages = $trip->packages->count() > 0;
     $hasSeasons = $trip->seasons->count() > 0;
     
+    // Find starting price
+    $startingPrice = 0;
+    if ($hasPackages) {
+        $startingPrice = $trip->packages->flatMap(function($p) {
+            return $p->prices;
+        })->min('price') ?? 0;
+    }
+    if (!$startingPrice) {
+        $startingPrice = $trip->price;
+    }
+    
     // Prepare pricing data for JS
     $pricingJson = $trip->packages->map(function($p) {
         return [
@@ -71,6 +82,34 @@
         --fe-glass-bg: rgba(255, 255, 255, 0.85);
         --fe-glass-border: rgba(255, 255, 255, 0.4);
     }
+
+    /* Sticky Booking Bar */
+    .fe-sticky-booking-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+        border-top: 1px solid var(--fe-border);
+        transform: translateY(100%);
+        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 1000;
+        padding: 15px 0;
+    }
+    .fe-sticky-booking-bar.visible {
+        transform: translateY(0);
+    }
+    .fe-sticky-inner {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .fe-sticky-info { display: flex; flex-direction: column; }
+    .fe-sticky-title { font-weight: 800; color: var(--fe-primary-dark); font-size: 1.1rem; }
+    .fe-sticky-price strong { color: var(--fe-primary); font-size: 1.4rem; font-weight: 900; }
+    @media (max-width: 768px) { .fe-sticky-title { display: none; } }
 
     body { font-family: 'Cairo', 'Outfit', sans-serif; background-color: #f8fafc; }
 
@@ -1361,6 +1400,22 @@
         </div>
     </section>
     @endif
+
+    {{-- Sticky Booking Bar --}}
+    <div class="fe-sticky-booking-bar" id="feStickyBookingBar">
+        <div class="fe-container fe-sticky-inner">
+            <div class="fe-sticky-info">
+                <span class="fe-sticky-title">{{ $title }}</span>
+                <div class="fe-sticky-price">
+                    <span id="sticky-price-label">{{ __('Starting from') }}</span>
+                    <strong id="sticky-price-value">{{ number_format($startingPrice, 2) }} {{ __("SAR") }}</strong>
+                </div>
+            </div>
+            <button class="fe-btn fe-btn-primary fe-btn-lg" onclick="document.querySelector('.fe-booking-sidebar').scrollIntoView({ behavior: 'smooth', block: 'center' });">
+                {{ __('Book Now') }}
+            </button>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
@@ -1445,9 +1500,12 @@
             const displayPriceEl = document.getElementById('display-price');
             const totalPriceEl = document.getElementById('total-price');
 
+            const stickyPriceEl = document.getElementById('sticky-price-value');
+
             if (priceAvailable) {
                 if (displayPriceEl) displayPriceEl.innerHTML = unitPrice.toLocaleString() + ' <span style="font-size: 1.2rem; font-weight: 600; margin-left: 5px; opacity: 0.9;">{{ __("SAR") }}</span>';
                 if (totalPriceEl) totalPriceEl.innerHTML = total.toLocaleString() + ' <span style="font-size: 1.2rem; font-weight: 700;">{{ __("SAR") }}</span>';
+                if (stickyPriceEl) stickyPriceEl.innerHTML = unitPrice.toLocaleString() + ' {{ __("SAR") }}';
                 if(btnSubmit) btnSubmit.disabled = false;
             } else {
                 if (displayPriceEl) displayPriceEl.innerHTML = '<span style="font-size: 1.5rem; color: #cbd5e1;">{{ __("Not Available") }}</span>';
@@ -1512,6 +1570,20 @@
 
         // Initial Calculation
         calculatePrice();
+
+        // Sticky Booking Bar visibility
+        const stickyBar = document.getElementById('feStickyBookingBar');
+        const bookingSidebar = document.querySelector('.fe-booking-sidebar');
+        if(stickyBar && bookingSidebar) {
+            window.addEventListener('scroll', () => {
+                const sidebarRect = bookingSidebar.getBoundingClientRect();
+                if(sidebarRect.bottom < 0) {
+                    stickyBar.classList.add('visible');
+                } else {
+                    stickyBar.classList.remove('visible');
+                }
+            });
+        }
     });
 </script>
 @endpush

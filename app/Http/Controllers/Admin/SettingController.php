@@ -21,7 +21,10 @@ class SettingController extends Controller
             $request->validate([
                 'site_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
                 'site_favicon' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,ico|max:1024',
+                'about_story_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
                 'contact_email' => 'nullable|email',
+                'contact_address_en' => 'nullable|string|max:255',
+                'contact_address_ar' => 'nullable|string|max:255',
                 'facebook_url' => 'nullable|url',
                 'twitter_url' => 'nullable|url',
                 'instagram_url' => 'nullable|url',
@@ -36,7 +39,7 @@ class SettingController extends Controller
                 'hotel_margin_type'  => 'nullable|in:percentage,fixed',
             ]);
 
-            $data = $request->except(['_token', 'site_logo', 'site_favicon']);
+            $data = $request->except(['_token', 'site_logo', 'site_favicon', 'about_story_image']);
 
             // Update text settings
             foreach ($data as $key => $value) {
@@ -46,6 +49,7 @@ class SettingController extends Controller
             // Handle File Uploads
             $logoPath = $this->handleFileUpload($request, 'site_logo');
             $faviconPath = $this->handleFileUpload($request, 'site_favicon');
+            $aboutStoryImagePath = $this->handleFileUpload($request, 'about_story_image');
 
             if ($request->ajax()) {
                 return response()->json([
@@ -53,6 +57,7 @@ class SettingController extends Controller
                     'message' => __('Settings updated successfully!'),
                     'logo_url' => $logoPath ? asset($logoPath) : null,
                     'favicon_url' => $faviconPath ? asset($faviconPath) : null,
+                    'about_story_image_url' => $aboutStoryImagePath ? asset($aboutStoryImagePath) : null,
                 ]);
             }
 
