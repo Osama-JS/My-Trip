@@ -304,7 +304,7 @@ class TripController extends Controller
             ],
             'base_capacity' => $trip->base_capacity ?? 2,
             'extra_passenger_price' => $trip->extra_passenger_price ?? 0,
-            'images' => $trip->images->map(function ($img) {
+            'images' => $trip->images->values()->map(function ($img) {
                 return asset('storage/' . $img->image_path);
             }),
             'itineraries' => $trip->itineraries->sortBy('sort_order')->values()->map(function ($itinerary) {
@@ -314,20 +314,20 @@ class TripController extends Controller
                     'description' => $itinerary->description,
                 ];
             }),
-            'categories' => $trip->categories->map(function ($cat) {
+            'categories' => $trip->categories->values()->map(function ($cat) {
                 return [
                     'id' => $cat->id,
                     'name' => $cat->name_attribute,
                 ];
             }),
-            'packages' => $trip->packages->map(function ($pkg) {
+            'packages' => $trip->packages->values()->map(function ($pkg) {
                 return [
                     'id' => $pkg->id,
-                    'name' => $pkg->name,
+                    'name' => app()->getLocale() == 'ar' ? $pkg->name_ar : $pkg->name_en,
                     'tier' => $pkg->tier,
                     'hotel_name' => $pkg->hotel_name,
                     'hotel_stars' => $pkg->hotel_stars,
-                    'prices' => $pkg->prices->map(function ($price) {
+                    'prices' => $pkg->prices->values()->map(function ($price) {
                         return [
                             'id' => $price->id,
                             'season_id' => $price->season_id,
@@ -337,18 +337,18 @@ class TripController extends Controller
                     }),
                 ];
             }),
-            'seasons' => $trip->seasons->map(function ($season) {
+            'seasons' => $trip->seasons->values()->map(function ($season) {
                 return [
                     'id' => $season->id,
-                    'name' => $season->name,
+                    'name' => app()->getLocale() == 'ar' ? $season->name_ar : $season->name_en,
                     'start_date' => $season->start_date,
                     'end_date' => $season->end_date,
                 ];
             }),
-            'addons' => $trip->addons->map(function ($addon) {
+            'addons' => $trip->addons->values()->map(function ($addon) {
                 return [
                     'id' => $addon->id,
-                    'name' => $addon->name,
+                    'name' => app()->getLocale() == 'ar' ? $addon->name_ar : $addon->name_en,
                     'extra_cost' => $addon->extra_cost,
                 ];
             }),
