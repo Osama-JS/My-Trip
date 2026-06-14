@@ -27,7 +27,7 @@
         rel="stylesheet">
 
     {{-- Font Awesome --}}
-    <link rel="stylesheet" href="{{ asset('icons/font-awesome/css/all.min.css') }}">
+    <link href="{{ asset('icons/font-awesome/css/all.min.css') }}" rel="stylesheet">
 
     {{-- Premium Frontend CSS --}}
     <link rel="stylesheet" href="{{ asset('css/frontend.css') }}?v={{ filemtime(public_path('css/frontend.css')) }}">

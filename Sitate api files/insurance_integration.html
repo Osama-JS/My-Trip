@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sitata API - دليل دمج التأمين والاشتراكات</title>
+    <style>
+        :root {
+            --primary-color: #d69d43;
+            --bg-color: #f8f9fa;
+            --text-color: #333;
+            --card-bg: #fff;
+            --border-radius: 8px;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        header {
+            background-color: #2f2e41;
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            border-bottom: 5px solid var(--primary-color);
+        }
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        .card {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        h1, h2, h3, h4 {
+            color: #2f2e41;
+        }
+        h1 { color: white; }
+        .highlight {
+            background-color: #ffecd2;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #d64343;
+        }
+        .nav-links {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            transition: 0.3s;
+        }
+        .nav-links a:hover {
+            background: var(--primary-color);
+        }
+        .code-block {
+            background-color: #f6f8fa;
+            padding: 1rem;
+            border-radius: 6px;
+            direction: ltr;
+            text-align: left;
+            font-family: Consolas, monospace;
+            border: 1px solid #e1e4e8;
+            margin: 1rem 0;
+            white-space: pre-wrap;
+        }
+        .step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+        }
+        .step-num {
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+            margin-left: 15px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>تعليمات واجهة Sitata API</h1>
+    <p>كيفية دمج خدمة تأمين السفر واشتراكات الحماية المدمجة (Embedded Insurance)</p>
+    <div class="nav-links">
+        <a href="index.html">المقدمة</a>
+        <a href="auth_and_errors.html">المصادقة والأخطاء</a>
+        <a href="insurance_integration.html">دليل دمج التأمين</a>
+    </div>
+</header>
+
+<div class="container">
+    <div class="card">
+        <h2>نظرة عامة على خدمة التأمين (Travel Safe Subscriptions)</h2>
+        <p>تتيح لك Sitata API إعادة بيع (Resell) اشتراكات الحماية وتأمين السفر كخدمة مدمجة (Embedded) داخل منصتك (للطيران، الفنادق، أو البكجات السياحية). تعتمد الآلية القياسية على أربع مراحل برمجية:</p>
+        <ol>
+            <li><strong>التسعير (Quoting):</strong> الاستعلام عن سعر الوثيقة التأمينية بناءً على تفاصيل الرحلة (التواريخ، الوجهة، أسعار التذاكر).</li>
+            <li><strong>الإنشاء المؤقت (Staging):</strong> إنشاء سجل مبدئي للتأمين قبل دفع العميل لضمان حجز السعر.</li>
+            <li><strong>الإصدار (Issuance):</strong> تأكيد الدفع وإصدار وثيقة التأمين رسمياً للمسافر.</li>
+            <li><strong>الإلغاء (Cancellation):</strong> في حال ألغى العميل حجزه الرئيسي، يتم إلغاء الوثيقة من Sitata.</li>
+        </ol>
+    </div>
+
+    <div class="card">
+        <h2>تفصيل العمليات وكيفية ربطها بمشروعك (My-Trip)</h2>
+        
+        <h3>1. دمج التأمين مع البكجات السياحية (Trips & Packages)</h3>
+        <div class="step">
+            <div class="step-num">1</div>
+            <div>
+                <strong>التهيئة وعرض السعر (UI Phase):</strong> 
+                في تطبيق الجوال، عندما يختار المستخدم باقة سياحية، قم بعرض خيار <em>"إضافة تأمين شامل"</em>. نظراً لأن الوجهة والمدة وتواريخ البكج معروفة، يقوم الـ Backend الخاص بك بإرسال طلب (POST /quote) لـ Sitata لحساب السعر، وإعادته لتطبيق الجوال لعرضه وتجميعه مع المبلغ الإجمالي.
+            </div>
+        </div>
+        
+        <h3>2. دمج التأمين مع رحلات الطيران (Flights)</h3>
+        <div class="step">
+            <div class="step-num">2</div>
+            <div>
+                <strong>حماية التذكرة:</strong> 
+                في شاشة إدخال بيانات الركاب للطيران، يتم استخدام أعمار الركاب ووجهة الوصول لاستدعاء الـ API. يركز التأمين هنا بشكل أساسي على (إلغاء الرحلة لظروف طارئة، أو فقدان الأمتعة).
+            </div>
+        </div>
+
+        <h3>3. دمج التأمين مع الفنادق (Hotels)</h3>
+        <div class="step">
+            <div class="step-num">3</div>
+            <div>
+                <strong>تأمين الإلغاء (Cancellation Protection):</strong> 
+                للفنادق، يتم تمرير إجمالي تكلفة الإقامة لـ Sitata لتقييم سعر الحماية. إذا ألغى العميل حجزه خارج فترة السماح المجانية، يضمن له هذا التأمين استرداد جزء كبير من أمواله.
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>الآلية البرمجية (الربط التقني)</h2>
+        <p>لتنفيذ هذه العمليات بشكل دقيق، يجب إنشاء كلاس أو خدمة في Laravel (مثلاً: <code>SitataInsuranceService</code>) تتولى الاتصال مع نقاط نهاية (Endpoints) Sitata. <em>ملاحظة: هذا الكود للتوضيح المعماري للتدفق.</em></p>
+
+        <h4>دالة الحصول على السعر (Quoting)</h4>
+        <div class="code-block">
+// يتم إرسال طلب إلى واجهة التسعير في Sitata
+// Endpoint: POST https://api.sitata.com/v1/insurance/quote
+// Headers: Authorization, Organization
+{
+    "destination_country": "ES",
+    "departure_date": "2026-07-01",
+    "return_date": "2026-07-15",
+    "total_trip_cost": 5000.00,
+    "travellers": [
+        { "age": 30 },
+        { "age": 28 }
+    ]
+}
+        </div>
+        <p><strong>الشرح (Arabic Explanation):</strong> تقوم هذه العملية بإرسال بيانات مبسطة عن الرحلة (دولة الوصول، تواريخ الرحلة، وتكلفة الرحلة الإجمالية، وأعمار المسافرين). يقوم نظام Sitata بالرد مباشرة بسعر التأمين المناسب (Premium) لهذه المعطيات.</p>
+
+        <h4>دالة الإصدار الفعلي (Issuance) بعد الدفع</h4>
+        <p>هذه الدالة <strong>يجب ألا يتم استدعاؤها إلا بعد نجاح الدفع (Payment Webhook / Success Callback)</strong> الخاص بالبوابة (مثلاً في <code>PaymentWebController</code>).</p>
+        <div class="code-block">
+// يتم إرسال بيانات كاملة لإصدار الوثيقة
+// Endpoint: POST https://api.sitata.com/v1/insurance/policies
+{
+    "quote_id": "qt_123456789",
+    "booking_reference": "MYTRIP-FL-0099",
+    "travellers": [
+        {
+            "first_name": "Osama",
+            "last_name": "Alsamomy",
+            "email": "osama@example.com",
+            "passport": "AB1234567",
+            "nationality": "SA"
+        }
+    ]
+}
+        </div>
+        <p><strong>الشرح (Arabic Explanation):</strong> بعد الدفع، يتم تزويد Sitata بالمعلومات الشخصية الفعلية للمسافرين لربطها بوثيقة التأمين (Policy). ستقوم واجهة Sitata بالرد برقم الوثيقة <code>policy_number</code> ورابط (URL) لملف الـ PDF الخاص بها. يجب عليك حفظ هذا الرقم في قاعدة البيانات الخاصة بك وإرسال ملف الوثيقة للمسافر عبر البريد الإلكتروني.</p>
+
+        <h4>دالة الإلغاء (Cancellation)</h4>
+        <div class="code-block">
+// Endpoint: DELETE https://api.sitata.com/v1/insurance/policies/{policy_id}
+        </div>
+        <p><strong>الشرح (Arabic Explanation):</strong> إذا قام العميل بطلب إلغاء الحجز عبر تطبيق My-Trip ضمن فترة السماح (Cooling-off Period) وتمت الموافقة، يجب استدعاء هذه النقطة في الخلفية لإشعار Sitata بإلغاء وثيقة التأمين واسترداد القيمة لتعويض العميل.</p>
+    </div>
+</div>
+
+</body>
+</html>

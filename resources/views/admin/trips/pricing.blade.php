@@ -3,7 +3,7 @@
 @section('title', __('Pricing & Packages') . ' - ' . $trip->title)
 
 @section('content')
-<div class="container-fluid">
+<div class="container-fluid pb-5 mb-5" style="height: auto; min-height: 100vh; overflow-y: visible !important; padding-bottom: 100px !important;">
     <div class="row page-titles">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{{ route('admin.trips.index') }}">{{ __('Trips') }}</a></li>
@@ -11,7 +11,20 @@
         </ol>
     </div>
 
-    <div class="row">
+    {{-- Admin Instructions Alert --}}
+    <div class="alert alert-info solid alert-dismissible fade show">
+        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="me-2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+        <strong>{{ __('كيفية إدارة التسعير:') }}</strong>
+        <ul class="mt-2 mb-0" style="list-style-type: disc; margin-right: 20px;">
+            <li><strong>الخطوة الأولى (المواسم):</strong> قم بإضافة المواسم أولاً (مثال: صيف 2024، شتاء 2024) مع تحديد تواريخ البداية والنهاية.</li>
+            <li><strong>الخطوة الثانية (البكجات):</strong> أضف البكجات المختلفة (مثل: اقتصادي، ذهبي، VIP) وتفاصيل الفنادق الخاصة بها.</li>
+            <li><strong>الخطوة الثالثة (التسعير):</strong> سيظهر لك جدول لكل بكج بناءً على المواسم المضافة. قم بإدخال الأسعار للغرف المفردة والمزدوجة وغيرها لكل موسم. (يتم الحفظ تلقائياً بمجرد إدخال الرقم وتغيير الخانة).</li>
+            <li><strong>الإضافات:</strong> يمكنك إضافة خيارات إضافية للرحلة (مثل تذكرة مزار إضافي) يتم احتسابها فوق سعر البكج الأساسي.</li>
+        </ul>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="btn-close"></button>
+    </div>
+
+    <div class="row" style="padding-bottom: 150px;">
         {{-- Trip Header --}}
         <div class="col-xl-12">
             <div class="card bg-primary text-white overflow-hidden">
