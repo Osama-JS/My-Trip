@@ -37,14 +37,18 @@
                         <div class="fe-input-group-v2 from-to-wrapper">
                             <div class="fe-input-sub">
                                 <label>{{ __('From') }}</label>
-                                <select name="from" id="airport_from" class="airport-select" required></select>
+                                <select name="from" id="airport_from" class="airport-select" required>
+                                    <option value=""></option>
+                                </select>
                             </div>
                             <button type="button" class="fe-swap-btn" id="swapAirports" title="{{ __('Swap') }}">
                                 <i class="fas fa-exchange-alt"></i>
                             </button>
                             <div class="fe-input-sub border-start">
                                 <label>{{ __('To') }}</label>
-                                <select name="to" id="airport_to" class="airport-select" required></select>
+                                <select name="to" id="airport_to" class="airport-select" required>
+                                    <option value=""></option>
+                                </select>
                             </div>
                         </div>
 

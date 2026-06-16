@@ -25,7 +25,9 @@
                 <div class="fe-search-col">
                     <label class="fe-search-label"><i class="fas fa-map-marker-alt"></i> {{ __('Destination') }}</label>
                     <div class="fe-input-with-icon">
-                        <select id="hotelCitySelect" name="cityName" class="fe-search-input city-select" required></select>
+                        <select id="hotelCitySelect" name="cityName" class="fe-search-input city-select" required>
+                            <option value=""></option>
+                        </select>
                         <input type="hidden" id="countryName" name="countryName">
                     </div>
                 </div>
@@ -566,8 +568,6 @@
 @endpush
 
 @push('scripts')
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
 $(document).ready(function() {
     // 1. SELECT2 FOR CITIES
