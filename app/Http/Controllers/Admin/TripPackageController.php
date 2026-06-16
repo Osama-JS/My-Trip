@@ -115,7 +115,7 @@ class TripPackageController extends Controller
             $package->prices()->delete();
         }
 
-        $validOccupancies = ['single', 'double', 'triple', 'child'];
+        $validOccupancies = ['single', 'double', 'triple', 'quadruple', 'quintuple'];
 
         foreach ($pricesMatrix as $seasonKey => $occupancies) {
             $seasonId = ($seasonKey === 'default' || !is_numeric($seasonKey)) ? null : (int) $seasonKey;
