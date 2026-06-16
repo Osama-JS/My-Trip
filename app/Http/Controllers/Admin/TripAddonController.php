@@ -15,10 +15,11 @@ class TripAddonController extends Controller
     public function store(Request $request, Trip $trip)
     {
         $data = $request->validate([
-            'title_ar' => 'required|string|max:255',
-            'title_en' => 'required|string|max:255',
-            'price'    => 'required|numeric|min:0',
-            'type'     => 'required|in:addition,replacement',
+            'title_ar'     => 'required|string|max:255',
+            'title_en'     => 'required|string|max:255',
+            'price'        => 'required|numeric|min:0',
+            'type'         => 'required|in:addition,replacement',
+            'pricing_type' => 'required|in:per_person,fixed_per_booking',
         ]);
 
         try {
@@ -28,6 +29,7 @@ class TripAddonController extends Controller
                 'extra_cost'     => $data['price'],
                 'currency'       => env('HYPERPAY_CURRENCY', 'SAR'),
                 'is_replacement' => $data['type'] === 'replacement',
+                'pricing_type'   => $data['pricing_type'],
             ]);
 
             return response()->json(['success' => true, 'message' => __('Add-on created successfully')]);
@@ -42,10 +44,11 @@ class TripAddonController extends Controller
     public function update(Request $request, Trip $trip, TripAddon $addon)
     {
         $data = $request->validate([
-            'title_ar' => 'required|string|max:255',
-            'title_en' => 'required|string|max:255',
-            'price'    => 'required|numeric|min:0',
-            'type'     => 'required|in:addition,replacement',
+            'title_ar'     => 'required|string|max:255',
+            'title_en'     => 'required|string|max:255',
+            'price'        => 'required|numeric|min:0',
+            'type'         => 'required|in:addition,replacement',
+            'pricing_type' => 'required|in:per_person,fixed_per_booking',
         ]);
 
         try {
@@ -54,6 +57,7 @@ class TripAddonController extends Controller
                 'name_en'        => $data['title_en'],
                 'extra_cost'     => $data['price'],
                 'is_replacement' => $data['type'] === 'replacement',
+                'pricing_type'   => $data['pricing_type'],
             ]);
 
             return response()->json(['success' => true, 'message' => __('Add-on updated successfully')]);

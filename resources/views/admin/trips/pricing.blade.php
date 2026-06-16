@@ -365,6 +365,13 @@
                             <option value="replacement">{{ __('Replacement') }}</option>
                         </select>
                     </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label font-w600">{{ __('Pricing Type') }}</label>
+                        <select name="pricing_type" id="a_pricing_type" class="form-control default-select">
+                            <option value="per_person">{{ __('Per Person') }}</option>
+                            <option value="fixed_per_booking">{{ __('Fixed per Booking') }}</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -565,10 +572,13 @@
             $('#a_title_en').val(addon.name_en);
             $('#a_price').val(addon.extra_cost);
             $('#a_type').val(addon.is_replacement ? 'replacement' : 'addition').trigger('change');
+            $('#a_pricing_type').val(addon.pricing_type || 'per_person').trigger('change');
             $('.default-select').niceSelect('update');
         } else {
             $('#addonForm')[0].reset();
             $('#a_id').val('');
+            $('#a_type').val('addition').trigger('change');
+            $('#a_pricing_type').val('per_person').trigger('change');
             $('.default-select').niceSelect('update');
         }
         $('#addonModal').modal('show');

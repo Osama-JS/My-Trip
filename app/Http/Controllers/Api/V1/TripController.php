@@ -350,6 +350,7 @@ class TripController extends Controller
                     'id' => $addon->id,
                     'name' => app()->getLocale() == 'ar' ? $addon->name_ar : $addon->name_en,
                     'extra_cost' => $addon->extra_cost,
+                    'pricing_type' => $addon->pricing_type,
                 ];
             }),
             'is_favorite' => Auth::guard('sanctum')->check() && Favorite::where('user_id', Auth::guard('sanctum')->id())->where('trip_id', $trip->id)->exists(),
@@ -477,26 +478,58 @@ class TripController extends Controller
             }
 
             $addonsSnapshot = [];
-            $addonsCostPerPax = 0;
+            $addonsCostTotal = 0;
             if ($request->has('addons') && is_array($request->addons)) {
-                $selectedAddons = \App\Models\TripAddon::whereIn('id', $request->addons)->get();
+                $addonIds = [];
+                $isLegacy = false;
+                
+                // Determine if legacy format (array of IDs) or new format (array of objects)
+                if (count($request->addons) > 0) {
+                    if (is_array($request->addons[0])) {
+                        $addonIds = array_column($request->addons, 'id');
+                    } else {
+                        $addonIds = $request->addons;
+                        $isLegacy = true;
+                    }
+                }
+
+                $selectedAddons = \App\Models\TripAddon::whereIn('id', $addonIds)->get();
                 foreach ($selectedAddons as $addon) {
-                    $addonsCostPerPax += $addon->extra_cost;
+                    $qty = 1;
+                    if (!$isLegacy) {
+                        foreach ($request->addons as $reqAddon) {
+                            if (isset($reqAddon['id']) && $reqAddon['id'] == $addon->id) {
+                                $qty = isset($reqAddon['quantity']) ? (int)$reqAddon['quantity'] : 1;
+                                break;
+                            }
+                        }
+                    } else {
+                        // Legacy fallback
+                        $qty = $passengersCount;
+                        if ($addon->pricing_type === 'fixed_per_booking') {
+                            $qty = 1;
+                        }
+                    }
+
+                    $totalCostForThisAddon = $addon->extra_cost * $qty;
+                    $addonsCostTotal += $totalCostForThisAddon;
                     $addonsSnapshot[] = [
-                        'id'    => $addon->id,
-                        'name'  => $addon->name,
-                        'price' => $addon->extra_cost,
+                        'id'       => $addon->id,
+                        'name'     => $addon->name,
+                        'price'    => $addon->extra_cost,
+                        'quantity' => $qty,
+                        'total'    => $totalCostForThisAddon,
                     ];
                 }
             }
 
-            $totalPrice = $unitPrice + ($addonsCostPerPax * $passengersCount);
+            $totalPrice = $unitPrice + $addonsCostTotal;
 
             // Legacy Extra passenger pricing fallback
             if (!$request->package_id && $trip->base_capacity && $passengersCount > $trip->base_capacity && $trip->extra_passenger_price) {
                 $extraPassengers = $passengersCount - $trip->base_capacity;
                 $baseTotal = ($trip->price * $trip->base_capacity) + ($trip->extra_passenger_price * $extraPassengers);
-                $totalPrice = $baseTotal + ($addonsCostPerPax * $passengersCount);
+                $totalPrice = $baseTotal + $addonsCostTotal;
             }
 
             $booking = TripBooking::create([
