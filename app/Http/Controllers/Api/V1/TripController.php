@@ -490,7 +490,7 @@ class TripController extends Controller
                 }
             }
 
-            $totalPrice = ($unitPrice + $addonsCostPerPax) * $passengersCount;
+            $totalPrice = $unitPrice + ($addonsCostPerPax * $passengersCount);
 
             // Legacy Extra passenger pricing fallback
             if (!$request->package_id && $trip->base_capacity && $passengersCount > $trip->base_capacity && $trip->extra_passenger_price) {
