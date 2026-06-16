@@ -353,6 +353,9 @@ class TripController extends Controller
                     'pricing_type' => $addon->pricing_type,
                 ];
             }),
+            'includes' => $trip->includes,
+            'excludes' => $trip->excludes,
+            'children_policy' => $trip->children_policy,
             'is_favorite' => Auth::guard('sanctum')->check() && Favorite::where('user_id', Auth::guard('sanctum')->id())->where('trip_id', $trip->id)->exists(),
         ];
 
