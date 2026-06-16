@@ -3,15 +3,16 @@
 @section('title', __('Bank Accounts'))
 @section('page-title', __('Bank Accounts Management'))
 
-@section('content')
-<div class="container-fluid">
-    <div class="row page-titles">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ __('Settings') }}</a></li>
-            <li class="breadcrumb-item"><a href="javascript:void(0)">{{ __('Bank Accounts') }}</a></li>
-        </ol>
-    </div>
+@section('page-header')
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ __('Settings') }}</a></li>
+        <li class="breadcrumb-item"><a href="javascript:void(0)">{{ __('Bank Accounts') }}</a></li>
+    </ol>
+</div>
+@endsection
 
+@section('content')
     <div class="row my-2">
         <div class="col-xl-4 col-sm-6">
             <x-stats-card
@@ -31,8 +32,8 @@
         </div>
         <div class="col-xl-4 col-sm-6">
             <x-stats-card
-                :label="__('Inactive')"
-                :value="$stats['inactive']"
+                :label="__('Disabled')"
+                :value="$stats['disabled']"
                 icon="fas fa-times-circle"
                 color="danger"
             />
@@ -41,19 +42,19 @@
 
     <div class="row">
         <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">{{ __('Bank Accounts List') }}</h4>
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAccountModal">
-                         <i class="fa fa-plus me-2"></i> {{ __('Add Bank Account') }}
-                     </button>
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header border-0 pb-0">
+                    <h4 class="card-title fw-bold text-dark">{{ __('Bank Accounts List') }}</h4>
+                    <button class="btn btn-primary btn-sm px-4 rounded-pill shadow-sm" data-bs-toggle="modal" data-bs-target="#addAccountModal">
+                        <i class="fas fa-plus-circle me-1"></i> {{ __('Add Account') }}
+                    </button>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table id="accounts-table" class="display" style="min-width: 845px">
+                        <table id="accounts-table" class="display custom-table" style="min-width: 845px">
                             <thead>
                                 <tr>
-                                    <th>{{ __('Logo') }}</th>
+                                    <th>{{ __('Bank Logo') }}</th>
                                     <th>{{ __('Bank Name') }}</th>
                                     <th>{{ __('IBAN') }}</th>
                                     <th>{{ __('Beneficiary') }}</th>
@@ -67,7 +68,6 @@
             </div>
         </div>
     </div>
-</div>
 
 {{-- Add Modal --}}
 <div class="modal fade" id="addAccountModal" tabindex="-1">
@@ -318,7 +318,7 @@
             text: '{{ __("This will permanently delete the bank account!") }}',
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#d33',
+            confirmButtonColor: '#041741',
             cancelButtonColor: '#3085d6',
             confirmButtonText: '{{ __("Yes, delete it!") }}',
             cancelButtonText: '{{ __("Cancel") }}'

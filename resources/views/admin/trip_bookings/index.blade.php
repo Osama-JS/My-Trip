@@ -1,14 +1,15 @@
 @extends('layouts.app')
 
-@section('content')
-<div class="container-fluid">
-    <div class="row page-titles">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ __('Admin') }}</a></li>
-            <li class="breadcrumb-item"><a href="javascript:void(0)">{{ __('Trip Bookings') }}</a></li>
-        </ol>
-    </div>
+@section('page-header')
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="javascript:void(0)">{{ __('Admin') }}</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ __('Trip Bookings') }}</a></li>
+    </ol>
+</div>
+@endsection
 
+@section('content')
     
     @push('styles')
     <style>
@@ -72,6 +73,63 @@
 
         /* Fix for RTL if needed, but assuming LTR for now as per code items */
         .ms-auto { margin-right: 0 !important; margin-left: auto !important; }
+
+        .custom-table {
+            border-collapse: separate;
+            border-spacing: 0 10px;
+            width: 100%;
+        }
+        .custom-table thead th {
+            border: none;
+            background: #f8f9fa;
+            color: #6c757d;
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            padding: 15px;
+        }
+        .custom-table tbody tr {
+            background: #fff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .custom-table tbody tr:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(4, 23, 65, 0.08);
+        }
+        .custom-table tbody td {
+            border: none;
+            padding: 15px;
+            vertical-align: middle;
+        }
+        .custom-table tbody td:first-child {
+            border-top-left-radius: 8px;
+            border-bottom-left-radius: 8px;
+        }
+        .custom-table tbody td:last-child {
+            border-top-right-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+
+        /* Empty state styling */
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+        }
+        .empty-state i {
+            font-size: 4rem;
+            color: #e2e8f0;
+            margin-bottom: 15px;
+        }
+        .empty-state h5 {
+            color: #64748b;
+            font-weight: 600;
+        }
+        .empty-state p {
+            color: #94a3b8;
+            font-size: 14px;
+        }
     </style>
     @endpush
 
@@ -113,13 +171,13 @@
 
     <div class="row">
         <div class="col-12">
-            <div class="card">
-                <div class="card-header">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header border-0 pb-0">
                     <h4 class="card-title">{{ __('Trip Bookings') }}</h4>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table id="bookings-table" class="display" style="min-width: 845px">
+                        <table id="bookings-table" class="display custom-table" style="min-width: 845px">
                             <thead>
                                 <tr>
                                     <th>{{ __('ID') }}</th>
@@ -138,7 +196,6 @@
             </div>
         </div>
     </div>
-</div>
 
 <script>
     $(document).ready(function() {
@@ -157,7 +214,17 @@
                 { data: 'actions', orderable: false, searchable: false }
             ],
             language: {
-                "url": "{{ asset('vendor/datatables/i18n/' . app()->getLocale() . '.json') }}"
+                "url": "{{ asset('vendor/datatables/i18n/' . app()->getLocale() . '.json') }}",
+                "emptyTable": `<div class="empty-state">
+                                <i class="fas fa-folder-open"></i>
+                                <h5>لا توجد بيانات</h5>
+                                <p>لم يتم العثور على أية سجلات لعرضها هنا.</p>
+                               </div>`,
+                "zeroRecords": `<div class="empty-state">
+                                <i class="fas fa-search"></i>
+                                <h5>لا توجد نتائج</h5>
+                                <p>لم يتم العثور على أية سجلات مطابقة للبحث.</p>
+                               </div>`
             },
             order: [[0, 'desc']] // Order by ID desc
         });

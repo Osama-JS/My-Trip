@@ -438,7 +438,7 @@
             text: "{{ __('Deleting a season will also delete all associated prices!') }}",
             icon: "warning",
             showCancelButton: true,
-            confirmButtonColor: "#d33",
+            confirmButtonColor: '#041741',
             confirmButtonText: "{{ __('Yes, delete it!') }}"
         }).then((result) => {
             if (result.isConfirmed) {
@@ -502,7 +502,7 @@
             text: "{{ __('This package and all its prices will be removed!') }}",
             icon: "warning",
             showCancelButton: true,
-            confirmButtonColor: "#d33",
+            confirmButtonColor: '#041741',
             confirmButtonText: "{{ __('Yes, delete it!') }}"
         }).then((result) => {
             if (result.isConfirmed) {
@@ -600,7 +600,7 @@
             text: "{{ __('This add-on will be permanently removed!') }}",
             icon: "warning",
             showCancelButton: true,
-            confirmButtonColor: "#d33",
+            confirmButtonColor: '#041741',
             confirmButtonText: "{{ __('Yes, delete it!') }}"
         }).then((result) => {
             if (result.isConfirmed) {

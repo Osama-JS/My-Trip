@@ -52,6 +52,8 @@ Route::get('/hotels/cities/search', [FrontendController::class, 'searchHotelCiti
 
 Route::get('/destinations', [FrontendController::class, 'destinations'])->name('destinations');
 Route::get('/about', [FrontendController::class, 'about'])->name('about');
+Route::get('/contact', [FrontendController::class, 'contact'])->name('contact');
+Route::post('/contact/submit', [FrontendController::class, 'processContact'])->name('contact.submit');
 Route::get('/search', [FrontendController::class, 'search'])->name('search');
 Route::get('/book-trip/form', [FrontendController::class, 'tripBookingForm'])->name('trips.booking.form')->middleware('auth');
 Route::post('/book-trip', [FrontendController::class, 'bookTrip'])->name('book.trip')->middleware('auth');
@@ -113,6 +115,8 @@ Route::get('/flights', [FrontendController::class, 'flights'])->name('flights');
 Route::get('/hotels', [FrontendController::class, 'hotels'])->name('hotels');
 Route::get('/destinations', [FrontendController::class, 'destinations'])->name('destinations');
 Route::get('/about', [FrontendController::class, 'about'])->name('about');
+Route::get('/contact', [FrontendController::class, 'contact'])->name('contact');
+Route::post('/contact/submit', [FrontendController::class, 'processContact'])->name('contact.submit');
 Route::get('/search', [FrontendController::class, 'search'])->name('search');
 Route::get('/book-trip/form', [FrontendController::class, 'tripBookingForm'])->name('trips.booking.form')->middleware('auth');
 Route::post('/book-trip', [FrontendController::class, 'bookTrip'])->name('book.trip')->middleware('auth');

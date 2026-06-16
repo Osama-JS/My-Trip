@@ -275,6 +275,94 @@
         }
     </style>
 
+    <style>
+        /* ============================================================ */
+        /* PREMIUM PAGE TITLES LAYOUT                                   */
+        /* ============================================================ */
+        .page-titles {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            background: #ffffff !important;
+            padding: 1.25rem 1.5rem !important;
+            border-radius: 12px !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03) !important;
+            margin-bottom: 2rem !important;
+            border: 1px solid #f1f5f9 !important;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .page-titles .breadcrumb {
+            margin-bottom: 0 !important;
+            padding: 0 !important;
+            background: transparent !important;
+            display: flex;
+            align-items: center;
+        }
+
+        .page-titles .breadcrumb .breadcrumb-item {
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+        }
+
+        .page-titles .breadcrumb .breadcrumb-item a {
+            color: #64748b;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .page-titles .breadcrumb .breadcrumb-item a:hover {
+            color: #041741;
+        }
+
+        .page-titles .breadcrumb .breadcrumb-item.active a {
+            color: #041741;
+            font-weight: 700;
+        }
+
+        /* Customize breadcrumb separator */
+        .page-titles .breadcrumb-item + .breadcrumb-item::before {
+            content: "\f105" !important; /* FontAwesome angle-right */
+            font-family: "Font Awesome 5 Free";
+            font-weight: 900;
+            font-size: 1rem;
+            line-height: 1;
+            vertical-align: middle;
+            color: #cbd5e1;
+            padding: 0 0.7rem;
+            float: none;
+        }
+
+        [dir="rtl"] .page-titles .breadcrumb-item + .breadcrumb-item::before {
+            content: "\f104" !important; /* FontAwesome angle-left for RTL */
+        }
+
+        /* Ensure buttons inside page-titles align properly */
+        .page-titles > button, 
+        .page-titles > a.btn,
+        .page-titles .btn-primary {
+            margin: 0 !important;
+            padding: 0.6rem 1.5rem !important;
+            font-weight: 600 !important;
+            display: inline-flex !important;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 10px rgba(4, 23, 65, 0.15) !important;
+            transition: all 0.3s ease !important;
+            border-radius: 8px !important;
+        }
+
+        .page-titles > button:hover, 
+        .page-titles > a.btn:hover,
+        .page-titles .btn-primary:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 15px rgba(4, 23, 65, 0.25) !important;
+        }
+    </style>
+
     @stack('styles')
 </head>
 <body

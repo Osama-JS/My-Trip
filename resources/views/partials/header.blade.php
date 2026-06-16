@@ -66,8 +66,8 @@
     box-sizing: border-box !important;
 }
 .header-search-item:hover, .header-search-item.active {
-    background: #f8fafc !important;
-    color: #fa1600 !important;
+    background: #f0f4f8 !important;
+    color: #041741 !important;
 }
 .header-search-item .icon-wrapper {
     width: 40px !important;
@@ -76,15 +76,15 @@
     align-items: center !important;
     justify-content: center !important;
     font-size: 16px !important;
-    color: #fa1600 !important;
-    background: #fff5f5 !important;
+    color: #041741 !important;
+    background: #e6ecf5 !important;
     border-radius: 12px !important;
     margin-left: 15px !important;
     flex-shrink: 0 !important;
     transition: all 0.2s;
 }
 .header-search-item:hover .icon-wrapper, .header-search-item.active .icon-wrapper {
-    background: #fa1600 !important;
+    background: #041741 !important;
     color: #fff !important;
     transform: scale(1.05);
 }
@@ -121,7 +121,7 @@
 .search-loader {
     padding: 20px;
     text-align: center;
-    color: #fa1600;
+    color: #041741;
 }
 
 /* Language Switcher */
@@ -133,13 +133,63 @@
     height: 42px;
     background: #f8fafc;
     border-radius: 12px;
-    color: #fa1600 !important;
+    color: #041741 !important;
     transition: all 0.2s;
 }
 .lang-switcher-btn:hover {
     background: #fff;
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     transform: translateY(-2px);
+}
+
+/* Glassmorphism Header */
+.header {
+    background: rgba(255, 255, 255, 0.85) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+}
+
+/* Notification Pulse Animation */
+@keyframes premiumPulse {
+    0% { box-shadow: 0 0 0 0 rgba(4, 23, 65, 0.7); }
+    70% { box-shadow: 0 0 0 6px rgba(4, 23, 65, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(4, 23, 65, 0); }
+}
+.pulse-badge {
+    animation: premiumPulse 2s infinite;
+}
+
+/* Profile Dropdown Improvements */
+.header-profile .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 10px;
+    border-radius: 30px;
+    background: #f8fafc;
+    transition: all 0.3s ease;
+}
+.header-profile .nav-link:hover {
+    background: #e2e8f0;
+}
+.header-profile .profile-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0;
+}
+.header-profile .profile-role {
+    font-size: 11px;
+    color: #64748b;
+    margin: 0;
+}
+.header-profile img {
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 </style>
 
@@ -195,7 +245,7 @@
                                 <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
                             </svg>
                             @if($unreadNotificationsCount > 0)
-                                <span class="badge light text-white bg-primary rounded-circle position-absolute" style="top: 2px; right: 2px; font-size: 10px; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border: 2px solid #fff;">
+                                <span class="badge light text-white bg-primary rounded-circle position-absolute pulse-badge" style="top: 2px; right: 2px; font-size: 10px; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border: 2px solid #fff;">
                                     {{ $unreadNotificationsCount }}
                                 </span>
                             @endif
@@ -230,15 +280,26 @@
 
                     <li class="nav-item dropdown header-profile">
                         <a class="nav-link" href="javascript:void(0);" role="button" data-bs-toggle="dropdown">
-                            <img src="{{ auth()->user()->profile_photo_url }}" width="20" alt=""/>
+                            <img src="{{ auth()->user()->profile_photo_url }}" width="35" height="35" alt="Profile"/>
+                            <div class="d-none d-md-flex flex-column text-start ms-2 me-2">
+                                <span class="profile-name">{{ auth()->user()->name }}</span>
+                                <span class="profile-role">{{ __('Administrator') }}</span>
+                            </div>
                         </a>
-                        <div class="dropdown-menu dropdown-menu-end">
-                            <a href="{{ route('profile.edit') }}" class="dropdown-item ai-icon">
-                                <span class="ms-2">{{ __('Profile') }}</span>
+                        <div class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2" style="border-radius: 16px; min-width: 200px;">
+                            <div class="p-3 border-bottom d-md-none">
+                                <h6 class="mb-0 text-dark">{{ auth()->user()->name }}</h6>
+                                <small class="text-muted">{{ __('Administrator') }}</small>
+                            </div>
+                            <a href="{{ route('profile.edit') }}" class="dropdown-item py-2">
+                                <i class="fas fa-user-circle text-primary me-2"></i> <span class="ms-2">{{ __('Profile') }}</span>
                             </a>
+                            <div class="dropdown-divider"></div>
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
-                                <button type="submit" class="dropdown-item ai-icon"><span class="ms-2">{{ __('Logout') }}</span></button>
+                                <button type="submit" class="dropdown-item py-2 text-danger border-0 bg-transparent w-100 text-start" style="cursor: pointer;">
+                                    <i class="fas fa-sign-out-alt me-2"></i> <span class="ms-2">{{ __('Logout') }}</span>
+                                </button>
                             </form>
                         </div>
                     </li>

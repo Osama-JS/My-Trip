@@ -3,15 +3,16 @@
 @section('title', __('Bank Account Details') . ' - ' . $bank_account->bank_name)
 @section('page-title', __('Bank Account Details'))
 
-@section('content')
-<div class="container-fluid">
-    <div class="row page-titles">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ route('admin.bank-accounts.index') }}">{{ __('Bank Accounts') }}</a></li>
-            <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ __('Details') }}</a></li>
-        </ol>
-    </div>
+@section('page-header')
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ route('admin.bank-accounts.index') }}">{{ __('Bank Accounts') }}</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ __('Details') }}</a></li>
+    </ol>
+</div>
+@endsection
 
+@section('content')
     <div class="row">
         {{-- Account Info Sidebar --}}
         <div class="col-xl-4">
@@ -24,22 +25,43 @@
                         @if($bank_account->logo_path)
                             <img src="{{ asset('storage/' . $bank_account->logo_path) }}" alt="{{ $bank_account->bank_name }}" class="img-fluid rounded mb-3" style="max-height: 100px;">
                         @else
-                            <div class="bg-light rounded d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 100px; height: 100px;">
-                                <i class="fas fa-university fa-3x text-muted"></i>
+                            <div class="avatar avatar-xl bg-light text-primary rounded mb-3 d-flex align-items-center justify-content-center mx-auto" style="width: 100px; height: 100px;">
+                                <i class="fas fa-university fa-3x"></i>
                             </div>
                         @endif
-                        <h3 class="mb-1 fw-bold">{{ $bank_account->bank_name }}</h3>
-                        <span class="badge badge-{{ $bank_account->is_active ? 'success' : 'danger' }} mb-3">
-                            {{ $bank_account->is_active ? __('Active') : __('Inactive') }}
+                        <h4 class="mb-1 fw-bold text-dark">{{ $bank_account->bank_name }}</h4>
+                        <span class="badge {{ $bank_account->is_active ? 'bg-success' : 'bg-danger' }}">
+                            {{ $bank_account->is_active ? __('Active') : __('Disabled') }}
                         </span>
                     </div>
 
-                    <div class="info-group mb-3">
-                        <label class="text-muted small mb-1">{{ __('IBAN') }}</label>
-                        <div class="d-flex align-items-center justify-content-between bg-light p-2 rounded">
-                            <code class="text-dark">{{ $bank_account->iban }}</code>
-                            <button class="btn btn-link btn-xs p-0 copy-btn" data-clipboard-text="{{ $bank_account->iban }}">
-                                <i class="fas fa-copy"></i>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                            <span class="text-muted">{{ __('Beneficiary') }}</span>
+                            <span class="fw-semibold text-dark">{{ $bank_account->beneficiary_name }}</span>
+                        </li>
+                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                            <span class="text-muted">{{ __('Created At') }}</span>
+                            <span class="text-dark">{{ $bank_account->created_at->format('Y-m-d') }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        {{-- Account Transfers List --}}
+        <div class="col-xl-8">
+            <div class="card">
+                <div class="card-header border-0 pb-0">
+                    <h4 class="card-title">{{ __('Bank Details & IBAN') }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4 p-3 bg-light rounded-3 border">
+                        <label class="form-label text-muted mb-1">{{ __('IBAN') }}</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control bg-white fw-bold text-dark border-0 fs-16" value="{{ $bank_account->iban }}" readonly id="ibanText">
+                            <button class="btn btn-outline-primary border-0 copy-btn" type="button" data-clipboard-text="{{ $bank_account->iban }}">
+                                <i class="fas fa-copy"></i> {{ __('Copy') }}
                             </button>
                         </div>
                     </div>

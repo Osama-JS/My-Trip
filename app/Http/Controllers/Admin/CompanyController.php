@@ -24,35 +24,39 @@ class CompanyController extends Controller
 
     public function getData(Request $request)
     {
-        $companies = Company::all(); // أو where حسب حاجتك
+        $companies = Company::all();
 
         return response()->json([
             'data' => $companies->map(function ($company) {
+                $statusBadge = $company->active
+                    ? '<div class="d-flex align-items-center"><i class="fa fa-circle text-success me-2" style="font-size: 8px;"></i> <span class="fw-medium text-dark">'.__('Active').'</span></div>'
+                    : '<div class="d-flex align-items-center"><i class="fa fa-circle text-danger me-2" style="font-size: 8px;"></i> <span class="fw-medium text-dark">'.__('Inactive').'</span></div>';
+
                 return [
                     'id'    => $company->id,
-                    'logo'  => '<img src="' . $company->logo_url . '" class="rounded-circle" width="35" height="35" alt="">',
-                    'name'  => $company->name,
-                    'en_name' => $company->en_name,
-                    'email' => $company->email,
-                    'phone' => ($company->phone_code ? '+'.$company->phone_code.' ' : '') . $company->phone,
-                    'notes' => $company->notes,
-                    'status' => $company->active
-                        ? '<span class="badge bg-success">'.__('Active').'</span>'
-                        : '<span class="badge bg-danger">'.__('Inactive').'</span>',
+                    'logo'  => '<img src="' . $company->logo_url . '" class="rounded-circle shadow-sm border border-2 border-white" style="width: 40px; height: 40px; object-fit: cover;" alt="">',
+                    'info'  => '<div>
+                                <strong class="text-dark">' . $company->name . '</strong><br>
+                                <span class="text-muted small">' . $company->en_name . '</span>
+                               </div>',
+                    'contact' => '<div>
+                                    <span class="text-dark fw-medium">' . $company->email . '</span><br>
+                                    <small class="text-muted">' . ($company->phone_code ? '+'.$company->phone_code.' ' : '') . ($company->phone ?? '---') . '</small>
+                                  </div>',
+                    'notes' => $company->notes ? '<span class="text-muted small">' . \Illuminate\Support\Str::limit($company->notes, 60) . '</span>' : '<span class="text-muted">---</span>',
+                    'status' => $statusBadge,
                     'actions' => '
-                        <div class="d-flex">
-                            <a href="' . route('admin.companies.agents', $company->id) . '" class="btn btn-info btn-xs me-1" title="' . __('Manage Agents') . '">
-                                <i class="fas fa-users"></i>
-                            </a>
-                            <button onclick="editCompany('.$company->id.')" class="btn btn-primary btn-xs me-1">
-                                <i class="fas fa-pencil-alt"></i>
+                        <div class="dropdown">
+                            <button type="button" class="btn btn-light btn-sm rounded-circle border-0 shadow-sm" data-bs-toggle="dropdown" aria-expanded="false" style="width:32px; height:32px; padding:0; display:inline-flex; align-items:center; justify-content:center;">
+                                <i class="fas fa-ellipsis-v text-muted"></i>
                             </button>
-                            <button onclick="togglecompanytatus('.$company->id.')" class="btn btn-warning btn-xs me-1">
-                                <i class="fas fa-ban"></i>
-                            </button>
-                            <button onclick="deletecompanie('.$company->id.')" class="btn btn-danger btn-xs">
-                                <i class="fa fa-trash"></i>
-                            </button>
+                            <div class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 py-2">
+                                <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="' . route('admin.companies.agents', $company->id) . '"><i class="fas fa-users text-info me-3 w-15px"></i> '.__('Manage Agents').'</a>
+                                <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="editCompany('.$company->id.')"><i class="fas fa-pencil-alt text-primary me-3 w-15px"></i> '.__('Edit').'</a>
+                                <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="togglecompanytatus('.$company->id.')"><i class="fas fa-ban text-warning me-3 w-15px"></i> '.__('Toggle Status').'</a>
+                                <div class="dropdown-divider my-1"></div>
+                                <a class="dropdown-item text-danger py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="deletecompanie('.$company->id.')"><i class="fa fa-trash text-danger me-3 w-15px"></i> '.__('Delete').'</a>
+                            </div>
                         </div>'
                 ];
             })

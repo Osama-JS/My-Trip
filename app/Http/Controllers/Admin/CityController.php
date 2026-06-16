@@ -23,6 +23,7 @@ class CityController extends Controller
             'total' => City::count(),
             'active' => City::where('active', true)->count(),
             'inactive' => City::where('active', false)->count(),
+            'disabled' => City::where('active', false)->count(),
             'countries_count' => Country::has('cities')->count(),
         ];
 

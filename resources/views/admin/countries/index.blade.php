@@ -3,21 +3,22 @@
 @section('title', __('Countries'))
 @section('page-title', __('Countries Management'))
 
-@section('content')
-<div class="container-fluid">
-    <div class="row page-titles">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ __('Locations') }}</a></li>
-            <li class="breadcrumb-item"><a href="javascript:void(0)">{{ __('Countries') }}</a></li>
-        </ol>
-    </div>
+@section('page-header')
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ __('Locations') }}</a></li>
+        <li class="breadcrumb-item"><a href="javascript:void(0)">{{ __('Countries') }}</a></li>
+    </ol>
+</div>
+@endsection
 
+@section('content')
     <div class="row my-2">
         <div class="col-xl-3 col-sm-6">
             <x-stats-card
-                :label="__('Total Cities')"
+                :label="__('Total Countries')"
                 :value="$stats['total']"
-                icon="fas fa-city"
+                icon="fas fa-globe"
                 color="primary"
             />
         </div>
@@ -31,33 +32,34 @@
         </div>
         <div class="col-xl-3 col-sm-6">
             <x-stats-card
-                :label="__('Inactive')"
-                :value="$stats['inactive']"
+                :label="__('Disabled')"
+                :value="$stats['disabled']"
                 icon="fas fa-times-circle"
                 color="danger"
             />
         </div>
         <div class="col-xl-3 col-sm-6">
             <x-stats-card
-                :label="__('In Use (Countries)')"
+                :label="__('With Cities')"
                 :value="$stats['with_cities']"
-                icon="fas fa-globe"
-                color="warning"
+                icon="fas fa-city"
+                color="info"
             />
         </div>
     </div>
- <div class="row">
+
+    <div class="row">
         <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">{{ __('Countries List') }}</h4>
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCountryModal">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header border-0 pb-0">
+                    <h4 class="card-title fw-bold text-dark">{{ __('Countries List') }}</h4>
+                    <button type="button" class="btn btn-primary btn-sm px-4 rounded-pill shadow-sm" data-bs-toggle="modal" data-bs-target="#addCountryModal">
                          <i class="fa fa-plus me-2"></i> {{ __('Add Country') }}
                      </button>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table id="countries-table" class="display" style="min-width: 845px">
+                        <table id="countries-table" class="display custom-table" style="min-width: 845px">
                             <thead>
                                 <tr>
                                     <th>{{ __('Flag') }}</th>
@@ -77,7 +79,6 @@
             </div>
         </div>
     </div>
-</div>
 
 
 <div class="modal fade" id="addCountryModal" tabindex="-1">
@@ -508,8 +509,10 @@
         Swal.fire({
             title: '{{ __("Are you sure?") }}',
             text: '{{ __("Do you want to toggle this country status?") }}',
-            icon: 'question',
+            type: 'question',
             showCancelButton: true,
+            confirmButtonColor: '#041741',
+            cancelButtonColor: '#777',
             confirmButtonText: '{{ __("Yes, toggle it!") }}',
             cancelButtonText: '{{ __("Cancel") }}'
         }).then((result) => {
@@ -523,13 +526,28 @@
                             if (typeof countriesTable !== 'undefined') {
                                 countriesTable.ajax.reload();
                             }
-                            Swal.fire('{{ __("Updated!") }}', response.message, 'success'); // عرض رسالة نجاح
+                            Swal.fire({
+                                title: '{{ __("Updated!") }}',
+                                text: response.message,
+                                type: 'success',
+                                confirmButtonColor: '#041741'
+                            });
                         } else {
-                            Swal.fire('{{ __("Error!") }}', response.message || '{{ __("Something went wrong") }}', 'error');
+                            Swal.fire({
+                                title: '{{ __("Error!") }}',
+                                text: response.message || '{{ __("Something went wrong") }}',
+                                type: 'error',
+                                confirmButtonColor: '#041741'
+                            });
                         }
                     },
                     error: function(xhr) {
-                        Swal.fire('{{ __("Error!") }}', xhr.responseJSON?.message || '{{ __("Something went wrong") }}', 'error');
+                        Swal.fire({
+                            title: '{{ __("Error!") }}',
+                            text: xhr.responseJSON?.message || '{{ __("Something went wrong") }}',
+                            type: 'error',
+                            confirmButtonColor: '#041741'
+                        });
                     }
                 });
             }
@@ -542,10 +560,10 @@
         Swal.fire({
             title: '{{ __("Are you sure?") }}',
             text: '{{ __("This will delete the country and related data!") }}',
-            icon: 'warning',
+            type: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
+            confirmButtonColor: '#041741',
+            cancelButtonColor: '#777',
             confirmButtonText: '{{ __("Yes, delete it!") }}',
             cancelButtonText: '{{ __("Cancel") }}'
         }).then((result) => {
@@ -572,6 +590,39 @@
         });
     }
 </script>
+@endpush
+
+@push('styles')
+<style>
+    /* Override danger badge (Inactive status) to light navy theme */
+    .badge-danger {
+        background-color: rgba(4, 23, 65, 0.1) !important;
+        color: #041741 !important;
+    }
+    
+    /* Override danger button (Delete button) to navy theme */
+    .btn-danger {
+        background-color: #041741 !important;
+        border-color: #041741 !important;
+        color: #fff !important;
+        box-shadow: 0 4px 10px rgba(4, 23, 65, 0.2) !important;
+    }
+    .btn-danger:hover {
+        background-color: #062261 !important;
+        border-color: #062261 !important;
+        color: #fff !important;
+    }
+    
+    /* Override danger icon color gradient in stats card component to navy */
+    .stat-icon.danger {
+        background: linear-gradient(135deg, #041741 0%, #0c2b73 100%) !important;
+    }
+    
+    /* Ensure general validation / text-danger matches navy theme if present */
+    .text-danger {
+        color: #041741 !important;
+    }
+</style>
 @endpush
 
 

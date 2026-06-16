@@ -4,11 +4,15 @@
 @section('page-title', __('Company Codes Management'))
 
 @section('page-header')
-<div class="row page-titles">
+<div class="page-titles">
     <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">{{ __('Dashboard') }}</a></li>
         <li class="breadcrumb-item"><a href="javascript:void(0)">{{ __('Company') }}</a></li>
         <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ __('Company Codes') }}</a></li>
     </ol>
+    <button class="btn btn-primary rounded-pill shadow-sm px-4" data-bs-toggle="modal" data-bs-target="#addCodeModal">
+        <i class="fas fa-plus me-2"></i> {{ __('Add Code') }}
+    </button>
 </div>
 @endsection
 
@@ -52,8 +56,8 @@
 
 
     <div class="card">
-        <div class="card-header">
-            <h4 class="card-title">{{ __('Company Codes')}}</h4>
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="card-title">{{ __('Company Codes List') }}</h4>
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCodeModal">
                 <i class="fa fa-plus"></i> {{ __('Add Code')}}
             </button>
@@ -427,7 +431,7 @@
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
+            cancelButtonColor: '#041741',
             confirmButtonText: '{{ __("Yes, Change it!") }}'
         }).then((result) => {
             if (result.value) {
@@ -456,7 +460,7 @@
             text: '{{ __("This action cannot be undone!") }}',
             icon: 'error',
             showCancelButton: true,
-            confirmButtonColor: '#d33',
+            confirmButtonColor: '#041741',
             cancelButtonColor: '#3085d6',
             confirmButtonText: '{{ __("Yes, delete it!") }}'
         }).then((result) => {

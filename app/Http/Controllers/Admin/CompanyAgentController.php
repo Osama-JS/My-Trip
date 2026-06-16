@@ -22,24 +22,28 @@ class CompanyAgentController extends Controller
 
         return response()->json([
             'data' => $agents->map(function ($agent) {
+                $statusBadge = $agent->status === 'active'
+                    ? '<div class="d-flex align-items-center"><i class="fa fa-circle text-success me-2" style="font-size: 8px;"></i> <span class="fw-medium text-dark">'.__('Active').'</span></div>'
+                    : '<div class="d-flex align-items-center"><i class="fa fa-circle text-danger me-2" style="font-size: 8px;"></i> <span class="fw-medium text-dark">'.__('Inactive').'</span></div>';
+
                 return [
                     'id' => $agent->id,
-                    'name' => $agent->first_name . ' ' . $agent->last_name,
-                    'phone' => '<span dir="ltr">+' . $agent->country_code . ' ' . $agent->phone . '</span>',
-                    'email' => $agent->email,
-                    'status' => $agent->status === 'active'
-                        ? '<span class="badge bg-success">'.__('Active').'</span>'
-                        : '<span class="badge bg-danger">'.__('Inactive').'</span>',
+                    'name' => '<strong class="text-dark">' . $agent->first_name . ' ' . $agent->last_name . '</strong>',
+                    'phone' => '<span class="text-muted" dir="ltr">+' . $agent->country_code . ' ' . $agent->phone . '</span>',
+                    'email' => '<span class="text-muted">' . $agent->email . '</span>',
+                    'status' => $statusBadge,
                     'actions' => '
-                        <button onclick="editAgent('.$agent->id.')" class="btn btn-primary btn-xs" title="'.__('Edit').'">
-                            <i class="fa fa-edit"></i>
-                        </button>
-                        <button onclick="toggleAgentStatus('.$agent->id.')" class="btn btn-warning btn-xs" title="'.__('Status').'">
-                            <i class="fa fa-ban"></i>
-                        </button>
-                        <button onclick="deleteAgent('.$agent->id.')" class="btn btn-danger btn-xs" title="'.__('Delete').'">
-                            <i class="fa fa-trash"></i>
-                        </button>'
+                        <div class="dropdown">
+                            <button type="button" class="btn btn-light btn-sm rounded-circle border-0 shadow-sm" data-bs-toggle="dropdown" aria-expanded="false" style="width:32px; height:32px; padding:0; display:inline-flex; align-items:center; justify-content:center;">
+                                <i class="fas fa-ellipsis-v text-muted"></i>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 py-2">
+                                <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="editAgent(' . $agent->id . ')"><i class="fas fa-pencil-alt text-primary me-3 w-15px"></i> '.__('Edit').'</a>
+                                <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="toggleAgentStatus(' . $agent->id . ')"><i class="fas fa-ban text-warning me-3 w-15px"></i> '.__('Toggle Status').'</a>
+                                <div class="dropdown-divider my-1"></div>
+                                <a class="dropdown-item text-danger py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="deleteAgent(' . $agent->id . ')"><i class="fa fa-trash text-danger me-3 w-15px"></i> '.__('Delete').'</a>
+                            </div>
+                        </div>'
                 ];
             })
         ]);

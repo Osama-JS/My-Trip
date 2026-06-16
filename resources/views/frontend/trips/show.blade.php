@@ -15,7 +15,6 @@
     // Check if we have the new pricing system data
     $hasPackages = $trip->packages->count() > 0;
     $hasSeasons = $trip->seasons->count() > 0;
-
     // Prepare pricing data for JS
     $pricingJson = $trip->packages->map(function ($p) {
         return [
@@ -1506,6 +1505,22 @@
             </div>
         </section>
     @endif
+
+    {{-- Sticky Booking Bar --}}
+    <div class="fe-sticky-booking-bar" id="feStickyBookingBar">
+        <div class="fe-container fe-sticky-inner">
+            <div class="fe-sticky-info">
+                <span class="fe-sticky-title">{{ $title }}</span>
+                <div class="fe-sticky-price">
+                    <span id="sticky-price-label">{{ __('Starting from') }}</span>
+                    <strong id="sticky-price-value">{{ number_format($startingPrice, 2) }} {{ __("SAR") }}</strong>
+                </div>
+            </div>
+            <button class="fe-btn fe-btn-primary fe-btn-lg" onclick="document.querySelector('.fe-booking-sidebar').scrollIntoView({ behavior: 'smooth', block: 'center' });">
+                {{ __('Book Now') }}
+            </button>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
@@ -1537,7 +1552,7 @@
             }
 
             const mobileSliderEl = document.querySelector('.fe-mobile-swiper');
-            if (mobileSliderEl && mobileSliderEl.querySelectorAll('.swiper-slide').length > 1) {
+            if (mobileSliderEl && mobileSliderEl.querySelectسorAll('.swiper-slide').length > 1) {
                 new Swiper('.fe-mobile-swiper', {
                     loop: true,
                     pagination: { el: '.swiper-pagination', clickable: true },
@@ -1577,6 +1592,40 @@
 
                 const tickets = parseInt(document.getElementById('tickets_count').value) || 1;
 
+            const total = (unitPrice * tickets) + (addonsTotal * tickets); 
+
+            // Update UI
+            const btnSubmit = document.querySelector('#booking-form button[type="submit"]');
+            const displayPriceEl = document.getElementById('display-price');
+            const totalPriceEl = document.getElementById('total-price');
+
+            const stickyPriceEl = document.getElementById('sticky-price-value');
+
+            if (priceAvailable) {
+                if (displayPriceEl) displayPriceEl.innerHTML = unitPrice.toLocaleString() + ' <span style="font-size: 1.2rem; font-weight: 600; margin-left: 5px; opacity: 0.9;">{{ __("SAR") }}</span>';
+                if (totalPriceEl) totalPriceEl.innerHTML = total.toLocaleString() + ' <span style="font-size: 1.2rem; font-weight: 700;">{{ __("SAR") }}</span>';
+                if (stickyPriceEl) stickyPriceEl.innerHTML = unitPrice.toLocaleString() + ' {{ __("SAR") }}';
+                if(btnSubmit) btnSubmit.disabled = false;
+            } else {
+                if (displayPriceEl) displayPriceEl.innerHTML = '<span style="font-size: 1.5rem; color: #cbd5e1;">{{ __("Not Available") }}</span>';
+                if (totalPriceEl) totalPriceEl.innerHTML = '-';
+                if(btnSubmit) btnSubmit.disabled = true;
+            }
+        }
+
+        // Add-ons listener
+        document.querySelectorAll('.addon-checkbox').forEach(chk => {
+            chk.addEventListener('change', calculatePrice);
+        });
+
+        if (hasPackages) {
+            // Package Selection
+            document.querySelectorAll('.package-option').forEach(card => {
+                card.addEventListener('click', function() {
+                    document.querySelectorAll('.package-option').forEach(c => c.classList.remove('active'));
+                    this.classList.add('active');
+                    document.getElementById('selected-package').value = this.dataset.id;
+                    calculatePrice();
                 // Calculate Add-ons
                 let addonsTotal = 0;
                 document.querySelectorAll('.addon-checkbox:checked').forEach(chk => {

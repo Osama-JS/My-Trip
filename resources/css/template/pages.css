@@ -310,7 +310,7 @@
       margin-right: 10px; }
     [direction="rtl"] .widget-timeline-icon li {
       border-left: 0;
-      border-right: 6px solid #E23428; }
+      border-right: 6px solid #041741; }
       [direction="rtl"] .widget-timeline-icon li a {
         padding: 0 30px 30px 0; }
       [direction="rtl"] .widget-timeline-icon li .icon {
@@ -467,19 +467,19 @@ html[dir="rtl"] [direction="rtl"][data-sidebar-style="compact"]:not([data-layout
   padding-right: 9.375rem; }
 
 :root {
-  --primary: #E23428;
+  --primary: #041741;
   --secondary: #135846;
-  --primary-hover: #bd241a;
-  --primary-dark: #64130d;
-  --rgba-primary-1: rgba(226, 52, 40, 0.1);
-  --rgba-primary-2: rgba(226, 52, 40, 0.2);
-  --rgba-primary-3: rgba(226, 52, 40, 0.3);
-  --rgba-primary-4: rgba(226, 52, 40, 0.4);
-  --rgba-primary-5: rgba(226, 52, 40, 0.5);
-  --rgba-primary-6: rgba(226, 52, 40, 0.6);
-  --rgba-primary-7: rgba(226, 52, 40, 0.7);
-  --rgba-primary-8: rgba(226, 52, 40, 0.8);
-  --rgba-primary-9: rgba(226, 52, 40, 0.9);
+  --primary-hover: #08286b;
+  --primary-dark: #020918;
+  --rgba-primary-1: rgba(4, 23, 65, 0.1);
+  --rgba-primary-2: rgba(4, 23, 65, 0.2);
+  --rgba-primary-3: rgba(4, 23, 65, 0.3);
+  --rgba-primary-4: rgba(4, 23, 65, 0.4);
+  --rgba-primary-5: rgba(4, 23, 65, 0.5);
+  --rgba-primary-6: rgba(4, 23, 65, 0.6);
+  --rgba-primary-7: rgba(4, 23, 65, 0.7);
+  --rgba-primary-8: rgba(4, 23, 65, 0.8);
+  --rgba-primary-9: rgba(4, 23, 65, 0.9);
   --font-family-base: Roboto, sans-serif;
   --font-family-title: Roboto, sans-serif;
   --rgba-secondary-1: rgba(19, 88, 70, 0.1);

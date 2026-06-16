@@ -457,7 +457,7 @@
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
+                cancelButtonColor: '#041741',
                 confirmButtonText: '{{ __("Yes, Send it!") }}',
                 cancelButtonText: '{{ __("Cancel") }}'
             }).then((result) => {
@@ -658,7 +658,7 @@
             text: '{{ __("This notification will be deleted.") }}',
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#d33',
+            confirmButtonColor: '#041741',
             cancelButtonColor: '#3085d6',
             confirmButtonText: '{{ __("Yes, delete it!") }}',
             cancelButtonText: '{{ __("Cancel") }}'

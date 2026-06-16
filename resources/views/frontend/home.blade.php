@@ -31,7 +31,7 @@
                             {{ __('Explore Trips') }}
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                         </a>
-                        <a href="{{ route('about') }}" class="fe-btn fe-btn-outline fe-btn-lg" style="border-color:rgba(255,255,255,0.3);color:white">
+                        <a href="{{ route('about') }}" class="fe-btn fe-btn-hero-outline fe-btn-lg">
                             {{ __('Learn More') }}
                         </a>
                     </div>
@@ -42,19 +42,23 @@
                     @php $heroBg = \App\Models\Setting::get('hero_bg'); @endphp
                     <img src="{{ $heroBg ? asset($heroBg) : 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=2000&auto=format&fit=crop' }}" alt="{{ __('Travel with Wejhtak') }}" class="fe-hero-img-main">
 
-                    <div class="fe-hero-float-card card-1" style="bottom:30px;{{ app()->getLocale()=='ar' ? 'right:-20px' : 'left:-20px' }}">
-                        <div class="icon-circle"><i class="fas fa-plane-departure"></i></div>
+                    <div class="fe-hero-float-card card-1 fe-glass">
+                        <div class="icon-circle">
+                            <svg class="fe-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
                         <div>
                             <strong>{{ $stats['trips'] ?? '500' }}+</strong>
-                            <div style="font-size:0.8rem;opacity:0.7">{{ __('Trips') }}</div>
+                            <div class="fe-hero-float-card-label">{{ __('Trips') }}</div>
                         </div>
                     </div>
 
-                    <div class="fe-hero-float-card card-2" style="top:40px;{{ app()->getLocale()=='ar' ? 'left:-20px' : 'right:-20px' }}">
-                        <div class="icon-circle"><i class="fas fa-star"></i></div>
+                    <div class="fe-hero-float-card card-2 fe-glass">
+                        <div class="icon-circle" style="color: var(--accent);">
+                            <svg class="fe-icon-svg" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                        </div>
                         <div>
                             <strong>{{ $stats['rating'] ?? '4.8' }}</strong>
-                            <div style="font-size:0.8rem;opacity:0.7">{{ __('Rating') }}</div>
+                            <div class="fe-hero-float-card-label">{{ __('Rating') }}</div>
                         </div>
                     </div>
                 </div>
@@ -62,23 +66,31 @@
 
             {{-- Stats --}}
             <div class="fe-hero-stats">
-                <div class="fe-stat-card">
-                    <div class="fe-stat-icon"><i class="fas fa-plane-departure"></i></div>
+                <div class="fe-stat-card fe-hover-float">
+                    <div class="fe-stat-icon">
+                        <svg class="fe-icon-svg-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
                     <div class="fe-stat-value">{{ $stats['trips'] ?? 0 }}+</div>
                     <div class="fe-stat-label">{{ __('Trips') }}</div>
                 </div>
-                <div class="fe-stat-card">
-                    <div class="fe-stat-icon"><i class="fas fa-globe-americas"></i></div>
+                <div class="fe-stat-card fe-hover-float">
+                    <div class="fe-stat-icon">
+                        <svg class="fe-icon-svg-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
                     <div class="fe-stat-value">{{ $stats['destinations'] ?? 0 }}+</div>
                     <div class="fe-stat-label">{{ __('Destinations') }}</div>
                 </div>
-                <div class="fe-stat-card">
-                    <div class="fe-stat-icon"><i class="fas fa-users"></i></div>
+                <div class="fe-stat-card fe-hover-float">
+                    <div class="fe-stat-icon">
+                        <svg class="fe-icon-svg-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    </div>
                     <div class="fe-stat-value">{{ $stats['customers'] ?? 0 }}+</div>
                     <div class="fe-stat-label">{{ __('Happy Travelers') }}</div>
                 </div>
-                <div class="fe-stat-card">
-                    <div class="fe-stat-icon"><i class="fas fa-star"></i></div>
+                <div class="fe-stat-card fe-hover-float">
+                    <div class="fe-stat-icon" style="color: var(--accent);">
+                        <svg class="fe-icon-svg-lg" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                    </div>
                     <div class="fe-stat-value">{{ $stats['rating'] ?? '4.8' }}</div>
                     <div class="fe-stat-label">{{ __('Rating') }}</div>
                 </div>
@@ -101,14 +113,14 @@
                 @forelse($featuredTrips as $trip)
                     @include('frontend.components.trip-card', ['trip' => $trip])
                 @empty
-                    <div class="fe-empty-state" style="grid-column:1/-1">
+                    <div class="fe-empty-state">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
                         <p>{{ __('No featured trips available at the moment.') }}</p>
                     </div>
                 @endforelse
             </div>
 
-            <div class="text-center" style="margin-top:var(--space-10)">
+            <div class="text-center fe-mt-10">
                 <a href="{{ route('trips.index') }}" class="fe-btn fe-btn-outline">
                     {{ __('View All Trips') }}
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
@@ -133,13 +145,13 @@
                         'tripCount' => $destination->trips_count ?? 0
                     ])
                 @empty
-                    <div class="fe-empty-state" style="grid-column:1/-1">
+                    <div class="fe-empty-state">
                         <p>{{ __('No destinations available yet.') }}</p>
                     </div>
                 @endforelse
             </div>
 
-            <div class="text-center" style="margin-top:var(--space-10)">
+            <div class="text-center fe-mt-10">
                 <a href="{{ route('destinations') }}" class="fe-btn fe-btn-outline">
                     {{ __('View All Destinations') }}
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
@@ -150,7 +162,7 @@
 
     {{-- ═══ BANNER SLIDER ═══ --}}
     @if(isset($banners) && count($banners) > 0)
-    <section class="fe-section" style="padding-bottom:0">
+    <section class="fe-section fe-section-no-pb">
         <div class="fe-container">
             <div class="fe-banner-slider">
                 <div class="fe-banner-track">

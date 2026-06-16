@@ -1,13 +1,16 @@
 @extends('layouts.app')
 
+@section('page-header')
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">{{ __('Dashboard') }}</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ __('Bookings Dashboard') }}</a></li>
+    </ol>
+</div>
+@endsection
+
 @section('content')
 <div class="container-fluid">
-    <div class="row page-titles">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ __('Admin') }}</a></li>
-            <li class="breadcrumb-item"><a href="javascript:void(0)">{{ __('Bookings Dashboard') }}</a></li>
-        </ol>
-    </div>
 
     <div class="row my-2">
         <div class="col-xl-4 col-sm-6">
