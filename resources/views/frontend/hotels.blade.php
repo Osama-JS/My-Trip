@@ -22,13 +22,13 @@
         <div class="fe-search-card-premium">
             <form id="hotelSearchForm" class="fe-search-grid">
                 {{-- City Search --}}
-                <div class="fe-search-col">
+                <div class="fe-search-col" style="position:relative;">
                     <label class="fe-search-label"><i class="fas fa-map-marker-alt"></i> {{ __('Destination') }}</label>
                     <div class="fe-input-with-icon">
-                        <select id="hotelCitySelect" name="cityName" class="fe-search-input city-select" required>
-                            <option value=""></option>
-                        </select>
+                        <input type="text" id="hotelCitySelect_text" class="fe-search-input" placeholder="{{ __('Enter city or destination') }}" autocomplete="off" required>
+                        <input type="hidden" id="hotelCitySelect" name="cityName" required>
                         <input type="hidden" id="countryName" name="countryName">
+                        <div class="custom-autocomplete-dropdown" id="dropdown_city" style="display:none;"></div>
                     </div>
                 </div>
 
@@ -220,6 +220,52 @@
 
 @push('styles')
 <style>
+    /* CUSTOM AUTOCOMPLETE */
+    .custom-autocomplete-dropdown {
+        position: absolute;
+        top: calc(100% + 5px);
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-xl);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        z-index: 1000;
+        max-height: 350px;
+        overflow-y: auto;
+        padding: 8px 0;
+    }
+    .custom-autocomplete-item {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 12px 16px;
+        cursor: pointer;
+        transition: background 0.2s;
+        border-bottom: 1px solid var(--gray-50);
+    }
+    .custom-autocomplete-item:last-child {
+        border-bottom: none;
+    }
+    .custom-autocomplete-item:hover {
+        background: var(--primary-50);
+    }
+    .c-auto-icon {
+        width: 40px; height: 40px;
+        background: white; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        color: var(--primary);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        border: 1px solid var(--gray-100);
+    }
+    .c-auto-body { flex: 1; min-width: 0; }
+    .c-auto-city { font-size: 1.05rem; font-weight: 800; color: var(--dark); line-height: 1.2; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .c-auto-airport { font-size: 0.8rem; color: var(--gray-500); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+    /* Scrollbar for autocomplete */
+    .custom-autocomplete-dropdown::-webkit-scrollbar { width: 6px; }
+    .custom-autocomplete-dropdown::-webkit-scrollbar-track { background: transparent; }
+    .custom-autocomplete-dropdown::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
+
     /* ═══ HOTELS HERO ═══ */
     .fe-hotels-hero {
         background: linear-gradient(135deg, var(--primary) 0%, #2c3e50 100%);
@@ -581,44 +627,65 @@ $(document).ready(function() {
         renderManualRooms();
     }
 
-    function formatCity(repo) {
-        if (repo.loading) return repo.text;
-        
-        const cityName = (currentLocale === 'ar' && repo.city_name_ar) ? repo.city_name_ar : (repo.city_name || repo.text);
-        const countryName = (currentLocale === 'ar' && repo.country_name_ar) ? repo.country_name_ar : (repo.country_name || '');
+    function setupCityAutocomplete() {
+        const input = document.getElementById('hotelCitySelect_text');
+        const hiddenCity = document.getElementById('hotelCitySelect');
+        const hiddenCountry = document.getElementById('countryName');
+        const dropdown = document.getElementById('dropdown_city');
+        let timeout = null;
 
-        return $(`
-            <div class="fe-city-result">
-                <div class="fe-city-icon"><i class="fas fa-map-marker-alt"></i></div>
-                <div class="fe-city-body">
-                    <div class="fe-city-name">${cityName}</div>
-                    <div class="fe-city-sub">${countryName}</div>
-                </div>
-            </div>
-        `);
+        input.addEventListener('input', function() {
+            clearTimeout(timeout);
+            const query = this.value.trim();
+            if (query.length < 2) {
+                dropdown.style.display = 'none';
+                return;
+            }
+            
+            dropdown.innerHTML = `<div style="padding:15px;text-align:center;"><i class="fas fa-spinner fa-spin" style="color:var(--primary);"></i></div>`;
+            dropdown.style.display = 'block';
+
+            timeout = setTimeout(() => {
+                fetch(`{{ route('hotels.cities.search') }}?q=${encodeURIComponent(query)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        dropdown.innerHTML = '';
+                        if (!data.results || data.results.length === 0) {
+                            dropdown.innerHTML = `<div style="padding:15px;text-align:center;color:var(--gray-500);font-size:0.9rem;">{{ __('No results found') }}</div>`;
+                            return;
+                        }
+                        data.results.forEach(item => {
+                            const cityName = (currentLocale === 'ar' && item.city_name_ar) ? item.city_name_ar : (item.city_name || '');
+                            const countryName = (currentLocale === 'ar' && item.country_name_ar) ? item.country_name_ar : (item.country_name || '');
+                            
+                            const div = document.createElement('div');
+                            div.className = 'custom-autocomplete-item';
+                            div.innerHTML = `
+                                <div class="c-auto-icon"><i class="fas fa-map-marker-alt"></i></div>
+                                <div class="c-auto-body">
+                                    <div class="c-auto-city">${cityName}</div>
+                                    <div class="c-auto-airport">${countryName}</div>
+                                </div>
+                            `;
+                            div.addEventListener('click', () => {
+                                input.value = countryName ? `${cityName}, ${countryName}` : cityName;
+                                hiddenCity.value = item.id;
+                                hiddenCountry.value = item.country_name || '';
+                                dropdown.style.display = 'none';
+                            });
+                            dropdown.appendChild(div);
+                        });
+                    });
+            }, 300);
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
     }
-    
-    $('#hotelCitySelect').select2({
-        ajax: {
-            url: '{{ route("hotels.cities.search") }}',
-            dataType: 'json', delay: 250,
-            data: params => ({ q: params.term }),
-            processResults: data => ({ results: data.results }),
-            cache: true
-        },
-        placeholder: '{{ __("Enter city or destination") }}',
-        minimumInputLength: 2,
-        templateResult: formatCity,
-        templateSelection: repo => {
-            if (!repo.id) return repo.text || '{{ __("Choose Destination") }}';
-            const cityName = (currentLocale === 'ar' && repo.city_name_ar) ? repo.city_name_ar : (repo.city_name || repo.text);
-            const countryName = (currentLocale === 'ar' && repo.country_name_ar) ? repo.country_name_ar : (repo.country_name || '');
-            return countryName ? `${cityName}, ${countryName}` : cityName;
-        },
-        width: '100%'
-    }).on('select2:select', function(e) {
-        $('#countryName').val(e.params.data.country_name);
-    });
+    setupCityAutocomplete();
 
     // 2. FLATPICKR DATES
     flatpickr("#dateRange", {

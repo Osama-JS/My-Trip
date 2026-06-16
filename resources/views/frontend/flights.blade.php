@@ -25,30 +25,26 @@
                         <input type="radio" name="journeyType" value="Return">
                         <span><i class="fas fa-exchange-alt"></i> {{ __('Round Trip') }}</span>
                     </label>
-                    <label class="fe-search-tab-item">
-                        <input type="radio" name="journeyType" value="MultiCity">
-                        <span><i class="fas fa-layer-group"></i> {{ __('Multi City') }}</span>
-                    </label>
                 </div>
 
                 <form action="{{ route('flights.results') }}" method="GET" id="mainSearchForm">
                     <div class="fe-search-row-v2">
                         {{-- From / To with Swap --}}
                         <div class="fe-input-group-v2 from-to-wrapper">
-                            <div class="fe-input-sub">
+                            <div class="fe-input-sub" style="position:relative;">
                                 <label>{{ __('From') }}</label>
-                                <select name="from" id="airport_from" class="airport-select" required>
-                                    <option value=""></option>
-                                </select>
+                                <input type="text" id="airport_from_text" class="fe-ghost-input" style="width:100%;font-size:1.1rem;font-weight:800;color:var(--dark);background:transparent;border:none;outline:none;" placeholder="{{ __('Enter City') }}" autocomplete="off" required>
+                                <input type="hidden" name="from" id="airport_from" required>
+                                <div class="custom-autocomplete-dropdown" id="dropdown_from" style="display:none;"></div>
                             </div>
                             <button type="button" class="fe-swap-btn" id="swapAirports" title="{{ __('Swap') }}">
                                 <i class="fas fa-exchange-alt"></i>
                             </button>
-                            <div class="fe-input-sub border-start">
+                            <div class="fe-input-sub border-start" style="position:relative;">
                                 <label>{{ __('To') }}</label>
-                                <select name="to" id="airport_to" class="airport-select" required>
-                                    <option value=""></option>
-                                </select>
+                                <input type="text" id="airport_to_text" class="fe-ghost-input" style="width:100%;font-size:1.1rem;font-weight:800;color:var(--dark);background:transparent;border:none;outline:none;" placeholder="{{ __('Enter City') }}" autocomplete="off" required>
+                                <input type="hidden" name="to" id="airport_to" required>
+                                <div class="custom-autocomplete-dropdown" id="dropdown_to" style="display:none;"></div>
                             </div>
                         </div>
 
@@ -208,52 +204,73 @@
         journeyTypeInputs.forEach(input => {
             input.addEventListener('change', function() {
                 returnDateGroup.style.display = this.value === 'Return' ? 'flex' : 'none';
-                if (this.value === 'MultiCity') alert('{{ __("Multi-city is being enhanced. For now, try Round-trip or One-way.") }}');
             });
         });
 
         // 2. Select2
         const currentLocale = '{{ app()->getLocale() }}';
+        
+        function setupAutocomplete(inputId, hiddenId, dropdownId) {
+            const input = document.getElementById(inputId);
+            const hidden = document.getElementById(hiddenId);
+            const dropdown = document.getElementById(dropdownId);
+            let timeout = null;
 
-        if (typeof jQuery !== 'undefined' && jQuery.fn.select2) {
-            function formatAirport(repo) {
-                if (repo.loading) return repo.text;
+            input.addEventListener('input', function() {
+                clearTimeout(timeout);
+                const query = this.value.trim();
+                if (query.length < 2) {
+                    dropdown.style.display = 'none';
+                    return;
+                }
                 
-                const name = (currentLocale === 'ar' && repo.airport_name_ar) ? repo.airport_name_ar : (repo.airport_name || repo.text);
-                const city = (currentLocale === 'ar' && repo.city_name_ar) ? repo.city_name_ar : (repo.city_name || '');
+                dropdown.innerHTML = `<div style="padding:15px;text-align:center;"><i class="fas fa-spinner fa-spin" style="color:var(--primary);"></i></div>`;
+                dropdown.style.display = 'block';
 
-                return $(`
-                    <div class="fe-airport-result">
-                        <div class="fe-airport-icon"><i class="fas fa-plane-departure"></i></div>
-                        <div class="fe-airport-body">
-                            <div class="fe-airport-name">${name}</div>
-                            <div class="fe-airport-sub">${city}</div>
-                        </div>
-                        <div class="fe-airport-code">${repo.airport_code || ''}</div>
-                    </div>
-                `);
-            }
-            function formatAirportSelection(repo) {
-                if (!repo.id) return repo.text;
-                const name = (currentLocale === 'ar' && repo.airport_name_ar) ? repo.airport_name_ar : (repo.airport_name || repo.text);
-                return $(`<span><i class="fas fa-plane-departure" style="margin-inline-end:8px;color:var(--primary);font-size:0.9rem"></i> ${repo.airport_code || repo.id} - ${name}</span>`);
-            }
+                timeout = setTimeout(() => {
+                    fetch(`{{ route('airports.search') }}?q=${encodeURIComponent(query)}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            dropdown.innerHTML = '';
+                            if (!data.results || data.results.length === 0) {
+                                dropdown.innerHTML = `<div style="padding:15px;text-align:center;color:var(--gray-500);font-size:0.9rem;">{{ __('No results found') }}</div>`;
+                                return;
+                            }
+                            data.results.forEach(item => {
+                                const city = (currentLocale === 'ar' && item.city_name_ar) ? item.city_name_ar : (item.city_name || '');
+                                const airport = (currentLocale === 'ar' && item.airport_name_ar) ? item.airport_name_ar : (item.airport_name || '');
+                                
+                                const div = document.createElement('div');
+                                div.className = 'custom-autocomplete-item';
+                                div.innerHTML = `
+                                    <div class="c-auto-icon"><i class="fas fa-map-marker-alt"></i></div>
+                                    <div class="c-auto-body">
+                                        <div class="c-auto-city">${city}</div>
+                                        <div class="c-auto-airport">${airport}</div>
+                                    </div>
+                                    <div class="c-auto-code">${item.airport_code}</div>
+                                `;
+                                div.addEventListener('click', () => {
+                                    input.value = `${city} (${item.airport_code})`;
+                                    hidden.value = item.airport_code;
+                                    dropdown.style.display = 'none';
+                                });
+                                dropdown.appendChild(div);
+                            });
+                        });
+                }, 300);
+            });
 
-            $('.airport-select').select2({
-                ajax: {
-                    url: '{{ route("airports.search") }}',
-                    dataType: 'json', delay: 250,
-                    data: params => ({ q: params.term }),
-                    processResults: data => ({ results: data.results }),
-                    cache: true
-                },
-                placeholder: '{{ __("Choose Airport") }}',
-                minimumInputLength: 2,
-                templateResult: formatAirport,
-                templateSelection: formatAirportSelection,
-                width: '100%'
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.style.display = 'none';
+                }
             });
         }
+
+        setupAutocomplete('airport_from_text', 'airport_from', 'dropdown_from');
+        setupAutocomplete('airport_to_text', 'airport_to', 'dropdown_to');
 
         // 3. Flatpickr
         if (typeof flatpickr !== 'undefined') {
@@ -300,12 +317,19 @@
 
         // 5. Swap Airports
         document.getElementById('swapAirports').addEventListener('click', function() {
-            const from = $('#airport_from'), to = $('#airport_to');
-            const fv = from.val(), ft = from.find('option:selected').text();
-            const tv = to.val(), tt = to.find('option:selected').text();
-            if (!fv && !tv) return;
-            from.empty(); if (tv) from.append(new Option(tt, tv, true, true)).trigger('change');
-            to.empty(); if (fv) to.append(new Option(ft, fv, true, true)).trigger('change');
+            const fromTxt = document.getElementById('airport_from_text');
+            const fromVal = document.getElementById('airport_from');
+            const toTxt = document.getElementById('airport_to_text');
+            const toVal = document.getElementById('airport_to');
+
+            const tempTxt = fromTxt.value;
+            const tempVal = fromVal.value;
+
+            fromTxt.value = toTxt.value;
+            fromVal.value = toVal.value;
+
+            toTxt.value = tempTxt;
+            toVal.value = tempVal;
         });
 
         // 6. AJAX Form Submit
@@ -318,8 +342,8 @@
             params.append('ajax', '1');
 
             // Add Select2 values manually
-            const fromVal = $('#airport_from').val();
-            const toVal   = $('#airport_to').val();
+            const fromVal = document.getElementById('airport_from').value;
+            const toVal   = document.getElementById('airport_to').value;
             if (fromVal) params.set('from', fromVal);
             if (toVal)   params.set('to', toVal);
 
@@ -519,6 +543,59 @@
 
 @push('styles')
 <style>
+    /* CUSTOM AUTOCOMPLETE */
+    .custom-autocomplete-dropdown {
+        position: absolute;
+        top: calc(100% + 5px);
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-xl);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        z-index: 1000;
+        max-height: 350px;
+        overflow-y: auto;
+        padding: 8px 0;
+    }
+    .custom-autocomplete-item {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 12px 16px;
+        cursor: pointer;
+        transition: background 0.2s;
+        border-bottom: 1px solid var(--gray-50);
+    }
+    .custom-autocomplete-item:last-child {
+        border-bottom: none;
+    }
+    .custom-autocomplete-item:hover {
+        background: var(--primary-50);
+    }
+    .c-auto-icon {
+        width: 40px; height: 40px;
+        background: white; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        color: var(--primary);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        border: 1px solid var(--gray-100);
+    }
+    .c-auto-body { flex: 1; min-width: 0; }
+    .c-auto-city { font-size: 1.05rem; font-weight: 800; color: var(--dark); line-height: 1.2; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .c-auto-airport { font-size: 0.8rem; color: var(--gray-500); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+    .c-auto-code {
+        font-weight: 900; color: var(--primary); font-size: 0.95rem;
+        background: white; padding: 6px 10px; border-radius: 8px;
+        border: 1px dashed var(--primary);
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .fe-ghost-input::placeholder { color: var(--gray-400); font-weight: 600; }
+    /* Scrollbar for autocomplete */
+    .custom-autocomplete-dropdown::-webkit-scrollbar { width: 6px; }
+    .custom-autocomplete-dropdown::-webkit-scrollbar-track { background: transparent; }
+    .custom-autocomplete-dropdown::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
+
     .fe-flights-hero {
         position: relative;
         padding: 140px 0 100px;
