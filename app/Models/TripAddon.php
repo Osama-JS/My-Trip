@@ -13,6 +13,7 @@ class TripAddon extends Model
         'extra_cost',
         'currency',
         'is_replacement',
+        'pricing_type',
     ];
 
     protected $casts = [
