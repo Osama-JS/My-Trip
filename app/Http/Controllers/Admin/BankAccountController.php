@@ -19,6 +19,7 @@ class BankAccountController extends Controller
             'total' => BankAccount::count(),
             'active' => BankAccount::where('is_active', true)->count(),
             'inactive' => BankAccount::where('is_active', false)->count(),
+            'disabled' => BankAccount::where('is_active', false)->count(),
         ];
         return view('admin.bank_accounts.index', compact('stats'));
     }

@@ -23,7 +23,7 @@
         right: -50px;
         width: 300px;
         height: 300px;
-        background: radial-gradient(circle, rgba(250, 22, 0, 0.03) 0%, rgba(255, 255, 255, 0) 70%);
+        background: radial-gradient(circle, rgba(4, 23, 65, 0.03) 0%, rgba(255, 255, 255, 0) 70%);
         border-radius: 50%;
         pointer-events: none;
     }
@@ -46,8 +46,8 @@
     }
 
     .settings-card .card-title i {
-        color: #fa1600;
-        background: rgba(250, 22, 0, 0.08);
+        color: #041741;
+        background: rgba(4, 23, 65, 0.08);
         width: 36px;
         height: 36px;
         display: flex;
@@ -82,12 +82,12 @@
 
     .settings-tabs .nav-link:hover {
         background: #f8f9fa;
-        color: #fa1600;
+        color: #041741;
     }
 
     .settings-tabs .nav-link.active {
-        background: rgba(250, 22, 0, 0.08) !important;
-        color: #fa1600 !important;
+        background: rgba(4, 23, 65, 0.08) !important;
+        color: #041741 !important;
         font-weight: 700;
     }
 
@@ -125,8 +125,8 @@
     }
 
     .form-control:focus, .form-select:focus {
-        border-color: #fa1600;
-        box-shadow: 0 0 0 4px rgba(250, 22, 0, 0.05);
+        border-color: #041741;
+        box-shadow: 0 0 0 4px rgba(4, 23, 65, 0.05);
         background-color: #fff;
     }
 
@@ -141,7 +141,7 @@
         transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
     .image-upload-wrapper:hover {
-        border-color: #fa1600;
+        border-color: #041741;
         background: #fff;
         transform: translateY(-4px);
         box-shadow: 0 15px 30px rgba(0,0,0,0.05);
@@ -173,7 +173,7 @@
         align-items: center;
     }
     .upload-btn-label {
-        background: #fa1600;
+        background: #041741;
         color: white;
         padding: 10px 24px;
         border-radius: 100px;
@@ -183,12 +183,12 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        box-shadow: 0 4px 12px rgba(250, 22, 0, 0.2);
+        box-shadow: 0 4px 12px rgba(4, 23, 65, 0.2);
         transition: all 0.2s;
         margin: 0;
     }
     .upload-btn-label:hover {
-        background: #d41300;
+        background: #062261;
         transform: scale(1.05);
     }
     .upload-info-text {
@@ -206,13 +206,13 @@
 
     /* Save Button */
     .btn-save {
-        background: #fa1600;
+        background: #041741;
         color: white;
         border: none;
         padding: 12px 30px;
         border-radius: 12px;
         font-weight: 700;
-        box-shadow: 0 8px 20px rgba(250, 22, 0, 0.25);
+        box-shadow: 0 8px 20px rgba(4, 23, 65, 0.25);
         transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
         display: flex;
         align-items: center;
@@ -220,9 +220,9 @@
     }
 
     .btn-save:hover {
-        background: #d41300;
+        background: #062261;
         transform: translateY(-2px);
-        box-shadow: 0 12px 25px rgba(250, 22, 0, 0.35);
+        box-shadow: 0 12px 25px rgba(4, 23, 65, 0.35);
         color: white;
     }
 
@@ -258,12 +258,12 @@
     }
 
     .maintenance-option input:checked + label {
-        border-color: #fa1600;
-        background: rgba(250, 22, 0, 0.04);
+        border-color: #041741;
+        background: rgba(4, 23, 65, 0.04);
     }
 
     .maintenance-option input:checked + label i {
-        color: #fa1600;
+        color: #041741;
         transform: scale(1.1);
     }
 
@@ -294,6 +294,18 @@
     }
 </style>
 @endpush
+
+@section('page-header')
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">{{ __('Dashboard') }}</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ __('Platform Settings') }}</a></li>
+    </ol>
+    <button type="submit" form="settingsForm" class="btn btn-primary rounded-pill shadow-sm px-4">
+         <i class="fa fa-save me-2"></i> {{ __('Save Settings') }}
+    </button>
+</div>
+@endsection
 
 @section('content')
 <div class="row">
@@ -383,7 +395,7 @@
                                 <div class="col-md-4 mb-4 form-group">
                                     <label>{{ __('Primary Brand Color') }}</label>
                                     <div class="d-flex align-items-center">
-                                        <input type="color" class="form-control form-control-color me-3" style="width: 60px; padding: 5px;" name="primary_color" value="{{ \App\Models\Setting::get('primary_color') ?? '#fa1600' }}">
+                                        <input type="color" class="form-control form-control-color me-3" style="width: 60px; padding: 5px;" name="primary_color" value="{{ \App\Models\Setting::get('primary_color') ?? '#041741' }}">
                                         <span class="text-muted small">{{ __('Used for buttons, links, and accents.') }}</span>
                                     </div>
                                 </div>
@@ -914,7 +926,7 @@
                 text: "{{ __('Do you want to save the changes?') }}",
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#fa1600',
+                confirmButtonColor: '#041741',
                 cancelButtonColor: '#777',
                 confirmButtonText: "{{ __('Yes, save it!') }}",
                 cancelButtonText: "{{ __('Cancel') }}",

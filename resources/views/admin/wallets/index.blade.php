@@ -2,6 +2,15 @@
 
 @section('title', __('Wallets Management'))
 
+@section('page-header')
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">{{ __('Dashboard') }}</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ __('Wallets Management') }}</a></li>
+    </ol>
+</div>
+@endsection
+
 @section('content')
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">

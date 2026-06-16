@@ -3,6 +3,16 @@
 @section('title', __('Search Logs'))
 @section('page-title', __('Search Statistics'))
 
+@section('page-header')
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">{{ __('Dashboard') }}</a></li>
+        <li class="breadcrumb-item"><a href="javascript:void(0)">{{ __('Reports') }}</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ __('Search Statistics') }}</a></li>
+    </ol>
+</div>
+@endsection
+
 @section('content')
 @php
     $totalSearches = \App\Models\FlightSearchLog::count();

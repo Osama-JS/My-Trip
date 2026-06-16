@@ -3,11 +3,15 @@
 @section('title', __('Banners Management'))
 
 @section('page-header')
-<div class="row page-titles">
+<div class="page-titles">
     <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">{{ __('Dashboard') }}</a></li>
         <li class="breadcrumb-item"><a href="javascript:void(0)">{{ __('Main Menu') }}</a></li>
         <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ __('Banners') }}</a></li>
     </ol>
+    <button type="button" class="btn btn-primary rounded-pill shadow-sm px-4" data-bs-toggle="modal" data-bs-target="#addBannerModal">
+        <i class="fa fa-plus me-2"></i> {{ __('Add Banner') }}
+    </button>
 </div>
 @endsection
 
@@ -47,9 +51,6 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h4 class="card-title">{{ __('Banners List') }}</h4>
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBannerModal">
-                         <i class="fa fa-plus me-2"></i> {{ __('Add Banner') }}
-                     </button>
                 </div>
                 <div class="card-body">
                     <div class="alert alert-info">
@@ -451,11 +452,12 @@
         Swal.fire({
             title: '{{ __("Are you sure?") }}',
             text: '{{ __("Do you want to toggle this banner status?") }}',
-            icon: 'warning',
+            type: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: '{{ __("Yes, Change it!") }}'
+            confirmButtonColor: '#041741',
+            cancelButtonColor: '#777',
+            confirmButtonText: '{{ __("Yes, Change it!") }}',
+            cancelButtonText: '{{ __("Cancel") }}'
         }).then((result) => {
             if (result.value) {
                 $.ajax({
@@ -482,11 +484,12 @@
         Swal.fire({
             title: '{{ __("Are you sure") }}',
             text: '{{ __("you want to delete this banner?") }}',
-            icon: 'error',
+            type: 'error',
             showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: '{{ __("Yes, delete it!") }}'
+            confirmButtonColor: '#041741',
+            cancelButtonColor: '#777',
+            confirmButtonText: '{{ __("Yes, delete it!") }}',
+            cancelButtonText: '{{ __("Cancel") }}'
         }).then((result) => {
             if (result.value) {
                 $.ajax({
@@ -507,6 +510,39 @@
         });
     }
 </script>
+
+@push('styles')
+<style>
+    /* Override danger badge (Inactive status) to light navy theme */
+    .badge-danger {
+        background-color: rgba(4, 23, 65, 0.1) !important;
+        color: #041741 !important;
+    }
+    
+    /* Override danger button (Delete button) to navy theme */
+    .btn-danger {
+        background-color: #041741 !important;
+        border-color: #041741 !important;
+        color: #fff !important;
+        box-shadow: 0 4px 10px rgba(4, 23, 65, 0.2) !important;
+    }
+    .btn-danger:hover {
+        background-color: #062261 !important;
+        border-color: #062261 !important;
+        color: #fff !important;
+    }
+    
+    /* Override danger icon color gradient in stats card component to navy */
+    .stat-icon.danger {
+        background: linear-gradient(135deg, #041741 0%, #0c2b73 100%) !important;
+    }
+    
+    /* Ensure general validation / text-danger matches navy theme if present */
+    .text-danger {
+        color: #041741 !important;
+    }
+</style>
+@endpush
 
 @endsection
 

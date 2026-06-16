@@ -18,7 +18,7 @@
 
     .profile-header-bg {
         height: 180px;
-        background: linear-gradient(135deg, #fa1600 0%, #ff4d3d 100%);
+        background: linear-gradient(135deg, #041741 0%, #082c7a 100%);
         position: relative;
     }
 
@@ -75,13 +75,13 @@
         left: 0;
         width: 0;
         height: 3px;
-        background: #fa1600;
+        background: #041741;
         transition: all 0.3s ease;
         border-radius: 3px;
     }
 
     .profile-tabs .nav-link.active {
-        color: #fa1600 !important;
+        color: #041741 !important;
         background: transparent !important;
     }
 
@@ -104,8 +104,8 @@
     }
 
     .section-title i {
-        color: #fa1600;
-        background: rgba(250, 22, 0, 0.1);
+        color: #041741;
+        background: rgba(4, 23, 65, 0.1);
         padding: 10px;
         border-radius: 12px;
         font-size: 1.1rem;
@@ -126,26 +126,26 @@
     }
 
     .form-control:focus {
-        border-color: #fa1600;
-        box-shadow: 0 0 0 4px rgba(250, 22, 0, 0.05);
+        border-color: #041741;
+        box-shadow: 0 0 0 4px rgba(4, 23, 65, 0.05);
         background: #fff;
     }
 
     .btn-update {
-        background: #fa1600;
+        background: #041741;
         color: #fff;
         border: none;
         padding: 14px 35px;
         border-radius: 15px;
         font-weight: 700;
-        box-shadow: 0 10px 25px rgba(250, 22, 0, 0.2);
+        box-shadow: 0 10px 25px rgba(4, 23, 65, 0.2);
         transition: all 0.3s ease;
     }
 
     .btn-update:hover {
-        background: #d41300;
+        background: #062261;
         transform: translateY(-2px);
-        box-shadow: 0 15px 30px rgba(250, 22, 0, 0.3);
+        box-shadow: 0 15px 30px rgba(4, 23, 65, 0.3);
         color: #fff;
     }
 
@@ -163,8 +163,8 @@
     }
 
     .avatar-dropzone:hover {
-        border-color: #fa1600;
-        background: rgba(250, 22, 0, 0.02);
+        border-color: #041741;
+        background: rgba(4, 23, 65, 0.02);
     }
 
     .avatar-dropzone .dlab-message {
@@ -173,7 +173,7 @@
 
     .avatar-dropzone .dlab-message i {
         font-size: 48px;
-        color: #fa1600;
+        color: #041741;
         margin-bottom: 15px;
         display: block;
     }
@@ -185,6 +185,15 @@
     }
 </style>
 @endpush
+
+@section('page-header')
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">{{ __('Dashboard') }}</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ __('Profile') }}</a></li>
+    </ol>
+</div>
+@endsection
 
 @section('content')
 <div class="container-fluid">

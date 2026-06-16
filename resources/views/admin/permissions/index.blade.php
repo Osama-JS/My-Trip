@@ -3,6 +3,18 @@
 @section('title', __('Manage Permissions'))
 @section('page-title', __('Permissions'))
 
+@section('page-header')
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">{{ __('Dashboard') }}</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ __('Permissions') }}</a></li>
+    </ol>
+    <button type="button" class="btn btn-primary rounded-pill shadow-sm px-4" data-bs-toggle="modal" data-bs-target="#permissionModal" onclick="resetForm()">
+        <i class="fa fa-plus me-2"></i> {{ __('Add Permission') }}
+    </button>
+</div>
+@endsection
+
 @section('content')
 @php
     $totalPermissions = \Spatie\Permission\Models\Permission::count();
@@ -29,10 +41,7 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header">
-                <h4 class="card-title">Permissions List</h4>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#permissionModal" onclick="resetForm()">
-                    <i class="fa fa-plus me-2"></i> Add Permission
-                </button>
+                <h4 class="card-title">{{ __('Permissions List') }}</h4>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -161,7 +170,7 @@
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
+            cancelButtonColor: '#041741',
             confirmButtonText: '{{ __('Yes, delete it!') }}',
             cancelButtonText: '{{ __('Cancel') }}'
         }).then((result) => {

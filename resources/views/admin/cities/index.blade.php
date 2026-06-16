@@ -3,17 +3,16 @@
 @section('title', __('Cities Management'))
 @section('page-title', __('Cities Management'))
 
+@section('page-header')
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ __('Locations') }}</a></li>
+        <li class="breadcrumb-item"><a href="javascript:void(0)">{{ __('Cities') }}</a></li>
+    </ol>
+</div>
+@endsection
 
 @section('content')
-<div class="container-fluid">
-    <div class="row page-titles">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ __('Locations') }}</a></li>
-            <li class="breadcrumb-item"><a href="javascript:void(0)">{{ __('Cities') }}</a></li>
-        </ol>
-    </div>
-
-    
     <div class="row my-2">
         <div class="col-xl-3 col-sm-6">
             <x-stats-card
@@ -33,30 +32,30 @@
         </div>
         <div class="col-xl-3 col-sm-6">
             <x-stats-card
-                :label="__('Inactive')"
-                :value="$stats['inactive']"
+                :label="__('Disabled')"
+                :value="$stats['disabled']"
                 icon="fas fa-times-circle"
                 color="danger"
             />
         </div>
         <div class="col-xl-3 col-sm-6">
             <x-stats-card
-                :label="__('In Use (Countries)')"
-                :value="$stats['countries_count']"
+                :label="__('Countries')"
+                :value="count($countries)"
                 icon="fas fa-globe"
-                color="warning"
+                color="info"
             />
         </div>
     </div>
 
     <div class="row">
         <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex flex-wrap justify-content-between align-items-center">
-                    <h4 class="card-title">{{ __('Cities List') }}</h4>
-                    <div class="d-flex align-items-center mt-2 mt-sm-0">
-                        <select id="country-filter" class="form-select me-2" style="width: 200px;">
-                            <option value="">{{ __('Filter by Country') }}</option>
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header border-0 pb-0">
+                    <h4 class="card-title fw-bold text-dark">{{ __('Cities List') }}</h4>
+                    <div class="d-flex align-items-center gap-2">
+                        <select id="country-filter" class="form-select border-0 bg-light rounded-pill px-3 py-1 shadow-sm" style="width: auto;">
+                            <option value="">{{ __('All Countries') }}</option>
                             @foreach($countries as $country)
                                 <option value="{{ $country->id }}">{{ $country->name }}</option>
                             @endforeach
@@ -85,7 +84,6 @@
             </div>
         </div>
     </div>
-</div>
 </div>
 
 <!-- Add City Modal -->
@@ -420,7 +418,7 @@
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
+            cancelButtonColor: '#041741',
             confirmButtonText: '{{ __("Yes, delete it!") }}',
             cancelButtonText: '{{ __("Cancel") }}'
         }).then((result) => {

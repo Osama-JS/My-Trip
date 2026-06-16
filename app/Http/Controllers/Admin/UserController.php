@@ -35,28 +35,34 @@ class UserController extends Controller
         return response()->json([
             'data' => $users->map(function($user) {
                 $statusBadge = $user->status === 'active'
-                    ? '<span class="badge badge-success">'.__('Active').'</span>'
-                    : '<span class="badge badge-danger">'.__('Inactive').'</span>';
+                    ? '<div class="d-flex align-items-center"><i class="fa fa-circle text-success me-2" style="font-size: 8px;"></i> <span class="fw-medium text-dark">'.__('Active').'</span></div>'
+                    : '<div class="d-flex align-items-center"><i class="fa fa-circle text-danger me-2" style="font-size: 8px;"></i> <span class="fw-medium text-dark">'.__('Inactive').'</span></div>';
 
                 $verifiedBadge = $user->email_verified_at
-                    ? '<span class="badge badge-light">'.__('Verified').'</span>'
-                    : '<span class="badge badge-warning">'.__('Unverified').'</span>';
+                    ? '<div class="d-flex align-items-center"><i class="fa fa-circle text-primary me-2" style="font-size: 8px;"></i> <span class="fw-medium text-dark">'.__('Verified').'</span></div>'
+                    : '<div class="d-flex align-items-center"><i class="fa fa-circle text-warning me-2" style="font-size: 8px;"></i> <span class="fw-medium text-dark">'.__('Unverified').'</span></div>';
 
                 return [
                     'id' => $user->id,
-                    'photo' => '<img src="' . $user->profile_photo_url . '" class="rounded-lg me-2" width="35" alt="">',
+                    'photo' => '<img src="' . $user->profile_photo_url . '" class="rounded-circle shadow-sm border border-2 border-white" style="width: 40px; height: 40px; object-fit: cover;" alt="">',
                     'info' => '<div>
-                                <strong>' . $user->full_name . '</strong><br>
+                                <strong class="text-dark">' . $user->full_name . '</strong><br>
                                 <small class="text-muted">' . $user->email . '</small>
                             </div>',
-                    'phone' => ($user->country_code ? $user->country_code . ' ' : '') . $user->phone,
+                    'phone' => '<span class="text-muted">' . ($user->country_code ? $user->country_code . ' ' : '') . $user->phone . '</span>',
                     'status' => $statusBadge,
                     'verified' => $verifiedBadge,
                     'actions' => auth()->user()->can('manage users') ? '
-                        <div class="d-flex">
-                            <button onclick="editUser(' . $user->id . ')" class="btn btn-primary shadow btn-xs sharp me-1"><i class="fas fa-pencil-alt"></i></button>
-                            <button onclick="toggleUserStatus(' . $user->id . ')" class="btn btn-warning shadow btn-xs sharp me-1"><i class="fas fa-ban"></i></button>
-                            <button onclick="deleteUser(' . $user->id . ')" class="btn btn-danger shadow btn-xs sharp"><i class="fa fa-trash"></i></button>
+                        <div class="dropdown">
+                            <button type="button" class="btn btn-light btn-sm rounded-circle border-0 shadow-sm" data-bs-toggle="dropdown" aria-expanded="false" style="width:32px; height:32px; padding:0; display:inline-flex; align-items:center; justify-content:center;">
+                                <i class="fas fa-ellipsis-v text-muted"></i>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 py-2">
+                                <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="editUser(' . $user->id . ')"><i class="fas fa-pencil-alt text-primary me-3 w-15px"></i> '.__('Edit').'</a>
+                                <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="toggleUserStatus(' . $user->id . ')"><i class="fas fa-ban text-warning me-3 w-15px"></i> '.__('Toggle Status').'</a>
+                                <div class="dropdown-divider my-1"></div>
+                                <a class="dropdown-item text-danger py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="deleteUser(' . $user->id . ')"><i class="fa fa-trash text-danger me-3 w-15px"></i> '.__('Delete').'</a>
+                            </div>
                         </div>' : ''
                 ];
             })
@@ -237,25 +243,37 @@ class UserController extends Controller
         return response()->json([
             'data' => $users->map(function($user) {
                 $statusBadge = $user->status === 'active'
-                    ? '<span class="badge badge-success">'.__('Active').'</span>'
-                    : '<span class="badge badge-danger">'.__('Inactive').'</span>';
+                    ? '<div class="d-flex align-items-center"><i class="fa fa-circle text-success me-2" style="font-size: 8px;"></i> <span class="fw-medium text-dark">'.__('Active').'</span></div>'
+                    : '<div class="d-flex align-items-center"><i class="fa fa-circle text-danger me-2" style="font-size: 8px;"></i> <span class="fw-medium text-dark">'.__('Inactive').'</span></div>';
+
+                $verifiedBadge = $user->email_verified_at
+                    ? '<div class="d-flex align-items-center"><i class="fa fa-circle text-primary me-2" style="font-size: 8px;"></i> <span class="fw-medium text-dark">'.__('Verified').'</span></div>'
+                    : '<div class="d-flex align-items-center"><i class="fa fa-circle text-warning me-2" style="font-size: 8px;"></i> <span class="fw-medium text-dark">'.__('Unverified').'</span></div>';
 
                 return [
                     'id' => $user->id,
-                    'photo' => '<img src="' . $user->profile_photo_url . '" class="rounded-circle" width="40" alt="">',
-                    'name' => '<strong>' . $user->full_name . '</strong><br><small class="text-muted">' . $user->email . '</small>',
-                    'email' => $user->email,
-                    'phone' => ($user->country_code ? $user->country_code . ' ' : '') . ($user->phone ?? '---'),
+                    'photo' => '<img src="' . $user->profile_photo_url . '" class="rounded-circle shadow-sm border border-2 border-white" style="width: 40px; height: 40px; object-fit: cover;" alt="">',
+                    'info' => '<div>
+                                <strong class="text-dark">' . $user->full_name . '</strong><br>
+                                <small class="text-muted">' . $user->email . '</small>
+                            </div>',
+                    'phone' => '<span class="text-muted">' . ($user->country_code ? $user->country_code . ' ' : '') . ($user->phone ?? '---') . '</span>',
                     'status' => $statusBadge,
-                    'joined' => $user->created_at->format('Y-m-d'),
+                    'verified' => $verifiedBadge,
                     'actions' => '
-                        <div class="d-flex">
-                            <button onclick="viewSubscriber(' . $user->id . ')" class="btn btn-info shadow btn-xs sharp me-1" title="'.__('View').'"><i class="fa fa-eye"></i></button>
-                            <button onclick="editSubscriber(' . $user->id . ')" class="btn btn-primary shadow btn-xs sharp me-1" title="'.__('Edit').'"><i class="fas fa-pencil-alt"></i></button>
-                            <button onclick="toggleSubscriberStatus(' . $user->id . ')" class="btn btn-warning shadow btn-xs sharp me-1" title="'.__('Toggle Status').'"><i class="fas fa-ban"></i></button>
-                            <button onclick="resetSubscriberPassword(' . $user->id . ')" class="btn btn-dark shadow btn-xs sharp me-1" title="'.__('Reset Password').'"><i class="fa fa-key"></i></button>
-                            <a href="' . route('admin.users.activity', $user->id) . '" class="btn btn-secondary shadow btn-xs sharp me-1" title="'.__('Activity').'"><i class="fa fa-chart-line"></i></a>
-                            <button onclick="deleteSubscriber(' . $user->id . ')" class="btn btn-danger shadow btn-xs sharp" title="'.__('Delete').'"><i class="fa fa-trash"></i></button>
+                        <div class="dropdown">
+                            <button type="button" class="btn btn-light btn-sm rounded-circle border-0 shadow-sm" data-bs-toggle="dropdown" aria-expanded="false" style="width:32px; height:32px; padding:0; display:inline-flex; align-items:center; justify-content:center;">
+                                <i class="fas fa-ellipsis-v text-muted"></i>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 py-2">
+                                <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="viewSubscriber(' . $user->id . ')"><i class="fa fa-eye text-info me-3 w-15px"></i> '.__('View').'</a>
+                                <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="editSubscriber(' . $user->id . ')"><i class="fas fa-pencil-alt text-primary me-3 w-15px"></i> '.__('Edit').'</a>
+                                <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="toggleSubscriberStatus(' . $user->id . ')"><i class="fas fa-ban text-warning me-3 w-15px"></i> '.__('Toggle Status').'</a>
+                                <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="resetSubscriberPassword(' . $user->id . ')"><i class="fa fa-key text-dark me-3 w-15px"></i> '.__('Reset Password').'</a>
+                                <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="' . route('admin.users.activity', $user->id) . '"><i class="fa fa-chart-line text-secondary me-3 w-15px"></i> '.__('Activity').'</a>
+                                <div class="dropdown-divider my-1"></div>
+                                <a class="dropdown-item text-danger py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="deleteSubscriber(' . $user->id . ')"><i class="fa fa-trash text-danger me-3 w-15px"></i> '.__('Delete').'</a>
+                            </div>
                         </div>'
                 ];
             })

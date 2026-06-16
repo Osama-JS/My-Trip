@@ -2,14 +2,19 @@
 
 @section('title', __('Trips Management'))
 
+@section('page-header')
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="javascript:void(0)">{{ __('Admin') }}</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ __('Trips') }}</a></li>
+    </ol>
+    <a href="{{ route('admin.trips.create') }}" class="btn btn-primary rounded-pill shadow-sm px-4">
+         <i class="fa fa-plus me-2"></i> {{ __('Add New Trip') }}
+    </a>
+</div>
+@endsection
+
 @section('content')
-<div class="container-fluid">
-    <div class="row page-titles">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ __('Admin') }}</a></li>
-            <li class="breadcrumb-item"><a href="javascript:void(0)">{{ __('Trips') }}</a></li>
-        </ol>
-    </div>
 
     @push('styles')
     <style>
@@ -23,56 +28,37 @@
             display: block;
             width: 100%;
         }
-        .filter-group {
-            position: relative;
-            margin-bottom: 0;
-        }
-        .filter-group i {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #488eff;
-            z-index: 10;
-        }
-        .filter-group .form-control {
-            padding-left: 40px;
-            height: 50px;
-            border-radius: 10px;
-            border: 1px solid #eef2f7;
-            background: #fcfdfe;
-            transition: all 0.3s ease;
-        }
-        .filter-group .form-control:focus {
-            border-color: #488eff;
-            box-shadow: 0 0 0 4px rgba(72, 142, 255, 0.1);
-            background: #fff;
-        }
-        .filter-label {
-            font-size: 13px;
-            font-weight: 700;
-            color: #4a5568;
-            margin-bottom: 10px;
-            display: block;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-        }
-        .form-section-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: #2d3748;
-            margin: 20px 0 15px 0;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #edf2f7;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+        .filter-group { position: relative; margin-bottom: 0; }
+        .filter-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #488eff; z-index: 10; }
+        .filter-group .form-control { padding-left: 40px; height: 50px; border-radius: 10px; border: 1px solid #eef2f7; background: #fcfdfe; transition: all 0.3s ease; }
+        .filter-group .form-control:focus { border-color: #488eff; box-shadow: 0 0 0 4px rgba(72, 142, 255, 0.1); background: #fff; }
+        .filter-label { font-size: 13px; font-weight: 700; color: #4a5568; margin-bottom: 10px; display: block; text-transform: uppercase; letter-spacing: 0.8px; }
+        .form-section-title { font-size: 16px; font-weight: 700; color: #2d3748; margin: 20px 0 15px 0; padding-bottom: 10px; border-bottom: 2px solid #edf2f7; display: flex; align-items: center; gap: 10px; }
         .modal-xl { max-width: 1200px; }
         .border-dashed { border-style: dashed !important; }
-
-        /* Fix for RTL if needed, but assuming LTR for now as per code items */
         .ms-auto { margin-right: 0 !important; margin-left: auto !important; }
+
+        /* Premium Table Styling */
+        .custom-table { border-collapse: separate; border-spacing: 0 12px !important; width: 100% !important; margin-top: -10px; }
+        .custom-table thead th { border: none !important; background: transparent !important; color: #94a3b8 !important; font-weight: 700 !important; font-size: 12px !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; padding: 10px 20px !important; border-bottom: 1px solid #f1f5f9 !important; }
+        .custom-table tbody tr { background: #ffffff !important; box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important; border-radius: 12px !important; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important; }
+        .custom-table tbody tr:hover { transform: translateY(-3px) scale(1.002) !important; box-shadow: 0 12px 24px rgba(4, 23, 65, 0.08) !important; z-index: 10; position: relative; }
+        .custom-table tbody td { border: none !important; padding: 18px 20px !important; vertical-align: middle !important; background: inherit !important; }
+        .custom-table tbody td:first-child { border-top-left-radius: 12px !important; border-bottom-left-radius: 12px !important; }
+        .custom-table tbody td:last-child { border-top-right-radius: 12px !important; border-bottom-right-radius: 12px !important; }
+
+        /* Custom Scrollbar for Responsive Table */
+        .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 10px; margin-top: 10px; }
+        .table-responsive::-webkit-scrollbar { height: 8px; }
+        .table-responsive::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+        .table-responsive::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .table-responsive::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* DataTables Specific Overrides */
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current, .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover { background: #041741 !important; color: #fff !important; border: none !important; border-radius: 8px !important; box-shadow: 0 4px 10px rgba(4, 23, 65, 0.2) !important; }
+        .dataTables_wrapper .dataTables_paginate .paginate_button { border-radius: 8px !important; border: none !important; transition: all 0.2s ease !important; }
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover { background: #f1f5f9 !important; color: #1e293b !important; }
+        table.dataTable.no-footer { border-bottom: none !important; }
     </style>
     @endpush
     <div class="row">
@@ -161,16 +147,13 @@
                 </div>
             </div>
 
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h4 class="card-title">{{ __('Trips List') }}</h4>
-                    <a href="{{ route('admin.trips.create') }}" class="btn btn-primary btn-rounded">
-                         <i class="fa fa-plus me-2"></i> {{ __('Add New Trip') }}
-                    </a>
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header border-0 pb-0">
+                    <h4 class="card-title mb-0">{{ __('Trips List') }}</h4>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table id="trips-table" class="display" style="min-width: 845px">
+                        <table id="trips-table" class="display custom-table" style="min-width: 845px">
                             <thead>
                                 <tr>
                                     <th>{{ __('title (AR)') }}</th>
@@ -211,7 +194,6 @@
             </div>
         </div>
     </div>
-</div>
     {{-- Renew Trip Modal --}}
     <div class="modal fade" id="renewTripModal" tabindex="-1">
         <div class="modal-dialog">
@@ -345,7 +327,7 @@
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
+            cancelButtonColor: '#041741',
             confirmButtonText: '{{ __("Yes, Change it!") }}'
         }).then((result) => {
             if (result.value) {
@@ -466,7 +448,7 @@
             text: '{{ __("This action cannot be undone!") }}',
             icon: 'error',
             showCancelButton: true,
-            confirmButtonColor: '#d33',
+            confirmButtonColor: '#041741',
             cancelButtonColor: '#3085d6',
             confirmButtonText: '{{ __("Yes, delete it!") }}'
         }).then((result) => {

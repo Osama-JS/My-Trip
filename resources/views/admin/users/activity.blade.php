@@ -35,7 +35,7 @@
         z-index: 1;
     }
     .card-gradient-1 { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); color: white; }
-    .card-gradient-2 { background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%); color: white; }
+    .card-gradient-2 { background: linear-gradient(135deg, #f59e0b 0%, #041741 100%); color: white; }
     .card-gradient-3 { background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%); color: white; }
     
     .stats-label { opacity: 0.8; font-size: 0.8rem; font-weight: 500; }

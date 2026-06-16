@@ -3,6 +3,18 @@
 @section('title', __('Manage Pages'))
 @section('page-title', __('Page Management'))
 
+@section('page-header')
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">{{ __('Dashboard') }}</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ __('Page Management') }}</a></li>
+    </ol>
+    <a href="{{ route('admin.pages.create') }}" class="btn btn-primary btn-sm rounded-pill shadow-sm px-4">
+        <i class="fa fa-plus me-1"></i> {{ __('Create New Page') }}
+    </a>
+</div>
+@endsection
+
 @section('content')
 <div class="container-fluid">
     {{-- Statistics Cards --}}
@@ -59,9 +71,6 @@
             <div class="card shadow-sm border-0">
                 <div class="card-header d-flex justify-content-between align-items-center bg-white border-bottom py-3">
                     <h4 class="card-title fw-bold mb-0 text-dark"><i class="fas fa-list-ul me-2 text-primary"></i>{{ __('All Static Pages') }}</h4>
-                    <a href="{{ route('admin.pages.create') }}" class="btn btn-primary btn-sm rounded-pill shadow-sm px-4">
-                        <i class="fa fa-plus me-1"></i> {{ __('Create New Page') }}
-                    </a>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -174,5 +183,21 @@
     .stat-widget-one .stat-digit { font-size: 24px; }
     .custom-switch .form-check-input { cursor: pointer; width: 3em; height: 1.5em; }
     .custom-switch .form-check-label { cursor: pointer; padding-top: 3px; }
+
+    /* Override primary colors from red to navy */
+    .bg-primary {
+        background-color: #041741 !important;
+    }
+    .text-primary {
+        color: #041741 !important;
+    }
+    .btn-primary {
+        background-color: #041741 !important;
+        border-color: #041741 !important;
+    }
+    .btn-primary:hover {
+        background-color: #062261 !important;
+        border-color: #062261 !important;
+    }
 </style>
 @endsection

@@ -152,7 +152,15 @@
 
 <style>
     .custom-tabs .nav-link { border-radius: 8px 8px 0 0; color: #6e6e6e; font-weight: 600; padding: 12px 24px; border: 1px solid #eee; margin-right: 5px; }
-    .custom-tabs .nav-link.active { background-color: var(--primary) !important; color: white !important; border-color: var(--primary); }
-    .form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 0.2rem rgba(15, 76, 129, 0.1); }
+    .custom-tabs .nav-link.active { background-color: #041741 !important; color: white !important; border-color: #041741 !important; }
+    .form-control:focus { border-color: #041741 !important; box-shadow: 0 0 0 0.2rem rgba(4, 23, 65, 0.1) !important; }
+
+    /* Override primary colors from red to navy */
+    .text-primary {
+        color: #041741 !important;
+    }
+    .bg-primary {
+        background-color: #041741 !important;
+    }
 </style>
 @endsection

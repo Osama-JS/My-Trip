@@ -3,29 +3,77 @@
 @section('title', __('Questions'))
 @section('page-title', __('Question Management'))
 
+@section('page-header')
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">{{ __('Dashboard') }}</a></li>
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ __('Question Management') }}</a></li>
+    </ol>
+    <button type="button" class="btn btn-primary rounded-pill shadow-sm px-4" data-bs-toggle="modal" data-bs-target="#addQuestionModal">
+        <i class="fa fa-plus me-1"></i> {{ __('Add Question') }}
+    </button>
+</div>
+@endsection
+
 @section('content')
+@php
+    $totalQuestions = \App\Models\Question::count();
+    $activeQuestions = \App\Models\Question::where('active', 1)->count();
+    $inactiveQuestions = \App\Models\Question::where('active', 0)->count();
+@endphp
 
 <div class="container-fluid">
+    {{-- Premium Stats Cards (Under the header, above the table) --}}
+    <div class="mb-4">
+        @include('components.stats-cards', ['stats' => [
+            [
+                'title' => __('Total Questions'),
+                'value' => $totalQuestions,
+                'icon' => 'fa-question-circle',
+                'color' => 'primary',
+            ],
+            [
+                'title' => __('Active Questions'),
+                'value' => $activeQuestions,
+                'icon' => 'fa-check-circle',
+                'color' => 'success',
+            ],
+            [
+                'title' => __('Inactive Questions'),
+                'value' => $inactiveQuestions,
+                'icon' => 'fa-times-circle',
+                'color' => 'danger',
+            ],
+        ]])
+    </div>
+
     <div class="row">
         <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">{{ __('Question Management') }}</h4>
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addQuestionModal" >
-                         <i class="fa fa-plus me-2"></i> {{ __('Add Question')}}
-                     </button>
+            <div class="card shadow border-0" style="border-radius: 16px;">
+                <div class="card-header d-flex justify-content-between align-items-center bg-white border-bottom py-3" style="border-top-left-radius: 16px; border-top-right-radius: 16px;">
+                    <h4 class="card-title fw-bold mb-0 text-primary">
+                        <i class="fas fa-list-ul me-2"></i>{{ __('Questions List') }}
+                    </h4>
                 </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table id="question-table" class="display" style="min-width: 845px">
-                            <thead>
+                <div class="card-body p-4">
+                    <div class="table-responsive rounded-3 shadow-sm border border-light-subtle">
+                        <table id="question-table" class="display table table-hover mb-0" style="min-width: 845px; width: 100%;">
+                            <thead class="bg-primary text-white">
                                 <tr>
-                                    <th>{{ __('question') }}</th>
-                                    <th>{{ __('answer') }}</th>
-                                    <th>{{ __('Status') }}</th>
-                                    <th>{{ __('Actions') }}</th>
+                                    <th style="width: 40%; font-weight: 600;" class="text-white">{{ __('Question') }}</th>
+                                    <th style="width: 40%; font-weight: 600;" class="text-white">{{ __('Answer') }}</th>
+                                    <th style="width: 10%; font-weight: 600;" class="text-white">{{ __('Status') }}</th>
+                                    <th style="width: 10%; font-weight: 600;" class="text-white text-end">{{ __('Actions') }}</th>
                                 </tr>
                             </thead>
+                            <tfoot class="bg-primary text-white border-top">
+                                <tr>
+                                    <th class="text-white" style="font-weight: 600;">{{ __('Question') }}</th>
+                                    <th class="text-white" style="font-weight: 600;">{{ __('Answer') }}</th>
+                                    <th class="text-white" style="font-weight: 600;">{{ __('Status') }}</th>
+                                    <th class="text-white text-end" style="font-weight: 600;">{{ __('Actions') }}</th>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
                 </div>
@@ -34,10 +82,12 @@
     </div>
 </div>
 
+<!-- Add Question Modal -->
 <div class="modal fade" id="addQuestionModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg"> <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i>{{ __('Add New Question') }}</h5>
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white border-0 py-3">
+                <h5 class="modal-title fw-bold text-white"><i class="fas fa-plus-circle me-2"></i>{{ __('Add New Question') }}</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             
@@ -45,42 +95,41 @@
                 @csrf
                 <div class="modal-body p-4">
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-bold">{{ __('Question (Arabic)') }} <span class="text-danger">*</span></label>
-                            <input type="text" name="question_ar" class="form-control" placeholder="أدخل السؤال بالعربية" required>
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label fw-bold text-dark">{{ __('Question (Arabic)') }} <span class="text-danger">*</span></label>
+                            <input type="text" name="question_ar" class="form-control border-2" placeholder="أدخل السؤال بالعربية" required>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-bold">{{ __('Question (English)') }} <span class="text-danger">*</span></label>
-                            <input type="text" name="question_en" class="form-control" placeholder="Enter question in English" required>
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label fw-bold text-dark">{{ __('Question (English)') }} <span class="text-danger">*</span></label>
+                            <input type="text" name="question_en" class="form-control border-2" placeholder="Enter question in English" required>
                         </div>
                     </div>
 
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-bold">{{ __('Answer (Arabic)') }} <span class="text-danger">*</span></label>
-                            <textarea name="answer_ar" class="form-control" rows="3" placeholder="أدخل الإجابة بالعربية" required></textarea>
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label fw-bold text-dark">{{ __('Answer (Arabic)') }} <span class="text-danger">*</span></label>
+                            <textarea name="answer_ar" class="form-control border-2" rows="4" placeholder="أدخل الإجابة بالعربية" required></textarea>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-bold">{{ __('Answer (English)') }} <span class="text-danger">*</span></label>
-                            <textarea name="answer_en" class="form-control" rows="3" placeholder="Enter answer in English" required></textarea>
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label fw-bold text-dark">{{ __('Answer (English)') }} <span class="text-danger">*</span></label>
+                            <textarea name="answer_en" class="form-control border-2" rows="4" placeholder="Enter answer in English" required></textarea>
                         </div>
                     </div>
 
-                    <div class="p-3 bg-light rounded-3 d-flex justify-content-between align-items-center">
+                    <div class="p-3 bg-light rounded-3 d-flex justify-content-between align-items-center border border-2 border-light-subtle">
                         <div>
-                            <h6 class="mb-0 fw-bold">{{ __('Status') }}</h6>
+                            <h6 class="mb-0 fw-bold text-dark"><i class="fas fa-toggle-on me-2 text-primary"></i>{{ __('Status') }}</h6>
                             <small class="text-muted">{{ __('Enable or disable this question from appearing') }}</small>
                         </div>
-                        <div class="form-check form-switch form-check-lg">
+                        <div class="form-check form-switch custom-switch">
                             <input class="form-check-input" type="checkbox" name="active" role="switch" id="activeStatus" checked>
-                            <label class="form-check-label" for="activeStatus"></label>
                         </div>
                     </div>
                 </div>
 
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
-                    <button type="submit" class="btn btn-primary px-4">
+                <div class="modal-footer bg-light border-0 py-3">
+                    <button type="button" class="btn btn-light shadow-sm px-4" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                    <button type="submit" class="btn btn-primary shadow-sm px-4 fw-bold">
                         <i class="fas fa-save me-1"></i> {{ __('Save Question') }}
                     </button>
                 </div>
@@ -89,14 +138,15 @@
     </div>
 </div>
 
-<!-- Edit User Modal -->
+<!-- Edit Question Modal -->
 <div class="modal fade" id="editQuestionModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-primary text-dark"> <h5 class="modal-title fw-bold">
+            <div class="modal-header bg-primary text-white border-0 py-3"> 
+                <h5 class="modal-title fw-bold text-white">
                     <i class="fas fa-edit me-2"></i>{{ __('Edit Question') }}
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             
             <form id="editQuestionForm">
@@ -106,41 +156,41 @@
 
                 <div class="modal-body p-4">
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-bold ">{{ __('Question (Arabic)') }}</label>
-                            <input type="text" id="edit_question_ar" name="question_ar" class="form-control border-primary-subtle" required>
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label fw-bold text-dark">{{ __('Question (Arabic)') }} <span class="text-danger">*</span></label>
+                            <input type="text" id="edit_question_ar" name="question_ar" class="form-control border-2" required>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-bold ">{{ __('Question (English)') }}</label>
-                            <input type="text" id="edit_question_en" name="question_en" class="form-control border-primary-subtle" required>
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label fw-bold text-dark">{{ __('Question (English)') }} <span class="text-danger">*</span></label>
+                            <input type="text" id="edit_question_en" name="question_en" class="form-control border-2" required>
                         </div>
                     </div>
 
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-bold ">{{ __('Answer (Arabic)') }}</label>
-                            <textarea id="edit_answer_ar" name="answer_ar" class="form-control" rows="3" required></textarea>
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label fw-bold text-dark">{{ __('Answer (Arabic)') }} <span class="text-danger">*</span></label>
+                            <textarea id="edit_answer_ar" name="answer_ar" class="form-control border-2" rows="4" required></textarea>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-bold ">{{ __('Answer (English)') }}</label>
-                            <textarea id="edit_answer_en" name="answer_en" class="form-control" rows="3" required></textarea>
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label fw-bold text-dark">{{ __('Answer (English)') }} <span class="text-danger">*</span></label>
+                            <textarea id="edit_answer_en" name="answer_en" class="form-control border-2" rows="4" required></textarea>
                         </div>
                     </div>
 
-                    <div class="p-3 bg-light rounded-3 d-flex justify-content-between align-items-center border border-warning-subtle">
+                    <div class="p-3 bg-light rounded-3 d-flex justify-content-between align-items-center border border-2 border-light-subtle">
                         <div>
-                            <h6 class="mb-0 fw-bold"><i class="fas fa-toggle-on me-2"></i>{{ __('Visibility Status') }}</h6>
+                            <h6 class="mb-0 fw-bold text-dark"><i class="fas fa-toggle-on me-2 text-primary"></i>{{ __('Visibility Status') }}</h6>
                             <small class="text-muted">{{ __('Enable or disable this question from the public site') }}</small>
                         </div>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="edit_active" name="active" role="switch" style="width: 2.5em; height: 1.25em;">
+                        <div class="form-check form-switch custom-switch">
+                            <input class="form-check-input" type="checkbox" id="edit_active" name="active" role="switch">
                         </div>
                     </div>
                 </div>
 
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
-                    <button type="submit" class="btn btn-primary px-4 fw-bold">
+                <div class="modal-footer bg-light border-0 py-3">
+                    <button type="button" class="btn btn-light shadow-sm px-4" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                    <button type="submit" class="btn btn-primary shadow-sm px-4 fw-bold">
                         <i class="fas fa-check-circle me-1"></i> {{ __('Save Changes') }}
                     </button>
                 </div>
@@ -149,13 +199,144 @@
     </div>
 </div>
 
+@push('styles')
+<style>
+    .custom-switch .form-check-input { cursor: pointer; width: 3em; height: 1.5em; }
+    .custom-switch .form-check-label { cursor: pointer; padding-top: 3px; }
+    
+    /* Premium overrides to Navy color #041741 */
+    .bg-primary {
+        background-color: #041741 !important;
+    }
+    .text-primary {
+        color: #041741 !important;
+    }
+    .btn-primary {
+        background-color: #041741 !important;
+        border-color: #041741 !important;
+        box-shadow: 0 4px 10px rgba(4, 23, 65, 0.2) !important;
+    }
+    .btn-primary:hover {
+        background-color: #062261 !important;
+        border-color: #062261 !important;
+        box-shadow: 0 6px 15px rgba(4, 23, 65, 0.3) !important;
+    }
+    .form-control:focus {
+        border-color: #041741 !important;
+        box-shadow: 0 0 0 4px rgba(4, 23, 65, 0.1) !important;
+    }
+    
+    /* Backdrop blur for modals */
+    .modal {
+        backdrop-filter: blur(5px);
+    }
+    .modal-content {
+        border-radius: 16px !important;
+        overflow: hidden;
+    }
+    
+    /* Premium DataTables Overrides */
+    table.dataTable thead th, table.dataTable tfoot th {
+        color: #fff !important;
+        border-bottom: none !important;
+    }
+    table.dataTable.no-footer {
+        border-bottom: 1px solid #e9ecef !important;
+    }
+    table.dataTable tbody tr:hover {
+        background-color: rgba(4, 23, 65, 0.03) !important;
+    }
+    table.dataTable tbody td {
+        vertical-align: middle;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current, 
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+        background: #041741 !important;
+        color: white !important;
+        border: 1px solid #041741 !important;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(4, 23, 65, 0.2);
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+        background: rgba(4, 23, 65, 0.1) !important;
+        color: #041741 !important;
+        border: 1px solid transparent !important;
+        border-radius: 8px;
+    }
+    .dataTables_wrapper .dataTables_filter input {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 5px 12px;
+        outline: none;
+        transition: all 0.3s ease;
+    }
+    .dataTables_wrapper .dataTables_filter input:focus {
+        border-color: #041741;
+        box-shadow: 0 0 0 3px rgba(4, 23, 65, 0.1);
+    }
+    .dataTables_wrapper .dataTables_length select {
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 4px;
+        outline: none;
+    }
+    .dataTables_wrapper {
+        padding-top: 10px;
+    }
+    
+    /* Action Buttons Hover Effect */
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .badge.light {
+        background-color: rgba(23, 162, 184, 0.1);
+    }
+    .badge-success.light {
+        background-color: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+    }
+    
+    /* Replaces the red color of Inactive/Danger elements with #041741 */
+    .text-danger {
+        color: #041741 !important;
+    }
+    .badge-danger.light {
+        background-color: rgba(4, 23, 65, 0.1) !important;
+        color: #041741 !important;
+    }
+    .btn-outline-danger {
+        color: #041741 !important;
+        border-color: #041741 !important;
+    }
+    .btn-outline-danger:hover {
+        background-color: #041741 !important;
+        color: #fff !important;
+    }
+    .btn-danger {
+        background-color: #041741 !important;
+        border-color: #041741 !important;
+        box-shadow: 0 4px 10px rgba(4, 23, 65, 0.2) !important;
+    }
+    .btn-danger:hover {
+        background-color: #062261 !important;
+        border-color: #062261 !important;
+    }
+    
+    /* Replace danger icon color gradient in stats cards component */
+    .stat-icon.danger {
+        background: linear-gradient(135deg, #041741 0%, #0c2b73 100%) !important;
+    }
+</style>
+@endpush
+
 <script>
-     var questionsDataUrl = "{{ route('admin.questions.data') }}";
+    var questionsDataUrl = "{{ route('admin.questions.data') }}";
     let questionTable;
     $(document).ready(function() {
         questionTable = $('#question-table').DataTable({
             processing: false,
-            serverSide: false, // Set to true if huge data
+            serverSide: false,
             ajax: questionsDataUrl,
             columns: [
                 { data: 'question' },
@@ -165,7 +346,9 @@
             ],
             language: {
                 "url": "{{ asset('vendor/datatables/i18n/' . app()->getLocale() . '.json') }}"
-            }
+            },
+            responsive: true,
+            pageLength: 10
         });
 
        $('#addQuestionForm').on('submit', function (e) {
@@ -180,7 +363,9 @@
                 type: "POST",
                 data: $.param(formData), 
                 beforeSend: function() {
-                    $('button[type="submit"]').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+                    $('#addQuestionForm').find('button[type="submit"]')
+                        .prop('disabled', true)
+                        .html('<i class="fas fa-spinner fa-spin me-2"></i>{{ __("Saving...") }}');
                 },
                 success: function (response) {
                     if (response.success) {
@@ -188,6 +373,10 @@
                         $('#addQuestionForm')[0].reset();
                         questionTable.ajax.reload(null, false);
                         toastr.success(response.message);
+                        
+                        setTimeout(function() {
+                            location.reload();
+                        }, 800);
                     }
                 },
                 error: function (xhr) {
@@ -201,7 +390,9 @@
                     }
                 },
                 complete: function() {
-                    $('button[type="submit"]').prop('disabled', false).text("{{ __('Add Question') }}");
+                    $('#addQuestionForm').find('button[type="submit"]')
+                        .prop('disabled', false)
+                        .html('<i class="fas fa-save me-1"></i> {{ __("Save Question") }}');
                 }
             });
         });
@@ -233,13 +424,17 @@
                 beforeSend: function() {
                     $('#editQuestionForm').find('button[type="submit"]')
                         .prop('disabled', true)
-                        .html('<i class="fas fa-spinner fa-spin"></i>');
+                        .html('<i class="fas fa-spinner fa-spin me-2"></i>{{ __("Saving...") }}');
                 },
                 success: function(response) {
                     if (response.success) {
                         $('#editQuestionModal').modal('hide');
                         questionTable.ajax.reload(null, false);
                         toastr.success(response.message);
+                        
+                        setTimeout(function() {
+                            location.reload();
+                        }, 800);
                     }
                 },
                 error: function(xhr) {
@@ -253,15 +448,12 @@
                     }
                 },
                 complete: function() {
-                
                     $('#editQuestionForm').find('button[type="submit"]')
                         .prop('disabled', false)
-                        .html("{{ __('Update Changes') }}");
+                        .html('<i class="fas fa-check-circle me-1"></i> {{ __("Save Changes") }}');
                 }
             });
         });
-
-
     });
 
     function editQuestion(id) {
@@ -275,23 +467,23 @@
                 $('#edit_question_en').val(question.question_en);
                 $('#edit_answer_ar').val(question.answer_ar);
                 $('#edit_answer_en').val(question.answer_en);
-                $('#edit_active').prop('checked', question.active);
+                $('#edit_active').prop('checked', question.active == 1);
                 $('#editQuestionModal').modal('show');
             }
         });
     }
-
 
     function toggleQuestionStatus(id) {
         const url = "{{ route('admin.questions.toggle-status', ':id') }}".replace(':id', id);
         Swal.fire({
             title: '{{ __("Are you sure?") }}',
             text: '{{ __("Do you want to toggle this questions status?") }}',
-            icon: 'warning',
+            type: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: '{{ __("Yes, Change it!") }}'
+            confirmButtonColor: '#041741',
+            cancelButtonColor: '#777',
+            confirmButtonText: '{{ __("Yes, Change it!") }}',
+            cancelButtonText: '{{ __("Cancel") }}'
         }).then((result) => {
             if (result.value) {
                 $.ajax({
@@ -304,6 +496,10 @@
                         if (response.success) {
                             questionTable.ajax.reload();
                             toastr.success(response.message);
+                            
+                            setTimeout(function() {
+                                location.reload();
+                            }, 800);
                         }
                     }
                 });
@@ -314,13 +510,14 @@
     function deleteQuestion(id) {
         let url = "{{ route('admin.questions.show', ':id') }}".replace(':id', id);
         Swal.fire({
-            title: '{{ __("Delete questions?") }}',
+            title: '{{ __("Are you sure?") }}',
             text: '{{ __("This action cannot be undone!") }}',
-            icon: 'error',
+            type: 'error',
             showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: '{{ __("Yes, delete it!") }}'
+            confirmButtonColor: '#041741',
+            cancelButtonColor: '#777',
+            confirmButtonText: '{{ __("Yes, delete it!") }}',
+            cancelButtonText: '{{ __("Cancel") }}'
         }).then((result) => {
             if (result.value) {
                 $.ajax({
@@ -334,6 +531,10 @@
                         if (response.success) {
                             questionTable.ajax.reload();
                             toastr.success(response.message);
+                            
+                            setTimeout(function() {
+                                location.reload();
+                            }, 800);
                         }
                     }
                 });

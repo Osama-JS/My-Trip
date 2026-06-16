@@ -19,6 +19,7 @@ class CountryController extends Controller
             'total' => Country::count(),
             'active' => Country::where('active', true)->count(),
             'inactive' => Country::where('active', false)->count(),
+            'disabled' => Country::where('active', false)->count(),
             'with_cities' => Country::has('cities')->count(),
         ];
         return view('admin.countries.index', compact('stats'));

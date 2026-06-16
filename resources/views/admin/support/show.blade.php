@@ -2,20 +2,17 @@
 
 @section('title', __('Ticket Details'))
 
-@section('content')
-<div class="container-fluid">
-    <div class="row page-titles mx-0">
-        <div class="col-sm-6 p-md-0">
-            <div class="welcome-text">
-                <h4>{{ __('Ticket #') }}{{ $ticket->id }}</h4>
-                <span>{{ __('Subject: ') }}{{ $ticket->subject }}</span>
-            </div>
-        </div>
-        <div class="col-sm-6 p-md-0 justify-content-sm-end mt-2 mt-sm-0 d-flex">
-            <a href="{{ route('admin.support.index') }}" class="btn btn-secondary btn-sm">{{ __('Back to List') }}</a>
-        </div>
-    </div>
+@section('page-header')
+<div class="page-titles">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ route('admin.support.index') }}">{{ __('Support Tickets') }}</a></li>
+        <li class="breadcrumb-item active">{{ __('Ticket #') }}{{ $ticket->id }}</li>
+    </ol>
+    <a href="{{ route('admin.support.index') }}" class="btn btn-secondary btn-sm rounded-pill shadow-sm px-3">{{ __('Back to List') }}</a>
+</div>
+@endsection
 
+@section('content')
     <div class="row">
         <!-- Sidebar Info -->
         <div class="col-xl-4 col-lg-5">
@@ -24,104 +21,125 @@
                     <h4 class="card-title">{{ __('Ticket Information') }}</h4>
                 </div>
                 <div class="card-body">
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item d-flex justify-content-between px-0">
-                            <strong>{{ __('Status') }}:</strong>
-                            <span class="badge @if($ticket->status == 'open') badge-success @elseif($ticket->status == 'pending') badge-warning @else badge-light @endif">
-                                {{ __(ucfirst($ticket->status)) }}
-                            </span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between px-0">
-                            <strong>{{ __('Priority') }}:</strong>
-                            <span class="text-primary font-w600">{{ __(ucfirst($ticket->priority)) }}</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between px-0">
-                            <strong>{{ __('Category') }}:</strong>
-                            <span>{{ __(ucfirst($ticket->category)) }}</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between px-0">
-                            <strong>{{ __('Client') }}:</strong>
-                            <span>{{ $ticket->user->full_name }}</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between px-0">
-                            <strong>{{ __('Assigned To') }}:</strong>
-                            <span>{{ $ticket->assignedAdmin->full_name ?? __('None') }}</span>
-                        </li>
-                    </ul>
-
-                    <div class="mt-4">
-                        <form action="{{ route('admin.support.status', $ticket->id) }}" method="POST" class="mb-2">
-                            @csrf
-                            <label class="form-label">{{ __('Change Status') }}</label>
-                            <div class="input-group">
-                                <select name="status" class="form-control">
-                                    <option value="open" {{ $ticket->status == 'open' ? 'selected' : '' }}>{{ __('Open') }}</option>
-                                    <option value="pending" {{ $ticket->status == 'pending' ? 'selected' : '' }}>{{ __('Pending') }}</option>
-                                    <option value="closed" {{ $ticket->status == 'closed' ? 'selected' : '' }}>{{ __('Closed') }}</option>
-                                </select>
-                                <button type="submit" class="btn btn-primary btn-sm">{{ __('Update') }}</button>
-                            </div>
-                        </form>
-
-                        @if(!$ticket->assigned_to || $ticket->assigned_to != auth()->id())
-                        <form action="{{ route('admin.support.assign', $ticket->id) }}" method="POST">
-                            @csrf
-                            <button type="submit" class="btn btn-outline-info btn-block btn-sm">{{ __('Assign to me') }}</button>
-                        </form>
-                        @endif
+                    <div class="basic-list-group">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between px-0">
+                                <span>{{ __('Status') }}</span>
+                                <span>
+                                    @if($ticket->status == 'open')
+                                        <span class="badge bg-success">{{ __('Open') }}</span>
+                                    @elseif($ticket->status == 'pending')
+                                        <span class="badge bg-warning text-dark">{{ __('Pending') }}</span>
+                                    @else
+                                        <span class="badge bg-light text-muted">{{ __('Closed') }}</span>
+                                    @endif
+                                </span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between px-0">
+                                <span>{{ __('Priority') }}</span>
+                                <span>
+                                    @if($ticket->priority == 'high')
+                                        <span class="badge bg-danger">{{ __('High') }}</span>
+                                    @elseif($ticket->priority == 'medium')
+                                        <span class="badge bg-warning text-dark">{{ __('Medium') }}</span>
+                                    @else
+                                        <span class="badge bg-info">{{ __('Low') }}</span>
+                                    @endif
+                                </span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between px-0">
+                                <span>{{ __('Category') }}</span>
+                                <span class="fw-bold">{{ __(ucfirst($ticket->category)) }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between px-0">
+                                <span>{{ __('Client') }}</span>
+                                <span class="fw-bold text-dark">{{ $ticket->user->first_name }} {{ $ticket->user->last_name }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between px-0">
+                                <span>{{ __('Assigned To') }}</span>
+                                <span>
+                                    <form action="{{ route('admin.support.assign', $ticket->id) }}" method="POST" id="assignForm" class="d-flex gap-2">
+                                        @csrf
+                                        <select name="assigned_to" class="form-control form-control-xs py-0 px-2" onchange="document.getElementById('assignForm').submit()">
+                                            <option value="">{{ __('Unassigned') }}</option>
+                                            @foreach($admins as $admin)
+                                                <option value="{{ $admin->id }}" {{ $ticket->assigned_to == $admin->id ? 'selected' : '' }}>
+                                                    {{ $admin->first_name }} {{ $admin->last_name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </form>
+                                </span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between px-0">
+                                <span>{{ __('Actions') }}</span>
+                                <span>
+                                    @if($ticket->status != 'closed')
+                                        <form action="{{ route('admin.support.close', $ticket->id) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            <button type="submit" class="btn btn-danger btn-xs">{{ __('Close Ticket') }}</button>
+                                        </form>
+                                    @else
+                                        <form action="{{ route('admin.support.reopen', $ticket->id) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            <button type="submit" class="btn btn-success btn-xs">{{ __('Re-open Ticket') }}</button>
+                                        </form>
+                                    @endif
+                                </span>
+                            </li>
+                        </ul>
                     </div>
                 </div>
             </div>
-
-            @if($ticket->rating)
-            <div class="card">
-                <div class="card-header border-0 pb-0">
-                    <h4 class="card-title">{{ __('Customer Rating') }}</h4>
-                </div>
-                <div class="card-body">
-                    <div class="text-center mb-3">
-                        @for($i=1; $i<=5; $i++)
-                            <i class="fas fa-star {{ $i <= $ticket->rating->rating ? 'text-warning' : 'text-light' }}"></i>
-                        @endfor
-                        <h4 class="mt-2">{{ $ticket->rating->rating }} / 5</h4>
-                    </div>
-                    <p class="text-muted">"{{ $ticket->rating->comment }}"</p>
-                </div>
-            </div>
-            @endif
         </div>
 
-        <!-- Chat Area -->
+        <!-- Conversation Messages -->
         <div class="col-xl-8 col-lg-7">
             <div class="card">
                 <div class="card-header border-0 pb-0">
-                    <h4 class="card-title">{{ __('Conversation') }}</h4>
+                    <h4 class="card-title">{{ __('Ticket Messages') }}</h4>
                 </div>
                 <div class="card-body">
-                    <div id="DZ_W_Todo1" class="widget-media dz-scroll ps ps--active-y" style="height: 450px;">
-                        <ul class="timeline">
-                            @foreach($ticket->messages as $message)
-                            <li>
-                                <div class="timeline-panel">
-                                    <div class="media mr-2 {{ $message->sender_id == auth()->id() ? 'order-2 ml-2' : '' }}">
-                                        <img alt="image" width="50" src="{{ $message->sender->profile_photo_url }}">
-                                    </div>
-                                    <div class="media-body {{ $message->sender_id == auth()->id() ? 'text-right' : '' }}">
-                                        <h5 class="mb-1">{{ $message->sender->full_name }} <small class="text-muted">{{ $message->created_at->diffForHumans() }}</small></h5>
-                                        <p class="mb-1">{{ $message->message }}</p>
-                                        
-                                        @if($message->attachments)
-                                            <div class="mt-2">
-                                                @foreach($message->attachments as $attachment)
-                                                    <a href="{{ asset('storage/' . $attachment) }}" target="_blank" class="badge badge-xs badge-info"><i class="fa fa-paperclip"></i> {{ __('Attachment') }}</a>
-                                                @endforeach
-                                            </div>
-                                        @endif
-                                    </div>
+                    <div class="chat-box-area" style="max-height: 400px; overflow-y: auto;">
+                        <!-- Client Original Message -->
+                        <div class="mb-4 p-3 bg-light rounded border-start border-primary border-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-bold text-dark">{{ $ticket->user->first_name }} {{ $ticket->user->last_name }}</span>
+                                <small class="text-muted">{{ $ticket->created_at->diffForHumans() }}</small>
+                            </div>
+                            <p class="mb-2 text-dark">{{ $ticket->message }}</p>
+                            @if($ticket->attachments)
+                                <div class="attachments mt-2">
+                                    <h6 class="small text-muted">{{ __('Attachments:') }}</h6>
+                                    @foreach($ticket->attachments as $file)
+                                        <a href="{{ asset('storage/' . $file) }}" target="_blank" class="btn btn-outline-secondary btn-xs me-1 mt-1"><i class="fa fa-paperclip"></i> View File</a>
+                                    @endforeach
                                 </div>
-                            </li>
-                            @endforeach
-                        </ul>
+                            @endif
+                        </div>
+
+                        <!-- Conversation Replies -->
+                        @foreach($ticket->replies as $reply)
+                            <div class="mb-4 p-3 rounded {{ $reply->user->role === 'admin' ? 'bg-primary-light border-start border-primary border-3' : 'bg-light border-start border-secondary border-3' }}">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-bold text-dark">{{ $reply->user->first_name }} {{ $reply->user->last_name }} 
+                                        @if($reply->user->role === 'admin')
+                                            <span class="badge bg-primary btn-xs ms-1">{{ __('Staff') }}</span>
+                                        @endif
+                                    </span>
+                                    <small class="text-muted">{{ $reply->created_at->diffForHumans() }}</small>
+                                </div>
+                                <p class="mb-2 text-dark">{{ $reply->message }}</p>
+                                @if($reply->attachments)
+                                    <div class="attachments mt-2">
+                                        <h6 class="small text-muted">{{ __('Attachments:') }}</h6>
+                                        @foreach($reply->attachments as $file)
+                                            <a href="{{ asset('storage/' . $file) }}" target="_blank" class="btn btn-outline-secondary btn-xs me-1 mt-1"><i class="fa fa-paperclip"></i> View File</a>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </div>
+                        @endforeach
                     </div>
                 </div>
                 <div class="card-footer border-0">
@@ -145,5 +163,4 @@
             </div>
         </div>
     </div>
-</div>
 @endsection
