@@ -794,94 +794,21 @@ class FrontendController extends Controller
     }
 
     /**
-     * Contact page
-     */
-    public function contact()
-    {
-        return view('frontend.contact');
-    }
-
-    /**
-     * Process Contact Form
-     */
-    public function processContact(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'subject' => 'required|string|max:255',
-            'message' => 'required|string',
-        ]);
-
-        // Normally we'd send an email here or store in DB. 
-        // Mail::to(Setting::get('contact_email'))->send(new ContactMessage($request->all()));
-
-        return redirect()->back()->with('success', __('Your message has been sent successfully. We will get back to you soon.'));
-    }
-
-    /**
      * Search page
      */
     public function search(Request $request)
     {
         $query = $request->get('q', '');
-        $minPrice = $request->get('min_price');
-        $maxPrice = $request->get('max_price');
-        $duration = $request->get('duration'); // expects "1-3", "4-7", "8+"
-        $rating = $request->get('rating'); // expects integer 1 to 5
         
-        $tripsQuery = Trip::active()
-            ->with(['images', 'toCountry', 'toCity', 'rates', 'packages.prices']);
-
-        if (!empty($query)) {
-            $tripsQuery->where(function(\Illuminate\Database\Eloquent\Builder $q) use ($query) {
+        $trips = Trip::active()
+            ->with(['images', 'toCountry', 'toCity', 'rates'])
+            ->where(function(\Illuminate\Database\Eloquent\Builder $q) use ($query) {
                 $q->where('title_ar', 'like', "%{$query}%")
                   ->orWhere('title_en', 'like', "%{$query}%")
                   ->orWhere('description_ar', 'like', "%{$query}%")
                   ->orWhere('description_en', 'like', "%{$query}%");
-            });
-        }
-
-        // Price Filter
-        if ($minPrice !== null || $maxPrice !== null) {
-            $tripsQuery->where(function ($q) use ($minPrice, $maxPrice) {
-                // Check legacy price
-                $q->where(function ($sub) use ($minPrice, $maxPrice) {
-                    if ($minPrice !== null) $sub->where('price', '>=', $minPrice);
-                    if ($maxPrice !== null) $sub->where('price', '<=', $maxPrice);
-                })
-                // Or check package prices
-                ->orWhereHas('packages.prices', function ($sub) use ($minPrice, $maxPrice) {
-                    if ($minPrice !== null) $sub->where('price', '>=', $minPrice);
-                    if ($maxPrice !== null) $sub->where('price', '<=', $maxPrice);
-                });
-            });
-        }
-
-        // Duration Filter
-        if (!empty($duration)) {
-            if ($duration === '1-3') {
-                $tripsQuery->whereBetween('duration', [1, 3]);
-            } elseif ($duration === '4-7') {
-                $tripsQuery->whereBetween('duration', [4, 7]);
-            } elseif ($duration === '8+') {
-                $tripsQuery->where('duration', '>=', 8);
-            }
-        }
-
-        // Rating Filter
-        if (!empty($rating) && is_numeric($rating)) {
-            // We only want trips whose average rating is >= $rating
-            $tripsQuery->whereHas('rates', function($q) {}, '>=', 1) // Just ensuring it has rates, but to do average in where is tricky without withAvg.
-                ->withAvg('rates', 'rate')
-                ->having('rates_avg_rate', '>=', $rating);
-        }
-
-        // If we use having, we might need group by, or we can just filter the collection after paginating?
-        // Since having requires group by in some SQL modes, let's just do a simpler approach or ignore SQL strict mode.
-        // Actually, let's just use withAvg and then filter.
-        
-        $trips = $tripsQuery->paginate(12)->appends($request->all());
+            })
+            ->paginate(12);
 
         return view('frontend.search', compact('trips', 'query'));
     }
