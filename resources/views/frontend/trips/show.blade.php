@@ -1250,14 +1250,15 @@
                                                                     <span><i class="far fa-calendar-alt text-primary me-2"></i>{{ $season->label }}</span>
                                                                 </div>
                                                                 <div class="row g-2">
-                                                                    @foreach(['double', 'single', 'triple', 'child'] as $occ)
+                                                                    @foreach(['double', 'single', 'triple', 'quadruple', 'quintuple'] as $occ)
                                                                         @php
                                                                             $priceObj = $pkg->prices->where('season_id', $season->id)->where('occupancy_type', $occ)->first();
                                                                             $occLabel = [
                                                                                 'single' => $locale == 'ar' ? 'فردية' : 'Single',
                                                                                 'double' => $locale == 'ar' ? 'ثنائية' : 'Double',
                                                                                 'triple' => $locale == 'ar' ? 'ثلاثية' : 'Triple',
-                                                                                'child' => $locale == 'ar' ? 'طفل' : 'Child'
+                                                                                'quadruple' => $locale == 'ar' ? '4 أشخاص' : '4 Persons',
+                                                                                'quintuple' => $locale == 'ar' ? '5 أشخاص' : '5 Persons',
                                                                             ][$occ];
                                                                             $priceVal = $priceObj && $priceObj->price > 0 ? number_format($priceObj->price, 0) . ' ' . __('SAR') : ($locale == 'ar' ? 'غير متوفر' : 'N/A');
                                                                         @endphp
@@ -1430,7 +1431,8 @@
                                         <div class="fe-occ-btn occ-option active" data-type="double"><i class="fas fa-user-friends mb-2 d-block fs-4"></i>{{ __('Double') }}</div>
                                         <div class="fe-occ-btn occ-option" data-type="single"><i class="fas fa-user mb-2 d-block fs-4"></i>{{ __('Single') }}</div>
                                         <div class="fe-occ-btn occ-option" data-type="triple"><i class="fas fa-users mb-2 d-block fs-4"></i>{{ __('Triple') }}</div>
-                                        <div class="fe-occ-btn occ-option" data-type="child"><i class="fas fa-child mb-2 d-block fs-4"></i>{{ __('Child') }}</div>
+                                        <div class="fe-occ-btn occ-option" data-type="quadruple"><i class="fas fa-users mb-2 d-block fs-4"></i>{{ __('4 Persons') }}</div>
+                                        <div class="fe-occ-btn occ-option" data-type="quintuple"><i class="fas fa-users mb-2 d-block fs-4"></i>{{ __('5 Persons') }}</div>
                                     </div>
                                     <input type="hidden" name="occupancy_type" id="selected-occupancy" value="double">
                                 </div>

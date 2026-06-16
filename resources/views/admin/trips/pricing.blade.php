@@ -165,15 +165,16 @@
                                 <thead class="bg-light">
                                     <tr>
                                         <th style="width: 25%">{{ __('Season / Date') }}</th>
-                                        <th style="width: 18%">{{ __('Single') }}</th>
-                                        <th style="width: 18%">{{ __('Double') }}</th>
-                                        <th style="width: 18%">{{ __('Triple') }}</th>
-                                        <th style="width: 21%">{{ __('Child') }}</th>
+                                        <th style="width: 15%">{{ __('Single') }}</th>
+                                        <th style="width: 15%">{{ __('Double') }}</th>
+                                        <th style="width: 15%">{{ __('Triple') }}</th>
+                                        <th style="width: 15%">{{ __('4 Persons') }}</th>
+                                        <th style="width: 15%">{{ __('5 Persons') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @php
-                                        $occupancyTypes = ['single', 'double', 'triple', 'child'];
+                                        $occupancyTypes = ['single', 'double', 'triple', 'quadruple', 'quintuple'];
                                         $prices = $package->prices->groupBy('season_id');
                                     @endphp
                                     @forelse($trip->seasons as $season)

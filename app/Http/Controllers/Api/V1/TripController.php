@@ -424,7 +424,7 @@ class TripController extends Controller
             'trip_id' => 'required|exists:trips,id',
             'package_id' => 'nullable|exists:trip_packages,id',
             'season_id' => 'nullable|exists:trip_seasons,id',
-            'occupancy_type' => 'nullable|in:single,double,triple,child',
+            'occupancy_type' => 'nullable|in:single,double,triple,quadruple,quintuple',
             'addons' => 'nullable|array',
             'addons.*' => 'exists:trip_addons,id',
             'tickets_count' => 'required|integer|min:1',
