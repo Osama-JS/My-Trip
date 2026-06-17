@@ -518,6 +518,132 @@
     })();
     </script>
 
+    <script>
+    (function() {
+        function initTranslations() {
+            // Find all inputs and textareas that end with _ar
+            document.querySelectorAll('input[name$="_ar"], textarea[name$="_ar"]').forEach(arField => {
+                const nameAr = arField.getAttribute('name');
+                if (!nameAr) return;
+                
+                // Generate the matching English field name (supporting array format like packages[0][name_ar])
+                const nameEn = nameAr.replace(/_ar(\]?)$/, '_en$1');
+                const enField = document.querySelector(`[name="${nameEn}"]`);
+                
+                if (enField) {
+                    // If we found a pair, let's add translate buttons if not already added
+                    addTranslationButton(arField, enField, 'ar');
+                    addTranslationButton(enField, arField, 'en');
+                }
+            });
+        }
+        
+        function addTranslationButton(field, targetField, type) {
+            // Check if button is already added to prevent duplicates
+            if (field.dataset.hasTranslateBtn === 'true') return;
+            
+            // Find parent form-group or input container
+            const parent = field.closest('.form-group, .mb-3, .col-md-12, .col-md-6, .col-12, td');
+            if (!parent) return;
+            
+            const label = parent.querySelector('label');
+            if (!label) return;
+            
+            // Mark field as handled
+            field.dataset.hasTranslateBtn = 'true';
+            
+            // Ensure label styling allows alignment (flexbox layout)
+            label.style.display = 'flex';
+            label.style.justifyContent = 'space-between';
+            label.style.alignItems = 'center';
+            label.style.width = '100%';
+            
+            // Create button
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn btn-link p-0 text-primary fw-bold text-decoration-none translate-btn';
+            btn.style.fontSize = '11px';
+            btn.style.textTransform = 'none';
+            btn.style.boxShadow = 'none';
+            
+            const labelText = type === 'ar' ? 'ترجمة للانجليزية <i class="fas fa-language"></i>' : 'ترجمة للعربية <i class="fas fa-language"></i>';
+            btn.innerHTML = labelText;
+            
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const sourceText = field.value.trim();
+                if (!sourceText) {
+                    if (typeof toastr !== 'undefined') {
+                        toastr.warning(type === 'ar' ? 'يرجى كتابة نص للترجمة أولاً' : 'Please type text to translate first');
+                    } else {
+                        alert(type === 'ar' ? 'يرجى كتابة نص للترجمة أولاً' : 'Please type text to translate first');
+                    }
+                    return;
+                }
+                
+                // Show loading state
+                const originalHtml = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+                
+                $.ajax({
+                    url: '{{ route("admin.translate") }}',
+                    type: 'POST',
+                    data: {
+                        text: sourceText,
+                        target: type === 'ar' ? 'en' : 'ar',
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            targetField.value = response.translated;
+                            // Trigger change event to notify any plugins/editors
+                            targetField.dispatchEvent(new Event('change'));
+                            
+                            if (typeof toastr !== 'undefined') {
+                                toastr.success(type === 'ar' ? 'تمت الترجمة بنجاح' : 'Translated successfully');
+                            }
+                        } else {
+                            if (typeof toastr !== 'undefined') {
+                                toastr.error(response.message || 'Translation failed');
+                            }
+                        }
+                    },
+                    error: function(xhr) {
+                        if (typeof toastr !== 'undefined') {
+                            toastr.error('Translation service error');
+                        }
+                        console.error(xhr);
+                    },
+                    complete: function() {
+                        btn.disabled = false;
+                        btn.innerHTML = originalHtml;
+                    }
+                });
+            });
+            
+            label.appendChild(btn);
+        }
+        
+        // Initial scan on load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initTranslations);
+        } else {
+            initTranslations();
+        }
+        
+        // Mutation observer to handle dynamically added fields (e.g. dynamic forms, modals, etc.)
+        const observer = new MutationObserver(function(mutations) {
+            initTranslations();
+        });
+        
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    })();
+    </script>
+
     @stack('scripts')
 </body>
 </html>

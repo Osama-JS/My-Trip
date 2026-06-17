@@ -148,6 +148,7 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/global-search', [App\Http\Controllers\Admin\GlobalSearchController::class, 'search'])->name('global-search');
+    Route::post('/translate', [App\Http\Controllers\Admin\TranslationController::class, 'translate'])->name('translate');
 
     // User Management
     Route::get('users/data', [UserController::class, 'getData'])->name('users.data');
