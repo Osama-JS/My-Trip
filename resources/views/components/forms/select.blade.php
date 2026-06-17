@@ -75,19 +75,3 @@
     @endif
 </div>
 
-@if($searchable)
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    if (typeof $.fn.select2 !== 'undefined') {
-        $('#{{ $id }}').select2({
-            theme: 'bootstrap-5',
-            placeholder: '{{ $placeholder }}',
-            allowClear: true,
-            dir: document.dir || 'ltr'
-        });
-    }
-});
-</script>
-@endpush
-@endif

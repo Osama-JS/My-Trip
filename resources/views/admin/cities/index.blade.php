@@ -194,7 +194,7 @@
                         <div class="col-12">
                             <div class="mb-3">
                                 <label class="form-label fw-semibold">{{ __('Select Country') }}</label>
-                                <select name="country_id" id="edit_country_id" class="form-select select-search" required>
+                                <select name="country_id" id="edit_country_id" class="form-select select2 select-search" required>
                                     <option value="" disabled selected>{{ __('Select Country') }}</option>
                                     @foreach($countries as $country)
                                         <option value="{{ $country->id }}">{{ $country->name }}</option>
