@@ -28,9 +28,11 @@ class CompanyController extends Controller
 
         return response()->json([
             'data' => $companies->map(function ($company) {
-                $statusBadge = $company->active
-                    ? '<div class="d-flex align-items-center"><i class="fa fa-circle text-success me-2" style="font-size: 8px;"></i> <span class="fw-medium text-dark">'.__('Active').'</span></div>'
-                    : '<div class="d-flex align-items-center"><i class="fa fa-circle text-danger me-2" style="font-size: 8px;"></i> <span class="fw-medium text-dark">'.__('Inactive').'</span></div>';
+                $statusBadge = '
+                <div class="form-check form-switch d-inline-flex align-items-center p-0 m-0">
+                    <input class="form-check-input ms-0 me-2" type="checkbox" role="switch" id="status_switch_' . $company->id . '" ' . ($company->active ? 'checked' : '') . ' onclick="togglecompanytatus(' . $company->id . ')" style="width: 36px; height: 18px; cursor: pointer;">
+                    <label class="form-check-label fw-medium text-dark small cursor-pointer" for="status_switch_' . $company->id . '">' . ($company->active ? __('Active') : __('Inactive')) . '</label>
+                </div>';
 
                 return [
                     'id'    => $company->id,
@@ -47,11 +49,12 @@ class CompanyController extends Controller
                     'status' => $statusBadge,
                     'actions' => '
                         <div class="dropdown">
-                            <button type="button" class="btn btn-light btn-sm rounded-circle border-0 shadow-sm" data-bs-toggle="dropdown" aria-expanded="false" style="width:32px; height:32px; padding:0; display:inline-flex; align-items:center; justify-content:center;">
+                            <button type="button" class="btn btn-white btn-sm rounded-circle border shadow-sm" data-bs-toggle="dropdown" data-bs-boundary="viewport" aria-expanded="false" style="width:32px; height:32px; padding:0; display:inline-flex; align-items:center; justify-content:center; background-color:#ffffff !important; border-color:#e2e8f0 !important;">
                                 <i class="fas fa-ellipsis-v text-muted"></i>
                             </button>
-                            <div class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 py-2">
-                                <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="' . route('admin.companies.agents', $company->id) . '"><i class="fas fa-users text-info me-3 w-15px"></i> '.__('Manage Agents').'</a>
+                            <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 py-2" style="z-index: 1060;">
+                                <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="viewCompany(' . $company->id . ')"><i class="fa fa-eye text-info me-3 w-15px"></i> '.__('View').'</a>
+                                <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="' . route('admin.companies.agents', $company->id) . '"><i class="fas fa-users text-secondary me-3 w-15px"></i> '.__('Manage Agents').'</a>
                                 <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="editCompany('.$company->id.')"><i class="fas fa-pencil-alt text-primary me-3 w-15px"></i> '.__('Edit').'</a>
                                 <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="togglecompanytatus('.$company->id.')"><i class="fas fa-ban text-warning me-3 w-15px"></i> '.__('Toggle Status').'</a>
                                 <div class="dropdown-divider my-1"></div>

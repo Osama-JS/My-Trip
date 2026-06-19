@@ -17,6 +17,7 @@
 @section('content')
 
     @push('styles')
+    <link rel="stylesheet" href="https://unpkg.com/dropzone@5/dist/min/dropzone.min.css">
     <style>
         .premium-filter-bar {
             background: #fff;
@@ -59,6 +60,115 @@
         .dataTables_wrapper .dataTables_paginate .paginate_button { border-radius: 8px !important; border: none !important; transition: all 0.2s ease !important; }
         .dataTables_wrapper .dataTables_paginate .paginate_button:hover { background: #f1f5f9 !important; color: #1e293b !important; }
         table.dataTable.no-footer { border-bottom: none !important; }
+
+        /* Premium Dropzone Styling */
+        .dz-premium-zone {
+            border: 2px dashed #488eff !important;
+            border-radius: 16px !important;
+            background: #fcfdfe !important;
+            padding: 40px 20px !important;
+            text-align: center !important;
+            cursor: pointer !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            min-height: 220px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            position: relative !important;
+        }
+        .dz-premium-zone:hover, .dz-premium-zone.dz-drag-hover {
+            border-color: #041741 !important;
+            background: rgba(72, 142, 255, 0.05) !important;
+            box-shadow: 0 10px 25px rgba(72, 142, 255, 0.08) !important;
+        }
+        .dz-premium-zone .dz-message {
+            margin: 0 !important;
+            width: 100% !important;
+        }
+        .dz-premium-zone .upload-icon-wrapper {
+            width: 70px;
+            height: 70px;
+            background: rgba(72, 142, 255, 0.08);
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            transition: all 0.3s ease;
+        }
+        .dz-premium-zone:hover .upload-icon-wrapper {
+            background: #488eff;
+            transform: translateY(-5px);
+        }
+        .dz-premium-zone .upload-icon-wrapper i {
+            font-size: 2.2rem;
+            transition: all 0.3s ease;
+        }
+        .dz-premium-zone:hover .upload-icon-wrapper i {
+            color: #fff !important;
+        }
+        .dz-premium-zone .dz-preview {
+            display: none !important;
+        }
+
+        /* Existing Images Gallery Grid */
+        .images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 14px;
+            margin-top: 15px;
+        }
+        .img-thumb-wrap {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            aspect-ratio: 1;
+            background: #f8fafc;
+            border: 1px solid #edf2f7;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .img-thumb-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        .img-thumb-wrap:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(4, 23, 65, 0.12);
+        }
+        .img-thumb-wrap:hover img {
+            transform: scale(1.08);
+        }
+        .img-thumb-wrap .del-btn {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 28px;
+            height: 28px;
+            background: rgba(239, 68, 68, 0.95);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .75rem;
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 10;
+        }
+        .img-thumb-wrap:hover .del-btn {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .img-thumb-wrap .del-btn:hover {
+            background: #dc2626;
+            transform: scale(1.1);
+        }
     </style>
     @endpush
     <div class="row">
@@ -103,9 +213,9 @@
                 <div class="row align-items-end">
                     <div class="col-md-3">
                         <label class="filter-label">{{ __('Company') }}</label>
-                        <div class="filter-group">
-                            <i class="fas fa-building"></i>
-                            <select id="company_id" class="form-control default-select">
+                        <div class="filter-wrapper" style="width: 100%;">
+                            <i class="fas fa-building filter-icon"></i>
+                            <select id="company_id" class="form-select select2">
                                 <option value="">{{ __('All Companies') }}</option>
                                 @foreach($companies as $company)
                                     <option value="{{ $company->id }}">{{ $company->name }}</option>
@@ -115,9 +225,9 @@
                     </div>
                     <div class="col-md-3">
                         <label class="filter-label">{{ __('Departure') }}</label>
-                        <div class="filter-group">
-                            <i class="fas fa-plane-departure"></i>
-                            <select id="from_country_id" class="form-control default-select">
+                        <div class="filter-wrapper" style="width: 100%;">
+                            <i class="fas fa-plane-departure filter-icon"></i>
+                            <select id="from_country_id" class="form-select select2">
                                 <option value="">{{ __('From Country') }}</option>
                                 @foreach($countries as $country)
                                     <option value="{{ $country->id }}">{{ $country->name }}</option>
@@ -127,9 +237,9 @@
                     </div>
                     <div class="col-md-3">
                         <label class="filter-label">{{ __('Destination') }}</label>
-                        <div class="filter-group">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <select id="to_country_id" class="form-control default-select">
+                        <div class="filter-wrapper" style="width: 100%;">
+                            <i class="fas fa-map-marker-alt filter-icon"></i>
+                            <select id="to_country_id" class="form-select select2">
                                 <option value="">{{ __('To Country') }}</option>
                                 @foreach($countries as $country)
                                     <option value="{{ $country->id }}">{{ $country->name }}</option>
@@ -139,9 +249,9 @@
                     </div>
                     <div class="col-md-3">
                         <label class="filter-label">{{ __('Expiry Date') }}</label>
-                        <div class="filter-group">
-                            <i class="fas fa-calendar-alt"></i>
-                            <input type="date" id="expiry_date" class="form-control">
+                        <div class="filter-wrapper" style="width: 100%;">
+                            <i class="fas fa-calendar-alt filter-icon"></i>
+                            <input type="date" id="expiry_date" class="form-control" style="padding-left: 40px; border-radius: 50px; height: 42px;">
                         </div>
                     </div>
                 </div>
@@ -177,19 +287,58 @@
     </div>
 
 
-    {{-- Image Upload Modal (Relocated from cards) --}}
-    <div class="modal fade" id="tripImagesModal">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">{{ __('Upload photos of the trip') }}: <span id="target-trip-name"></span></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    {{-- Image Upload Modal --}}
+    <div class="modal fade" id="tripImagesModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+                <div class="modal-header bg-light border-0 py-3 px-4">
+                    <h5 class="modal-title fw-bold text-dark mb-0" style="font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-images text-primary"></i>
+                        {{ __('Upload photos of the trip') }}: 
+                        <span id="target-trip-name" class="text-primary font-weight-bold"></span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <div id="trip-images-upload" class="dropzone border-dashed"></div>
+                <div class="modal-body px-4 py-4" style="max-height: 70vh; overflow-y: auto;">
+                    {{-- Dropzone Form Container --}}
+                    <div id="trip-images-upload" class="dropzone dz-premium-zone">
+                        <div class="dz-message">
+                            <div class="upload-icon-wrapper mb-3">
+                                <i class="fas fa-cloud-upload-alt text-primary"></i>
+                            </div>
+                            <h5 class="fw-bold mb-1">{{ __('Drag and drop photos here to upload') }}</h5>
+                            <span class="text-muted small">{{ __('or click to browse local files') }}</span>
+                            <div class="upload-limits mt-3">
+                                <span class="badge bg-light text-dark border-0 px-3 py-2" style="border-radius: 8px;">
+                                    <i class="fas fa-file-image text-muted me-1"></i> JPG, PNG, GIF
+                                </span>
+                                <span class="badge bg-light text-dark border-0 px-3 py-2 ms-2" style="border-radius: 8px;">
+                                    <i class="fas fa-weight-hanging text-muted me-1"></i> {{ __('Max') }} 5MB
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Existing Images Section --}}
+                    <div class="existing-images-section mt-4 pt-3 border-top border-light">
+                        <h6 class="fw-bold text-dark mb-3 d-flex align-items-center justify-content-between">
+                            <span class="d-flex align-items-center gap-2">
+                                <i class="fas fa-images text-muted"></i>
+                                {{ __('Trip Photos') }}
+                            </span>
+                            <span id="admin-images-count" class="badge bg-primary rounded-pill px-3 py-1 font-weight-bold">0</span>
+                        </h6>
+                        <div class="images-grid" id="admin-images-grid">
+                            {{-- Preloaded via JS --}}
+                        </div>
+                        <div id="admin-images-empty" class="text-center py-5 text-muted" style="display: none;">
+                            <i class="far fa-image mb-2 text-muted" style="font-size: 2.5rem; opacity: 0.5;"></i>
+                            <p class="small mb-0">{{ __('No images uploaded yet.') }}</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">{{ __('Done') }}</button>
+                <div class="modal-footer bg-light border-0 py-3 px-4">
+                    <button type="button" class="btn btn-primary rounded-pill px-4" data-bs-dismiss="modal">{{ __('Done') }}</button>
                 </div>
             </div>
         </div>
@@ -240,7 +389,7 @@
             processing: true,
             serverSide: false,
             ajax: {
-            url: '{{ route("admin.trips.data") }}',
+            url: '{{ parse_url(route("admin.trips.data"), PHP_URL_PATH) }}',
             data: function (d) {
                 d.company_id      = $('#company_id').val();
                 d.from_country_id = $('#from_country_id').val();
@@ -270,7 +419,7 @@
                 }
             },
             language: {
-                "url": "{{ asset('vendor/datatables/i18n/' . app()->getLocale() . '.json') }}"
+                "url": "{{ parse_url(asset('vendor/datatables/i18n/' . app()->getLocale() . '.json'), PHP_URL_PATH) }}"
             }
         });
 
@@ -285,38 +434,134 @@
     Dropzone.autoDiscover = false;
     let myDropzone;
 
+    function appendAdminImage(id, url) {
+        const grid = $('#admin-images-grid');
+        $('#admin-images-empty').hide();
+        
+        const imgHtml = `
+            <div class="img-thumb-wrap" id="admin-img-${id}">
+                <img src="${url}" alt="">
+                <button class="del-btn" onclick="deleteAdminImage(${id})" title="{{ __('Delete') }}">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `;
+        grid.append(imgHtml);
+        
+        // Update count
+        const countEl = $('#admin-images-count');
+        countEl.text(parseInt(countEl.text()) + 1);
+    }
+
+    function deleteAdminImage(id) {
+        Swal.fire({
+            title: '{{ __("Delete Photo?") }}',
+            text: '{{ __("This action cannot be undone!") }}',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#041741',
+            confirmButtonText: '{{ __("Yes, Delete") }}',
+            cancelButtonText: '{{ __("Cancel") }}',
+            reverseButtons: true
+        }).then(result => {
+            if (result.isConfirmed) {
+                const deleteUrl = "{{ parse_url(route('admin.trips.images-destroy', ':id'), PHP_URL_PATH) }}".replace(':id', id);
+                $.ajax({
+                    url: deleteUrl,
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            $(`#admin-img-${id}`).fadeOut(300, function() {
+                                $(this).remove();
+                                // Update count
+                                const countEl = $('#admin-images-count');
+                                const newCount = Math.max(0, parseInt(countEl.text()) - 1);
+                                countEl.text(newCount);
+                                if (newCount === 0) {
+                                    $('#admin-images-empty').show();
+                                }
+                            });
+                            toastr.success(response.message || '{{ __("Image deleted successfully") }}');
+                        } else {
+                            toastr.error(response.message || '{{ __("Error while deleting") }}');
+                        }
+                    },
+                    error: function(xhr) {
+                        const errMsg = xhr.responseJSON?.message || '{{ __("Error while deleting") }}';
+                        toastr.error(errMsg);
+                    }
+                });
+            }
+        });
+    }
+
     function openImageUpload(id, name) {
         $('#target-trip-name').text(name);
+        
+        // Clear previous images
+        $('#admin-images-grid').empty();
+        $('#admin-images-empty').hide();
+        $('#admin-images-count').text('0');
+
+        // Fetch and show current images
+        const getImagesUrl = "{{ parse_url(route('admin.trips.get-images', ':id'), PHP_URL_PATH) }}".replace(':id', id);
+        $.ajax({
+            url: getImagesUrl,
+            method: 'GET',
+            success: function(response) {
+                if (response && response.length > 0) {
+                    response.forEach(function(img) {
+                        appendAdminImage(img.id, img.url);
+                    });
+                } else {
+                    $('#admin-images-empty').show();
+                }
+            },
+            error: function() {
+                toastr.error("{{ __('Error while loading images') }}");
+            }
+        });
+
         $('#tripImagesModal').modal('show');
 
         // Initialize Dropzone if not already initialized
         if (!myDropzone) {
             myDropzone = new Dropzone("#trip-images-upload", {
-                url: "{{ route('admin.trips.images-store', ':id') }}".replace(':id', id),
+                url: "{{ parse_url(route('admin.trips.images-store', ':id'), PHP_URL_PATH) }}".replace(':id', id),
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
                 paramName: "file",
                 maxFilesize: 5,
                 acceptedFiles: "image/*",
-                addRemoveLinks: true,
-                dictDefaultMessage: "{{ __('Drag and drop photos here to upload') }}",
+                addRemoveLinks: false,
+                dictDefaultMessage: "",
                 init: function() {
                     this.on("success", function(file, response) {
-                        toastr.success(response.message || "{{ __('Image uploaded successfully') }}");
+                        if (response.success) {
+                            appendAdminImage(response.id, response.url);
+                            toastr.success(response.message || "{{ __('Image uploaded successfully') }}");
+                        } else {
+                            toastr.error(response.message || "{{ __('Error while uploading the image') }}");
+                        }
+                        this.removeFile(file);
                     });
                     this.on("error", function(file, response) {
-                        toastr.error(response.error || "{{ __('Error while uploading the image') }}");
+                        const errMsg = (typeof response === 'object') ? (response.error || response.message) : response;
+                        toastr.error(errMsg || "{{ __('Error while uploading the image') }}");
+                        this.removeFile(file);
                     });
                 }
             });
         } else {
             // Update URL for the new trip ID
-            myDropzone.options.url = "{{ route('admin.trips.images-store', ':id') }}".replace(':id', id);
+            myDropzone.options.url = "{{ parse_url(route('admin.trips.images-store', ':id'), PHP_URL_PATH) }}".replace(':id', id);
             myDropzone.removeAllFiles();
         }
-
-        // Load existing images if needed (optional enhancement)
     }
 
     function toggleTripStatus(id) {

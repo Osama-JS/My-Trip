@@ -295,7 +295,7 @@
         agentsTable = $('#agents-table').DataTable({
             processing: true,
             serverSide: false,
-            ajax: "{{ route('admin.companies.agents.data', $company->id) }}",
+            ajax: "{{ route('admin.companies.agents.data', [$company->id], false) }}",
             columns: [
                 { data: 'name' },
                 { data: 'phone' },
@@ -304,7 +304,7 @@
                 { data: 'actions', orderable: false, searchable: false }
             ],
             language: {
-                "url": "{{ asset('vendor/datatables/i18n/' . app()->getLocale() . '.json') }}",
+                "url": "{{ parse_url(asset('vendor/datatables/i18n/' . app()->getLocale() . '.json'), PHP_URL_PATH) }}",
                 "emptyTable": `<div class="empty-state">
                                 <i class="fas fa-folder-open"></i>
                                 <h5>لا توجد بيانات</h5>

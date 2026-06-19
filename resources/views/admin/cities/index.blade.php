@@ -54,12 +54,15 @@
                 <div class="card-header border-0 pb-0">
                     <h4 class="card-title fw-bold text-dark">{{ __('Cities List') }}</h4>
                     <div class="d-flex align-items-center gap-2">
-                        <select id="country-filter" class="form-select border-0 bg-light rounded-pill px-3 py-1 shadow-sm" style="width: auto;">
-                            <option value="">{{ __('All Countries') }}</option>
-                            @foreach($countries as $country)
-                                <option value="{{ $country->id }}">{{ $country->name }}</option>
-                            @endforeach
-                        </select>
+                        <div class="filter-wrapper">
+                            <i class="fas fa-globe filter-icon"></i>
+                            <select id="country-filter" class="form-select select2" data-hide-search="true">
+                                <option value="">{{ __('All Countries') }}</option>
+                                @foreach($countries as $country)
+                                    <option value="{{ $country->id }}">{{ $country->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCityModal">
                              <i class="fa fa-plus me-2"></i> {{ __('Add City') }}
                          </button>
@@ -268,7 +271,7 @@
 
 <script>
     let citiesTable;
-    const citiesDataUrl = "{{ route('admin.cities.data') }}";
+    const citiesDataUrl = "{{ parse_url(route('admin.cities.data'), PHP_URL_PATH) }}";
 
     $(document).ready(function() {
         // Initialize DataTable
@@ -290,7 +293,7 @@
                 { data: 'actions', orderable: false, searchable: false }
             ],
             language: {
-                "url": "{{ asset('vendor/datatables/i18n/' . app()->getLocale() . '.json') }}"
+                "url": "{{ parse_url(asset('vendor/datatables/i18n/' . app()->getLocale() . '.json'), PHP_URL_PATH) }}"
             }
         });
 

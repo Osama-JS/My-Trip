@@ -10,11 +10,17 @@
     $headerPosition = $_COOKIE['headerPosition'] ?? 'fixed';
     $containerLayout = $_COOKIE['containerLayout'] ?? 'wide';
     $primary = $_COOKIE['primary'] ?? 'color_1';
-    $direction = $_COOKIE['direction'] ?? (app()->getLocale() == 'ar' ? 'rtl' : 'ltr');
+    $direction = app()->getLocale() == 'ar' ? 'rtl' : 'ltr';
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ $direction }}" class="{{ $direction == 'rtl' ? 'rtl' : '' }}">
 <head>
+    <script>
+        (function() {
+            var currentLocaleDir = "{{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }}";
+            document.cookie = "direction=" + currentLocaleDir + ";path=/;max-age=" + (30 * 60);
+        })();
+    </script>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -1056,6 +1062,113 @@
     </style>
 
     @stack('styles')
+    {{-- ═══ PREMIUM GLOBAL SELECT2 FILTERS ═══ --}}
+    <style>
+        /* Modern Select2 Container for Filters */
+        .filter-wrapper {
+            position: relative;
+            display: inline-block;
+            min-width: 180px;
+        }
+        .filter-wrapper .select2-container--default .select2-selection--single {
+            background-color: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 50px !important;
+            height: 42px !important;
+            padding: 5px 40px 5px 20px !important; /* LTR padding */
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02) !important;
+            transition: all 0.3s ease !important;
+            font-weight: 500 !important;
+            color: #334155 !important;
+            font-size: 13px !important;
+        }
+        .rtl .filter-wrapper .select2-container--default .select2-selection--single {
+            padding: 5px 20px 5px 40px !important; /* RTL padding */
+        }
+        .filter-wrapper .select2-container--default .select2-selection--single:hover {
+            border-color: #cbd5e1 !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
+        }
+        .filter-wrapper .select2-container--default.select2-container--open .select2-selection--single {
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1) !important;
+        }
+        .filter-wrapper .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 40px !important;
+            right: 15px !important; /* LTR arrow */
+        }
+        .rtl .filter-wrapper .select2-container--default .select2-selection--single .select2-selection__arrow {
+            right: auto !important;
+            left: 15px !important; /* RTL arrow */
+        }
+        .filter-wrapper .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #475569 !important;
+            line-height: 28px !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+        /* Icon inside wrapper */
+        .filter-wrapper .filter-icon {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            left: 15px;
+            color: #94a3b8;
+            font-size: 13px;
+            z-index: 5;
+            pointer-events: none;
+            transition: color 0.3s ease;
+        }
+        .rtl .filter-wrapper .filter-icon {
+            left: auto;
+            right: 15px;
+        }
+        .filter-wrapper:hover .filter-icon {
+            color: #3b82f6;
+        }
+        .rtl .filter-wrapper .select2-container--default .select2-selection--single {
+            padding-right: 40px !important;
+            padding-left: 20px !important;
+        }
+        /* Dropdown Styling */
+        .select2-dropdown {
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 12px !important;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08) !important;
+            overflow: hidden !important;
+            margin-top: 5px !important;
+            animation: fadeInDrop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .select2-search--dropdown .select2-search__field {
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 8px !important;
+            padding: 8px 12px !important;
+            background: #f8fafc !important;
+        }
+        .select2-search--dropdown .select2-search__field:focus {
+            outline: none !important;
+            border-color: #3b82f6 !important;
+            background: #fff !important;
+        }
+        .select2-results__option {
+            padding: 10px 16px !important;
+            font-size: 13px !important;
+            color: #475569 !important;
+            transition: all 0.2s ease !important;
+        }
+        .select2-results__option--highlighted[aria-selected] {
+            background-color: #f1f5f9 !important;
+            color: #0f172a !important;
+            font-weight: 600 !important;
+        }
+        @keyframes fadeInDrop {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+
 </head>
 <body
     data-typography="{{ $typography }}"
@@ -1388,7 +1501,7 @@
          */
         function initSelect2Elements(container) {
             container = container || document;
-            $(container).find('select.select2, select.select-search').each(function() {
+            $(container).find('select:not(.dataTables_wrapper select):not(.nice-select):not(.swal2-select):not([data-no-select2="true"])').each(function() {
                 var $el = $(this);
                 if ($el.data('select2')) return; // already initialized
 
@@ -1398,6 +1511,7 @@
                     allowClear: !$el.prop('required'),
                     width: '100%',
                     dir: isRtl ? 'rtl' : 'ltr',
+                    minimumResultsForSearch: $el.attr('data-hide-search') === 'true' ? Infinity : 0,
                     language: {
                         noResults: function() {
                             return '{{ __("لا توجد نتائج") }}';

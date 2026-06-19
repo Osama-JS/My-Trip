@@ -73,23 +73,107 @@
     .route-line::after { content: '✈'; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); background: #fff; padding: 0 8px; color: var(--accent); font-size: 1rem; }
 
     /* ── Image Gallery ── */
-    .dz-zone { border: 2px dashed #e2e8f0; border-radius: 16px; background: #f8fafc; padding: 30px; text-align: center; cursor: pointer; transition: all .2s; }
-    .dz-zone:hover { border-color: var(--accent); background: var(--accent-soft); }
-    .dz-zone .dz-message { font-size: .95rem; color: #64748b; font-weight: 600; }
-    .dz-zone .dz-message i { font-size: 2.5rem; color: var(--accent); display: block; margin-bottom: 12px; }
-
-    .images-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px; margin-top: 20px; }
-    .img-thumb-wrap { position: relative; border-radius: 12px; overflow: hidden; aspect-ratio: 1; }
-    .img-thumb-wrap img { width: 100%; height: 100%; object-fit: cover; }
-    .img-thumb-wrap .del-btn {
-        position: absolute; top: 6px; right: 6px;
-        width: 28px; height: 28px;
-        background: rgba(239,68,68,.9); color: #fff;
-        border: none; border-radius: 8px; cursor: pointer;
-        display: flex; align-items: center; justify-content: center;
-        font-size: .75rem; opacity: 0; transition: opacity .2s;
+    .dz-premium-zone {
+        border: 2px dashed var(--accent) !important;
+        border-radius: 16px !important;
+        background: #fcfdfe !important;
+        padding: 40px 20px !important;
+        text-align: center !important;
+        cursor: pointer !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        min-height: 220px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        position: relative !important;
     }
-    .img-thumb-wrap:hover .del-btn { opacity: 1; }
+    .dz-premium-zone:hover, .dz-premium-zone.dz-drag-hover {
+        border-color: #1e293b !important;
+        background: var(--accent-soft) !important;
+        box-shadow: 0 10px 25px rgba(232, 83, 46, 0.08) !important;
+    }
+    .dz-premium-zone .dz-message {
+        margin: 0 !important;
+        width: 100% !important;
+    }
+    .dz-premium-zone .upload-icon-wrapper {
+        width: 70px;
+        height: 70px;
+        background: var(--accent-soft);
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+        transition: all 0.3s ease;
+    }
+    .dz-premium-zone:hover .upload-icon-wrapper {
+        background: var(--accent);
+        transform: translateY(-5px);
+    }
+    .dz-premium-zone .upload-icon-wrapper i {
+        font-size: 2.2rem;
+        transition: all 0.3s ease;
+    }
+    .dz-premium-zone:hover .upload-icon-wrapper i {
+        color: #fff !important;
+    }
+    .dz-premium-zone .dz-preview {
+        display: none !important;
+    }
+
+    .images-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 16px; margin-top: 25px; }
+    .img-thumb-wrap {
+        position: relative;
+        border-radius: 12px;
+        overflow: hidden;
+        aspect-ratio: 1;
+        background: #f8fafc;
+        border: 1px solid #edf2f7;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .img-thumb-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+    .img-thumb-wrap:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(4, 23, 65, 0.12);
+    }
+    .img-thumb-wrap:hover img {
+        transform: scale(1.08);
+    }
+    .img-thumb-wrap .del-btn {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        width: 28px;
+        height: 28px;
+        background: rgba(239, 68, 68, 0.95);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .75rem;
+        opacity: 0;
+        transform: scale(0.8);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 10;
+    }
+    .img-thumb-wrap:hover .del-btn {
+        opacity: 1;
+        transform: scale(1);
+    }
+    .img-thumb-wrap .del-btn:hover {
+        background: #dc2626;
+        transform: scale(1.1);
+    }
 
     /* ── Itinerary ── */
     .sortable-ghost { opacity: .4; background: #f8fafc !important; border: 2px dashed var(--accent) !important; }
@@ -311,12 +395,22 @@
         </div>
         <div class="agent-section-body">
             {{-- Dropzone --}}
-            <form id="trip-images-upload" class="dz-zone dropzone" action="{{ route('agent.trips.images.store', $trip->id) }}">
+            <form id="trip-images-upload" class="dz-premium-zone dropzone" action="{{ parse_url(route('agent.trips.images.store', $trip->id), PHP_URL_PATH) }}">
                 @csrf
                 <div class="dz-message">
-                    <i class="fas fa-cloud-upload-alt"></i>
-                    {{ __('Drag and drop photos here to upload') }}
-                    <br><small style="color:#94a3b8; font-weight:500; margin-top:4px; display:block;">JPG, PNG, GIF — {{ __('Max') }} 5MB</small>
+                    <div class="upload-icon-wrapper mb-3">
+                        <i class="fas fa-cloud-upload-alt" style="color: var(--accent);"></i>
+                    </div>
+                    <h5 class="fw-bold mb-1" style="color: #1e293b;">{{ __('Drag and drop photos here to upload') }}</h5>
+                    <span class="text-muted small">{{ __('or click to browse local files') }}</span>
+                    <div class="upload-limits mt-3">
+                        <span class="badge bg-light text-dark border-0 px-3 py-2" style="border-radius: 8px; font-weight: 600;">
+                            <i class="fas fa-file-image text-muted me-1"></i> JPG, PNG, GIF
+                        </span>
+                        <span class="badge bg-light text-dark border-0 px-3 py-2 ms-2" style="border-radius: 8px; font-weight: 600;">
+                            <i class="fas fa-weight-hanging text-muted me-1"></i> {{ __('Max') }} 5MB
+                        </span>
+                    </div>
                 </div>
             </form>
 
@@ -539,7 +633,7 @@
 Dropzone.autoDiscover = false;
 
 const myDropzone = new Dropzone('#trip-images-upload', {
-    url: "{{ route('agent.trips.images.store', $trip->id) }}",
+    url: "{{ parse_url(route('agent.trips.images.store', $trip->id), PHP_URL_PATH) }}",
     headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
     paramName: 'file',
     maxFilesize: 5,
@@ -581,7 +675,7 @@ function deleteImage(id, btn) {
         cancelButtonText: '{{ __("Cancel") }}',
     }).then(result => {
         if (!result.isConfirmed) return;
-        const url = "{{ route('agent.trips.images.destroy', ':id') }}".replace(':id', id);
+        const url = "{{ parse_url(route('agent.trips.images.destroy', ':id'), PHP_URL_PATH) }}".replace(':id', id);
         fetch(url, {
             method: 'DELETE',
             headers: {

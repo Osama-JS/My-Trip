@@ -45,49 +45,40 @@
 
 @push('styles')
 <style>
-    /* Premium Spaced Table Styling */
+    /* Premium Table Styling */
     .custom-table {
-        border-collapse: separate;
-        border-spacing: 0 12px !important;
         width: 100% !important;
-        margin-top: -10px;
+        margin-top: 10px;
+        border-collapse: collapse !important;
     }
     .custom-table thead th {
-        border: none !important;
-        background: transparent !important;
-        color: #94a3b8 !important;
+        border-bottom: 2px solid #e2e8f0 !important;
+        background-color: #f8fafc !important;
+        color: #475569 !important;
         font-weight: 700 !important;
-        font-size: 12px !important;
+        font-size: 13px !important;
         text-transform: uppercase !important;
         letter-spacing: 0.5px !important;
-        padding: 10px 20px !important;
-        border-bottom: 1px solid #f1f5f9 !important;
+        padding: 14px 16px !important;
+        text-align: left;
+    }
+    [dir="rtl"] .custom-table thead th {
+        text-align: right;
     }
     .custom-table tbody tr {
-        background: #ffffff !important;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
-        border-radius: 12px !important;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        background-color: #ffffff !important;
+        transition: background-color 0.2s ease !important;
+        border-bottom: 1px solid #f1f5f9 !important;
     }
     .custom-table tbody tr:hover {
-        transform: translateY(-3px) scale(1.002) !important;
-        box-shadow: 0 12px 24px rgba(4, 23, 65, 0.08) !important;
-        z-index: 10;
-        position: relative;
+        background-color: #f8fafc !important;
     }
     .custom-table tbody td {
-        border: none !important;
-        padding: 16px 20px !important;
+        padding: 14px 16px !important;
         vertical-align: middle !important;
-        background: inherit !important;
-    }
-    .custom-table tbody td:first-child {
-        border-top-left-radius: 12px !important;
-        border-bottom-left-radius: 12px !important;
-    }
-    .custom-table tbody td:last-child {
-        border-top-right-radius: 12px !important;
-        border-bottom-right-radius: 12px !important;
+        color: #334155 !important;
+        font-size: 13.5px !important;
+        background: transparent !important;
     }
 
     /* Custom Scrollbar for Responsive Table */
@@ -175,8 +166,25 @@
 <div class="row">
     <div class="col-12">
         <div class="card border-0 shadow-sm rounded-4">
-            <div class="card-header border-0 pb-0">
+            <div class="card-header border-0 pb-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <h4 class="card-title mb-0">{{ __('Company Management') }}</h4>
+                <!-- Advanced Filter Bar -->
+                <div class="d-flex align-items-center mt-3 mt-md-0 gap-2 flex-wrap">
+                    <!-- Search Input -->
+                    <div class="input-group input-group-sm rounded-pill border bg-white overflow-hidden px-2 align-items-center shadow-sm" style="width: 200px; height: 38px; border-color: #d1d9e6 !important;">
+                        <span class="text-muted"><i class="fas fa-search"></i></span>
+                        <input type="text" id="custom-search" class="form-control border-0 bg-transparent text-dark ps-2" placeholder="{{ __('Search...') }}" style="box-shadow: none; font-size: 13px;">
+                    </div>
+                    <!-- Status Filter -->
+                    <div class="filter-wrapper">
+                        <i class="fas fa-filter filter-icon"></i>
+                        <select class="form-select select2" id="filter-status" data-hide-search="true">
+                            <option value="">{{ __('All Status') }}</option>
+                            <option value="active">{{ __('Active') }}</option>
+                            <option value="inactive">{{ __('Inactive') }}</option>
+                        </select>
+                    </div>
+                </div>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -417,7 +425,7 @@
         CompanysTable = $('#Companys-table').DataTable({
             processing: true,
             serverSide: false,
-            ajax: "{{ route('admin.companies.data') }}",
+            ajax: "{{ parse_url(route('admin.companies.data'), PHP_URL_PATH) }}",
             columns: [
                 { data: 'logo', orderable: false, searchable: false },
                 { data: 'info' },
@@ -427,7 +435,7 @@
                 { data: 'actions', orderable: false, searchable: false }
             ],
             language: {
-                "url": "{{ asset('vendor/datatables/i18n/' . app()->getLocale() . '.json') }}",
+                "url": "{{ parse_url(asset('vendor/datatables/i18n/' . app()->getLocale() . '.json'), PHP_URL_PATH) }}",
                 "emptyTable": `<div class="empty-state">
                                 <i class="fas fa-folder-open"></i>
                                 <h5>لا توجد بيانات</h5>
@@ -440,6 +448,30 @@
                                </div>`
             }
         });
+
+        // Initialize select2
+        $('#filter-status').select2({
+            minimumResultsForSearch: -1,
+            width: '100%'
+        });
+
+        // Instant filter search logic helper
+        function performFilterSearch() {
+            // Status
+            let statusVal = $('#filter-status').val();
+            let statusSearch = statusVal ? (statusVal === 'active' ? '{{ __("Active") }}' : '{{ __("Inactive") }}') : '';
+            CompanysTable.column(4).search(statusSearch);
+
+            // Text search
+            let textVal = $('#custom-search').val();
+            CompanysTable.search(textVal);
+
+            // Redraw
+            CompanysTable.draw();
+        }
+
+        $('#filter-status').on('change', performFilterSearch);
+        $('#custom-search').on('keyup', performFilterSearch);
 
         $('#addCompanyForm').on('submit', function (e) {
             e.preventDefault();

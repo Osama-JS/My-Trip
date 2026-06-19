@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }}">
 <head>
+    <script>
+        (function() {
+            var currentLocaleDir = "{{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }}";
+            document.cookie = "direction=" + currentLocaleDir + ";path=/;max-age=" + (30 * 60);
+        })();
+    </script>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">

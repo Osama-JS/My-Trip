@@ -331,7 +331,7 @@
 @endpush
 
 <script>
-    var questionsDataUrl = "{{ route('admin.questions.data') }}";
+    var questionsDataUrl = "{{ parse_url(route('admin.questions.data'), PHP_URL_PATH) }}";
     let questionTable;
     $(document).ready(function() {
         questionTable = $('#question-table').DataTable({
@@ -345,7 +345,7 @@
                 { data: 'actions', orderable: false, searchable: false }
             ],
             language: {
-                "url": "{{ asset('vendor/datatables/i18n/' . app()->getLocale() . '.json') }}"
+                "url": "{{ parse_url(asset('vendor/datatables/i18n/' . app()->getLocale() . '.json'), PHP_URL_PATH) }}"
             },
             responsive: true,
             pageLength: 10

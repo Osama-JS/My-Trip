@@ -25,31 +25,38 @@ class BankTransferController extends Controller
             $transfers = BankTransfer::with(['user', 'booking.trip'])->latest()->get();
 
             $data = $transfers->map(function ($row) {
-                $statusClass = [
-                    'pending' => 'warning',
-                    'approved' => 'success',
-                    'rejected' => 'danger'
-                ][$row->status] ?? 'secondary';
+                $statusBadge = $row->status === 'approved'
+                    ? '<span class="badge bg-success-subtle text-success border border-success border-opacity-10 px-3 py-1 rounded-pill fw-bold"><i class="fas fa-check-circle me-1"></i>' . __('Approved') . '</span>'
+                    : ($row->status === 'rejected'
+                        ? '<span class="badge bg-danger-subtle text-danger border border-danger border-opacity-10 px-3 py-1 rounded-pill fw-bold"><i class="fas fa-times-circle me-1"></i>' . __('Rejected') . '</span>'
+                        : '<span class="badge bg-warning-subtle text-warning border border-warning border-opacity-10 px-3 py-1 rounded-pill fw-bold"><i class="fas fa-clock me-1"></i>' . __('Pending') . '</span>');
 
-                $statusBadge = '<span class="badge badge-'. $statusClass .'">'. strtoupper(__($row->status)) .'</span>';
+                $userInfo = '
+                <div class="d-flex align-items-center">
+                    <img src="' . ($row->user ? $row->user->profile_photo_url : asset('images/default-avatar.png')) . '" class="rounded-circle shadow-sm border border-2 border-white me-2" style="width: 36px; height: 36px; object-fit: cover;" alt="">
+                    <div>
+                        <strong class="text-dark">' . ($row->user ? $row->user->full_name : __('Guest')) . '</strong><br>
+                        <small class="text-muted">' . ($row->user ? $row->user->email : '') . '</small>
+                    </div>
+                </div>';
 
                 return [
                     'id' => $row->id,
-                    'user' => [
-                        'full_name' => $row->user ? $row->user->full_name : __('Guest'),
-                        'phone' => $row->user ? $row->user->phone : ''
-                    ],
-                    'booking' => [
-                        'trip' => [
-                            'title' => ($row->booking && $row->booking->trip) ? $row->booking->trip->title : '—'
-                        ]
-                    ],
-                    'amount' => number_format($row->booking->total_price ?? 0, 2) . ' ' . __('SAR'),
-                    'sender_name' => $row->sender_name,
-                    'receipt_number' => $row->receipt_number,
+                    'user' => $userInfo,
+                    'trip' => ($row->booking && $row->booking->trip) ? $row->booking->trip->title : '—',
+                    'amount' => '<strong class="text-dark">' . number_format($row->booking->total_price ?? $row->amount, 2) . ' ' . __('SAR') . '</strong>',
+                    'sender_name' => '<span class="fw-medium text-dark">' . $row->sender_name . '</span>',
+                    'receipt_number' => '<code class="bg-light px-2 py-1 rounded text-dark fw-bold">' . $row->receipt_number . '</code>',
                     'status' => $statusBadge,
-                    'created_at' => $row->created_at->format('Y-m-d H:i'),
-                    'actions' => '<a href="' . route('admin.bank-transfers.show', $row->id) . '" class="btn btn-primary shadow btn-xs sharp me-1"><i class="fas fa-eye"></i></a>'
+                    'created_at' => '<span class="text-muted">' . $row->created_at->format('Y-m-d H:i') . '</span>',
+                    'actions' => '<div class="dropdown">
+                                    <button type="button" class="btn btn-white btn-sm rounded-circle border shadow-sm" data-bs-toggle="dropdown" data-bs-boundary="viewport" aria-expanded="false" style="width:32px; height:32px; padding:0; display:inline-flex; align-items:center; justify-content:center; background-color:#ffffff !important; border-color:#e2e8f0 !important;">
+                                        <i class="fas fa-ellipsis-v text-muted"></i>
+                                    </button>
+                                    <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 py-2" style="z-index: 1060;">
+                                        <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="' . route('admin.bank-transfers.show', $row->id) . '"><i class="fa fa-eye text-primary me-3 w-15px"></i> '.__('Review').'</a>
+                                    </div>
+                                </div>'
                 ];
             });
 

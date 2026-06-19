@@ -21,6 +21,8 @@ class DashboardController extends Controller
             'bookings_pending' => \App\Models\TripBooking::where('booking_state', \App\Models\TripBooking::STATE_AWAITING_PAYMENT)->count(),
             'revenue_total' => \App\Models\TripBooking::where('booking_state', \App\Models\TripBooking::STATE_COMPLETED)->sum('total_price'),
             'companies_count' => \App\Models\Company::count(),
+            'bookings_today' => \App\Models\TripBooking::whereDate('created_at', today())->count(),
+            'tickets_open' => \App\Models\SupportTicket::where('status', 'open')->count(),
         ];
 
         $greeting = $this->getGreeting();
@@ -47,10 +49,23 @@ class DashboardController extends Controller
             $chartData[] = $found ? $found->count : 0;
         }
 
+        // Booking State Breakdown for Donut Chart
+        $stateCounts = \App\Models\TripBooking::selectRaw('booking_state, COUNT(*) as count')
+            ->groupBy('booking_state')
+            ->pluck('count', 'booking_state')
+            ->toArray();
+
+        $donutData = [
+            'pending_payment' => $stateCounts[\App\Models\TripBooking::STATE_AWAITING_PAYMENT] ?? 0,
+            'processing' => ($stateCounts['preparing'] ?? 0) + ($stateCounts['confirmed'] ?? 0) + ($stateCounts['issuing_tickets'] ?? 0) + ($stateCounts['tickets_uploaded'] ?? 0) + ($stateCounts['tickets_sent'] ?? 0),
+            'completed' => $stateCounts['completed'] ?? 0,
+            'cancelled' => $stateCounts['cancelled'] ?? 0,
+        ];
+
         $latestUsers = \App\Models\User::latest()->take(5)->get();
         $recentBookings = \App\Models\TripBooking::with(['user', 'trip'])->latest()->take(5)->get();
 
-        return view('admin.dashboard', compact('stats', 'chartLabels', 'chartData', 'latestUsers', 'greeting', 'adminName', 'recentBookings'));
+        return view('admin.dashboard', compact('stats', 'chartLabels', 'chartData', 'donutData', 'latestUsers', 'greeting', 'adminName', 'recentBookings'));
     }
 
     private function getGreeting()

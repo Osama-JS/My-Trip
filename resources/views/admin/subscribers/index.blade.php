@@ -62,47 +62,38 @@
 <style>
     /* Premium Table Styling */
     .custom-table {
-        border-collapse: separate;
-        border-spacing: 0 12px !important;
         width: 100% !important;
-        margin-top: -10px;
+        margin-top: 10px;
+        border-collapse: collapse !important;
     }
     .custom-table thead th {
-        border: none !important;
-        background: transparent !important;
-        color: #94a3b8 !important;
+        border-bottom: 2px solid #e2e8f0 !important;
+        background-color: #f8fafc !important;
+        color: #475569 !important;
         font-weight: 700 !important;
-        font-size: 12px !important;
+        font-size: 13px !important;
         text-transform: uppercase !important;
         letter-spacing: 0.5px !important;
-        padding: 10px 20px !important;
-        border-bottom: 1px solid #f1f5f9 !important;
+        padding: 14px 16px !important;
+        text-align: left;
+    }
+    [dir="rtl"] .custom-table thead th {
+        text-align: right;
     }
     .custom-table tbody tr {
-        background: #ffffff !important;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
-        border-radius: 12px !important;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        background-color: #ffffff !important;
+        transition: background-color 0.2s ease !important;
+        border-bottom: 1px solid #f1f5f9 !important;
     }
     .custom-table tbody tr:hover {
-        transform: translateY(-3px) scale(1.002) !important;
-        box-shadow: 0 12px 24px rgba(4, 23, 65, 0.08) !important;
-        z-index: 10;
-        position: relative;
+        background-color: #f8fafc !important;
     }
     .custom-table tbody td {
-        border: none !important;
-        padding: 18px 20px !important;
+        padding: 14px 16px !important;
         vertical-align: middle !important;
-        background: inherit !important;
-    }
-    .custom-table tbody td:first-child {
-        border-top-left-radius: 12px !important;
-        border-bottom-left-radius: 12px !important;
-    }
-    .custom-table tbody td:last-child {
-        border-top-right-radius: 12px !important;
-        border-bottom-right-radius: 12px !important;
+        color: #334155 !important;
+        font-size: 13.5px !important;
+        background: transparent !important;
     }
 
     /* Custom Scrollbar for Responsive Table */
@@ -111,9 +102,11 @@
         -webkit-overflow-scrolling: touch;
         padding-bottom: 10px;
         margin-top: 10px;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
     }
     .table-responsive::-webkit-scrollbar {
-        height: 8px;
+        height: 6px;
     }
     .table-responsive::-webkit-scrollbar-track {
         background: #f1f5f9;
@@ -143,46 +136,186 @@
     /* Empty state styling */
     .empty-state {
         text-align: center;
-        padding: 60px 20px;
+        padding: 50px 20px;
         background: #fff;
-        border-radius: 12px;
     }
     .empty-state i {
-        font-size: 3.5rem;
+        font-size: 3rem;
         color: #cbd5e1;
-        margin-bottom: 20px;
+        margin-bottom: 15px;
     }
     .empty-state h5 {
         color: #475569;
         font-weight: 700;
-        font-size: 18px;
+        font-size: 16px;
     }
     .empty-state p {
         color: #94a3b8;
-        font-size: 14px;
+        font-size: 13px;
         margin-bottom: 0;
     }
 
     /* DataTables Specific Overrides for cleaner look */
-    .dataTables_wrapper .dataTables_paginate .paginate_button.current, 
-    .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
-        background: #041741 !important;
-        color: #fff !important;
-        border: none !important;
-        border-radius: 8px !important;
-        box-shadow: 0 4px 10px rgba(4, 23, 65, 0.2) !important;
+    .dataTables_wrapper .dataTables_paginate {
+        margin-top: 15px !important;
+        display: flex;
+        justify-content: flex-end;
+        gap: 2px;
     }
     .dataTables_wrapper .dataTables_paginate .paginate_button {
+        padding: 6px 12px !important;
+        margin: 0 2px !important;
+        border: 1px solid #e2e8f0 !important;
         border-radius: 8px !important;
-        border: none !important;
+        background: #ffffff !important;
+        color: #475569 !important;
+        font-weight: 600 !important;
+        font-size: 13px !important;
         transition: all 0.2s ease !important;
+        cursor: pointer;
     }
     .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
         background: #f1f5f9 !important;
-        color: #1e293b !important;
+        border-color: #cbd5e1 !important;
+        color: #041741 !important;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current, 
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+        background: #041741 !important;
+        border-color: #041741 !important;
+        color: #fff !important;
+        box-shadow: 0 4px 12px rgba(4, 23, 65, 0.15) !important;
+    }
+    .dataTables_wrapper .dataTables_info {
+        color: #64748b !important;
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        margin-top: 15px !important;
     }
     table.dataTable.no-footer {
         border-bottom: none !important;
+    }
+    #subscribers-table_filter {
+        display: none !important;
+    }
+    
+    /* Premium Dropdown Styling */
+    .dropdown-menu {
+        border: 1px solid rgba(4, 23, 65, 0.08) !important;
+        border-radius: 12px !important;
+        box-shadow: 0 10px 30px rgba(4, 23, 65, 0.1) !important;
+        background: #ffffff !important;
+        padding: 6px 0 !important;
+    }
+    .dropdown-item {
+        color: #475569 !important;
+        font-weight: 500 !important;
+        font-size: 13.5px !important;
+        transition: all 0.2s ease !important;
+    }
+    .dropdown-item:hover {
+        background-color: rgba(4, 23, 65, 0.04) !important;
+        color: #041741 !important;
+    }
+    .dropdown-item i {
+        font-size: 14px;
+        opacity: 0.85;
+    }
+
+    /* Premium Input Styling */
+    .premium-input {
+        font-size: 14px !important;
+        height: 48px !important;
+        border: 1.5px solid #e2e8f0 !important;
+        background-color: #f8fafc !important;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        color: #1e293b !important;
+        font-weight: 500 !important;
+    }
+    .premium-input:hover {
+        border-color: #cbd5e1 !important;
+        background-color: #ffffff !important;
+    }
+    .premium-input:focus {
+        border-color: #041741 !important;
+        background-color: #ffffff !important;
+        box-shadow: 0 0 0 4px rgba(4, 23, 65, 0.1) !important;
+        outline: none !important;
+    }
+    .bg-primary-subtle {
+        background-color: rgba(4, 23, 65, 0.08) !important;
+        color: #041741 !important;
+    }
+    .bg-success-subtle {
+        background-color: rgba(34, 197, 94, 0.12) !important;
+        color: #22c55e !important;
+    }
+    .cursor-pointer {
+        cursor: pointer !important;
+    }
+
+    /* Subscribers Modals Premium Styling */
+    .detail-box {
+        background: #f8fafc !important;
+        border: 1px solid #e2e8f0 !important;
+        transition: all 0.2s ease;
+    }
+    .detail-box:hover {
+        background: #ffffff !important;
+        border-color: #cbd5e1 !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
+        transform: translateY(-2px);
+    }
+    .status-indicator {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        display: inline-block;
+        border: 2.5px solid #ffffff;
+        box-shadow: 0 0 10px rgba(0,0,0,0.15);
+    }
+    .status-indicator.bg-success {
+        background-color: #22c55e !important;
+        animation: pulse-green 2s infinite;
+    }
+    .status-indicator.bg-danger {
+        background-color: #ef4444 !important;
+    }
+    @keyframes pulse-green {
+        0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+        70% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+    }
+    
+    .password-toggle-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        border: 0;
+        background: transparent;
+        color: #64748b;
+        z-index: 5;
+        padding: 0 12px;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+    }
+    /* LTR default */
+    .password-toggle-btn {
+        right: 0;
+    }
+    /* RTL override */
+    [dir="rtl"] .password-toggle-btn {
+        left: 0;
+        right: auto;
+    }
+    .premium-input.password-input {
+        padding-right: 42px !important;
+    }
+    [dir="rtl"] .premium-input.password-input {
+        padding-left: 42px !important;
+        padding-right: 12px !important;
     }
 </style>
 @endpush
@@ -190,20 +323,33 @@
 <div class="row">
     <div class="col-12">
         <div class="card border-0 shadow-sm rounded-4">
-            <div class="card-header border-0 pb-0 d-flex justify-content-between align-items-center flex-wrap">
+            <div class="card-header border-0 pb-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <h4 class="card-title mb-0">{{ __('Subscribers List') }}</h4>
                 <!-- Advanced Filter Bar -->
-                <div class="d-flex align-items-center mt-3 mt-md-0">
-                    <select class="form-select form-select-sm rounded-pill shadow-sm me-2 border-0 bg-light text-muted" id="filter-status" style="width: auto;">
-                        <option value="">{{ __('All Status') }}</option>
-                        <option value="active">{{ __('Active') }}</option>
-                        <option value="inactive">{{ __('Inactive') }}</option>
-                    </select>
-                    <select class="form-select form-select-sm rounded-pill shadow-sm border-0 bg-light text-muted" id="filter-verification" style="width: auto;">
-                        <option value="">{{ __('All Verification') }}</option>
-                        <option value="verified">{{ __('Verified') }}</option>
-                        <option value="unverified">{{ __('Unverified') }}</option>
-                    </select>
+                <div class="d-flex align-items-center mt-3 mt-md-0 gap-2 flex-wrap">
+                    <!-- Search Input -->
+                    <div class="input-group input-group-sm rounded-pill border bg-white overflow-hidden px-2 align-items-center shadow-sm" style="width: 200px; height: 38px; border-color: #d1d9e6 !important;">
+                        <span class="text-muted"><i class="fas fa-search"></i></span>
+                        <input type="text" id="custom-search" class="form-control border-0 bg-transparent text-dark ps-2" placeholder="{{ __('Search...') }}" style="box-shadow: none; font-size: 13px;">
+                    </div>
+                    <!-- Status Filter -->
+                    <div class="filter-wrapper">
+                        <i class="fas fa-filter filter-icon"></i>
+                        <select class="form-select select2" id="filter-status" data-hide-search="true">
+                            <option value="">{{ __('All Status') }}</option>
+                            <option value="active">{{ __('Active') }}</option>
+                            <option value="inactive">{{ __('Inactive') }}</option>
+                        </select>
+                    </div>
+                    <!-- Verification Filter -->
+                    <div class="filter-wrapper">
+                        <i class="fas fa-certificate filter-icon"></i>
+                        <select class="form-select select2" id="filter-verification" data-hide-search="true">
+                            <option value="">{{ __('All Verification') }}</option>
+                            <option value="verified">{{ __('Verified') }}</option>
+                            <option value="unverified">{{ __('Unverified') }}</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             <div class="card-body">
@@ -229,57 +375,95 @@
 {{-- Add Subscriber Modal --}}
 <div class="modal fade" id="addSubscriberModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header bg-light border-0 px-4 py-3">
-                <h5 class="modal-title fw-bold text-dark"><i class="fas fa-user-plus me-2 text-primary"></i>{{ __('Add New Subscriber') }}</h5>
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden" style="background-color: #ffffff; border-top: 5px solid #041741 !important;">
+            <div class="modal-header border-0 px-4 pt-4 pb-0 bg-transparent">
+                <div>
+                    <h5 class="modal-title fw-bold text-dark"><i class="fas fa-user-plus me-2 text-primary"></i>{{ __('Add New Subscriber') }}</h5>
+                    <p class="text-muted mb-0 small mt-1">{{ __('Create a new customer profile with personalized information.') }}</p>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="addSubscriberForm">
                 @csrf
                 <input type="hidden" name="user_type" value="customer">
-                <div class="modal-body p-4 bg-white">
+                <div class="modal-body p-4">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label fw-medium text-muted small text-uppercase">{{ __('First Name') }}</label>
-                            <input type="text" name="first_name" class="form-control form-control-lg rounded-3 bg-light border-0" required>
+                            <label class="form-label fw-bold text-muted small text-uppercase mb-2 d-flex align-items-center gap-2">
+                                <span class="d-inline-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-circle" style="width: 24px; height: 24px; font-size: 11px;">
+                                    <i class="fas fa-user"></i>
+                                </span>
+                                {{ __('First Name') }}
+                            </label>
+                            <input type="text" name="first_name" class="form-control premium-input rounded-3 text-dark" required placeholder="{{ __('Enter first name') }}">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Last Name') }}</label>
-                            <input type="text" name="last_name" class="form-control form-control-lg rounded-3 bg-light border-0" required>
+                            <label class="form-label fw-bold text-muted small text-uppercase mb-2 d-flex align-items-center gap-2">
+                                <span class="d-inline-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-circle" style="width: 24px; height: 24px; font-size: 11px;">
+                                    <i class="fas fa-user"></i>
+                                </span>
+                                {{ __('Last Name') }}
+                            </label>
+                            <input type="text" name="last_name" class="form-control premium-input rounded-3 text-dark" required placeholder="{{ __('Enter last name') }}">
                         </div>
                         <div class="col-md-12">
-                            <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Email Address') }}</label>
-                            <div class="input-group input-group-lg bg-light rounded-3">
-                                <span class="input-group-text bg-transparent border-0"><i class="fas fa-envelope text-muted"></i></span>
-                                <input type="email" name="email" class="form-control bg-transparent border-0 ps-0" required>
-                            </div>
+                            <label class="form-label fw-bold text-muted small text-uppercase mb-2 d-flex align-items-center gap-2">
+                                <span class="d-inline-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-circle" style="width: 24px; height: 24px; font-size: 11px;">
+                                    <i class="fas fa-envelope"></i>
+                                </span>
+                                {{ __('Email Address') }}
+                            </label>
+                            <input type="email" name="email" class="form-control premium-input rounded-3 text-dark" required placeholder="{{ __('Enter email address') }}">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Dial Code') }}</label>
-                            <input type="text" name="country_code" class="form-control form-control-lg rounded-3 bg-light border-0" placeholder="+966">
+                            <label class="form-label fw-bold text-muted small text-uppercase mb-2 d-flex align-items-center gap-2">
+                                <span class="d-inline-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-circle" style="width: 24px; height: 24px; font-size: 11px;">
+                                    <i class="fas fa-globe"></i>
+                                </span>
+                                {{ __('Dial Code') }}
+                            </label>
+                            <input type="text" name="country_code" class="form-control premium-input rounded-3 text-dark" placeholder="+966">
                         </div>
                         <div class="col-md-8">
-                            <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Phone Number') }}</label>
-                            <input type="text" name="phone" class="form-control form-control-lg rounded-3 bg-light border-0">
+                            <label class="form-label fw-bold text-muted small text-uppercase mb-2 d-flex align-items-center gap-2">
+                                <span class="d-inline-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-circle" style="width: 24px; height: 24px; font-size: 11px;">
+                                    <i class="fas fa-phone"></i>
+                                </span>
+                                {{ __('Phone Number') }}
+                            </label>
+                            <input type="text" name="phone" class="form-control premium-input rounded-3 text-dark" placeholder="{{ __('Enter phone number') }}">
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Password') }}</label>
-                            <div class="input-group input-group-lg bg-light rounded-3">
-                                <span class="input-group-text bg-transparent border-0"><i class="fas fa-lock text-muted"></i></span>
-                                <input type="password" name="password" class="form-control bg-transparent border-0 ps-0" required minlength="8">
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold text-muted small text-uppercase mb-2 d-flex align-items-center gap-2">
+                                <span class="d-inline-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-circle" style="width: 24px; height: 24px; font-size: 11px;">
+                                    <i class="fas fa-lock"></i>
+                                </span>
+                                {{ __('Password') }}
+                            </label>
+                            <input type="password" name="password" class="form-control premium-input rounded-3 text-dark" required minlength="8" placeholder="{{ __('Enter secure password') }}">
+                        </div>
+                        
+                        <!-- Account Status Card Toggle Box -->
+                        <div class="col-12 mt-4">
+                            <div class="p-3 rounded-3 border d-flex align-items-center justify-content-between" style="background-color: #f8fafc; border-color: #e2e8f0 !important;">
+                                <div class="d-flex align-items-center gap-3">
+                                    <span class="d-inline-flex align-items-center justify-content-center bg-success-subtle text-success rounded-circle" style="width: 40px; height: 40px; font-size: 16px;">
+                                        <i class="fas fa-power-off"></i>
+                                    </span>
+                                    <div>
+                                        <h6 class="fw-bold mb-1 text-dark" style="font-size: 13.5px;">{{ __('Account Status') }}</h6>
+                                        <p class="text-muted mb-0 small">{{ __('Activate this account immediately upon creation.') }}</p>
+                                    </div>
+                                </div>
+                                <div class="form-check form-switch p-0 m-0">
+                                    <input class="form-check-input ms-0 cursor-pointer" type="checkbox" role="switch" id="add_status" name="status" value="active" checked style="width: 48px; height: 24px;">
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Status') }}</label>
-                            <select name="status" class="form-select form-select-lg rounded-3 bg-light border-0" required>
-                                <option value="active">{{ __('Active') }}</option>
-                                <option value="inactive">{{ __('Inactive') }}</option>
-                            </select>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer bg-light border-0 px-4 py-3">
-                    <button type="button" class="btn btn-light rounded-pill px-4 shadow-sm" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                <div class="modal-footer border-0 px-4 pb-4 pt-2 bg-transparent">
+                    <button type="button" class="btn btn-light rounded-pill px-4 shadow-sm border" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
                     <button type="submit" class="btn btn-primary rounded-pill px-5 shadow-sm"><i class="fas fa-save me-2"></i>{{ __('Create Subscriber') }}</button>
                 </div>
             </form>
@@ -290,51 +474,87 @@
 {{-- Edit Subscriber Modal --}}
 <div class="modal fade" id="editSubscriberModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header bg-light border-0 px-4 py-3">
-                <h5 class="modal-title fw-bold text-dark"><i class="fas fa-user-edit me-2 text-primary"></i>{{ __('Edit Subscriber') }}</h5>
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden" style="background-color: #ffffff; border-top: 5px solid #041741 !important;">
+            <div class="modal-header border-0 px-4 pt-4 pb-0 bg-transparent">
+                <div>
+                    <h5 class="modal-title fw-bold text-dark"><i class="fas fa-user-edit me-2 text-primary"></i>{{ __('Edit Subscriber') }}</h5>
+                    <p class="text-muted mb-0 small mt-1">{{ __('Update subscriber credentials and account properties.') }}</p>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="editSubscriberForm">
                 @csrf
                 @method('PUT')
                 <input type="hidden" name="id" id="edit_subscriber_id">
-                <div class="modal-body p-4 bg-white">
+                <div class="modal-body p-4">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label fw-medium text-muted small text-uppercase">{{ __('First Name') }}</label>
-                            <input type="text" name="first_name" id="edit_first_name" class="form-control form-control-lg rounded-3 bg-light border-0" required>
+                            <label class="form-label fw-bold text-muted small text-uppercase mb-2 d-flex align-items-center gap-2">
+                                <span class="d-inline-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-circle" style="width: 24px; height: 24px; font-size: 11px;">
+                                    <i class="fas fa-user"></i>
+                                </span>
+                                {{ __('First Name') }}
+                            </label>
+                            <input type="text" name="first_name" id="edit_first_name" class="form-control premium-input rounded-3 text-dark" required placeholder="{{ __('Enter first name') }}">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Last Name') }}</label>
-                            <input type="text" name="last_name" id="edit_last_name" class="form-control form-control-lg rounded-3 bg-light border-0" required>
+                            <label class="form-label fw-bold text-muted small text-uppercase mb-2 d-flex align-items-center gap-2">
+                                <span class="d-inline-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-circle" style="width: 24px; height: 24px; font-size: 11px;">
+                                    <i class="fas fa-user"></i>
+                                </span>
+                                {{ __('Last Name') }}
+                            </label>
+                            <input type="text" name="last_name" id="edit_last_name" class="form-control premium-input rounded-3 text-dark" required placeholder="{{ __('Enter last name') }}">
                         </div>
                         <div class="col-md-12">
-                            <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Email Address') }}</label>
-                            <div class="input-group input-group-lg bg-light rounded-3">
-                                <span class="input-group-text bg-transparent border-0"><i class="fas fa-envelope text-muted"></i></span>
-                                <input type="email" name="email" id="edit_email" class="form-control bg-transparent border-0 ps-0" required>
-                            </div>
+                            <label class="form-label fw-bold text-muted small text-uppercase mb-2 d-flex align-items-center gap-2">
+                                <span class="d-inline-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-circle" style="width: 24px; height: 24px; font-size: 11px;">
+                                    <i class="fas fa-envelope"></i>
+                                </span>
+                                {{ __('Email Address') }}
+                            </label>
+                            <input type="email" name="email" id="edit_email" class="form-control premium-input rounded-3 text-dark" required placeholder="{{ __('Enter email address') }}">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Dial Code') }}</label>
-                            <input type="text" name="country_code" id="edit_country_code" class="form-control form-control-lg rounded-3 bg-light border-0" placeholder="+966">
+                            <label class="form-label fw-bold text-muted small text-uppercase mb-2 d-flex align-items-center gap-2">
+                                <span class="d-inline-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-circle" style="width: 24px; height: 24px; font-size: 11px;">
+                                    <i class="fas fa-globe"></i>
+                                </span>
+                                {{ __('Dial Code') }}
+                            </label>
+                            <input type="text" name="country_code" id="edit_country_code" class="form-control premium-input rounded-3 text-dark" placeholder="+966">
                         </div>
                         <div class="col-md-8">
-                            <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Phone Number') }}</label>
-                            <input type="text" name="phone" id="edit_phone" class="form-control form-control-lg rounded-3 bg-light border-0">
+                            <label class="form-label fw-bold text-muted small text-uppercase mb-2 d-flex align-items-center gap-2">
+                                <span class="d-inline-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-circle" style="width: 24px; height: 24px; font-size: 11px;">
+                                    <i class="fas fa-phone"></i>
+                                </span>
+                                {{ __('Phone Number') }}
+                            </label>
+                            <input type="text" name="phone" id="edit_phone" class="form-control premium-input rounded-3 text-dark" placeholder="{{ __('Enter phone number') }}">
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Status') }}</label>
-                            <select name="status" id="edit_status" class="form-select form-select-lg rounded-3 bg-light border-0" required>
-                                <option value="active">{{ __('Active') }}</option>
-                                <option value="inactive">{{ __('Inactive') }}</option>
-                            </select>
+                        
+                        <!-- Account Status Card Toggle Box -->
+                        <div class="col-12 mt-4">
+                            <div class="p-3 rounded-3 border d-flex align-items-center justify-content-between" style="background-color: #f8fafc; border-color: #e2e8f0 !important;">
+                                <div class="d-flex align-items-center gap-3">
+                                    <span class="d-inline-flex align-items-center justify-content-center bg-success-subtle text-success rounded-circle" style="width: 40px; height: 40px; font-size: 16px;">
+                                        <i class="fas fa-power-off"></i>
+                                    </span>
+                                    <div>
+                                        <h6 class="fw-bold mb-1 text-dark" style="font-size: 13.5px;">{{ __('Account Status') }}</h6>
+                                        <p class="text-muted mb-0 small">{{ __('Deactivating this account will immediately revoke all access rights.') }}</p>
+                                    </div>
+                                </div>
+                                <div class="form-check form-switch p-0 m-0">
+                                    <input class="form-check-input ms-0 cursor-pointer" type="checkbox" role="switch" id="edit_status" name="status" value="active" style="width: 48px; height: 24px;">
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer bg-light border-0 px-4 py-3">
-                    <button type="button" class="btn btn-light rounded-pill px-4 shadow-sm" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                <div class="modal-footer border-0 px-4 pb-4 pt-2 bg-transparent">
+                    <button type="button" class="btn btn-light rounded-pill px-4 shadow-sm border" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
                     <button type="submit" class="btn btn-primary rounded-pill px-5 shadow-sm"><i class="fas fa-save me-2"></i>{{ __('Update Changes') }}</button>
                 </div>
             </form>
@@ -345,34 +565,51 @@
 {{-- Reset Password Modal --}}
 <div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header bg-light border-0 px-4 py-3">
-                <h5 class="modal-title fw-bold text-dark"><i class="fas fa-key me-2 text-primary"></i>{{ __('Reset Password') }}</h5>
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden" style="background-color: #ffffff; border-top: 5px solid #041741 !important;">
+            <div class="modal-header border-0 px-4 pt-4 pb-0 bg-transparent">
+                <div>
+                    <h5 class="modal-title fw-bold text-dark"><i class="fas fa-key me-2 text-primary"></i>{{ __('Reset Password') }}</h5>
+                    <p class="text-muted mb-0 small mt-1">{{ __('Set a strong new password for this subscriber. Minimum 8 characters.') }}</p>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="resetPasswordForm">
                 @csrf
                 <input type="hidden" id="reset_user_id">
-                <div class="modal-body p-4 bg-white">
+                <div class="modal-body p-4">
                     <div class="row g-3">
                         <div class="col-md-12">
-                            <label class="form-label fw-medium text-muted small text-uppercase">{{ __('New Password') }}</label>
-                            <div class="input-group input-group-lg bg-light rounded-3">
-                                <span class="input-group-text bg-transparent border-0"><i class="fas fa-lock text-muted"></i></span>
-                                <input type="password" name="password" class="form-control bg-transparent border-0 ps-0" required minlength="8">
+                            <label class="form-label fw-bold text-muted small text-uppercase mb-2 d-flex align-items-center gap-2">
+                                <span class="d-inline-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-circle" style="width: 24px; height: 24px; font-size: 11px;">
+                                    <i class="fas fa-lock"></i>
+                                </span>
+                                {{ __('New Password') }}
+                            </label>
+                            <div class="position-relative">
+                                <input type="password" name="password" id="reset_password" class="form-control premium-input password-input rounded-3 text-dark" required minlength="8" placeholder="{{ __('Enter new password') }}">
+                                <button class="password-toggle-btn text-muted" type="button" onclick="togglePasswordVisibility('reset_password', this)">
+                                    <i class="far fa-eye"></i>
+                                </button>
                             </div>
                         </div>
                         <div class="col-md-12">
-                            <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Confirm New Password') }}</label>
-                            <div class="input-group input-group-lg bg-light rounded-3">
-                                <span class="input-group-text bg-transparent border-0"><i class="fas fa-lock text-muted"></i></span>
-                                <input type="password" name="password_confirmation" class="form-control bg-transparent border-0 ps-0" required minlength="8">
+                            <label class="form-label fw-bold text-muted small text-uppercase mb-2 d-flex align-items-center gap-2">
+                                <span class="d-inline-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-circle" style="width: 24px; height: 24px; font-size: 11px;">
+                                    <i class="fas fa-lock"></i>
+                                </span>
+                                {{ __('Confirm New Password') }}
+                            </label>
+                            <div class="position-relative">
+                                <input type="password" name="password_confirmation" id="reset_password_confirmation" class="form-control premium-input password-input rounded-3 text-dark" required minlength="8" placeholder="{{ __('Confirm new password') }}">
+                                <button class="password-toggle-btn text-muted" type="button" onclick="togglePasswordVisibility('reset_password_confirmation', this)">
+                                    <i class="far fa-eye"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer bg-light border-0 px-4 py-3">
-                    <button type="button" class="btn btn-light rounded-pill px-4 shadow-sm" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                <div class="modal-footer border-0 px-4 pb-4 pt-2 bg-transparent">
+                    <button type="button" class="btn btn-light rounded-pill px-4 shadow-sm border" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
                     <button type="submit" class="btn btn-primary rounded-pill px-5 shadow-sm">{{ __('Reset') }}</button>
                 </div>
             </form>
@@ -383,16 +620,18 @@
 {{-- View Subscriber Modal --}}
 <div class="modal fade" id="viewSubscriberModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header bg-light border-0 px-4 py-3">
-                <h5 class="modal-title fw-bold text-dark"><i class="fas fa-id-card me-2 text-primary"></i>{{ __('Subscriber Details') }}</h5>
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden" style="background-color: #ffffff; border-top: 5px solid #041741 !important;">
+            <div class="modal-header border-0 px-4 pt-4 pb-0 bg-transparent">
+                <div>
+                    <h5 class="modal-title fw-bold text-dark mb-0"><i class="fas fa-id-card me-2 text-primary"></i>{{ __('Subscriber Details') }}</h5>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body p-4 bg-white" id="viewSubscriberBody">
+            <div class="modal-body p-4" id="viewSubscriberBody">
                 {{-- Loaded via AJAX --}}
             </div>
-            <div class="modal-footer bg-light border-0 px-4 py-2">
-                <button type="button" class="btn btn-light rounded-pill px-4 shadow-sm" data-bs-dismiss="modal">{{ __('Close') }}</button>
+            <div class="modal-footer border-0 px-4 pb-4 pt-2 bg-transparent">
+                <button type="button" class="btn btn-primary rounded-pill px-4" data-bs-dismiss="modal">{{ __('Close') }}</button>
             </div>
         </div>
     </div>
@@ -407,7 +646,7 @@ $(document).ready(function() {
     subscribersTable = $('#subscribers-table').DataTable({
         processing: true,
         serverSide: false,
-        ajax: "{{ route('admin.subscribers.data') }}",
+        ajax: "{{ parse_url(route('admin.subscribers.data'), PHP_URL_PATH) }}",
         columns: [
             { data: 'photo' },
             { data: 'info' },
@@ -417,7 +656,7 @@ $(document).ready(function() {
             { data: 'actions', orderable: false, searchable: false }
         ],
         language: {
-            "url": "{{ asset('vendor/datatables/i18n/' . app()->getLocale() . '.json') }}",
+            "url": "{{ parse_url(asset('vendor/datatables/i18n/' . app()->getLocale() . '.json'), PHP_URL_PATH) }}",
             "emptyTable": `<div class="empty-state">
                             <i class="fas fa-folder-open"></i>
                             <h5>لا توجد بيانات</h5>
@@ -432,31 +671,54 @@ $(document).ready(function() {
         order: [[0, 'desc']]
     });
 
-    // Filter by Status
-    $('#filter-status').on('change', function() {
-        let val = $(this).val();
-        let searchStr = val ? (val === 'active' ? '{{ __("Active") }}' : '{{ __("Inactive") }}') : '';
-        subscribersTable.column(3).search(searchStr).draw();
+    // Initialize select2
+    $('#filter-status, #filter-verification').select2({
+        minimumResultsForSearch: -1,
+        width: '100%'
     });
 
-    // Filter by Verification
-    $('#filter-verification').on('change', function() {
-        let val = $(this).val();
-        let searchStr = val ? (val === 'verified' ? '{{ __("Verified") }}' : '{{ __("Unverified") }}') : '';
-        subscribersTable.column(4).search(searchStr).draw();
-    });
+    // Instant filter logic helper
+    function performFilterSearch() {
+        // Status filter
+        let statusVal = $('#filter-status').val();
+        let statusSearch = statusVal ? (statusVal === 'active' ? '{{ __("Active") }}' : '{{ __("Inactive") }}') : '';
+        subscribersTable.column(3).search(statusSearch);
+
+        // Verification filter
+        let verVal = $('#filter-verification').val();
+        let verSearch = verVal ? (verVal === 'verified' ? '{{ __("Verified") }}' : '{{ __("Unverified") }}') : '';
+        subscribersTable.column(4).search(verSearch);
+
+        // Text Search
+        let textVal = $('#custom-search').val();
+        subscribersTable.search(textVal);
+
+        // Redraw
+        subscribersTable.draw();
+    }
+
+    // Bind events for instant search
+    $('#filter-status, #filter-verification').on('change', performFilterSearch);
+    $('#custom-search').on('keyup', performFilterSearch);
 
     // Add Subscriber
     $('#addSubscriberForm').on('submit', function(e) {
         e.preventDefault();
+        let formData = $(this).serializeArray();
+        let statusVal = $('#add_status').is(':checked') ? 'active' : 'inactive';
+        formData = formData.filter(item => item.name !== 'status');
+        formData.push({name: 'status', value: statusVal});
+
         $.ajax({
             url: "{{ route('admin.users.store') }}",
             type: "POST",
-            data: $(this).serialize(),
+            data: $.param(formData),
             success: function(response) {
                 if (response.success) {
                     $('#addSubscriberModal').modal('hide');
                     $('#addSubscriberForm')[0].reset();
+                    // Set default status check to true for next open
+                    $('#add_status').prop('checked', true);
                     subscribersTable.ajax.reload(null, false);
                     toastr.success(response.message);
                 }
@@ -475,12 +737,17 @@ $(document).ready(function() {
     // Edit Subscriber
     $('#editSubscriberForm').on('submit', function(e) {
         e.preventDefault();
+        let formData = $(this).serializeArray();
+        let statusVal = $('#edit_status').is(':checked') ? 'active' : 'inactive';
+        formData = formData.filter(item => item.name !== 'status');
+        formData.push({name: 'status', value: statusVal});
+
         const id = $('#edit_subscriber_id').val();
         const url = "{{ route('admin.users.update', ':id') }}".replace(':id', id);
         $.ajax({
             url: url,
             type: "POST",
-            data: $(this).serialize(),
+            data: $.param(formData),
             success: function(response) {
                 if (response.success) {
                     $('#editSubscriberModal').modal('hide');
@@ -503,7 +770,7 @@ $(document).ready(function() {
     $('#resetPasswordForm').on('submit', function(e) {
         e.preventDefault();
         const id = $('#reset_user_id').val();
-        const url = "{{ route('admin.users.reset-password', ':id') }}".replace(':id', id);
+        const url = "{{ parse_url(route('admin.users.reset-password', ':id'), PHP_URL_PATH) }}".replace(':id', id);
         $.ajax({
             url: url,
             type: "POST",
@@ -527,25 +794,86 @@ $(document).ready(function() {
     });
 });
 
+function togglePasswordVisibility(fieldId, button) {
+    const input = document.getElementById(fieldId);
+    if (!input) return;
+    const icon = button.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+
 function viewSubscriber(id) {
-    $.get("{{ route('admin.users.show', ':id') }}".replace(':id', id), function(response) {
+    const url = "{{ parse_url(route('admin.users.show', ':id'), PHP_URL_PATH) }}".replace(':id', id);
+    $.get(url, function(response) {
         if (response.success) {
             const user = response.user;
+            const statusIndicator = user.status === 'active' 
+                ? '<span class="status-indicator bg-success"></span>' 
+                : '<span class="status-indicator bg-danger"></span>';
+                
+            const statusBadge = user.status === 'active' 
+                ? `<span class="badge bg-success-subtle text-success border border-success border-opacity-10 px-3 py-1 rounded-pill fw-bold"><i class="fas fa-check-circle me-1"></i>{{ __("Active") }}</span>` 
+                : `<span class="badge bg-danger-subtle text-danger border border-danger border-opacity-10 px-3 py-1 rounded-pill fw-bold"><i class="fas fa-times-circle me-1"></i>{{ __("Inactive") }}</span>`;
+
+            const phoneVal = `${user.country_code ? user.country_code + ' ' : ''}${user.phone || '---'}`;
+            const locationVal = (user.city || user.country) ? `${user.city || ''}${user.city && user.country ? ', ' : ''}${user.country || ''}` : '---';
+
             const html = `
-                <div class="row align-items-center">
-                    <div class="col-md-4 text-center mb-3 mb-md-0">
-                        <img src="${response.photo_url}" class="img-fluid rounded-circle shadow mb-3 border border-3 border-white" style="max-width: 130px; height: 130px; object-fit: cover;">
-                        <h5 class="mb-1 fw-bold">${user.first_name} ${user.last_name}</h5>
-                        <p class="text-muted mb-0 small">${user.email}</p>
+                <div class="profile-card-details text-center pb-4 mb-4 border-bottom border-light">
+                    <div class="avatar-container position-relative d-inline-block mb-3">
+                        <img src="${response.photo_url}" class="rounded-circle shadow-md border border-4 border-white" style="width: 110px; height: 110px; object-fit: cover; box-shadow: 0 8px 20px rgba(0,0,0,0.08) !important;">
+                        <span class="position-absolute bottom-0 end-0 me-1 mb-1">
+                            ${statusIndicator}
+                        </span>
                     </div>
-                    <div class="col-md-8">
-                        <table class="table table-borderless table-sm mb-0">
-                            <tr><th class="text-muted" style="width: 40%;">{{ __('Phone') }}</th><td class="fw-bold">${user.country_code ? user.country_code + ' ' : ''}${user.phone || '---'}</td></tr>
-                            <tr><th class="text-muted">{{ __('City') }}</th><td class="fw-bold">${user.city || '---'}</td></tr>
-                            <tr><th class="text-muted">{{ __('Country') }}</th><td class="fw-bold">${user.country || '---'}</td></tr>
-                            <tr><th class="text-muted">{{ __('Status') }}</th><td class="fw-bold">${user.status === 'active' ? '<span class="badge badge-success px-3 py-1 rounded-pill">{{ __("Active") }}</span>' : '<span class="badge badge-danger px-3 py-1 rounded-pill">{{ __("Inactive") }}</span>'}</td></tr>
-                            <tr><th class="text-muted">{{ __('Joined') }}</th><td class="fw-bold">${response.created_at}</td></tr>
-                        </table>
+                    <h4 class="fw-bold text-dark mb-1">${user.first_name} ${user.last_name}</h4>
+                    <p class="text-muted mb-0 small d-flex align-items-center justify-content-center gap-1">
+                        <i class="far fa-envelope text-primary"></i> ${user.email}
+                    </p>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="detail-box p-3 rounded-3 h-100">
+                            <div class="text-muted small mb-1 fw-bold text-uppercase d-flex align-items-center gap-2">
+                                <i class="fas fa-phone text-muted"></i>
+                                {{ __('Phone') }}
+                            </div>
+                            <div class="fw-bold text-dark">${phoneVal}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-box p-3 rounded-3 h-100">
+                            <div class="text-muted small mb-1 fw-bold text-uppercase d-flex align-items-center gap-2">
+                                <i class="fas fa-map-marker-alt text-muted"></i>
+                                {{ __('Location') }}
+                            </div>
+                            <div class="fw-bold text-dark">${locationVal}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-box p-3 rounded-3 h-100">
+                            <div class="text-muted small mb-1 fw-bold text-uppercase d-flex align-items-center gap-2">
+                                <i class="fas fa-toggle-on text-muted"></i>
+                                {{ __('Status') }}
+                            </div>
+                            <div class="mt-1">${statusBadge}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-box p-3 rounded-3 h-100">
+                            <div class="text-muted small mb-1 fw-bold text-uppercase d-flex align-items-center gap-2">
+                                <i class="fas fa-calendar-alt text-muted"></i>
+                                {{ __('Joined') }}
+                            </div>
+                            <div class="fw-bold text-dark">${response.created_at}</div>
+                        </div>
                     </div>
                 </div>
             `;
@@ -556,7 +884,8 @@ function viewSubscriber(id) {
 }
 
 function editSubscriber(id) {
-    $.get("{{ route('admin.users.show', ':id') }}".replace(':id', id), function(response) {
+    const url = "{{ parse_url(route('admin.users.show', ':id'), PHP_URL_PATH) }}".replace(':id', id);
+    $.get(url, function(response) {
         if (response.success) {
             const user = response.user;
             $('#edit_subscriber_id').val(user.id);
@@ -565,13 +894,20 @@ function editSubscriber(id) {
             $('#edit_email').val(user.email);
             $('#edit_country_code').val(user.country_code);
             $('#edit_phone').val(user.phone);
-            $('#edit_status').val(user.status);
+            $('#edit_status').prop('checked', user.status === 'active');
             $('#editSubscriberModal').modal('show');
         }
     });
 }
 
 function toggleSubscriberStatus(id) {
+    const checkbox = document.getElementById('status_switch_' + id);
+    if (!checkbox) return;
+    const isChecked = checkbox.checked;
+    
+    // Temporarily revert the checkbox visual state until confirmed
+    checkbox.checked = !isChecked;
+
     Swal.fire({
         title: '{{ __("Are you sure?") }}',
         text: '{{ __("Do you want to toggle this subscriber status?") }}',
@@ -582,14 +918,21 @@ function toggleSubscriberStatus(id) {
         confirmButtonText: '{{ __("Yes, Change it!") }}'
     }).then((result) => {
         if (result.value) {
-            $.post("{{ route('admin.users.toggle-status', ':id') }}".replace(':id', id), {
+            const url = "{{ parse_url(route('admin.users.toggle-status', ':id'), PHP_URL_PATH) }}".replace(':id', id);
+            $.post(url, {
                 _token: "{{ csrf_token() }}"
             }, function(response) {
                 if (response.success) {
                     subscribersTable.ajax.reload(null, false);
                     toastr.success(response.message);
+                } else {
+                    checkbox.checked = !isChecked;
                 }
+            }).fail(function() {
+                checkbox.checked = !isChecked;
             });
+        } else {
+            checkbox.checked = !isChecked;
         }
     });
 }
@@ -611,8 +954,9 @@ function deleteSubscriber(id) {
         confirmButtonText: '{{ __("Yes, delete it!") }}'
     }).then((result) => {
         if (result.value) {
+            const url = "{{ parse_url(route('admin.users.destroy', ':id'), PHP_URL_PATH) }}".replace(':id', id);
             $.ajax({
-                url: "{{ route('admin.users.destroy', ':id') }}".replace(':id', id),
+                url: url,
                 type: "DELETE",
                 data: { _token: "{{ csrf_token() }}" },
                 success: function(response) {

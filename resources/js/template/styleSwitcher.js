@@ -186,6 +186,16 @@ $(document).ready(function () {
     const containerLayoutSelect = $("#container_layout");
     const themeDirectionSelect = $("#theme_direction");
 
+    // Initialize select elements to match the current HTML/Body attributes on load
+    typographySelect.val(body.attr("data-typography") || "poppins");
+    versionSelect.val(body.attr("data-theme-version") || "light");
+    layoutSelect.val(body.attr("data-layout") || "vertical");
+    sidebarStyleSelect.val(body.attr("data-sidebar-style") || "full");
+    sidebarPositionSelect.val(body.attr("data-sidebar-position") || "fixed");
+    headerPositionSelect.val(body.attr("data-header-position") || "fixed");
+    containerLayoutSelect.val(body.attr("data-container") || "wide");
+    themeDirectionSelect.val(html.attr("dir") || "ltr");
+
     //change the theme typography controller
     typographySelect.on("change", function () {
         body.attr("data-typography", this.value);

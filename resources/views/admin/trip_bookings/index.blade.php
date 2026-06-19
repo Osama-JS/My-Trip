@@ -202,7 +202,7 @@
         var table = $('#bookings-table').DataTable({
             processing: true,
             serverSide: false, // Client-side processing for now as per controller
-            ajax: "{{ route('admin.trip-bookings.data') }}",
+            ajax: "{{ parse_url(route('admin.trip-bookings.data'), PHP_URL_PATH) }}",
             columns: [
                 { data: 'id' },
                 { data: 'user' },
@@ -214,7 +214,7 @@
                 { data: 'actions', orderable: false, searchable: false }
             ],
             language: {
-                "url": "{{ asset('vendor/datatables/i18n/' . app()->getLocale() . '.json') }}",
+                "url": "{{ parse_url(asset('vendor/datatables/i18n/' . app()->getLocale() . '.json'), PHP_URL_PATH) }}",
                 "emptyTable": `<div class="empty-state">
                                 <i class="fas fa-folder-open"></i>
                                 <h5>لا توجد بيانات</h5>

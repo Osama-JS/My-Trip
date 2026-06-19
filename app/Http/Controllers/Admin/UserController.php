@@ -34,9 +34,11 @@ class UserController extends Controller
 
         return response()->json([
             'data' => $users->map(function($user) {
-                $statusBadge = $user->status === 'active'
-                    ? '<div class="d-flex align-items-center"><i class="fa fa-circle text-success me-2" style="font-size: 8px;"></i> <span class="fw-medium text-dark">'.__('Active').'</span></div>'
-                    : '<div class="d-flex align-items-center"><i class="fa fa-circle text-danger me-2" style="font-size: 8px;"></i> <span class="fw-medium text-dark">'.__('Inactive').'</span></div>';
+                $statusBadge = '
+                <div class="form-check form-switch d-inline-flex align-items-center p-0 m-0">
+                    <input class="form-check-input ms-0 me-2" type="checkbox" role="switch" id="status_switch_' . $user->id . '" ' . ($user->status === 'active' ? 'checked' : '') . ' onclick="toggleUserStatus(' . $user->id . ')" style="width: 36px; height: 18px; cursor: pointer;">
+                    <label class="form-check-label fw-medium text-dark small cursor-pointer" for="status_switch_' . $user->id . '">' . ($user->status === 'active' ? __('Active') : __('Inactive')) . '</label>
+                </div>';
 
                 $verifiedBadge = $user->email_verified_at
                     ? '<div class="d-flex align-items-center"><i class="fa fa-circle text-primary me-2" style="font-size: 8px;"></i> <span class="fw-medium text-dark">'.__('Verified').'</span></div>'
@@ -49,17 +51,20 @@ class UserController extends Controller
                                 <strong class="text-dark">' . $user->full_name . '</strong><br>
                                 <small class="text-muted">' . $user->email . '</small>
                             </div>',
-                    'phone' => '<span class="text-muted">' . ($user->country_code ? $user->country_code . ' ' : '') . $user->phone . '</span>',
+                    'phone' => '<span class="text-muted">' . ($user->country_code ? $user->country_code . ' ' : '') . ($user->phone ?? '---') . '</span>',
                     'status' => $statusBadge,
                     'verified' => $verifiedBadge,
                     'actions' => auth()->user()->can('manage users') ? '
                         <div class="dropdown">
-                            <button type="button" class="btn btn-light btn-sm rounded-circle border-0 shadow-sm" data-bs-toggle="dropdown" aria-expanded="false" style="width:32px; height:32px; padding:0; display:inline-flex; align-items:center; justify-content:center;">
+                            <button type="button" class="btn btn-white btn-sm rounded-circle border shadow-sm" data-bs-toggle="dropdown" data-bs-boundary="viewport" aria-expanded="false" style="width:32px; height:32px; padding:0; display:inline-flex; align-items:center; justify-content:center; background-color:#ffffff !important; border-color:#e2e8f0 !important;">
                                 <i class="fas fa-ellipsis-v text-muted"></i>
                             </button>
-                            <div class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 py-2">
+                            <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 py-2" style="z-index: 1060;">
+                                <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="viewUser(' . $user->id . ')"><i class="fa fa-eye text-info me-3 w-15px"></i> '.__('View').'</a>
                                 <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="editUser(' . $user->id . ')"><i class="fas fa-pencil-alt text-primary me-3 w-15px"></i> '.__('Edit').'</a>
                                 <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="toggleUserStatus(' . $user->id . ')"><i class="fas fa-ban text-warning me-3 w-15px"></i> '.__('Toggle Status').'</a>
+                                <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="resetUserPassword(' . $user->id . ')"><i class="fa fa-key text-dark me-3 w-15px"></i> '.__('Reset Password').'</a>
+                                <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="' . route('admin.users.activity', $user->id) . '"><i class="fa fa-chart-line text-secondary me-3 w-15px"></i> '.__('Activity').'</a>
                                 <div class="dropdown-divider my-1"></div>
                                 <a class="dropdown-item text-danger py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="deleteUser(' . $user->id . ')"><i class="fa fa-trash text-danger me-3 w-15px"></i> '.__('Delete').'</a>
                             </div>
@@ -67,7 +72,6 @@ class UserController extends Controller
                 ];
             })
         ]);
-
     }
 
     /**
@@ -242,9 +246,11 @@ class UserController extends Controller
 
         return response()->json([
             'data' => $users->map(function($user) {
-                $statusBadge = $user->status === 'active'
-                    ? '<div class="d-flex align-items-center"><i class="fa fa-circle text-success me-2" style="font-size: 8px;"></i> <span class="fw-medium text-dark">'.__('Active').'</span></div>'
-                    : '<div class="d-flex align-items-center"><i class="fa fa-circle text-danger me-2" style="font-size: 8px;"></i> <span class="fw-medium text-dark">'.__('Inactive').'</span></div>';
+                $statusBadge = '
+                <div class="form-check form-switch d-inline-flex align-items-center p-0 m-0">
+                    <input class="form-check-input ms-0 me-2" type="checkbox" role="switch" id="status_switch_' . $user->id . '" ' . ($user->status === 'active' ? 'checked' : '') . ' onclick="toggleSubscriberStatus(' . $user->id . ')" style="width: 36px; height: 18px; cursor: pointer;">
+                    <label class="form-check-label fw-medium text-dark small cursor-pointer" for="status_switch_' . $user->id . '">' . ($user->status === 'active' ? __('Active') : __('Inactive')) . '</label>
+                </div>';
 
                 $verifiedBadge = $user->email_verified_at
                     ? '<div class="d-flex align-items-center"><i class="fa fa-circle text-primary me-2" style="font-size: 8px;"></i> <span class="fw-medium text-dark">'.__('Verified').'</span></div>'
@@ -262,10 +268,10 @@ class UserController extends Controller
                     'verified' => $verifiedBadge,
                     'actions' => '
                         <div class="dropdown">
-                            <button type="button" class="btn btn-light btn-sm rounded-circle border-0 shadow-sm" data-bs-toggle="dropdown" aria-expanded="false" style="width:32px; height:32px; padding:0; display:inline-flex; align-items:center; justify-content:center;">
+                            <button type="button" class="btn btn-white btn-sm rounded-circle border shadow-sm" data-bs-toggle="dropdown" data-bs-boundary="viewport" aria-expanded="false" style="width:32px; height:32px; padding:0; display:inline-flex; align-items:center; justify-content:center; background-color:#ffffff !important; border-color:#e2e8f0 !important;">
                                 <i class="fas fa-ellipsis-v text-muted"></i>
                             </button>
-                            <div class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 py-2">
+                            <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 py-2" style="z-index: 1060;">
                                 <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="viewSubscriber(' . $user->id . ')"><i class="fa fa-eye text-info me-3 w-15px"></i> '.__('View').'</a>
                                 <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="editSubscriber(' . $user->id . ')"><i class="fas fa-pencil-alt text-primary me-3 w-15px"></i> '.__('Edit').'</a>
                                 <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="toggleSubscriberStatus(' . $user->id . ')"><i class="fas fa-ban text-warning me-3 w-15px"></i> '.__('Toggle Status').'</a>

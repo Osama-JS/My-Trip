@@ -222,3 +222,151 @@ h6,
         display: block;
     }
 }
+
+/* -------------------------------------------------------------------------- */
+/* MODAL INPUTS & SELECTS STYLING                                             */
+/* -------------------------------------------------------------------------- */
+
+.modal .form-control,
+.modal .form-select,
+.modal select,
+.modal textarea {
+    background-color: #ffffff !important;
+    color: #212529 !important;
+    border: 1px solid #ced4da !important;
+}
+
+/* Ensure focus state has good styling */
+.modal .form-control:focus,
+.modal .form-select:focus,
+.modal select:focus,
+.modal textarea:focus {
+    background-color: #ffffff !important;
+    color: #212529 !important;
+    border-color: #86b7fe !important;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+}
+
+/* Options text visibility inside selects */
+.modal select.form-select option,
+.modal select option {
+    background-color: #ffffff !important;
+    color: #212529 !important;
+}
+
+/* Form floating label adjustment */
+.modal .form-floating > label {
+    color: #495057 !important;
+}
+
+/* Focus and active state floating labels */
+.modal .form-floating > .form-control:focus ~ label,
+.modal .form-floating > .form-control:not(:placeholder-shown) ~ label,
+.modal .form-floating > .form-select ~ label {
+    color: #212529 !important;
+}
+
+/* Select2 inputs inside modals */
+.modal .select2-container--default .select2-selection--single,
+.modal .select2-container--default .select2-selection--multiple {
+    background-color: #ffffff !important;
+    border: 1px solid #ced4da !important;
+    color: #212529 !important;
+}
+
+.modal .select2-container--default .select2-selection--single .select2-selection__rendered,
+.modal .select2-container--default .select2-selection--multiple .select2-selection__rendered {
+    color: #212529 !important;
+}
+
+.modal .select2-dropdown {
+    background-color: #ffffff !important;
+    color: #212529 !important;
+    border: 1px solid #ced4da !important;
+}
+
+.modal .select2-results__option {
+    background-color: #ffffff !important;
+    color: #212529 !important;
+}
+
+.modal .select2-results__option--highlighted[aria-selected] {
+    background-color: #0d6efd !important;
+    color: #ffffff !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/* FILTER FIELDS & SIDEBARS WHITE STYLING                                     */
+/* -------------------------------------------------------------------------- */
+
+/* Filter inputs, selects and search inputs */
+.filter-input,
+.filter-input-wrap,
+.fe-search-input,
+.fe-pax-input-wrapper,
+.fe-pax-summary,
+.fe-pax-popover,
+.custom-autocomplete-dropdown {
+    background-color: #ffffff !important;
+    color: #212529 !important;
+}
+
+/* Ensure borders are clean and visible on white */
+.filter-input,
+.filter-input-wrap,
+.fe-search-input,
+.fe-pax-input-wrapper,
+.fe-pax-popover,
+.custom-autocomplete-dropdown {
+    border: 1px solid #ced4da !important;
+}
+
+/* Filter inputs text color inside wrappers */
+.filter-input-wrap .filter-input,
+.filter-input-wrap select,
+.filter-input-wrap input {
+    color: #212529 !important;
+    background-color: transparent !important;
+    border: none !important;
+}
+
+/* Icons inside input wraps */
+.filter-input-wrap .filter-icon {
+    color: #6c757d !important;
+}
+
+/* Focus and active states */
+.filter-input:focus,
+.fe-search-input:focus,
+.filter-input-wrap:focus-within {
+    background-color: #ffffff !important;
+    border-color: #86b7fe !important;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15) !important;
+    outline: 0 !important;
+}
+
+/* Options of selects inside filters */
+.filter-input option,
+.fe-search-input option,
+.filter-select option {
+    background-color: #ffffff !important;
+    color: #212529 !important;
+}
+
+/* Custom Checkboxes in filters */
+.fe-custom-check .checkmark {
+    background-color: #ffffff !important;
+    border-color: #ced4da !important;
+}
+
+/* Filter sidebars on mobile (ensure drawer is white background) */
+@media (max-width: 1023px) {
+    .fe-sidebar,
+    .fe-results-sidebar,
+    #filtersSidebar,
+    #hotelFilterSidebar {
+        background-color: #ffffff !important;
+    }
+}
+
+

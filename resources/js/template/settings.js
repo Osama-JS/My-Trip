@@ -25,7 +25,7 @@ function dlabSettings({
     this.sidebarPosition = sidebarPosition || "static";
     this.headerPosition = headerPosition || "static";
     this.containerLayout = containerLayout || "wide";
-    this.direction = direction || "ltr";
+    this.direction = direction || html.attr("dir") || "ltr";
     this.primary = primary || "color_1";
 
     this.manageTypography();

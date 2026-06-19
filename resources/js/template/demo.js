@@ -185,9 +185,18 @@ window.deleteAllCookie = deleteAllCookie;
         containerLayout: "full",
     };
 
+    var themeSets = {
+        0: dlabThemeSet0,
+        1: dlabThemeSet1,
+        2: dlabThemeSet2,
+        3: dlabThemeSet3,
+        4: dlabThemeSet4,
+        5: dlabThemeSet5,
+        6: dlabThemeSet6
+    };
+
     function themeChange(theme) {
-        var themeSettings = {};
-        themeSettings = eval("dlabThemeSet" + theme);
+        var themeSettings = themeSets[theme] || themeSets[0];
         dlabSettingsOptions = themeSettings; /* For Screen Resize */
         new dlabSettings(themeSettings);
 

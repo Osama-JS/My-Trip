@@ -287,25 +287,34 @@
         <div class="card shadow-sm">
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <h4 class="card-title mb-0"><i class="fas fa-history me-2"></i>{{ __('Notification History') }}</h4>
-                <div class="d-flex gap-2 flex-wrap">
-                    <select id="filterType" class="form-select form-select-sm" style="width: auto;">
-                        <option value="">{{ __('All Types') }}</option>
-                        <option value="general">{{ __('General') }}</option>
-                        <option value="promotion">{{ __('Promotion') }}</option>
-                        <option value="new_trip">{{ __('New Trip') }}</option>
-                        <option value="payment_success">{{ __('Payment Success') }}</option>
-                        <option value="payment_failed">{{ __('Payment Failed') }}</option>
-                        <option value="booking_confirmed">{{ __('Booking Confirmed') }}</option>
-                        <option value="booking_cancelled">{{ __('Booking Cancelled') }}</option>
-                        <option value="booking_reminder">{{ __('Booking Reminder') }}</option>
-                        <option value="favorite_trip_update">{{ __('Favorite Update') }}</option>
-                    </select>
-                    <input type="date" id="filterFromDate" class="form-control form-control-sm" style="width: auto;"
-                           placeholder="{{ __('From Date') }}">
-                    <input type="date" id="filterToDate" class="form-control form-control-sm" style="width: auto;"
-                           placeholder="{{ __('To Date') }}">
-                    <button class="btn btn-sm btn-outline-primary" onclick="loadHistory()">
-                        <i class="fas fa-search"></i>
+                <div class="d-flex gap-2 flex-wrap align-items-center">
+                    <div class="filter-wrapper m-0">
+                        <i class="fas fa-filter filter-icon"></i>
+                        <select id="filterType" class="form-select select2" data-hide-search="true" style="width: 200px;">
+                            <option value="">{{ __('All Types') }}</option>
+                            <option value="general">{{ __('General') }}</option>
+                            <option value="promotion">{{ __('Promotion') }}</option>
+                            <option value="new_trip">{{ __('New Trip') }}</option>
+                            <option value="payment_success">{{ __('Payment Success') }}</option>
+                            <option value="payment_failed">{{ __('Payment Failed') }}</option>
+                            <option value="booking_confirmed">{{ __('Booking Confirmed') }}</option>
+                            <option value="booking_cancelled">{{ __('Booking Cancelled') }}</option>
+                            <option value="booking_reminder">{{ __('Booking Reminder') }}</option>
+                            <option value="favorite_trip_update">{{ __('Favorite Update') }}</option>
+                        </select>
+                    </div>
+                    <div class="filter-wrapper m-0">
+                        <i class="fas fa-calendar-alt filter-icon"></i>
+                        <input type="date" id="filterFromDate" class="form-control" style="width: 150px; border-radius: 50px; padding-left: 40px; height: 42px;"
+                               placeholder="{{ __('From Date') }}">
+                    </div>
+                    <div class="filter-wrapper m-0">
+                        <i class="fas fa-calendar-alt filter-icon"></i>
+                        <input type="date" id="filterToDate" class="form-control" style="width: 150px; border-radius: 50px; padding-left: 40px; height: 42px;"
+                               placeholder="{{ __('To Date') }}">
+                    </div>
+                    <button class="btn btn-primary rounded-pill shadow-sm px-4" onclick="loadHistory()" style="height: 42px;">
+                        <i class="fas fa-search me-1"></i> {{ __('Search') }}
                     </button>
                 </div>
             </div>
@@ -572,7 +581,7 @@
             </td></tr>
         `);
 
-        $.get("{{ route('admin.notifications.data') }}", params, function(response) {
+        $.get("{{ parse_url(route('admin.notifications.data'), PHP_URL_PATH) }}", params, function(response) {
             const tbody = $('#historyBody');
             tbody.empty();
 
