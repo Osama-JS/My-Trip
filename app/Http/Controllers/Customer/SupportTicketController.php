@@ -10,10 +10,56 @@ use Illuminate\Http\Request;
 
 class SupportTicketController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $tickets = auth()->user()->supportTickets()->latest()->paginate(10);
-        return view('frontend.customer.support.index', compact('tickets'));
+        $query = auth()->user()->supportTickets();
+
+        $status = $request->get('status');
+        $category = $request->get('category');
+        $priority = $request->get('priority');
+        $search = $request->get('search');
+        $dateFrom = $request->get('date_from');
+        $dateTo = $request->get('date_to');
+
+        if ($status && in_array($status, ['open', 'pending', 'closed'])) {
+            $query->where('status', $status);
+        }
+
+        if ($category && in_array($category, ['technical', 'financial', 'booking', 'general'])) {
+            $query->where('category', $category);
+        }
+
+        if ($priority && in_array($priority, ['low', 'medium', 'high', 'urgent'])) {
+            $query->where('priority', $priority);
+        }
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('subject', 'like', "%{$search}%")
+                  ->orWhereHas('messages', function($mq) use ($search) {
+                      $mq->where('message', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        if ($dateFrom) {
+            $query->whereDate('created_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->whereDate('created_at', '<=', $dateTo);
+        }
+
+        $tickets = $query->latest('updated_at')->paginate(10);
+
+        // Fetch counts for stats boxes
+        $stats = [
+            'total'   => auth()->user()->supportTickets()->count(),
+            'open'    => auth()->user()->supportTickets()->where('status', 'open')->count(),
+            'pending' => auth()->user()->supportTickets()->where('status', 'pending')->count(),
+            'closed'  => auth()->user()->supportTickets()->where('status', 'closed')->count(),
+        ];
+
+        return view('frontend.customer.support.index', compact('tickets', 'stats'));
     }
 
     public function create()

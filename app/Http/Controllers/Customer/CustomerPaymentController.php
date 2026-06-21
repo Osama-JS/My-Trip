@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Customer;
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Models\TripBooking;
+use App\Models\HotelBooking;
+use App\Models\Booking;
 use App\Services\InvoiceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,16 +24,70 @@ class CustomerPaymentController extends Controller
     /**
      * List all payments for the authenticated customer.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $payments = Payment::whereHas('booking', function ($q) {
-                $q->where('user_id', Auth::id());
-            })
-            ->with('booking.trip')
-            ->latest()
-            ->paginate(10);
+        $query = Payment::where('user_id', Auth::id())->with(['payable']);
 
-        return view('frontend.customer.payments.index', compact('payments'));
+        $status = $request->get('status');
+        $gateway = $request->get('gateway');
+        $search = $request->get('search');
+        $dateFrom = $request->get('date_from');
+        $dateTo = $request->get('date_to');
+
+        // Filter by status
+        if ($status && in_array($status, ['paid', 'pending', 'failed'])) {
+            $query->where('status', $status);
+        }
+
+        // Filter by gateway
+        if ($gateway) {
+            $query->where('payment_gateway', $gateway);
+        }
+
+        // Filter by search keyword (description, method, gateway, or inside relations)
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('transaction_id', 'like', "%{$search}%")
+                  ->orWhere('payment_gateway', 'like', "%{$search}%")
+                  ->orWhere('payment_method', 'like', "%{$search}%")
+                  ->orWhereHasMorph('payable', [TripBooking::class, HotelBooking::class, Booking::class], function($subQ, $type) use ($search) {
+                      if ($type === TripBooking::class) {
+                          $subQ->whereHas('trip', function($t) use ($search) {
+                              $t->where('title_ar', 'like', "%{$search}%")
+                                ->orWhere('title_en', 'like', "%{$search}%");
+                          })->orWhere('id', 'like', "%{$search}%");
+                      } elseif ($type === HotelBooking::class) {
+                          $subQ->where('hotel_name', 'like', "%{$search}%")
+                               ->orWhere('city_name', 'like', "%{$search}%")
+                               ->orWhere('id', 'like', "%{$search}%");
+                      } elseif ($type === Booking::class) {
+                          $subQ->where('airline_name', 'like', "%{$search}%")
+                               ->orWhere('pnr_code', 'like', "%{$search}%")
+                               ->orWhere('id', 'like', "%{$search}%");
+                      }
+                  });
+            });
+        }
+
+        // Filter by dates
+        if ($dateFrom) {
+            $query->whereDate('created_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->whereDate('created_at', '<=', $dateTo);
+        }
+
+        $payments = $query->latest()->paginate(10);
+
+        // Fetch counts for stats boxes
+        $stats = [
+            'total'   => Payment::where('user_id', Auth::id())->count(),
+            'paid'    => Payment::where('user_id', Auth::id())->where('status', 'paid')->count(),
+            'pending' => Payment::where('user_id', Auth::id())->where('status', 'pending')->count(),
+            'failed'  => Payment::where('user_id', Auth::id())->where('status', 'failed')->count(),
+        ];
+
+        return view('frontend.customer.payments.index', compact('payments', 'stats'));
     }
 
     /**

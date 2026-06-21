@@ -143,7 +143,7 @@
             <div class="select-grid">
                 <div class="input-group-custom">
                     <label class="label-custom">{{ __('القسم المختص') }}</label>
-                    <select name="category" class="input-custom" required>
+                    <select name="category" class="input-custom select2" required>
                         <option value="technical">🛠️ {{ __('الدعم الفني') }}</option>
                         <option value="financial">💰 {{ __('الحسابات والمدفوعات') }}</option>
                         <option value="booking">✈️ {{ __('استفسارات الحجوزات') }}</option>
@@ -153,7 +153,7 @@
                 
                 <div class="input-group-custom">
                     <label class="label-custom">{{ __('أهمية التذكرة') }}</label>
-                    <select name="priority" class="input-custom" required>
+                    <select name="priority" class="input-custom select2" required>
                         <option value="low">{{ __('منخفضة - غير مستعجل') }}</option>
                         <option value="medium" selected>{{ __('متوسطة - عادي') }}</option>
                         <option value="high">{{ __('عالية - هام') }}</option>

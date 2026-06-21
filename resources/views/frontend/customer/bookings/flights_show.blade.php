@@ -3,123 +3,880 @@
 @section('title', __('Flight Booking') . ' · #' . $booking->booking_reference)
 @section('page-title', __('Flight Booking Details'))
 
+@push('styles')
+<style>
+/* ─── Variables & Animations ─── */
+:root {
+    --detail-border-radius: 20px;
+    --ticket-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.03), 0 4px 6px -4px rgba(0, 0, 0, 0.03), 0 0 0 1px rgba(0, 0, 0, 0.025);
+    --ticket-shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.03), 0 0 0 1px rgba(37, 99, 235, 0.15);
+    --fd-success: #10b981;
+    --fd-danger: #ef4444;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+.flight-details-container {
+    animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ─── Back Link ─── */
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted);
+    text-decoration: none !important;
+    font-size: .88rem;
+    margin-bottom: 24px;
+    font-weight: 700;
+    transition: all 0.2s ease;
+}
+.back-link:hover {
+    color: var(--primary-blue);
+    transform: translateX(-4px);
+}
+[dir="rtl"] .back-link:hover {
+    transform: translateX(4px);
+}
+
+/* ─── Boarding Pass ─── */
+.boarding-pass {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--detail-border-radius);
+    overflow: hidden;
+    box-shadow: var(--ticket-shadow);
+    margin-bottom: 28px;
+    position: relative;
+}
+.pass-header {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    padding: 16px 24px;
+    color: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.pass-title {
+    font-size: 0.85rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    color: rgba(255,255,255,0.7);
+    text-transform: uppercase;
+}
+.pass-pnr {
+    font-size: 0.9rem;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    background: rgba(255,255,255,0.12);
+    padding: 4px 14px;
+    border-radius: 8px;
+    color: #fff;
+}
+.pass-body {
+    padding: 28px;
+    position: relative;
+}
+.pass-airport-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+.pass-airport-code {
+    display: flex;
+    flex-direction: column;
+}
+.pass-airport-code h3 {
+    font-size: 2.5rem;
+    font-weight: 950;
+    color: var(--primary-blue);
+    margin: 0;
+    line-height: 1;
+    letter-spacing: -0.5px;
+}
+.pass-airport-code span {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+.pass-airport-code.dest-code {
+    align-items: flex-end;
+}
+.pass-path-line {
+    flex: 1;
+    height: 2px;
+    background: var(--border-color);
+    margin: 0 24px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.pass-path-line i {
+    font-size: 1.25rem;
+    color: var(--primary-blue);
+    background: var(--bg-card);
+    padding: 0 12px;
+    z-index: 2;
+    transition: background-color 0.3s;
+}
+
+.boarding-pass-stub-line {
+    position: relative;
+    border-top: 2px dashed var(--border-color);
+    margin-top: 20px;
+    padding-top: 20px;
+}
+.boarding-pass-stub-line::before, .boarding-pass-stub-line::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    top: -11px;
+    z-index: 5;
+    transition: background-color 0.3s, border-color 0.3s;
+}
+.boarding-pass-stub-line::before {
+    left: -39px;
+}
+.boarding-pass-stub-line::after {
+    right: -39px;
+}
+[dir="rtl"] .boarding-pass-stub-line::before {
+    left: auto;
+    right: -39px;
+}
+[dir="rtl"] .boarding-pass-stub-line::after {
+    right: auto;
+    left: -39px;
+}
+
+.pass-details-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+@media (max-width: 768px) {
+    .pass-details-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+}
+.pass-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+.pass-val {
+    display: block;
+    font-size: 0.95rem;
+    font-weight: 850;
+    color: var(--text-main);
+}
+
+/* ─── Detail Grid ─── */
+.booking-detail-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 24px;
+}
+@media (max-width: 991px) {
+    .booking-detail-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ─── Detail Cards ─── */
+.detail-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--detail-border-radius);
+    box-shadow: var(--ticket-shadow);
+    margin-bottom: 24px;
+    overflow: hidden;
+}
+.detail-card-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 850;
+    font-size: 1.05rem;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(0, 0, 0, 0.005);
+}
+.detail-card-header h5 {
+    margin: 0;
+    font-weight: 850;
+    font-size: 1.05rem;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.detail-card-header h5 i {
+    color: var(--primary-blue);
+    font-size: 1.15rem;
+}
+.detail-card-body {
+    padding: 24px;
+}
+
+/* ─── Callout Alerts ─── */
+.callout-alert {
+    padding: 16px 20px;
+    border-radius: 14px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: start;
+    gap: 14px;
+    border: 1px solid transparent;
+}
+.callout-success {
+    background: rgba(16, 185, 129, 0.06);
+    color: #15803d;
+    border-color: rgba(16, 185, 129, 0.15);
+}
+body.dark-mode .callout-success {
+    background: rgba(16, 185, 129, 0.12);
+    color: #10b981;
+}
+.callout-warning {
+    background: rgba(249, 115, 22, 0.06);
+    color: #b45309;
+    border-color: rgba(249, 115, 22, 0.15);
+}
+body.dark-mode .callout-warning {
+    background: rgba(249, 115, 22, 0.12);
+    color: #f97316;
+}
+.callout-danger {
+    background: rgba(239, 68, 68, 0.06);
+    color: #b91c1c;
+    border-color: rgba(239, 68, 68, 0.15);
+}
+body.dark-mode .callout-danger {
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+}
+.callout-alert i {
+    font-size: 1.25rem;
+    margin-top: 2px;
+}
+
+/* ─── Passengers Seating Tags ─── */
+.passenger-item {
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.25s ease;
+}
+.passenger-item:hover {
+    border-color: rgba(37, 99, 235, 0.15);
+    background: rgba(37, 99, 235, 0.01);
+}
+.passenger-item:last-child {
+    margin-bottom: 0;
+}
+.passenger-main {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+.passenger-avatar {
+    width: 40px;
+    height: 40px;
+    background: var(--primary-blue);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 800;
+    font-size: .95rem;
+    flex-shrink: 0;
+    box-shadow: 0 4px 8px rgba(37, 99, 235, 0.15);
+}
+.passenger-info .p-name {
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: var(--text-main);
+}
+.passenger-info .p-meta {
+    font-size: .8rem;
+    color: var(--text-muted);
+    margin-top: 3px;
+}
+.passenger-docs {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+.ticket-tag, .passport-tag {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.72rem;
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px solid var(--border-color);
+    padding: 4px 10px;
+    border-radius: 8px;
+}
+body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
+    background: rgba(255, 255, 255, 0.02);
+}
+.ticket-tag label, .passport-tag label {
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+}
+.ticket-tag strong, .passport-tag strong {
+    color: var(--text-main);
+    font-weight: 800;
+}
+
+/* ─── Detailed Journey Timeline ─── */
+.segment-timeline {
+    padding: 24px;
+}
+.segment-step {
+    position: relative;
+    padding-bottom: 30px;
+    padding-inline-start: 32px;
+}
+.segment-step:last-child {
+    padding-bottom: 0;
+}
+.segment-step::before {
+    content: '';
+    position: absolute;
+    inset-inline-start: 11px;
+    top: 24px;
+    width: 2px;
+    height: calc(100% - 16px);
+    background: var(--border-color);
+}
+.segment-step:last-child::before {
+    display: none;
+}
+.seg-dot {
+    position: absolute;
+    inset-inline-start: 0;
+    top: 2px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 2px solid var(--primary-blue);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-blue);
+    font-size: 0.7rem;
+    z-index: 2;
+}
+.seg-airline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+.seg-airline img {
+    height: 24px;
+    width: auto;
+    border-radius: 4px;
+    background: #fff;
+    padding: 2px;
+    border: 1px solid var(--border-color);
+}
+.seg-airline span {
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: var(--text-main);
+}
+.seg-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px 20px;
+    gap: 16px;
+}
+@media (max-width: 576px) {
+    .seg-main {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+    }
+    .seg-point.text-end {
+        text-align: center !important;
+    }
+}
+.seg-point .time {
+    font-size: 1.2rem;
+    font-weight: 900;
+    color: var(--text-main);
+}
+.seg-point .airport {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--primary-blue);
+    margin: 2px 0;
+}
+.seg-point .date {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+.seg-path {
+    flex: 1;
+    position: relative;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.seg-path-line {
+    width: 100%;
+    height: 2px;
+    border-top: 2px dashed var(--border-color);
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1;
+}
+.seg-path i {
+    position: relative;
+    z-index: 2;
+    background: var(--bg-main);
+    padding: 0 10px;
+    color: var(--primary-blue);
+    font-size: 0.95rem;
+}
+.seg-path .path-dur {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-weight: 700;
+    margin-top: 4px;
+    position: relative;
+    z-index: 2;
+    background: var(--bg-main);
+    padding: 0 6px;
+}
+.seg-footer {
+    margin-top: 10px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    display: flex;
+    gap: 16px;
+}
+.seg-footer span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ─── Sidebar Pricing Card ─── */
+.summary-total {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-radius: 18px;
+    padding: 28px 24px;
+    color: #fff;
+    text-align: center;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15);
+    position: relative;
+    overflow: hidden;
+}
+.summary-total::after {
+    content: '';
+    position: absolute;
+    width: 150px;
+    height: 150px;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%);
+    top: -30px;
+    right: -30px;
+}
+.summary-total .amount {
+    font-size: 2.2rem;
+    font-weight: 950;
+    letter-spacing: -0.5px;
+    line-height: 1.1;
+}
+.summary-total .amount span {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.7);
+    margin-inline-start: 4px;
+}
+.summary-total .amount-label {
+    font-size: .85rem;
+    color: #94a3b8;
+    margin-top: 6px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.price-breakdown {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 16px;
+    margin-top: 16px;
+    text-align: start;
+}
+.row-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+.row-info:last-child {
+    margin-bottom: 0;
+}
+.row-info span {
+    color: rgba(255, 255, 255, 0.6);
+}
+.row-info strong {
+    color: #fff;
+    font-weight: 700;
+}
+
+/* ─── Actions Sidebar ─── */
+.actions-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px 20px;
+    border-radius: 12px;
+    text-align: center;
+    font-weight: 700;
+    font-size: .88rem;
+    text-decoration: none !important;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+.action-btn-primary {
+    background: var(--primary-blue);
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.15);
+}
+.action-btn-primary:hover {
+    background: #1d4ed8;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.25);
+    color: #fff;
+}
+.action-btn-success {
+    background: var(--fd-success, #10b981);
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.15);
+}
+.action-btn-success:hover {
+    background: #059669;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.25);
+    color: #fff;
+}
+.action-btn-outline {
+    border-color: var(--border-color);
+    background: var(--bg-card);
+    color: var(--text-main);
+}
+.action-btn-outline:hover {
+    border-color: var(--primary-blue);
+    color: var(--primary-blue);
+    background: rgba(37, 99, 235, 0.03);
+    transform: translateY(-2px);
+}
+
+/* ─── Timeline Card ─── */
+.timeline-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--detail-border-radius);
+    padding: 24px;
+    box-shadow: var(--ticket-shadow);
+    margin-bottom: 24px;
+}
+.timeline-v {
+    display: flex;
+    flex-direction: column;
+}
+.tl-item {
+    display: flex;
+    gap: 14px;
+    position: relative;
+    padding-bottom: 24px;
+}
+.tl-item:last-child {
+    padding-bottom: 0;
+}
+.tl-item::before {
+    content: '';
+    position: absolute;
+    inset-inline-start: 17px;
+    top: 34px;
+    width: 2px;
+    height: calc(100% - 14px);
+    background: var(--border-color);
+}
+.tl-item:last-child::before {
+    display: none;
+}
+.tl-item.done::before {
+    background: var(--fd-success, #10b981);
+}
+.tl-dot {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--bg-main);
+    border: 2px solid var(--border-color);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    position: relative;
+    z-index: 1;
+}
+.tl-item.done .tl-dot {
+    background: var(--fd-success, #10b981);
+    border-color: var(--fd-success, #10b981);
+    color: white;
+}
+.tl-text strong {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-bottom: 2px;
+}
+.tl-text small {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+/* Status Badge */
+.status-badge-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+.status-badge-wrapper .pulse-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.status-badge-wrapper.status-confirmed {
+    background: rgba(16, 185, 129, 0.08);
+    color: #15803d;
+}
+.status-badge-wrapper.status-confirmed .pulse-dot {
+    background: #10b981;
+}
+.status-badge-wrapper.status-pending {
+    background: rgba(249, 115, 22, 0.08);
+    color: #c2410c;
+}
+.status-badge-wrapper.status-pending .pulse-dot {
+    background: #f97316;
+}
+.status-badge-wrapper.status-cancelled {
+    background: rgba(239, 68, 68, 0.08);
+    color: #b91c1c;
+}
+.status-badge-wrapper.status-cancelled .pulse-dot {
+    background: #ef4444;
+}
+
+/* Expiry timer */
+.expired-msg-sidebar {
+    background: rgba(239, 68, 68, 0.06);
+    color: #ef4444;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 750;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid rgba(239, 68, 68, 0.15);
+}
+</style>
+@endpush
+
 @section('content')
-<div class="flight-details-wrapper">
+<div class="flight-details-container">
 
-    {{-- ─── Top Status Banner ─── --}}
-    @php
-        $statusClass = match($booking->status) {
-            'confirmed' => 'confirmed',
-            'paid'      => 'paid',
-            'cancelled' => 'cancelled',
-            default     => 'pending'
-        };
-        $statusLabel = match($booking->status) {
-            'confirmed' => __('Confirmed'),
-            'paid'      => __('Paid & Processing'),
-            'cancelled' => __('Cancelled'),
-            default     => __('Awaiting Payment')
-        };
-        $statusIcon = match($booking->status) {
-            'confirmed' => 'fa-check-circle',
-            'paid'      => 'fa-receipt',
-            'cancelled' => 'fa-times-circle',
-            default     => 'fa-clock'
-        };
-    @endphp
+    {{-- Back Link --}}
+    <a href="{{ route('customer.bookings.flights') }}" class="back-link">
+        <i class="fas fa-arrow-{{ app()->isLocale('ar') ? 'right' : 'left' }}"></i>
+        {{ __('Back to Bookings') }}
+    </a>
 
-    <div class="status-hero status-{{ $statusClass }}">
-        <div class="status-hero-main">
-            <div class="status-icon"><i class="fas {{ $statusIcon }}"></i></div>
-            <div class="status-info">
-                <h3>{{ $statusLabel }}</h3>
-                <p>{{ __('Booking Reference') }}: <strong>#{{ $booking->booking_reference }}</strong></p>
+    {{-- Expiry Alerts & PNR States --}}
+    @if($booking->status === 'pending' && $booking->ticketing_time_limit)
+        <div class="callout-alert callout-warning" id="pnrTimer" data-expiry="{{ $booking->ticketing_time_limit->toIso8601String() }}">
+            <i class="fas fa-hourglass-start fa-spin"></i>
+            <div>
+                <strong>{{ __('Action Required: Complete Payment') }}</strong>
+                <div>{{ __('Your flight hold reservation is temporary. Please pay now to secure your ticket.') }}</div>
+                <div class="timer-display-wrapper mt-2">
+                    <span class="badge bg-danger p-2" id="timerDisplay" style="font-family: monospace; font-size: 1.1rem; font-weight: 800;">00:00</span>
+                </div>
             </div>
         </div>
-        @if($booking->pnr_code)
-        <div class="pnr-badge">
-            <label>{{ __('Airline PNR') }}</label>
-            <span>{{ $booking->pnr_code }}</span>
-        </div>
-        @endif
+    @endif
 
-        @if($booking->status === 'pending' && $booking->ticketing_time_limit)
-        <div class="expiry-timer-box" id="pnrTimer" data-expiry="{{ $booking->ticketing_time_limit->toIso8601String() }}">
-            <div class="timer-label"><i class="fas fa-hourglass-start fa-spin"></i> {{ __('Time remaining to pay') }}</div>
-            <div class="timer-value" id="timerDisplay">00:00</div>
+    {{-- ─── Boarding Pass Ticket Header ─── --}}
+    <div class="boarding-pass">
+        <div class="pass-header">
+            <span class="pass-title">{{ __('BOARDING PASS / FLIGHT TICKET') }}</span>
+            <span class="pass-pnr">{{ __('Airline PNR') }}: {{ $booking->pnr_code ?: 'N/A' }}</span>
         </div>
-        @endif
+        <div class="pass-body">
+            <div class="pass-airport-row">
+                <div class="pass-airport-code">
+                    <h3>{{ strtoupper(substr($booking->origin, 0, 3)) }}</h3>
+                    <span>{{ $booking->origin }}</span>
+                </div>
+                <div class="pass-path-line">
+                    <i class="fas fa-plane"></i>
+                </div>
+                <div class="pass-airport-code dest-code">
+                    <h3>{{ strtoupper(substr($booking->destination, 0, 3)) }}</h3>
+                    <span>{{ $booking->destination }}</span>
+                </div>
+            </div>
+
+            <div class="boarding-pass-stub-line">
+                <div class="pass-details-grid">
+                    <div>
+                        <span class="pass-label">{{ __('PASSENGER') }}</span>
+                        <span class="pass-val">{{ auth()->user()->full_name }}</span>
+                    </div>
+                    <div>
+                        <span class="pass-label">{{ __('BOOKING DATE') }}</span>
+                        <span class="pass-val">{{ $booking->created_at->format('d M Y') }}</span>
+                    </div>
+                    <div>
+                        <span class="pass-label">{{ __('DEPARTURE DATE') }}</span>
+                        <span class="pass-val">{{ $booking->departure_date }}</span>
+                    </div>
+                    <div>
+                        <span class="pass-label">{{ __('CLASS') }}</span>
+                        <span class="pass-val">{{ $booking->flightBooking->flight_class ?? __('Economy') }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="fd-grid">
-        {{-- ─── LEFT COLUMN ─── --}}
-        <div class="fd-main-content">
+    {{-- Layout Grid --}}
+    <div class="booking-detail-grid">
+
+        {{-- LEFT COLUMN --}}
+        <div>
             
-            {{-- Itinerary Card (Boarding Pass Style) --}}
-            <div class="fd-card itinerary-card">
-                <div class="fd-card-header">
+            {{-- Itinerary Card --}}
+            <div class="detail-card">
+                <div class="detail-card-header">
                     <h5><i class="fas fa-plane-departure"></i> {{ __('Flight Itinerary') }}</h5>
-                    <span class="airline-text">{{ $booking->airline_name ?? __('Direct Flight') }}</span>
+                    <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted);">{{ $booking->airline_name ?? __('Direct Flight') }}</span>
                 </div>
-                <div class="boarding-pass">
-                    <div class="bp-top">
-                        <div class="airport">
-                            <span class="city">{{ $booking->origin }}</span>
-                            <span class="time">{{ $booking->departure_date }}</span>
-                        </div>
-                        <div class="flight-path">
-                            <div class="path-line"></div>
-                            <i class="fas fa-plane"></i>
-                            <span class="duration">{{ __('Direct') }}</span>
-                        </div>
-                        <div class="airport text-end">
-                            <span class="city">{{ $booking->destination }}</span>
-                            <span class="time">{{ __('Scheduled Arrival') }}</span>
-                        </div>
+                <div class="detail-card-body">
+                    <div class="info-row">
+                        <span class="info-label">{{ __('Origin') }}</span>
+                        <span class="info-value">{{ $booking->origin }}</span>
                     </div>
-                    <div class="bp-divider">
-                        <div class="notch left"></div>
-                        <div class="line"></div>
-                        <div class="notch right"></div>
+                    <div class="info-row">
+                        <span class="info-label">{{ __('Destination') }}</span>
+                        <span class="info-value">{{ $booking->destination }}</span>
                     </div>
-                    <div class="bp-bottom">
-                        <div class="bp-info">
-                            <label><i class="fas fa-chair"></i> {{ __('Class') }}</label>
-                            <span>{{ $booking->flightBooking->flight_class ?? __('Economy') }}</span>
-                        </div>
-                        <div class="bp-info">
-                            <label><i class="fas fa-suitcase"></i> {{ __('Baggage') }}</label>
-                            <span>{{ __('Included') }}</span>
-                        </div>
-                        <div class="bp-info text-end">
-                            <label><i class="fas fa-ticket-alt"></i> {{ __('Ticket Status') }}</label>
-                            <span class="badge-status">{{ ucfirst($booking->ticket_status ?? 'pending') }}</span>
-                        </div>
+                    <div class="info-row">
+                        <span class="info-label">{{ __('Departure Date') }}</span>
+                        <span class="info-value">{{ $booking->departure_date }}</span>
                     </div>
+                    @if($booking->flightBooking->flight_class)
+                    <div class="info-row">
+                        <span class="info-label">{{ __('Cabin Class') }}</span>
+                        <span class="info-value">{{ $booking->flightBooking->flight_class }}</span>
+                    </div>
+                    @endif
                 </div>
             </div>
 
             {{-- Passengers Section --}}
-            <div class="fd-card">
-                <div class="fd-card-header">
+            <div class="detail-card">
+                <div class="detail-card-header">
                     <h5><i class="fas fa-users"></i> {{ __('Travelers') }}</h5>
-                    <span class="badge badge-primary" style="background: var(--fd-accent); color: white; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem;">
+                    <span class="badge" style="background: var(--primary-blue); color: white; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem;">
                         {{ $booking->passengers->count() }} {{ __('Total') }}
                     </span>
                 </div>
-                <div class="passengers-list">
+                <div class="detail-card-body" style="padding: 16px;">
                     @forelse($booking->passengers as $pax)
                         <div class="passenger-item">
-                            <div class="pax-avatar">
-                                <i class="fas {{ $pax->passenger_type === 'infant' ? 'fa-baby' : ($pax->passenger_type === 'child' ? 'fa-child' : 'fa-user') }}"></i>
+                            <div class="passenger-main">
+                                <div class="passenger-avatar">
+                                    <i class="fas {{ $pax->passenger_type === 'infant' ? 'fa-baby' : ($pax->passenger_type === 'child' ? 'fa-child' : 'fa-user') }}"></i>
+                                </div>
+                                <div class="passenger-info">
+                                    <span class="p-name">{{ $pax->title }} {{ $pax->first_name }} {{ $pax->last_name }}</span>
+                                    <span class="p-meta text-uppercase">
+                                        {{ __($pax->passenger_type ?? 'adult') }}
+                                    </span>
+                                </div>
                             </div>
-                            <div class="pax-meta">
-                                <span class="pax-name">{{ $pax->title }} {{ $pax->first_name }} {{ $pax->last_name }}</span>
-                                <span class="pax-type text-uppercase" style="font-size: 0.65rem; font-weight: 700; color: #94a3b8;">
-                                    {{ __($pax->passenger_type ?? 'adult') }}
-                                </span>
-                            </div>
-                            <div class="pax-docs">
+                            <div class="passenger-docs">
                                 @if($pax->e_ticket_no)
                                     <div class="ticket-tag">
                                         <label>{{ __('Ticket No') }}</label>
@@ -142,21 +899,19 @@
                         </div>
                     @empty
                         <div class="p-4 text-center text-muted">
-                            <i class="fas fa-user-slash d-block mb-2"></i>
+                            <i class="fas fa-user-slash d-block mb-2" style="font-size: 2rem; opacity: 0.3;"></i>
                             {{ __('No passenger details found.') }}
                         </div>
                     @endforelse
                 </div>
             </div>
 
-            {{-- ─── Detailed Itinerary ─── --}}
+            {{-- Journey Timeline Segments --}}
             @php
                 $itinData = $booking->flightBooking->itinerary_data ?? [];
-                // Normalize segments from Travelopro JSON
                 $segments = [];
                 if (isset($itinData['FareItineraries']['FareItinerary']['OriginDestinationOptions'])) {
                     $options = $itinData['FareItineraries']['FareItinerary']['OriginDestinationOptions'];
-                    // could be single or array
                     if (isset($options['OriginDestinationOption']['FlightSegment'])) {
                         $options = [$options['OriginDestinationOption']];
                     } else {
@@ -172,18 +927,19 @@
             @endphp
 
             @if(!empty($segments))
-                <div class="fd-card">
-                    <div class="fd-card-header">
+                <div class="detail-card">
+                    <div class="detail-card-header">
                         <h5><i class="fas fa-route"></i> {{ __('Detailed Journey') }}</h5>
                     </div>
-                    <div class="segment-timeline p-4">
+                    <div class="segment-timeline">
                         @foreach($segments as $idx => $seg)
                             @php
                                 $depTime = \Carbon\Carbon::parse($seg['DepartureDateTime']);
                                 $arrTime = \Carbon\Carbon::parse($seg['ArrivalDateTime']);
                                 $airlineCode = $seg['MarketingAirlineCode'] ?? $seg['OperatedByAirlineCode'] ?? '';
                             @endphp
-                            <div class="segment-step {{ $idx < count($segments) - 1 ? 'has-line' : '' }}">
+                            <div class="segment-step">
+                                <div class="seg-dot"><i class="fas fa-circle" style="font-size: 0.4rem;"></i></div>
                                 <div class="seg-airline">
                                     <img src="https://travelnext.works/api/airlines/{{ $airlineCode }}.gif" 
                                          onerror="this.src='https://via.placeholder.com/30?text={{ $airlineCode }}'"
@@ -197,7 +953,8 @@
                                         <div class="date">{{ $depTime->format('d M, Y') }}</div>
                                     </div>
                                     <div class="seg-path">
-                                        <div class="path-icon"><i class="fas fa-plane"></i></div>
+                                        <div class="seg-path-line"></div>
+                                        <i class="fas fa-plane"></i>
                                         <div class="path-dur">{{ $depTime->diff($arrTime)->format('%hh %im') }}</div>
                                     </div>
                                     <div class="seg-point text-end">
@@ -222,73 +979,90 @@
 
         </div>
 
-        {{-- ─── RIGHT COLUMN ─── --}}
+        {{-- RIGHT COLUMN --}}
         <div class="fd-sidebar">
             
-            {{-- Pricing Summary --}}
-            <div class="fd-card total-card">
-                <div class="total-label">{{ __('Total Price') }}</div>
-                <div class="total-value">{{ number_format($booking->total_amount, 2) }} <span>{{ $booking->currency }}</span></div>
+            {{-- Price Breakdown Stub --}}
+            <div class="summary-total">
+                <div class="amount-label">{{ __('Total Price') }}</div>
+                <div class="amount">{{ number_format($booking->total_amount, 2) }} <span>{{ $booking->currency }}</span></div>
                 
                 <div class="price-breakdown">
-                    <div class="row-info"><span>{{ __('Base Fare') }}</span><strong>{{ number_format($booking->total_amount, 2) }}</strong></div>
-                    <div class="row-info"><span>{{ __('Taxes & Fees') }}</span><strong>0.00</strong></div>
-                </div>
-
-                <div class="fd-actions">
-                    @if($booking->status === 'pending')
-                        @php
-                            $isExpired = $booking->ticketing_time_limit && now()->greaterThan($booking->ticketing_time_limit);
-                        @endphp
-                        @if($isExpired)
-                            <div class="expired-msg-sidebar">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                <span>{{ __('This PNR has expired. Please search again.') }}</span>
-                            </div>
-                            <a href="{{ route('flights') }}" class="btn-fd btn-fd-outline">
-                                <i class="fas fa-search"></i> {{ __('New Search') }}
-                            </a>
-                        @else
-                            <a href="{{ route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'mada', 'type' => 'flight']) }}" class="btn-fd btn-fd-primary" id="payButton">
-                                <i class="fas fa-credit-card"></i> {{ __('Pay Now') }}
-                            </a>
-                        @endif
-                    @elseif($booking->status === 'confirmed')
-                        <a href="{{ route('customer.bookings.invoice', $booking->id) }}" class="btn-fd btn-fd-success">
-                            <i class="fas fa-file-invoice-dollar"></i> {{ __('Download Invoice') }}
-                        </a>
-                    @endif
-                    <a href="https://wa.me/" class="btn-fd btn-fd-outline">
-                        <i class="fab fa-whatsapp"></i> {{ __('Need Assistance?') }}
-                    </a>
+                    <div class="row-info">
+                        <span>{{ __('Base Fare') }}</span>
+                        <strong>{{ number_format($booking->total_amount, 2) }} {{ $booking->currency }}</strong>
+                    </div>
+                    <div class="row-info">
+                        <span>{{ __('Taxes & Fees') }}</span>
+                        <strong>0.00 {{ $booking->currency }}</strong>
+                    </div>
                 </div>
             </div>
 
-            {{-- Timeline --}}
-            <div class="fd-card">
-                <div class="fd-card-header">
+            {{-- Action Stack --}}
+            <div class="detail-card">
+                <div class="detail-card-body" style="padding: 20px;">
+                    <div class="actions-stack">
+                        @if($booking->status === 'pending')
+                            @php
+                                $isExpired = $booking->ticketing_time_limit && now()->greaterThan($booking->ticketing_time_limit);
+                            @endphp
+                            @if($isExpired)
+                                <div class="expired-msg-sidebar">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <span>{{ __('This PNR reservation has expired.') }}</span>
+                                </div>
+                                <a href="{{ route('flights') }}" class="action-btn action-btn-outline">
+                                    <i class="fas fa-search"></i> {{ __('Search Flights') }}
+                                </a>
+                            @else
+                                <a href="{{ route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'mada', 'type' => 'flight']) }}" class="action-btn action-btn-primary" id="payButton">
+                                    <i class="fas fa-credit-card"></i> {{ __('Pay Now') }}
+                                </a>
+                            @endif
+                        @elseif($booking->status === 'confirmed')
+                            <a href="{{ route('customer.bookings.invoice', $booking->id) }}" class="action-btn action-btn-success">
+                                <i class="fas fa-file-invoice-dollar"></i> {{ __('Download Invoice') }}
+                            </a>
+                        @endif
+                        <a href="https://wa.me/{{ \App\Models\Setting::get('whatsapp_number', '') }}" class="action-btn action-btn-outline" target="_blank">
+                            <i class="fab fa-whatsapp" style="color: #25d366;"></i> {{ __('WhatsApp Support') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Booking Timeline --}}
+            <div class="detail-card">
+                <div class="detail-card-header" style="padding: 16px 20px;">
                     <h5><i class="fas fa-history"></i> {{ __('Booking Timeline') }}</h5>
                 </div>
-                <div class="timeline">
-                    <div class="timeline-step done">
-                        <div class="step-dot"><i class="fas fa-check"></i></div>
-                        <div class="step-content">
-                            <strong>{{ __('Reservation Received') }}</strong>
-                            <small>{{ $booking->created_at->format('d M Y, H:i') }}</small>
+                <div class="detail-card-body" style="padding: 20px;">
+                    <div class="timeline-v">
+                        <div class="tl-item done">
+                            <div class="tl-dot"><i class="fas fa-check"></i></div>
+                            <div class="tl-text">
+                                <strong>{{ __('Reservation Created') }}</strong>
+                                <small>{{ $booking->created_at->format('d M Y, H:i') }}</small>
+                            </div>
                         </div>
-                    </div>
-                    <div class="timeline-step {{ in_array($booking->status, ['paid', 'confirmed']) ? 'done' : '' }}">
-                        <div class="step-dot"><i class="fas {{ in_array($booking->status, ['paid', 'confirmed']) ? 'fa-check' : 'fa-credit-card' }}"></i></div>
-                        <div class="step-content">
-                            <strong>{{ __('Payment Verification') }}</strong>
-                            <small>{{ in_array($booking->status, ['paid', 'confirmed']) ? __('Completed') : __('Awaiting Payment') }}</small>
+                        <div class="tl-item {{ in_array($booking->status, ['paid', 'confirmed']) ? 'done' : '' }}">
+                            <div class="tl-dot">
+                                <i class="fas {{ in_array($booking->status, ['paid', 'confirmed']) ? 'fa-check' : 'fa-credit-card' }}"></i>
+                            </div>
+                            <div class="tl-text">
+                                <strong>{{ __('Payment Verification') }}</strong>
+                                <small>{{ in_array($booking->status, ['paid', 'confirmed']) ? __('Completed') : __('Awaiting Payment') }}</small>
+                            </div>
                         </div>
-                    </div>
-                    <div class="timeline-step {{ $booking->status === 'confirmed' ? 'done' : '' }}">
-                        <div class="step-dot"><i class="fas {{ $booking->status === 'confirmed' ? 'fa-check' : 'fa-plane' }}"></i></div>
-                        <div class="step-content">
-                            <strong>{{ __('Official Confirmation') }}</strong>
-                            <small>{{ $booking->status === 'confirmed' ? __('Ready to fly') : __('Processing...') }}</small>
+                        <div class="tl-item {{ $booking->status === 'confirmed' ? 'done' : '' }}">
+                            <div class="tl-dot">
+                                <i class="fas {{ $booking->status === 'confirmed' ? 'fa-check' : 'fa-plane' }}"></i>
+                            </div>
+                            <div class="tl-text">
+                                <strong>{{ __('Official Tickets Sent') }}</strong>
+                                <small>{{ $booking->status === 'confirmed' ? __('Ready to fly') : __('Processing...') }}</small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -321,7 +1095,6 @@
                     payButton.style.pointerEvents = 'none';
                     payButton.innerHTML = '<i class="fas fa-times-circle"></i> {{ __("Expired") }}';
                 }
-                // Optional: Reload to show cancelled status
                 setTimeout(() => { window.location.reload(); }, 2000);
                 return;
             }
@@ -332,7 +1105,7 @@
             display.innerHTML = (minutes < 10 ? "0" + minutes : minutes) + ":" + (seconds < 10 ? "0" + seconds : seconds);
 
             if (distance < 60000) { // Last minute
-                display.style.color = 'var(--fd-danger)';
+                display.style.color = '#ef4444';
             }
         }, 1000);
     });
@@ -340,193 +1113,3 @@
 @endpush
 @endif
 @endsection
-
-@push('styles')
-<style>
-    :root {
-        --fd-primary: #1e293b;
-        --fd-accent: #3b82f6;
-        --fd-success: #10b981;
-        --fd-warning: #f59e0b;
-        --fd-danger: #ef4444;
-        --fd-bg: #f8fafc;
-        --fd-card-shadow: 0 10px 30px -5px rgba(0,0,0,0.04);
-        --fd-radius: 20px;
-    }
-
-    .flight-details-wrapper {
-        padding: 20px 0;
-    }
-
-    /* ─── Status Hero ─── */
-    .status-hero {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 30px;
-        border-radius: var(--fd-radius);
-        margin-bottom: 30px;
-        border-left: 8px solid transparent;
-        box-shadow: var(--fd-card-shadow);
-        background: white;
-    }
-    .status-confirmed { border-color: var(--fd-success); }
-    .status-paid      { border-color: var(--fd-accent); }
-    .status-pending   { border-color: var(--fd-warning); }
-    .status-cancelled { border-color: var(--fd-danger); }
-
-    .status-hero-main { display: flex; align-items: center; gap: 20px; }
-    .status-icon {
-        width: 60px; height: 60px; border-radius: 15px;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 1.5rem;
-    }
-    .status-confirmed .status-icon { background: #ecfdf5; color: var(--fd-success); }
-    .status-paid .status-icon      { background: #eff6ff; color: var(--fd-accent); }
-    .status-pending .status-icon   { background: #fffbeb; color: var(--fd-warning); }
-    .status-cancelled .status-icon { background: #fef2f2; color: var(--fd-danger); }
-
-    .status-info h3 { margin: 0; font-weight: 900; color: var(--fd-primary); font-size: 1.4rem; }
-    .status-info p { margin: 5px 0 0; color: #64748b; font-size: 0.95rem; }
-
-    .pnr-badge span { font-size: 1.6rem; font-weight: 900; color: var(--fd-accent); letter-spacing: 1px; }
-    
-    .expiry-timer-box { 
-        text-align: right; 
-        padding: 10px 20px; 
-        background: #f8fafc; 
-        border-radius: 12px;
-        border: 1px solid #e2e8f0;
-    }
-    .timer-label { font-size: 0.7rem; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; }
-    .timer-value { font-size: 1.8rem; font-weight: 900; color: var(--fd-primary); font-family: monospace; }
-    .timer-value.expired { color: var(--fd-danger) !important; }
-
-    .expired-msg-sidebar {
-        background: #fef2f2;
-        color: var(--fd-danger);
-        padding: 12px;
-        border-radius: 12px;
-        font-size: 0.85rem;
-        font-weight: 700;
-        margin-bottom: 15px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        border: 1px solid #fee2e2;
-    }
-
-    /* ─── Layout Grid ─── */
-    .fd-grid { display: grid; grid-template-columns: 1fr 380px; gap: 30px; }
-    @media (max-width: 1100px) { .fd-grid { grid-template-columns: 1fr; } }
-
-    /* ─── Cards ─── */
-    .fd-card {
-        background: white; border-radius: var(--fd-radius);
-        box-shadow: var(--fd-card-shadow); margin-bottom: 25px;
-        border: 1px solid #f1f5f9; overflow: hidden;
-    }
-    .fd-card-header {
-        padding: 20px 25px; border-bottom: 1px solid #f8fafc;
-        display: flex; justify-content: space-between; align-items: center;
-    }
-    .fd-card-header h5 { margin: 0; font-weight: 800; color: var(--fd-primary); display: flex; align-items: center; gap: 10px; font-size: 1rem; }
-    .fd-card-header h5 i { color: var(--fd-accent); }
-    .airline-text { font-size: 0.85rem; font-weight: 700; color: #94a3b8; }
-
-    /* ─── Boarding Pass ─── */
-    .boarding-pass { padding: 30px; background: linear-gradient(135deg, #ffffff, #f9fafb); }
-    .bp-top { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
-    .airport .city { display: block; font-size: 2rem; font-weight: 900; color: var(--fd-primary); line-height: 1; }
-    .airport .time { font-size: 0.9rem; color: #64748b; font-weight: 600; display: block; margin-top: 8px; }
-
-    .flight-path { flex: 1; position: relative; text-align: center; }
-    .path-line { position: absolute; top: 50%; left: 0; right: 0; border-top: 2px dashed #cbd5e1; z-index: 1; }
-    .flight-path i { position: relative; z-index: 2; background: white; padding: 0 15px; color: var(--fd-accent); font-size: 1.4rem; }
-    .duration { display: block; font-size: 0.75rem; color: #94a3b8; font-weight: 700; margin-top: 5px; }
-
-    .bp-divider { position: relative; margin: 25px -30px; display: flex; align-items: center; height: 30px; }
-    .bp-divider .line { flex: 1; border-top: 2px dashed #f1f5f9; }
-    .bp-divider .notch { width: 30px; height: 30px; background: var(--fd-bg); border-radius: 50%; position: absolute; z-index: 5; }
-    .bp-divider .notch.left { left: -15px; }
-    .bp-divider .notch.right { right: -15px; }
-
-    .bp-bottom { display: flex; justify-content: space-between; align-items: center; }
-    .bp-info label { display: block; font-size: 0.72rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
-    .bp-info span { font-weight: 800; color: var(--fd-primary); font-size: 0.95rem; }
-    .badge-status { padding: 4px 12px; background: var(--fd-accent); color: white; border-radius: 100px; font-size: 0.75rem; }
-
-    /* ─── Passengers ─── */
-    .passengers-list { padding: 15px 25px; }
-    .passenger-item {
-        display: flex; align-items: center; gap: 15px; padding: 15px 0;
-        border-bottom: 1px solid #f8fafc;
-    }
-    .passenger-item:last-child { border-bottom: none; }
-    .pax-avatar {
-        width: 45px; height: 45px; border-radius: 12px; background: #f1f5f9;
-        display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 1.1rem;
-    }
-    .pax-meta { flex: 1; }
-    .pax-name { display: block; font-weight: 800; color: var(--fd-primary); font-size: 0.95rem; }
-    .pax-type { font-size: 0.75rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; }
-
-    .pax-docs { display: flex; gap: 20px; }
-    .pax-docs label { display: block; font-size: 0.68rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; }
-    .pax-docs strong { font-size: 0.88rem; font-weight: 800; color: var(--fd-primary); }
-
-    /* ─── Sidebar ─── */
-    .total-card { background: var(--fd-primary); color: white; border: none; padding: 30px; }
-    .total-label { font-size: 0.8rem; color: rgba(255,255,255,0.6); font-weight: 700; text-transform: uppercase; margin-bottom: 5px; }
-    .total-value { font-size: 2.5rem; font-weight: 900; line-height: 1; margin-bottom: 20px; }
-    .total-value span { font-size: 1rem; opacity: 0.7; font-weight: 600; margin-left: 5px; }
-
-    .price-breakdown { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; margin-bottom: 25px; }
-    .row-info { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.88rem; }
-    .row-info span { color: rgba(255,255,255,0.6); }
-
-    .fd-actions { display: flex; flex-direction: column; gap: 10px; }
-    .btn-fd {
-        display: flex; align-items: center; justify-content: center; gap: 10px;
-        padding: 14px; border-radius: 15px; font-weight: 800; font-size: 0.9rem;
-        cursor: pointer; transition: all .3s; text-decoration: none; border: none;
-    }
-    .btn-fd-primary { background: white; color: var(--fd-primary); }
-    .btn-fd-primary:hover { background: #f1f5f9; transform: translateY(-3px); }
-    .btn-fd-success { background: var(--fd-success); color: white; }
-    .btn-fd-success:hover { background: #059669; transform: translateY(-3px); }
-    .btn-fd-outline { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
-    .btn-fd-outline:hover { background: rgba(255,255,255,0.2); }
-
-    /* ─── Timeline ─── */
-    .timeline { padding: 25px; }
-    .timeline-step { display: flex; gap: 15px; position: relative; padding-bottom: 25px; }
-    .timeline-step:last-child { padding-bottom: 0; }
-    .timeline-step::before {
-        content: ''; position: absolute; left: 17px; top: 30px; width: 2px;
-        height: calc(100% - 25px); background: #f1f5f9;
-        z-index: 1;
-    }
-    .timeline-step:last-child::before { display: none; }
-    .timeline-step.done::before { background: var(--fd-success); }
-
-    .step-dot {
-        width: 36px; height: 36px; border-radius: 50%; background: #f1f5f9; color: #94a3b8;
-        display: flex; align-items: center; justify-content: center; font-size: 0.8rem;
-        position: relative; z-index: 2; border: 4px solid white;
-    }
-    .timeline-step.done .step-dot { background: var(--fd-success); color: white; }
-    .step-content strong { display: block; font-size: 0.9rem; color: var(--fd-primary); font-weight: 800; margin-bottom: 2px; }
-    .step-content small { color: #94a3b8; font-size: 0.75rem; font-weight: 600; }
-
-    /* Arabic RTL Adjustments */
-    html[dir="rtl"] .status-hero { border-left: none; border-right: 8px solid transparent; }
-    html[dir="rtl"] .status-hero.status-confirmed { border-right-color: var(--fd-success); }
-    html[dir="rtl"] .status-hero.status-paid      { border-right-color: var(--fd-accent); }
-    html[dir="rtl"] .status-hero.status-pending   { border-right-color: var(--fd-warning); }
-    html[dir="rtl"] .status-hero.status-cancelled { border-right-color: var(--fd-danger); }
-    html[dir="rtl"] .pnr-badge { text-align: left; }
-    html[dir="rtl"] .timeline-step::before { left: auto; right: 17px; }
-    html[dir="rtl"] .step-dot { border-width: 4px; }
-</style>
-@endpush

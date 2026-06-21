@@ -419,6 +419,9 @@ Route::middleware(['auth', 'isCustomer'])->prefix('customer')->name('customer.')
     // Dashboard
     Route::get('/dashboard', [\App\Http\Controllers\Customer\CustomerDashboardController::class, 'index'])->name('dashboard');
 
+    // Global Search
+    Route::get('/search-all', [\App\Http\Controllers\Customer\CustomerSearchController::class, 'search'])->name('search-all');
+
     // Bookings
     Route::get('/bookings', [CustomerBookingController::class, 'index'])->name('bookings.index');
     Route::get('/bookings/trips', [CustomerBookingController::class, 'trips'])->name('bookings.trips');

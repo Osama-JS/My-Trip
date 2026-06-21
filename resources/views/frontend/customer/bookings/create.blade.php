@@ -40,7 +40,7 @@
                                 </div>
                             @endif
                             <div class="form-group" style="max-width: 300px;">
-                                <select name="travelers_count" id="travelersCount" class="form-input" style="height: 54px; width: 100%; border: 2px solid #e2e8f0; border-radius: 12px; padding: 0 20px; font-weight: 600;" onchange="updatePassengerFields(); calculateTotal();">
+                                <select name="travelers_count" id="travelersCount" class="form-input select2" style="height: 54px; width: 100%; border: 2px solid #e2e8f0; border-radius: 12px; padding: 0 20px; font-weight: 600;" onchange="updatePassengerFields(); calculateTotal();">
                                     @for($i = 1; $i <= ($trip->personnel_capacity ?? 10); $i++)
                                         <option value="{{ $i }}" {{ old('travelers_count') == $i ? 'selected' : '' }}>{{ $i }} {{ $i == 1 ? __('Traveler') : __('Travelers') }}</option>
                                     @endfor
@@ -142,6 +142,123 @@
 
 @push('styles')
 <style>
+    /* ==========================================
+       Select2 Premium Custom Overrides
+       ========================================== */
+    .select2-container {
+        width: 100% !important;
+        margin-bottom: 2px;
+    }
+    
+    .select2-container--default .select2-selection--single {
+        background-color: #ffffff !important;
+        border: 2px solid #e2e8f0 !important;
+        border-radius: 12px !important;
+        height: 54px !important;
+        display: flex !important;
+        align-items: center !important;
+        transition: all 0.2s ease !important;
+        padding: 0 10px !important;
+        outline: none !important;
+    }
+    
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        color: #0f172a !important;
+        font-size: 0.95rem !important;
+        font-weight: 600 !important;
+        padding-inline-start: 10px !important;
+        padding-inline-end: 25px !important;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__placeholder {
+        color: #64748b !important;
+        opacity: 0.8;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 50px !important;
+        position: absolute !important;
+        top: 2px !important;
+        inset-inline-end: 15px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow b {
+        border-color: #64748b transparent transparent transparent !important;
+        border-width: 6px 5px 0 5px !important;
+    }
+    .select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
+        border-color: transparent transparent #64748b transparent !important;
+        border-width: 0 5px 6px 5px !important;
+    }
+
+    /* Focus & Active States */
+    .select2-container--default.select2-container--focus .select2-selection--single,
+    .select2-container--default.select2-container--open .select2-selection--single {
+        border-color: var(--color-primary) !important;
+        box-shadow: 0 0 0 4px rgba(var(--color-primary-rgb), 0.1) !important;
+    }
+
+    /* Dropdown Panel */
+    .select2-dropdown {
+        background-color: #ffffff !important;
+        border: 2px solid #e2e8f0 !important;
+        border-radius: 16px !important;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08) !important;
+        overflow: hidden !important;
+        z-index: 9999 !important;
+        padding: 6px !important;
+    }
+
+    /* Dropdown Search Field */
+    .select2-search--dropdown {
+        padding: 8px 8px 4px 8px !important;
+    }
+    .select2-search--dropdown .select2-search__field {
+        background-color: #f8fafc !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 8px !important;
+        padding: 8px 12px !important;
+        color: #0f172a !important;
+        outline: none !important;
+        font-size: 0.88rem !important;
+        font-weight: 500 !important;
+        font-family: inherit !important;
+    }
+    .select2-search--dropdown .select2-search__field:focus {
+        border-color: var(--color-primary) !important;
+    }
+
+    /* Options Results */
+    .select2-results__options {
+        max-height: 220px !important;
+        padding-inline-start: 0 !important;
+        margin: 4px 0 0 0 !important;
+    }
+    .select2-results__option {
+        padding: 10px 14px !important;
+        font-size: 0.88rem !important;
+        font-weight: 600 !important;
+        border-radius: 8px !important;
+        color: #0f172a !important;
+        margin-bottom: 2px !important;
+        transition: background 0.15s, color 0.15s !important;
+    }
+    .select2-results__option:last-child {
+        margin-bottom: 0 !important;
+    }
+    
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background-color: var(--color-primary) !important;
+        color: #ffffff !important;
+    }
+    
+    .select2-container--default .select2-results__option[aria-selected="true"] {
+        background-color: rgba(var(--color-primary-rgb), 0.08) !important;
+        color: var(--color-primary) !important;
+    }
+
     .form-input:focus {
         border-color: var(--color-primary) !important;
         outline: none;
@@ -275,6 +392,22 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Select2
+        $('#travelersCount').select2({
+            width: '100%',
+            minimumResultsForSearch: 0, // always show search
+            dropdownParent: $('#travelersCount').parent(),
+            dir: $('html').attr('dir') || 'ltr',
+            language: {
+                noResults: function() {
+                    return $('html').attr('dir') === 'rtl' ? "لا توجد نتائج" : "No results found";
+                }
+            }
+        }).on('change', function() {
+            updatePassengerFields();
+            calculateTotal();
+        });
+
         const oldPassengers = @json(old('passengers'));
         if (oldPassengers) {
             updatePassengerFields(oldPassengers);

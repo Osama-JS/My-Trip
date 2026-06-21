@@ -5,78 +5,605 @@
 
 @push('styles')
 <style>
-.filter-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 22px; }
-.filter-btn { padding: 8px 18px; border-radius: 30px; border: 1.5px solid #e5e7eb; background: #fff; color: #6b7280; font-size: .85rem; font-weight: 600; cursor: pointer; text-decoration: none; transition: all .2s; }
-.filter-btn:hover, .filter-btn.active { background: var(--accent-color, #0f172a); border-color: var(--accent-color, #0f172a); color: #fff; }
-.booking-card { background: #fff; border-radius: 14px; box-shadow: 0 2px 10px rgba(0,0,0,.06); margin-bottom: 16px; overflow: hidden; transition: box-shadow .2s; }
-.booking-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,.1); }
-.booking-card-body { display: flex; align-items: center; gap: 18px; padding: 18px 20px; }
-.booking-img-placeholder { width: 80px; height: 80px; border-radius: 12px; background: #e0f2fe; color: #0369a1; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; flex-shrink: 0; }
-.booking-details { flex: 1; min-width: 0; }
-.booking-trip-name { font-weight: 700; font-size: 1rem; color: #111827; margin-bottom: 4px; }
-.booking-meta-row { display: flex; flex-wrap: wrap; gap: 14px; font-size: .8rem; color: #6b7280; }
-.booking-meta-row span { display: flex; align-items: center; gap: 4px; }
-.booking-right { text-align: end; flex-shrink: 0; }
-.booking-price { font-size: 1.2rem; font-weight: 700; color: #111827; margin-bottom: 6px; }
-.status-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; border-radius: 20px; font-size: .75rem; font-weight: 600; }
-.status-pending { background: #fff7ed; color: #c2410c; }
-.status-confirmed { background: #f0fdf4; color: #15803d; }
-.status-cancelled { background: #fef2f2; color: #b91c1c; }
-.booking-card-footer { border-top: 1px solid #f3f4f6; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-.booking-actions { display: flex; gap: 8px; }
-.btn-sm { padding: 6px 14px; border-radius: 8px; font-size: .8rem; font-weight: 600; text-decoration: none; border: none; cursor: pointer; transition: all .2s; display: inline-flex; align-items: center; gap: 5px; }
-.btn-outline { border: 1.5px solid #e5e7eb; background: #fff; color: #374151; }
-.btn-outline:hover { border-color: var(--accent-color, #0f172a); color: var(--accent-color, #0f172a); }
+/* ─── Global Variables & Animations ─── */
+:root {
+    --ticket-radius: 20px;
+    --ticket-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.03), 0 4px 6px -4px rgba(0, 0, 0, 0.03), 0 0 0 1px rgba(0, 0, 0, 0.025);
+    --ticket-shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.03), 0 0 0 1px rgba(37, 99, 235, 0.15);
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+.booking-list-container {
+    animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ─── Filter Bar ─── */
+.filter-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+.filter-btn {
+    padding: 10px 22px;
+    border-radius: 30px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    color: var(--text-muted);
+    font-size: .88rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.filter-btn:hover {
+    color: var(--primary-blue);
+    border-color: var(--primary-blue);
+    background: rgba(37, 99, 235, 0.03);
+    transform: translateY(-1px);
+}
+.filter-btn.active {
+    background: var(--primary-blue);
+    border-color: var(--primary-blue);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.18);
+}
+
+/* ─── Advanced Filters Panel ─── */
+.advanced-filters-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 24px;
+    box-shadow: var(--ticket-shadow);
+    display: none;
+    animation: fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.filters-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 16px;
+}
+@media (max-width: 768px) {
+    .filters-grid {
+        grid-template-columns: 1fr;
+    }
+}
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.filter-label {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.filter-input {
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    width: 100%;
+    outline: none;
+    transition: all 0.2s;
+}
+.filter-input:focus {
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+.filter-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+/* ─── Boarding Ticket Card ─── */
+.booking-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--ticket-radius);
+    margin-bottom: 24px;
+    position: relative;
+    overflow: visible;
+    display: flex;
+    box-shadow: var(--ticket-shadow);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.booking-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--ticket-shadow-hover);
+    border-color: rgba(37, 99, 235, 0.15);
+}
+
+.booking-card-main {
+    flex: 1;
+    padding: 24px;
+    min-width: 0;
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+@media (max-width: 768px) {
+    .booking-card-main {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+}
+
+.booking-img-placeholder {
+    width: 96px;
+    height: 96px;
+    border-radius: 14px;
+    background: rgba(59, 130, 246, 0.08);
+    color: #3b82f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.2rem;
+    flex-shrink: 0;
+}
+
+.booking-details {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Route Visualizer */
+.ticket-route {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.route-city {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--primary-blue);
+    text-transform: uppercase;
+}
+.route-arrow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    max-width: 120px;
+    min-width: 40px;
+    padding: 0 4px;
+}
+.route-line {
+    height: 2px;
+    background: var(--border-color);
+    flex: 1;
+    position: relative;
+}
+.route-arrow i {
+    font-size: 0.75rem;
+    color: var(--primary-blue);
+    transform: rotate(90deg);
+}
+[dir="rtl"] .route-arrow i {
+    transform: rotate(-90deg);
+}
+
+.booking-trip-name {
+    font-weight: 850;
+    font-size: 1.15rem;
+    color: var(--text-main);
+    margin: 0 0 10px;
+    line-height: 1.3;
+}
+
+.booking-meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-size: .82rem;
+    color: var(--text-muted);
+}
+.booking-meta-row span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+}
+.booking-meta-row i {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+/* Ticket divider with punch-holes */
+.booking-card-divider {
+    position: relative;
+    width: 1px;
+    border-left: 2px dashed var(--border-color);
+    margin: 18px 0;
+    flex-shrink: 0;
+}
+@media (max-width: 900px) {
+    .booking-card-divider {
+        width: 100%;
+        height: 1px;
+        border-left: none;
+        border-top: 2px dashed var(--border-color);
+        margin: 0;
+    }
+}
+
+.booking-card-divider::before, .booking-card-divider::after {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    left: -10px;
+    z-index: 5;
+    transition: background-color 0.3s, border-color 0.3s;
+}
+.booking-card-divider::before {
+    top: -28px;
+}
+.booking-card-divider::after {
+    bottom: -28px;
+}
+@media (max-width: 900px) {
+    .booking-card-divider::before {
+        left: -10px;
+        top: -9px;
+    }
+    .booking-card-divider::after {
+        right: -10px;
+        left: auto;
+        bottom: -9px;
+    }
+}
+
+/* Right ticket stub */
+.booking-card-stub {
+    width: 200px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.005);
+    flex-shrink: 0;
+    gap: 12px;
+}
+@media (max-width: 900px) {
+    .booking-card-stub {
+        width: 100%;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(0, 0, 0, 0.005);
+        padding: 16px 24px;
+    }
+}
+
+.price-section {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: center;
+}
+@media (max-width: 900px) {
+    .price-section {
+        align-items: flex-start;
+        text-align: left;
+    }
+    [dir="rtl"] .price-section {
+        text-align: right;
+    }
+}
+
+.booking-price {
+    font-size: 1.4rem;
+    font-weight: 950;
+    color: var(--text-main);
+    letter-spacing: -0.5px;
+    line-height: 1;
+}
+.price-label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stub-actions {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+@media (max-width: 900px) {
+    .stub-actions {
+        width: auto;
+        flex-direction: row;
+        align-items: center;
+    }
+}
+
+/* Buttons & Badges */
+.btn-sm {
+    padding: 8px 18px;
+    border-radius: 12px;
+    font-size: .82rem;
+    font-weight: 750;
+    text-decoration: none !important;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+}
+.btn-outline {
+    border-color: var(--border-color);
+    background: var(--bg-card);
+    color: var(--text-main);
+}
+.btn-outline:hover {
+    border-color: var(--primary-blue);
+    color: var(--primary-blue);
+    background: rgba(37, 99, 235, 0.03);
+    transform: translateY(-1px);
+}
+.btn-accent {
+    background: var(--primary-blue);
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.15);
+}
+.btn-accent:hover {
+    background: #1d4ed8;
+    box-shadow: 0 6px 14px rgba(37, 99, 235, 0.25);
+    transform: translateY(-1px);
+}
+
+/* Status wrapper */
+.status-badge-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+.status-badge-wrapper .pulse-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.status-badge-wrapper.status-pending {
+    background: rgba(249, 115, 22, 0.08);
+    color: #c2410c;
+}
+.status-badge-wrapper.status-pending .pulse-dot {
+    background: #f97316;
+    animation: statusPulseOrange 1.5s infinite;
+}
+
+.status-badge-wrapper.status-confirmed {
+    background: rgba(16, 185, 129, 0.08);
+    color: #15803d;
+}
+.status-badge-wrapper.status-confirmed .pulse-dot {
+    background: #10b981;
+    animation: statusPulseGreen 1.5s infinite;
+}
+
+.status-badge-wrapper.status-cancelled {
+    background: rgba(239, 68, 68, 0.08);
+    color: #b91c1c;
+}
+.status-badge-wrapper.status-cancelled .pulse-dot {
+    background: #ef4444;
+}
+
+@keyframes statusPulseGreen {
+    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+    70% { box-shadow: 0 0 0 5px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+@keyframes statusPulseOrange {
+    0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.4); }
+    70% { box-shadow: 0 0 0 5px rgba(249, 115, 22, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); }
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 70px 30px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--ticket-radius);
+    box-shadow: var(--ticket-shadow);
+}
+.empty-state .empty-icon {
+    font-size: 4.5rem;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+    opacity: 0.25;
+}
+.empty-state h3 {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--text-main);
+    margin: 0 0 8px;
+}
+.empty-state p {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    margin: 0;
+}
 </style>
 @endpush
 
 @section('content')
 
-<div class="filter-bar">
-    <a href="{{ route('customer.bookings.flights') }}" class="filter-btn {{ !request('status') ? 'active' : '' }}">
-        {{ __('All Status') }}
-    </a>
-    <a href="{{ route('customer.bookings.flights', ['status' => 'pending']) }}" class="filter-btn {{ request('status') === 'pending' ? 'active' : '' }}">
-        <i class="fas fa-clock"></i> {{ __('Pending') }}
-    </a>
-    <a href="{{ route('customer.bookings.flights', ['status' => 'confirmed']) }}" class="filter-btn {{ request('status') === 'confirmed' ? 'active' : '' }}">
-        <i class="fas fa-check-circle"></i> {{ __('Confirmed') }}
-    </a>
-</div>
+<div class="booking-list-container">
+    {{-- Filter Bar --}}
+    <div class="filter-bar">
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <a href="{{ route('customer.bookings.flights', request()->except(['status', 'page'])) }}" class="filter-btn {{ !request('status') ? 'active' : '' }}">
+                {{ __('All Status') }}
+            </a>
+            <a href="{{ route('customer.bookings.flights', array_merge(request()->except(['page']), ['status' => 'pending'])) }}" class="filter-btn {{ request('status') === 'pending' ? 'active' : '' }}">
+                <i class="fas fa-clock"></i> {{ __('Pending') }}
+            </a>
+            <a href="{{ route('customer.bookings.flights', array_merge(request()->except(['page']), ['status' => 'confirmed'])) }}" class="filter-btn {{ request('status') === 'confirmed' ? 'active' : '' }}">
+                <i class="fas fa-check-circle"></i> {{ __('Confirmed') }}
+            </a>
+        </div>
+        <button class="filter-btn" type="button" onclick="toggleAdvancedFilters()" style="color: var(--text-main); border-color: var(--border-color);">
+            <i class="fas fa-filter"></i> {{ __('Advanced Filters') }}
+            @if(request('search') || request('date_from') || request('date_to'))
+                <span style="display: inline-block; width: 8px; height: 8px; background: #ef4444; border-radius: 50%;"></span>
+            @endif
+        </button>
+    </div>
 
-@if($bookings->count() > 0)
-    @foreach($bookings as $booking)
-        <div class="booking-card">
-            <div class="booking-card-body">
-                <div class="booking-img-placeholder"><i class="fas fa-plane"></i></div>
-                <div class="booking-details">
-                    <div class="booking-trip-name">{{ $booking->booking_reference }}</div>
-                    <div class="booking-meta-row">
-                        <span><i class="fas fa-ticket-alt"></i> {{ __('Ref') }}: {{ $booking->booking_reference }}</span>
-                        <span><i class="fas fa-calendar"></i> {{ $booking->created_at->format('d/m/Y') }}</span>
-                    </div>
+    {{-- Advanced Filters Panel --}}
+    <form action="{{ route('customer.bookings.flights') }}" method="GET" id="filterForm">
+        @if(request('status'))
+            <input type="hidden" name="status" value="{{ request('status') }}">
+        @endif
+
+        <div class="advanced-filters-panel" id="advancedFilters" style="{{ (request('search') || request('date_from') || request('date_to')) ? 'display: block;' : '' }}">
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label class="filter-label">{{ __('Search') }}</label>
+                    <input type="text" name="search" class="filter-input" value="{{ request('search') }}" placeholder="{{ __('Search by PNR, Reference or Airline...') }}">
                 </div>
-                <div class="booking-right">
-                    <div class="booking-price">{{ number_format($booking->total_amount, 0) }} {{ $booking->currency }}</div>
-                    <span class="status-badge status-{{ $booking->status }}">{{ __($booking->status) }}</span>
+                <div class="filter-group">
+                    <label class="filter-label">{{ __('From Date') }}</label>
+                    <input type="date" name="date_from" class="filter-input" value="{{ request('date_from') }}">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">{{ __('To Date') }}</label>
+                    <input type="date" name="date_to" class="filter-input" value="{{ request('date_to') }}">
                 </div>
             </div>
-            <div class="booking-card-footer">
-                <div class="booking-date-info">{{ __('Flight Booking') }}</div>
-                <div class="booking-actions">
+            <div class="filter-actions">
+                <a href="{{ route('customer.bookings.flights', request('status') ? ['status' => request('status')] : []) }}" class="btn-sm btn-outline" style="width: auto;">
+                    <i class="fas fa-undo"></i> {{ __('Reset') }}
+                </a>
+                <button type="submit" class="btn-sm btn-accent" style="width: auto;">
+                    <i class="fas fa-search"></i> {{ __('Apply Filters') }}
+                </button>
+            </div>
+        </div>
+    </form>
+
+    {{-- Bookings Loop --}}
+    @forelse($bookings as $booking)
+        <div class="booking-card">
+            {{-- Main Column --}}
+            <div class="booking-card-main">
+                <div class="booking-img-placeholder"><i class="fas fa-plane"></i></div>
+
+                <div class="booking-details">
+                    <div class="ticket-route">
+                        <span class="route-city">{{ $booking->airline_name ?: __('Flight') }}</span>
+                        <span class="route-arrow">
+                            <span class="route-line"></span>
+                            <i class="fas fa-plane"></i>
+                        </span>
+                        <span class="route-city">{{ $booking->pnr_code ?: 'PNR' }}</span>
+                    </div>
+
+                    <div class="booking-trip-name">{{ __('Flight Booking') }}</div>
+                    
+                    <div class="booking-meta-row">
+                        <span><i class="fas fa-ticket-alt"></i> {{ __('Ref') }}: {{ $booking->booking_reference }}</span>
+                        @if($booking->pnr_code)
+                            <span><i class="fas fa-barcode"></i> {{ __('PNR') }}: {{ $booking->pnr_code }}</span>
+                        @endif
+                        <span><i class="fas fa-users"></i> {{ $booking->passengers()->count() }} {{ __('Passenger(s)') }}</span>
+                        <span><i class="fas fa-calendar-alt"></i> {{ $booking->created_at->format('d/m/Y') }}</span>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Boarding Pass Cutout Divider --}}
+            <div class="booking-card-divider"></div>
+
+            {{-- Stub Column --}}
+            <div class="booking-card-stub">
+                <div class="price-section">
+                    <span class="booking-price">{{ number_format($booking->total_amount, 0) }} {{ $booking->currency ?: __('SAR') }}</span>
+                    <span class="price-label">{{ __('Total Price') }}</span>
+                </div>
+
+                <span class="status-badge-wrapper status-{{ $booking->status }}">
+                    <span class="pulse-dot"></span>
+                    {{ $booking->status === 'pending' ? __('Pending') : ($booking->status === 'confirmed' ? __('Confirmed') : __('Cancelled')) }}
+                </span>
+
+                <div class="stub-actions">
                     <a href="{{ route('customer.bookings.show', ['id' => $booking->id, 'type' => 'flight']) }}" class="btn-sm btn-outline">
                         <i class="fas fa-eye"></i> {{ __('Details') }}
                     </a>
                 </div>
             </div>
         </div>
-    @endforeach
-@else
-    <div class="empty-state">
-        <div class="empty-icon text-center" style="font-size: 4rem; color: #e2e8f0; padding: 40px;"><i class="fas fa-plane"></i><h3>{{ __('No flight bookings found') }}</h3></div>
-    </div>
-@endif
+    @empty
+        <div class="empty-state">
+            <div class="empty-icon"><i class="fas fa-plane"></i></div>
+            <h3>{{ __('No flight bookings found') }}</h3>
+            <p>{{ __('No results match your active search filters. Try clearing some options.') }}</p>
+        </div>
+    @endforelse
 
-<div class="mt-3">{{ $bookings->links() }}</div>
+    <div class="mt-4">{{ $bookings->links() }}</div>
+</div>
+
+<script>
+function toggleAdvancedFilters() {
+    const panel = document.getElementById('advancedFilters');
+    if (panel.style.display === 'none' || panel.style.display === '') {
+        panel.style.display = 'block';
+    } else {
+        panel.style.display = 'none';
+    }
+}
+</script>
 
 @endsection

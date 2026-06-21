@@ -42,10 +42,41 @@ class BookingController extends Controller
     public function trips(Request $request)
     {
         $status = $request->get('status');
-        $query = \App\Models\TripBooking::with(['trip.images'])->where('user_id', Auth::id());
+        $search = $request->get('search');
+        $dateFrom = $request->get('date_from');
+        $dateTo = $request->get('date_to');
+
+        $query = \App\Models\TripBooking::with(['trip.images', 'trip.fromCity', 'trip.toCity', 'trip.toCountry'])
+            ->where('user_id', Auth::id());
         
         if ($status && in_array($status, ['pending', 'confirmed', 'cancelled'])) {
             $query->where('status', $status);
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                if (is_numeric($search)) {
+                    $q->where('id', $search);
+                }
+                $q->orWhereHas('trip', function ($sub) use ($search) {
+                    $sub->where('title_ar', 'like', "%{$search}%")
+                        ->orWhere('title_en', 'like', "%{$search}%")
+                        ->orWhereHas('toCountry', function($c) use ($search) {
+                            $c->where('name', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('toCity', function($c) use ($search) {
+                            $c->where('title_ar', 'like', "%{$search}%")
+                              ->orWhere('title_en', 'like', "%{$search}%");
+                        });
+                });
+            });
+        }
+
+        if ($dateFrom) {
+            $query->whereDate('booking_date', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->whereDate('booking_date', '<=', $dateTo);
         }
 
         $bookings = $query->latest()->paginate(10);
@@ -58,10 +89,32 @@ class BookingController extends Controller
     public function flights(Request $request)
     {
         $status = $request->get('status');
+        $search = $request->get('search');
+        $dateFrom = $request->get('date_from');
+        $dateTo = $request->get('date_to');
+
         $query = \App\Models\Booking::where('user_id', Auth::id());
         
         if ($status && in_array($status, ['pending', 'confirmed', 'cancelled'])) {
             $query->where('status', $status);
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                if (is_numeric($search)) {
+                    $q->where('id', $search);
+                }
+                $q->orWhere('booking_reference', 'like', "%{$search}%")
+                  ->orWhere('pnr_code', 'like', "%{$search}%")
+                  ->orWhere('airline_name', 'like', "%{$search}%");
+            });
+        }
+
+        if ($dateFrom) {
+            $query->whereDate('created_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->whereDate('created_at', '<=', $dateTo);
         }
 
         $bookings = $query->latest()->paginate(10);
@@ -74,10 +127,34 @@ class BookingController extends Controller
     public function hotels(Request $request)
     {
         $status = $request->get('status');
+        $search = $request->get('search');
+        $dateFrom = $request->get('date_from');
+        $dateTo = $request->get('date_to');
+
         $query = \App\Models\HotelBooking::where('user_id', Auth::id());
         
         if ($status && in_array($status, ['pending', 'confirmed', 'cancelled'])) {
             $query->where('status', $status);
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                if (is_numeric($search)) {
+                    $q->where('id', $search);
+                }
+                $q->orWhere('hotel_name', 'like', "%{$search}%")
+                  ->orWhere('city_name', 'like', "%{$search}%")
+                  ->orWhere('country_name', 'like', "%{$search}%")
+                  ->orWhere('reference_num', 'like', "%{$search}%")
+                  ->orWhere('supplier_confirmation_num', 'like', "%{$search}%");
+            });
+        }
+
+        if ($dateFrom) {
+            $query->whereDate('check_in', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->whereDate('check_in', '<=', $dateTo);
         }
 
         $bookings = $query->latest()->paginate(10);
