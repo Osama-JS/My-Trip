@@ -29,8 +29,9 @@ class InvoiceService
                 'margin_bottom' => 10,
             ]);
 
-            // Set RTL for Arabic support
-            $mpdf->SetDirectionality('rtl');
+            // Set direction dynamically
+            $dir = app()->getLocale() == 'ar' ? 'rtl' : 'ltr';
+            $mpdf->SetDirectionality($dir);
 
             $html = view('invoices.hotel_voucher', compact('booking'))->render();
             $mpdf->WriteHTML($html);
@@ -77,7 +78,8 @@ class InvoiceService
                 'default_font' => 'cairo'
             ]);
 
-            $mpdf->SetDirectionality('rtl');
+            $dir = app()->getLocale() == 'ar' ? 'rtl' : 'ltr';
+            $mpdf->SetDirectionality($dir);
 
             $html = view($view, compact('booking'))->render();
             $mpdf->WriteHTML($html);
