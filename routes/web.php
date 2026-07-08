@@ -56,6 +56,12 @@ Route::get('/search', [FrontendController::class, 'search'])->name('search');
 Route::get('/book-trip/form', [FrontendController::class, 'tripBookingForm'])->name('trips.booking.form')->middleware('auth');
 Route::post('/book-trip', [FrontendController::class, 'bookTrip'])->name('book.trip')->middleware('auth');
 
+// Guest Profile Completion
+Route::middleware('auth')->group(function () {
+    Route::get('/profile/complete', [CustomerProfileController::class, 'completeProfileForm'])->name('profile.complete.form');
+    Route::post('/profile/complete', [CustomerProfileController::class, 'submitCompleteProfile'])->name('profile.complete.submit');
+});
+
 // Dynamic Pages
 Route::get('/p/{slug}', [FrontendController::class, 'showPage'])->name('pages.show');
 
@@ -497,3 +503,8 @@ Route::middleware(['auth'])->group(function () {
 });
 
 require __DIR__.'/auth.php';
+
+// Web Phone OTP Routes
+Route::post('/login/phone/request-otp', [\App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'requestWebOtp'])->name('login.phone.request');
+Route::post('/login/phone/verify-otp', [\App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'verifyWebOtp'])->name('login.phone.verify');
+

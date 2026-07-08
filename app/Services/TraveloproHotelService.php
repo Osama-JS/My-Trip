@@ -14,12 +14,44 @@ class TraveloproHotelService
     protected $access;
     protected $baseUrl;
 
+    /** Path to SSL certificate for secure API calls. */
+    protected string $certPath;
+
     public function __construct()
     {
-        $this->userId = config('services.travelopro.user_id');
+        $this->userId   = config('services.travelopro.user_id');
         $this->password = config('services.travelopro.password');
-        $this->access = config('services.travelopro.access');
-        $this->baseUrl = 'https://travelnext.works/api/hotel-api-v6'; // Correct base URL for Hotel v6
+        $this->access   = config('services.travelopro.access');
+        $this->baseUrl  = 'https://travelnext.works/api/hotel-api-v6';
+        $this->certPath = base_path('cacert.pem');
+    }
+
+    /**
+     * Return a pre-configured HTTP client with SSL via cacert.pem.
+     * Falls back to insecure only when the cert file is missing (local dev).
+     */
+    private function httpClient(int $connectTimeout = 60, int $timeout = 120): \Illuminate\Http\Client\PendingRequest
+    {
+        $options = file_exists($this->certPath)
+            ? ['verify' => $this->certPath]
+            : ['verify' => false]; // dev fallback only
+
+        return Http::withOptions($options)
+            ->connectTimeout($connectTimeout)
+            ->timeout($timeout);
+    }
+
+    /**
+     * Base authentication payload added to every request.
+     */
+    private function authPayload(): array
+    {
+        return [
+            'user_id'       => $this->userId,
+            'user_password' => $this->password,
+            'access'        => $this->access,
+            'ip_address'    => request()->ip() ?? '127.0.0.1',
+        ];
     }
 
     private function logApiCall($action, $url, $payload, $response, $statusCode, $startTime, $bookingId = null, $method = 'POST')
@@ -54,25 +86,19 @@ class TraveloproHotelService
     {
         $url = "{$this->baseUrl}/{$endpoint}";
 
-        $authData = [
-            'user_id' => $this->userId,
-            'user_password' => $this->password,
-            'access' => $this->access,
-            'ip_address' => request()->ip() ?? '127.0.0.1',
-        ];
-
         $startTime = microtime(true);
         Log::info("Travelopro Hotel {$actionName} Request", ['url' => $url, 'method' => $method, 'data' => $data]);
 
         try {
-            set_time_limit(0); 
+            set_time_limit(0);
             ini_set('memory_limit', '1G');
+
+            $payload = array_merge($this->authPayload(), $data);
+
             if ($method === 'GET') {
-                $payload = array_merge($authData, $data);
-                $response = Http::withoutVerifying()->connectTimeout(60)->timeout(120)->get($url, $payload);
+                $response = $this->httpClient()->get($url, $payload);
             } else {
-                $payload = array_merge($authData, $data);
-                $response = Http::withoutVerifying()->connectTimeout(60)->timeout(120)->post($url, $payload);
+                $response = $this->httpClient()->post($url, $payload);
             }
 
             Log::info("Travelopro Hotel {$actionName} Response received.", ['status' => $response->status()]);
@@ -85,23 +111,67 @@ class TraveloproHotelService
 
             Log::error("Travelopro Hotel {$actionName} Error", [
                 'status' => $response->status(),
-                'body' => $response->body()
+                'body'   => $response->body(),
             ]);
 
             return [
-                'status' => 'error',
+                'status'  => 'error',
                 'message' => "Failed to perform {$actionName}",
-                'details' => $response->json() ?? ['raw_body' => $response->body()]
+                'details' => $response->json() ?? ['raw_body' => $response->body()],
             ];
         } catch (\Exception $e) {
             $this->logApiCall($actionName, $url, $data, ['error' => $e->getMessage()], 500, $startTime, $bookingId, $method);
             Log::error("Travelopro Hotel {$actionName} Exception", ['message' => $e->getMessage()]);
             return [
-                'status' => 'error',
+                'status'  => 'error',
                 'message' => 'Service unavailable',
-                'error' => $e->getMessage()
+                'error'   => $e->getMessage(),
             ];
         }
+    }
+
+    /**
+     * ✅ P0 FIX: Centralized sessionId extraction.
+     *
+     * Travelopro can return sessionId in different locations depending on the
+     * API version and endpoint. This helper checks all known structures so we
+     * never silently lose it between booking stages.
+     *
+     * Known locations:
+     *  1. Top-level: response['sessionId']
+     *  2. Nested under 'status' object: response['status']['sessionId']
+     *  3. Snake-case variant: response['session_id'] / response['status']['session_id']
+     */
+    private function extractSessionId(?array $response): ?string
+    {
+        if (empty($response)) {
+            return null;
+        }
+
+        // Location 1 — top level
+        if (!empty($response['sessionId']))  return (string) $response['sessionId'];
+        if (!empty($response['session_id'])) return (string) $response['session_id'];
+
+        // Location 2 — nested under 'status' object
+        $status = $response['status'] ?? null;
+        if (is_array($status)) {
+            if (!empty($status['sessionId']))  return (string) $status['sessionId'];
+            if (!empty($status['session_id'])) return (string) $status['session_id'];
+        }
+
+        // Location 3 — sometimes embedded inside the first hotel result
+        $firstHotel = current(
+            $response['HotelResults'] ?? $response['HotelList'] ?? $response['hotels'] ?? []
+        );
+        if (is_array($firstHotel) && !empty($firstHotel['sessionId'])) {
+            return (string) $firstHotel['sessionId'];
+        }
+
+        Log::warning('TraveloproHotelService: sessionId not found in response', [
+            'top_keys' => array_keys($response),
+        ]);
+
+        return null;
     }
 
     /**
@@ -173,49 +243,36 @@ class TraveloproHotelService
         }
 
         $response = $this->sendRequest('hotel_search', $payload, 'Hotel Search');
-        
+
         $hotelCount = 0;
         if (isset($response['hotels'])) $hotelCount = count($response['hotels']);
         elseif (isset($response['HotelResults'])) $hotelCount = count($response['HotelResults']);
         elseif (isset($response['HotelList'])) $hotelCount = count($response['HotelList']);
 
         Log::info("Hotel Search Response received. Count: {$hotelCount}");
-        
-        // The API 'status' field may be an object containing sessionId
-        $statusField = $response['status'] ?? null;
-        Log::info('Hotel Search - Full status field', ['status' => $statusField]);
-        Log::info('Hotel Search - All top-level response keys', ['keys' => array_keys($response ?? [])]);
-        
-        // Extract sessionId from status object
-        $sessionId = null;
-        if (is_array($statusField)) {
-            $sessionId = $statusField['sessionId'] ?? $statusField['session_id'] ?? null;
-            Log::info('Hotel Search - Extracted sessionId from status', ['sessionId' => $sessionId]);
-        }
-        
-        if (!empty($response)) {
-            $rawKeyCheck = array_intersect_key($response, array_flip(['itineraries', 'hotels', 'HotelResults', 'HotelList']));
-            if (!empty($rawKeyCheck)) {
-                $firstKey = array_key_first($rawKeyCheck);
-                $firstItem = $response[$firstKey][0] ?? null;
-                Log::info('Hotel Search - First hotel item keys', ['keys' => array_keys($firstItem ?? [])]);
-            }
-        }
+
+        // ✅ P0 FIX: use centralized extraction so we never silently lose the sessionId
+        $sessionId = $this->extractSessionId($response);
+        Log::info('Hotel Search - Extracted sessionId', [
+            'sessionId'  => $sessionId,
+            'top_keys'   => array_keys($response ?? []),
+            'status_val' => $response['status'] ?? null,
+        ]);
 
         $normalized = $this->normalizeHotelResults($response);
-        
-        // Store hotel list in session — include sessionId in every hotel entry
+
+        // Store hotel list in session — sessionId attached to EVERY hotel entry
+        // and also stored at the top-level session key for later stages
         if (!empty($normalized['hotels'])) {
             $hotelMap = [];
             foreach ($normalized['hotels'] as $h) {
                 if (!empty($h['hotelId'])) {
-                    // Attach sessionId so the details page can use it for room rates
                     $h['sessionId'] = $sessionId ?? $h['sessionId'] ?? null;
                     $hotelMap[$h['hotelId']] = $h;
                 }
             }
-            session(['hotel_search_results' => $hotelMap]);
-            session(['hotel_search_session_id' => $sessionId]); // also store at top level
+            session(['hotel_search_results'    => $hotelMap]);
+            session(['hotel_search_session_id' => $sessionId]);
         }
 
         return $normalized;
@@ -234,7 +291,7 @@ class TraveloproHotelService
         Log::info('normalizeHotelResults - top-level keys', ['keys' => array_keys($response ?? [])]);
         
         // Preserve critical session fields BEFORE any unset()
-        $sessionId  = $response['sessionId']  ?? $response['session_id']  ?? null;
+        $sessionId  = $this->extractSessionId($response);
         $tokenId    = $response['tokenId']    ?? $response['token_id']    ?? null;
         $moreResults = $response['moreResults'] ?? false;
         $nextToken   = $response['nextToken']   ?? null;
@@ -247,10 +304,7 @@ class TraveloproHotelService
             // Log one hotel item's keys to understand the structure
             Log::info('normalizeHotelResults - sample hotel keys', ['keys' => array_keys($rawHotels[0] ?? [])]);
             
-            // Also capture sessionId from a hotel item if not found at top level
-            if (!$sessionId) {
-                $sessionId = $rawHotels[0]['sessionId'] ?? $rawHotels[0]['session_id'] ?? null;
-            }
+            // Also capture tokenId from a hotel item if not found at top level
             if (!$tokenId) {
                 $tokenId = $rawHotels[0]['tokenId'] ?? $rawHotels[0]['token_id'] ?? null;
             }

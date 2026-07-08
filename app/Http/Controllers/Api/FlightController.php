@@ -421,6 +421,11 @@ class FlightController extends Controller
     )]
     public function book(Request $request)
     {
+        $user = auth()->user();
+        if ($user && !$user->isProfileComplete()) {
+            return $this->apiResponse(true, __('PROFILE_INCOMPLETE'), null, null, 403);
+        }
+
         $validator = Validator::make($request->all(), [
             'flight_session_id' => 'required|string',
             'fare_source_code' => 'required|string',
@@ -441,6 +446,8 @@ class FlightController extends Controller
             'passengers.*.passport_no' => 'nullable|string',
             'passengers.*.passport_issue_country' => 'nullable|string|size:2',
             'passengers.*.passport_expiry_date' => 'nullable|date_format:Y-m-d',
+            // ✅ P1: Collect passport issue date — sent when IsPassportFullDetailsMandatory=true
+            'passengers.*.passport_issue_date' => 'nullable|date_format:Y-m-d',
             'passengers.*.passport_image' => 'nullable|string',
             'airline_code' => 'nullable|string',
             'airline_name' => 'nullable|string',
@@ -1357,4 +1364,26 @@ class FlightController extends Controller
 
         return $this->apiResponse(false, __('Status retrieved successfully.'), $result, null, 200);
     }
+
+    /**
+     * Get post-ticket booking status (polling endpoint for P2 implementation).
+     */
+    public function getPostTicketStatus(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'UniqueID' => 'required|string',
+        ]);
+
+        if ($validator->fails())
+            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+
+        $result = $this->traveloproService->getPostTicketStatus($request->all());
+
+        if (isset($result['status']) && $result['status'] === 'error') {
+            return $this->apiResponse(true, $result['message'], null, null, 500);
+        }
+
+        return $this->apiResponse(false, __('Post-ticket status retrieved.'), $result, null, 200);
+    }
+
 }

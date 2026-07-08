@@ -66,4 +66,13 @@ return [
         'credentials_path' => env('FIREBASE_CREDENTIALS_PATH', 'storage/app/firebase/service-account.json'),
     ],
 
+    'green_api' => [
+        'id_instance' => env('GREEN_API_ID_INSTANCE'),
+        'token_instance' => env('GREEN_API_TOKEN_INSTANCE'),
+    ],
+
+    'whatsapp' => [
+        'simulation' => env('WHATSAPP_SIMULATION', false),
+    ],
+
 ];

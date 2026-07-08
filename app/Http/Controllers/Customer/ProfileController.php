@@ -17,6 +17,49 @@ class ProfileController extends Controller
         return view('frontend.customer.profile', compact('user'));
     }
 
+    /**
+     * Show Profile Completion Form for Guest Users
+     */
+    public function completeProfileForm()
+    {
+        $user = Auth::user();
+        if ($user->isProfileComplete()) {
+            // If already complete, redirect back or to dashboard
+            return redirect()->route('customer.dashboard');
+        }
+
+        // intended_url is where the user wanted to go (e.g. flight booking processing)
+        return view('frontend.customer.complete_profile', compact('user'));
+    }
+
+    /**
+     * Submit Profile Completion
+     */
+    public function submitCompleteProfile(Request $request)
+    {
+        $user = Auth::user();
+
+        $request->validate([
+            'first_name' => 'required|string|max:100',
+            'last_name'  => 'required|string|max:100',
+            'email'      => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'gender'     => 'nullable|in:male,female',
+            'date_of_birth' => 'nullable|date',
+        ]);
+
+        $user->update([
+            'first_name' => $request->first_name,
+            'last_name'  => $request->last_name,
+            'email'      => $request->email,
+            'gender'     => $request->gender,
+            'date_of_birth' => $request->date_of_birth,
+            'is_guest'   => false,
+        ]);
+
+        // Redirect back to intended url, or dashboard
+        return redirect()->intended(route('customer.dashboard'))->with('success', __('Profile completed successfully. You can now proceed.'));
+    }
+
     public function update(Request $request)
     {
         $user = Auth::user();

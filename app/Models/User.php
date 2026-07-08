@@ -46,6 +46,7 @@ class User extends Authenticatable
         'phone_verified_at',
         'fcm_token',
         'device_type',
+        'is_guest',
     ];
 
     /**
@@ -79,6 +80,15 @@ class User extends Authenticatable
     public function isInactive(): bool
     {
         return $this->status === 'inactive';
+    }
+
+    /**
+     * Check if the user profile is complete.
+     * Guest users (who only verified phone via OTP) will have a @guest.flyvio.com email.
+     */
+    public function isProfileComplete(): bool
+    {
+        return !$this->is_guest;
     }
 
     /**
@@ -121,6 +131,7 @@ class User extends Authenticatable
             'phone_verified_at' => 'datetime',
             'otp_expires_at' => 'datetime',
             'password' => 'hashed',
+            'is_guest' => 'boolean',
         ];
     }
 

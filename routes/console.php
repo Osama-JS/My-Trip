@@ -10,3 +10,6 @@ Artisan::command('inspire', function () {
 use Illuminate\Support\Facades\Schedule;
 Schedule::command('app:sync-airports')->dailyAt('02:00');
 Schedule::command('app:sync-hotel-cities')->weeklyOn(0, '04:00');
+
+// ✅ P2: Poll Travelopro post-ticket status every 5 minutes for pending bookings
+Schedule::command('travelopro:poll-status --limit=30')->everyFiveMinutes();

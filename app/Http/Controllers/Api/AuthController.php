@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\MailService;
+use App\Services\WhatsAppService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -224,6 +225,207 @@ class AuthController extends Controller
         return $this->apiResponse(false, __('Account verified successfully.'), [
             'access_token' => $token,
             'token_type' => 'Bearer',
+            'user' => $user
+        ]);
+    }
+
+    // ==========================================
+    // NEW WHATSAPP OTP PHONE AUTHENTICATION FLOW
+    // ==========================================
+
+    #[OA\Post(
+        path: "/api/phone/request-otp",
+        summary: "Request OTP via WhatsApp",
+        operationId: "requestPhoneOtp",
+        description: "Requests a WhatsApp OTP for a phone number. Creates a guest account if the user does not exist.",
+        tags: ["Authentication"],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ["phone"],
+                properties: [
+                    new OA\Property(property: "phone", type: "string", example: "966500000000"),
+                    new OA\Property(property: "country_code", type: "string", example: "+966"),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: "OTP sent successfully")
+        ]
+    )]
+    public function requestPhoneOtp(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'phone' => 'required|string|max:20',
+            'country_code' => 'required|string|max:10',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+        }
+
+        $phone = ltrim($request->phone, '0');
+        $countryCode = '+' . ltrim($request->country_code, '+');
+        $user = User::where('phone', $phone)->where('country_code', $countryCode)->first();
+
+        $otpCode = env('WHATSAPP_SIMULATION', false) ? '1234' : rand(1000, 9999);
+
+        if (!$user) {
+            // Create Guest User
+            $user = User::create([
+                'phone' => $phone,
+                'country_code' => $countryCode,
+                'email' => $phone . '@guest.flyvio.com',
+                'first_name' => 'Guest',
+                'last_name' => 'User',
+                'password' => Hash::make(\Illuminate\Support\Str::random(16)),
+                'user_type' => User::TYPE_CUSTOMER,
+                'is_guest' => true,
+                'otp_code' => Hash::make($otpCode),
+                'otp_expires_at' => Carbon::now()->addMinutes(10),
+                'status' => 'active'
+            ]);
+        } else {
+            $user->otp_code = Hash::make($otpCode);
+            $user->otp_expires_at = Carbon::now()->addMinutes(10);
+            $user->save();
+        }
+
+        // Send WhatsApp OTP
+        $whatsAppService = new WhatsAppService();
+        $fullPhone = ltrim($request->country_code, '+') . ltrim($phone, '0');
+        
+        $isSent = $whatsAppService->sendOTP($fullPhone, $otpCode, app()->getLocale());
+
+        if ($isSent || env('WHATSAPP_SIMULATION', false)) {
+            return $this->apiResponse(false, __('OTP sent successfully to your WhatsApp.'), null, null, 200);
+        }
+
+        return $this->apiResponse(true, __('Failed to send OTP. Please try again later.'), null, null, 500);
+    }
+
+    #[OA\Post(
+        path: "/api/phone/verify-otp",
+        summary: "Verify WhatsApp OTP",
+        operationId: "verifyPhoneOtp",
+        tags: ["Authentication"],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ["phone", "otp_code"],
+                properties: [
+                    new OA\Property(property: "phone", type: "string", example: "966500000000"),
+                    new OA\Property(property: "otp_code", type: "string", example: "1234"),
+                    new OA\Property(property: "fcm_token", type: "string"),
+                    new OA\Property(property: "device_type", type: "string", enum: ["android", "ios"]),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: "Logged in successfully")
+        ]
+    )]
+    public function verifyPhoneOtp(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'phone' => 'required|string',
+            'country_code' => 'required|string',
+            'otp_code' => 'required|string',
+            'fcm_token' => 'nullable|string',
+            'device_type' => 'nullable|string|in:android,ios',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+        }
+
+        $phone = ltrim($request->phone, '0');
+        $countryCode = '+' . ltrim($request->country_code, '+');
+        $user = User::where('phone', $phone)->where('country_code', $countryCode)->first();
+
+        if (!$user) {
+            return $this->apiResponse(true, __('User not found.'), null, null, 404);
+        }
+
+        if (!$user->otp_code || !$user->otp_expires_at || $user->otp_expires_at->isPast()) {
+            return $this->apiResponse(true, __('OTP expired or invalid.'), null, null, 422);
+        }
+
+        if (!Hash::check($request->otp_code, $user->otp_code)) {
+            // Also check for raw match if not hashed previously (fallback)
+            if ($user->otp_code !== $request->otp_code) {
+                return $this->apiResponse(true, __('Invalid OTP.'), null, null, 422);
+            }
+        }
+
+        // Success
+        $user->phone_verified_at = Carbon::now();
+        $user->otp_code = null;
+        $user->otp_expires_at = null;
+        if ($request->fcm_token) $user->fcm_token = $request->fcm_token;
+        if ($request->device_type) $user->device_type = $request->device_type;
+        $user->save();
+
+        app(\App\Services\WalletService::class)->getOrCreateWallet($user->id);
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return $this->apiResponse(false, __('Logged in successfully.'), [
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+            'is_profile_complete' => $user->isProfileComplete(),
+            'user' => $user
+        ]);
+    }
+
+    #[OA\Post(
+        path: "/api/profile/complete",
+        summary: "Complete Guest Profile",
+        operationId: "completeProfile",
+        description: "Completes the profile for a guest user who registered via phone OTP.",
+        tags: ["Authentication"],
+        security: [["bearerAuth" => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ["first_name", "last_name", "email"],
+                properties: [
+                    new OA\Property(property: "first_name", type: "string", example: "John"),
+                    new OA\Property(property: "last_name", type: "string", example: "Doe"),
+                    new OA\Property(property: "email", type: "string", format: "email", example: "user@example.com"),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: "Profile completed successfully")
+        ]
+    )]
+    public function completeProfile(Request $request)
+    {
+        $user = auth()->user();
+
+        $validator = Validator::make($request->all(), [
+            'first_name' => 'required|string|max:100',
+            'last_name' => 'required|string|max:100',
+            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'gender' => 'nullable|string|in:male,female,other',
+            'date_of_birth' => 'nullable|date',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+        }
+
+        $user->first_name = $request->first_name;
+        $user->last_name = $request->last_name;
+        $user->email = $request->email;
+        $user->is_guest = false;
+        if ($request->has('gender')) $user->gender = $request->gender;
+        if ($request->has('date_of_birth')) $user->date_of_birth = $request->date_of_birth;
+        $user->save();
+
+        return $this->apiResponse(false, __('Profile completed successfully.'), [
+            'is_profile_complete' => $user->isProfileComplete(),
             'user' => $user
         ]);
     }
@@ -604,6 +806,10 @@ class AuthController extends Controller
         }
 
         $user->update($data);
+
+        if ($user->is_guest && !empty($user->first_name) && !empty($user->last_name) && !empty($user->email) && !str_contains($user->email, '@guest.')) {
+            $user->update(['is_guest' => false]);
+        }
 
         return $this->apiResponse(false, __('Profile updated successfully.'), [
             'user' => $user->fresh()

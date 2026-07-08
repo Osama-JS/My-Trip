@@ -248,6 +248,11 @@ class HotelController extends Controller
     )]
     public function book(Request $request)
     {
+        $user = auth()->user();
+        if ($user && !$user->isProfileComplete()) {
+            return $this->apiResponse(true, __('PROFILE_INCOMPLETE'), null, null, 403);
+        }
+
         $validator = Validator::make($request->all(), [
             'rateBasisId' => 'required|string',
             'sessionId' => 'required|string',

@@ -2,188 +2,211 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>Voucher - {{ $booking->supplier_confirmation_num }}</title>
+    <title>Hotel Voucher - {{ $booking->supplier_confirmation_num }}</title>
     <style>
         @page {
-            margin: 0;
-            padding: 0;
+            margin: 25px;
+            header: page-header;
+            footer: page-footer;
         }
         body { 
             font-family: 'Cairo', sans-serif; 
             direction: rtl; 
             text-align: right; 
-            color: #1e293b; 
-            line-height: 1.35; 
-            margin: 0;
-            padding: 0;
-            background: #fff;
-            width: 100%;
-        }
-        .container {
-            padding: 30px;
-            width: 100%;
-        }
-        .header-bg {
-            background: #0f4c81;
-            height: 110px;
-            width: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: -1;
-        }
-        .logo { 
-            font-size: 26px; 
-            font-weight: 900; 
-            color: #ffffff; 
-        }
-        .voucher-header {
+            color: #334155; 
+            line-height: 1.5; 
+            font-size: 13px;
             background: #ffffff;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 15px;
-            border: 1px solid #e2e8f0;
         }
-        .voucher-title { 
-            font-size: 20px; 
-            font-weight: 800; 
-            color: #0f4c81; 
-            margin: 0;
-        }
-        .issued-date { font-size: 0.75rem; color: #64748b; }
+        table { width: 100%; border-collapse: collapse; }
+        td, th { padding: 6px 0; }
         
-        .main-table { width: 100%; border-collapse: collapse; }
-        .card { background: #f8fafc; border-radius: 8px; padding: 12px; border: 1px solid #f1f5f9; }
-        .section-title { 
-            font-size: 0.85rem; font-weight: 800; color: #0f4c81; 
-            border-bottom: 1.5px solid #e2e8f0; margin-bottom: 10px; padding-bottom: 4px; 
-        }
+        .text-primary { color: #001841; }
+        .text-muted { color: #64748b; }
+        .text-center { text-align: center; }
+        .text-left { text-align: left; }
+        .font-bold { font-weight: bold; }
+        .text-lg { font-size: 16px; }
+        .text-xl { font-size: 20px; }
         
-        .label { color: #64748b; font-size: 0.7rem; margin-bottom: 1px; font-weight: 600; }
-        .value { font-weight: 700; color: #1e293b; font-size: 0.9rem; }
-        .hotel-name { font-size: 1.1rem; font-weight: 800; color: #0f4c81; margin-bottom: 3px; }
+        /* Layout Blocks */
+        .header-table { margin-bottom: 25px; border-bottom: 2px solid #001841; padding-bottom: 15px; }
+        .app-name { font-size: 28px; font-weight: 900; color: #001841; }
+        .voucher-title { font-size: 14px; color: #64748b; letter-spacing: 1px; text-transform: uppercase; }
         
-        .conf-badge { background: #10b981; color: white; padding: 8px; border-radius: 5px; text-align: center; }
-        .conf-num { font-size: 1.3rem; font-weight: 900; }
+        .info-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 15px; margin-bottom: 20px; }
+        .info-box-title { background: #001841; color: #ffffff; padding: 6px 12px; font-size: 14px; font-weight: bold; border-radius: 4px 4px 0 0; margin: -15px -15px 15px -15px; }
+        
+        /* Key Reference Highlight */
+        .ref-box { background: #001841; color: #ffffff; text-align: center; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
+        .ref-label { font-size: 11px; opacity: 0.8; margin-bottom: 5px; }
+        .ref-number { font-size: 24px; font-weight: bold; letter-spacing: 1px; }
 
-        .guest-item { padding: 4px 0; border-bottom: 1px solid #edf2f7; font-size: 0.8rem; }
-        .pax-type { font-size: 0.65rem; background: #e2e8f0; padding: 1px 5px; border-radius: 3px; margin-right: 4px; }
+        /* Grid emulation with tables */
+        .data-label { color: #64748b; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .data-value { font-size: 14px; font-weight: bold; color: #0f172a; margin-top: 2px; }
         
-        .footer { margin-top: 20px; font-size: 0.7rem; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 10px; }
+        .border-bottom { border-bottom: 1px solid #e2e8f0; }
+        
+        .pax-table th { background: #f1f5f9; color: #475569; font-size: 12px; text-align: right; padding: 8px; border: 1px solid #e2e8f0; }
+        .pax-table td { padding: 8px; border: 1px solid #e2e8f0; font-size: 13px; }
+        
+        .stamp-prepaid {
+            display: inline-block;
+            border: 3px solid #10b981;
+            color: #10b981;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 8px 20px;
+            border-radius: 8px;
+            text-transform: uppercase;
+            transform: rotate(-5deg);
+            margin-top: 10px;
+        }
+        
+        .footer-note { font-size: 11px; color: #64748b; background: #f8fafc; border-right: 3px solid #001841; padding: 10px; margin-top: 30px; }
     </style>
 </head>
 <body>
-    <div class="header-bg"></div>
-    <div class="container">
-        <!-- Header -->
-        <table width="100%" style="margin-bottom: 15px;">
+
+    <!-- HEADER -->
+    <table class="header-table">
+        <tr>
+            <td width="50%">
+                <div class="app-name">{{ config('app.name') }}</div>
+            </td>
+            <td width="50%" class="text-left">
+                <div class="voucher-title">Hotel Accommodation Voucher</div>
+                <div class="voucher-title">قسيمة حجز فندق</div>
+                <div style="margin-top: 5px; font-size: 11px; color: #94a3b8;">Issue Date: {{ now()->format('d M Y - H:i') }}</div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- IMPORTANT REFERENCES -->
+    <table width="100%">
+        <tr>
+            <td width="60%" valign="top" style="padding-left: 20px;">
+                <!-- Hotel Details -->
+                <div class="info-box" style="height: 100px;">
+                    <div class="text-primary text-xl font-bold" style="margin-bottom: 8px;">{{ $booking->hotel_name }}</div>
+                    <div class="text-muted" style="margin-bottom: 4px;">📍 {{ $booking->city_name }}, {{ $booking->country_name }}</div>
+                    <div class="text-muted" style="font-size: 11px;">Agency Ref / المرجع الداخلي: <strong>{{ $booking->reference_num }}</strong></div>
+                </div>
+            </td>
+            <td width="40%" valign="top">
+                <div class="ref-box" style="height: 100px;">
+                    <div class="ref-label">SUPPLIER CONFIRMATION NO.<br>رقم تأكيد الفندق</div>
+                    <div class="ref-number">{{ $booking->supplier_confirmation_num }}</div>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- STAY DETAILS -->
+    <div class="info-box">
+        <div class="info-box-title">تفاصيل الإقامة / Stay Details</div>
+        <table width="100%" cellpadding="5">
             <tr>
-                <td><div class="logo">{{ config('app.name') }}</div></td>
-                <td align="left" style="color: white; font-size: 0.75rem;">Hotel Accommodation Voucher</td>
+                <td width="25%" class="border-bottom">
+                    <div class="data-label">Check-in / الدخول</div>
+                    <div class="data-value">{{ $booking->check_in->format('d M Y') }}</div>
+                </td>
+                <td width="25%" class="border-bottom">
+                    <div class="data-label">Check-out / الخروج</div>
+                    <div class="data-value">{{ $booking->check_out->format('d M Y') }}</div>
+                </td>
+                <td width="25%" class="border-bottom">
+                    <div class="data-label">Nights / الليالي</div>
+                    <div class="data-value">{{ $booking->check_in->diffInDays($booking->check_out) }} Nights</div>
+                </td>
+                <td width="25%" class="border-bottom text-center">
+                    <div class="stamp-prepaid">PREPAID<br><span style="font-size:12px;">مدفوع بالكامل</span></div>
+                </td>
+            </tr>
+            <tr><td colspan="4" style="height: 10px;"></td></tr>
+            <tr>
+                <td colspan="2">
+                    <div class="data-label">Room Type / نوع الغرفة</div>
+                    <div class="data-value">{{ $booking->room_name }}</div>
+                </td>
+                <td colspan="2">
+                    <div class="data-label">Meal Plan / الوجبات</div>
+                    <div class="data-value">{{ $booking->board_type ?? 'Room Only / بدون وجبات' }}</div>
+                </td>
             </tr>
         </table>
+    </div>
 
-        <!-- Summary Title area -->
-        <div class="voucher-header">
-            <table width="100%">
+    <!-- GUESTS -->
+    <div class="info-box">
+        <div class="info-box-title">أسماء النزلاء / Guest Names</div>
+        
+        <table class="pax-table">
+            <thead>
                 <tr>
-                    <td>
-                        <h1 class="voucher-title">تأكيد حجز الفندق (Hotel Voucher)</h1>
-                        <span class="issued-date">تاريخ الإصدار: {{ now()->format('Y-m-d H:i') }}</span>
-                    </td>
-                    <td align="left" width="35%">
-                        <div class="conf-badge">
-                            <div style="font-size: 0.6rem; opacity: 0.9;">رقم تأكيد المورد (SUPPLIER REF)</div>
-                            <div class="conf-num">{{ $booking->supplier_confirmation_num }}</div>
-                        </div>
-                    </td>
+                    <th width="15%">الغرفة / Room</th>
+                    <th width="55%">اسم النزيل / Guest Name</th>
+                    <th width="30%">نوع النزيل / Pax Type</th>
                 </tr>
-            </table>
-        </div>
-
-        <!-- Details Grid -->
-        <table width="100%" cellpadding="4">
-            <tr>
-                <!-- Left: Hotel & Stay -->
-                <td width="55%" valign="top">
-                    <div class="card" style="margin-bottom: 15px;">
-                        <div class="section-title">بيانات الفندق والوجهة</div>
-                        <div class="hotel-name">{{ $booking->hotel_name }}</div>
-                        <div class="value" style="font-size: 0.8rem;">📍 {{ $booking->city_name }}, {{ $booking->country_name }}</div>
-                        <div class="label" style="margin-top: 8px;">رقم المرجع الداخلي: <span class="value">{{ $booking->reference_num }}</span></div>
-                    </div>
-
-                    <div class="card">
-                        <div class="section-title">تفاصيل الإقامة (Stay Details)</div>
-                        <table width="100%">
-                            <tr>
-                                <td><div class="label">تاريخ الدخول</div><div class="value">{{ $booking->check_in->format('d/m/Y') }}</div></td>
-                                <td><div class="label">تاريخ الخروج</div><div class="value">{{ $booking->check_out->format('d/m/Y') }}</div></td>
-                                <td><div class="label">الليالي</div><div class="value">{{ $booking->check_in->diffInDays($booking->check_out) }}</div></td>
-                            </tr>
-                            <tr><td colspan="3" style="height: 10px;"></td></tr>
-                            <tr>
-                                <td colspan="2"><div class="label">نوع الغرفة</div><div class="value">{{ $booking->room_name }}</div></td>
-                                <td><div class="label">الوجبات</div><div class="value">{{ $booking->board_type ?? 'Bed & Breakfast' }}</div></td>
-                            </tr>
-                        </table>
-                    </div>
-                </td>
-
-                <!-- Right: Guest Data -->
-                <td width="45%" valign="top">
-                    <div class="card" style="height: 100%;">
-                        <div class="section-title">بيانات النزلاء (Guests)</div>
-                        @if($booking->pax_details && is_array($booking->pax_details))
-                            @foreach($booking->pax_details as $room)
-                                <div style="margin-bottom: 6px;">
-                                    <div style="font-size: 0.75rem; font-weight: bold; color: #64748b; margin-bottom: 2px;">غرفة {{ $room['room_no'] ?? $loop->iteration }}:</div>
-                                    @php $passengers = $booking->passengers; @endphp
-                                    @if($passengers->isNotEmpty())
-                                        @foreach($passengers as $pax)
-                                            <div class="guest-item">
-                                                <span class="pax-type">{{ __($pax->passenger_type) }}</span> {{ $pax->name }}
-                                            </div>
-                                        @endforeach
-                                    @else
-                                        @if(isset($room['pax']))
-                                            @foreach($room['pax'] as $pax)
-                                                <div class="guest-item">
-                                                    <span class="pax-type">{{ ($pax['type'] ?? 'AD') === 'CH' ? 'طفل' : 'بالغ' }}</span>
-                                                    {{ $pax['Title'] ?? '' }} {{ $pax['FirstName'] ?? '' }} {{ $pax['LastName'] ?? '' }}
-                                                </div>
-                                            @endforeach
-                                        @endif
-                                    @endif
-                                </div>
+            </thead>
+            <tbody>
+                @if($booking->pax_details && is_array($booking->pax_details))
+                    @foreach($booking->pax_details as $room)
+                        @php $passengers = $booking->passengers; @endphp
+                        @if($passengers->isNotEmpty())
+                            @foreach($passengers as $pax)
+                                <tr>
+                                    <td class="text-center font-bold">{{ $room['room_no'] ?? 1 }}</td>
+                                    <td class="font-bold">{{ $pax->name }}</td>
+                                    <td>{{ __($pax->passenger_type) }} ({{ strtoupper($pax->passenger_type) }})</td>
+                                </tr>
                             @endforeach
                         @else
-                            <div class="guest-item">{{ $booking->user->name ?? 'Guest' }}</div>
+                            @if(isset($room['pax']))
+                                @foreach($room['pax'] as $pax)
+                                    <tr>
+                                        <td class="text-center font-bold">{{ $room['room_no'] ?? $loop->parent->iteration }}</td>
+                                        <td class="font-bold">{{ $pax['Title'] ?? '' }} {{ $pax['FirstName'] ?? '' }} {{ $pax['LastName'] ?? '' }}</td>
+                                        <td>{{ ($pax['type'] ?? 'AD') === 'CH' ? 'طفل (Child)' : 'بالغ (Adult)' }}</td>
+                                    </tr>
+                                @endforeach
+                            @endif
                         @endif
+                    @endforeach
+                @else
+                    <tr>
+                        <td class="text-center font-bold">1</td>
+                        <td class="font-bold">{{ $booking->user->name ?? 'Primary Guest' }}</td>
+                        <td>بالغ (Adult)</td>
+                    </tr>
+                @endif
+            </tbody>
+        </table>
+    </div>
 
-                        <div style="margin-top: 10px; background: #e2e8f0; padding: 8px; border-radius: 5px;">
-                            <div class="label">إجمالي السعر (مدفوع)</div>
-                            <div class="value" style="font-size: 1rem; color: #0f4c81;">{{ number_format($booking->total_price, 2) }} {{ $booking->currency }}</div>
-                        </div>
-                    </div>
-                </td>
+    <!-- FOOTER NOTES -->
+    <div class="footer-note">
+        <strong>⚠️ ملاحظات هامة / Important Notes:</strong><br>
+        - يرجى تقديم هذه القسيمة (Voucher) مطبوعة أو رقمية عند تسجيل الدخول في الفندق.<br>
+        - Please present this voucher (printed or digital) upon check-in at the hotel.<br>
+        - هذا الحجز مدفوع بالكامل مسبقاً عن طريق وكالتنا (Prepaid). لا تقم بتحصيل أي مبالغ من النزيل تخص تكلفة الغرفة المحجوزة أعلاه.<br>
+        - This booking is PREPAID in full by our agency. Do not collect any room charges for the booked stay from the guest.<br>
+        - أي خدمات إضافية يطلبها النزيل (ميني بار، خدمة غرف، إلخ) تُدفع مباشرة للفندق بواسطة النزيل.<br>
+        - Any extra incidentals (mini-bar, room service, etc.) are to be settled by the guest directly with the hotel.<br><br>
+        لأي استفسارات، يرجى التواصل مع الدعم الفني: <strong>{{ config('app.name') }}</strong>
+    </div>
+
+    <!-- PAGE FOOTER (mPDF feature) -->
+    <htmlpagefooter name="page-footer">
+        <table width="100%" style="border-top: 1px solid #e2e8f0; padding-top: 5px; font-size: 10px; color: #94a3b8;">
+            <tr>
+                <td width="33%">{{ config('app.name') }} &copy; {{ date('Y') }}</td>
+                <td width="33%" align="center">Generated electronically / مصدر إلكترونياً</td>
+                <td width="33%" style="text-align: left; direction: ltr;">Page {PAGENO} of {nbpg}</td>
             </tr>
         </table>
+    </htmlpagefooter>
 
-        <!-- Notes -->
-        <div style="margin-top: 15px; border-right: 3px solid #0f4c81; background: #f8fafc; padding: 10px; border-radius: 4px;">
-            <div style="font-size: 0.7rem; color: #475569; line-height: 1.5;">
-                <strong>⚠️ ملاحظات هامة:</strong><br>
-                - يجب تقديم هذا الفوتشر (مطبوعاً أو رقمياً) مع الهوية الأصلية عند موظف الاستقبال.<br>
-                - الحجز مدفوع بالكامل شامل الرسوم والضرائب، أي خدمات إضافية تُدفع للفندق مباشرة.<br>
-                - في حال واجهت أي استفسار، يرجى الاتصال بخدمة عملاء {{ config('app.name') }}.
-            </div>
-        </div>
-
-        <div class="footer">
-            تم إصدار هذا المستند إلكترونياً وهو ملزم قانوناً بموجب شروط منصة <strong>{{ config('app.name') }}</strong><br>
-            &copy; {{ date('Y') }} {{ config('app.name') }}
-        </div>
-    </div>
 </body>
 </html>

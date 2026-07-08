@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تقرير تكامل Travelopro API - My-Trip</title>
+    <style>
+        :root {
+            --primary: #001841;
+            --primary-light: #0a2d6b;
+            --accent: #2563eb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --bg: #f0f4f8;
+            --card: #ffffff;
+            --text: #1e293b;
+            --muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            direction: rtl;
+        }
+
+        .report-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 50%, #1a56db 100%);
+            color: white;
+            padding: 50px 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        .report-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -10%;
+            width: 400px;
+            height: 400px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+        }
+        .report-header h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 10px; position: relative; z-index: 1; }
+        .report-header p { font-size: 1rem; opacity: 0.85; position: relative; z-index: 1; }
+        .report-header .meta { display: flex; gap: 20px; margin-top: 25px; flex-wrap: wrap; position: relative; z-index: 1; }
+        .meta-item { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); padding: 10px 18px; border-radius: 8px; font-size: 0.85rem; }
+        .meta-item span { display: block; font-weight: 700; font-size: 1rem; margin-top: 3px; }
+
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; padding: 30px 40px; }
+        .summary-card { background: var(--card); border-radius: 14px; padding: 24px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); border-top: 4px solid var(--accent); text-align: center; }
+        .summary-card.green { border-top-color: var(--success); }
+        .summary-card.yellow { border-top-color: var(--warning); }
+        .summary-card.red { border-top-color: var(--danger); }
+        .summary-card .num { font-size: 2.5rem; font-weight: 900; color: var(--primary); }
+        .summary-card.green .num { color: var(--success); }
+        .summary-card.yellow .num { color: var(--warning); }
+        .summary-card.red .num { color: var(--danger); }
+        .summary-card .label { font-size: 0.85rem; color: var(--muted); font-weight: 600; margin-top: 5px; }
+        .progress-wrap { background: #e2e8f0; border-radius: 10px; height: 8px; overflow: hidden; margin-top: 10px; }
+        .progress-bar { height: 100%; border-radius: 10px; }
+        .progress-bar.green { background: linear-gradient(90deg, var(--success), #34d399); }
+        .progress-bar.yellow { background: linear-gradient(90deg, var(--warning), #fbbf24); }
+        .progress-bar.red { background: linear-gradient(90deg, var(--danger), #f87171); }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 40px 60px; }
+
+        .overall-score { background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; border-radius: 16px; padding: 30px; text-align: center; margin-bottom: 30px; box-shadow: 0 8px 24px rgba(0,24,65,0.3); }
+        .score-num { font-size: 4rem; font-weight: 900; line-height: 1; }
+        .score-label { opacity: 0.85; margin-top: 8px; font-size: 1rem; }
+
+        .toc { background: var(--card); border-radius: 12px; padding: 20px 24px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .toc h3 { font-size: 1rem; font-weight: 800; color: var(--primary); margin-bottom: 12px; }
+        .toc ul { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; }
+        .toc a { display: inline-block; padding: 6px 14px; border-radius: 6px; background: #f1f5f9; color: var(--primary); font-size: 0.84rem; font-weight: 600; text-decoration: none; transition: all 0.2s; }
+        .toc a:hover { background: var(--primary); color: white; }
+
+        .section { margin-bottom: 40px; }
+        .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid var(--border); }
+        .section-header .icon { width: 44px; height: 44px; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: white; }
+        .section-header h2 { font-size: 1.4rem; font-weight: 800; color: var(--primary); }
+
+        .api-table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+        .api-table thead { background: var(--primary); color: white; }
+        .api-table th { padding: 14px 16px; text-align: right; font-size: 0.85rem; font-weight: 700; }
+        .api-table td { padding: 14px 16px; font-size: 0.88rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+        .api-table tr:last-child td { border-bottom: none; }
+        .api-table tr:hover td { background: #f8fafc; }
+        .api-table .group-header td { background: #f1f5f9; font-weight: 800; color: var(--primary); font-size: 0.9rem; padding: 10px 16px; }
+
+        .badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
+        .badge-success { background: #d1fae5; color: #065f46; }
+        .badge-warning { background: #fef3c7; color: #92400e; }
+        .badge-danger  { background: #fee2e2; color: #991b1b; }
+        .badge-info    { background: #dbeafe; color: #1e40af; }
+        .badge-purple  { background: #ede9fe; color: #6b21a8; }
+
+        .issue-card { background: var(--card); border-radius: 12px; padding: 20px 24px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-right: 5px solid var(--danger); position: relative; }
+        .issue-card.warning { border-right-color: var(--warning); }
+        .issue-card.info { border-right-color: var(--info); }
+        .issue-title { font-weight: 800; color: var(--text); margin-bottom: 8px; font-size: 1rem; }
+        .issue-body { color: var(--muted); font-size: 0.88rem; }
+        .issue-tag { position: absolute; top: 15px; left: 15px; font-size: 0.75rem; font-weight: 700; background: #fee2e2; color: #991b1b; padding: 3px 10px; border-radius: 20px; }
+        .issue-card.warning .issue-tag { background: #fef3c7; color: #92400e; }
+        .issue-card.info .issue-tag { background: #dbeafe; color: #1e40af; }
+
+        code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 0.82rem; color: #0f172a; }
+
+        .code-block { background: #0f172a; color: #e2e8f0; padding: 16px 20px; border-radius: 10px; font-family: 'Courier New', monospace; font-size: 0.82rem; line-height: 1.6; overflow-x: auto; margin: 10px 0; direction: ltr; text-align: left; }
+        .comment { color: #64748b; }
+        .danger-code { color: #fca5a5; }
+        .good-code { color: #86efac; }
+
+        .workflow { display: flex; flex-direction: column; gap: 0; }
+        .workflow-step { display: flex; gap: 20px; position: relative; }
+        .workflow-step::before { content: ''; position: absolute; right: 19px; top: 40px; width: 2px; height: 100%; background: var(--border); }
+        .workflow-step:last-child::before { display: none; }
+        .step-num { min-width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 0.9rem; position: relative; z-index: 1; flex-shrink: 0; }
+        .step-num.done { background: var(--success); color: white; }
+        .step-num.partial { background: var(--warning); color: white; }
+        .step-num.missing { background: #f1f5f9; color: var(--muted); border: 2px dashed var(--border); }
+        .step-content { flex: 1; padding-bottom: 24px; }
+        .step-content h4 { font-weight: 800; color: var(--text); margin-bottom: 4px; }
+        .step-content p { font-size: 0.85rem; color: var(--muted); }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        .rec-card { background: var(--card); border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .rec-card h4 { font-weight: 800; margin-bottom: 12px; font-size: 0.95rem; padding-bottom: 8px; border-bottom: 2px solid var(--border); }
+        .rec-item { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px; font-size: 0.84rem; color: var(--muted); }
+        .rec-item::before { content: ''; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 7px; }
+        .rec-danger .rec-item::before { background: var(--danger); }
+        .rec-warning .rec-item::before { background: var(--warning); }
+        .rec-success .rec-item::before { background: var(--success); }
+        .rec-info .rec-item::before { background: var(--info); }
+
+        .report-footer { background: var(--primary); color: rgba(255,255,255,0.7); text-align: center; padding: 30px; font-size: 0.85rem; }
+
+        @media (max-width: 768px) {
+            .grid-2 { grid-template-columns: 1fr; }
+            .summary-grid { grid-template-columns: repeat(2, 1fr); }
+            .container { padding: 0 20px 40px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="report-header">
+    <h1>📊 تقرير تحليل تكامل Travelopro API</h1>
+    <p>تحليل شامل لجميع عمليات Travelopro في نظام My-Trip — رحلات الطيران والفنادق</p>
+    <div class="meta">
+        <div class="meta-item">تاريخ التقرير <span>30 يونيو 2026</span></div>
+        <div class="meta-item">إصدار API الطيران <span>aeroVE5</span></div>
+        <div class="meta-item">إصدار API الفنادق <span>hotel-api-v6</span></div>
+        <div class="meta-item">إجمالي الملفات المحللة <span>12 ملف</span></div>
+    </div>
+</div>
+
+<div class="summary-grid">
+    <div class="summary-card green">
+        <div class="num">18</div>
+        <div class="label">عملية منفذة بالكامل</div>
+        <div class="progress-wrap"><div class="progress-bar green" style="width: 69%"></div></div>
+    </div>
+    <div class="summary-card yellow">
+        <div class="num">5</div>
+        <div class="label">عملية منفذة جزئياً</div>
+        <div class="progress-wrap"><div class="progress-bar yellow" style="width: 19%"></div></div>
+    </div>
+    <div class="summary-card red">
+        <div class="num">3</div>
+        <div class="label">عملية غير منفذة</div>
+        <div class="progress-wrap"><div class="progress-bar red" style="width: 12%"></div></div>
+    </div>
+    <div class="summary-card red">
+        <div class="num">7</div>
+        <div class="label">مشكلة مكتشفة في التنفيذ</div>
+        <div class="progress-wrap"><div class="progress-bar red" style="width: 100%"></div></div>
+    </div>
+</div>
+
+<div class="container">
+
+    <div class="toc">
+        <h3>📋 فهرس التقرير</h3>
+        <ul>
+            <li><a href="#score">التقييم العام</a></li>
+            <li><a href="#flights">عمليات الطيران</a></li>
+            <li><a href="#hotels">عمليات الفنادق</a></li>
+            <li><a href="#workflow">مطابقة سير العمل</a></li>
+            <li><a href="#issues">المشكلات المكتشفة</a></li>
+            <li><a href="#missing">العمليات الناقصة</a></li>
+            <li><a href="#rec">التوصيات</a></li>
+        </ul>
+    </div>
+
+    <div id="score" class="overall-score">
+        <div class="score-num">69%</div>
+        <div class="score-label">نسبة اكتمال التنفيذ — الحالة: يحتاج مراجعة وتطوير في نقاط محددة</div>
+    </div>
+
+    <!-- FLIGHTS -->
+    <div class="section" id="flights">
+        <div class="section-header">
+            <div class="icon">✈️</div>
+            <h2>عمليات API الطيران (aeroVE5)</h2>
+        </div>
+        <table class="api-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>العملية</th>
+                    <th>نقطة النهاية</th>
+                    <th>حالة التنفيذ</th>
+                    <th>موقع التنفيذ</th>
+                    <th>ملاحظات</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="group-header"><td colspan="6">🔍 مرحلة البحث والتحقق</td></tr>
+                <tr>
+                    <td>1</td>
+                    <td><strong>Flight Search</strong><br><small>البحث عن رحلات</small></td>
+                    <td><code>/availability</code></td>
+                    <td><span class="badge badge-success">✅ مكتمل</span></td>
+                    <td><code>TraveloproService::searchFlights()</code><br><code>FlightController</code></td>
+                    <td>يدعم One-Way/Round-Trip/Multi-City. يطبق هامش الربح. يحفظ session_id.</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td><strong>Validate Fare</strong><br><small>التحقق من السعر قبل الحجز</small></td>
+                    <td><code>/revalidate</code></td>
+                    <td><span class="badge badge-success">✅ مكتمل</span></td>
+                    <td><code>TraveloproService::validateFare()</code></td>
+                    <td>يُعيد تطبيق هامش الربح. يستخدم fare_source_code وflight_session_id.</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td><strong>Airport List</strong><br><small>قائمة المطارات</small></td>
+                    <td><code>/airport_list</code></td>
+                    <td><span class="badge badge-success">✅ مكتمل</span></td>
+                    <td><code>TraveloproService::getAirportList()</code><br><code>syncAirports()</code></td>
+                    <td>يدعم EN/AR. Cache 24 ساعة. Fallback للمطارات الرئيسية.</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td><strong>Airline List</strong><br><small>قائمة شركات الطيران</small></td>
+                    <td><code>/airline_list</code></td>
+                    <td><span class="badge badge-success">✅ مكتمل</span></td>
+                    <td><code>TraveloproService::getAirlineList()</code></td>
+                    <td>Cache 24 ساعة.</td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td><strong>Fare Rules</strong><br><small>قواعد التعرفة</small></td>
+                    <td><code>/fare_rules</code></td>
+                    <td><span class="badge badge-success">✅ مكتمل</span></td>
+                    <td><code>TraveloproService::getFareRules()</code><br><code>FlightController</code></td>
+                    <td>متاح كـ API endpoint.</td>
+                </tr>
+                <tr>
+                    <td>6</td>
+                    <td><strong>Extra Services</strong><br><small>أمتعة / مقاعد / وجبات</small></td>
+                    <td><code>/extra_services</code></td>
+                    <td><span class="badge badge-warning">⚠️ جزئي</span></td>
+                    <td><code>TraveloproService::getExtraServices()</code></td>
+                    <td>الجلب منفذ لكن لا يوجد UI لاختيار الخدمات قبل الحجز.</td>
+                </tr>
+                <tr class="group-header"><td colspan="6">📋 مرحلة الحجز وإصدار التذاكر</td></tr>
+                <tr>
+                    <td>7</td>
+                    <td><strong>Create Booking (PNR)</strong><br><small>إنشاء الحجز</small></td>
+                    <td><code>/booking</code></td>
+                    <td><span class="badge badge-warning">⚠️ جزئي</span></td>
+                    <td><code>TraveloproService::createBooking()</code><br><code>FlightController</code></td>
+                    <td>⚠️ بنية paxDetails قد تختلف عن الوثيقة — تحتاج مراجعة (تغليف مزدوج).</td>
+                </tr>
+                <tr>
+                    <td>8</td>
+                    <td><strong>Order Ticket</strong><br><small>إصدار التذكرة</small></td>
+                    <td><code>/ticket_order</code></td>
+                    <td><span class="badge badge-success">✅ مكتمل</span></td>
+                    <td><code>TraveloproService::orderTicket()</code><br><code>PaymentWebController</code></td>
+                    <td>يُشغَّل تلقائياً بعد نجاح الدفع. يستخرج rقم eTicket ويحفظه.</td>
+                </tr>
+                <tr>
+                    <td>9</td>
+                    <td><strong>Trip Details</strong><br><small>تفاصيل الرحلة</small></td>
+                    <td><code>/trip_details</code></td>
+                    <td><span class="badge badge-success">✅ مكتمل</span></td>
+                    <td><code>TraveloproService::getTripDetails()</code></td>
+                    <td>لمزامنة حالة الحجز.</td>
+                </tr>
+                <tr>
+                    <td>10</td>
+                    <td><strong>Search Post-Ticket Status</strong><br><small>متابعة حالة التذكرة</small></td>
+                    <td><code>/post_ticket_status</code></td>
+                    <td><span class="badge badge-success">✅ مكتمل</span></td>
+                    <td><code>TraveloproService::searchPostTicketStatus()</code></td>
+                    <td>لمتابعة التذاكر بعد الإصدار.</td>
+                </tr>
+                <tr>
+                    <td>11</td>
+                    <td><strong>Booking Notes</strong><br><small>ملاحظات الحجز</small></td>
+                    <td><code>/booking_notes</code></td>
+                    <td><span class="badge badge-success">✅ مكتمل</span></td>
+                    <td><code>TraveloproService::addBookingNotes()</code></td>
+                    <td>متاح.</td>
+                </tr>
+                <tr class="group-header"><td colspan="6">❌ مرحلة الإلغاء والاسترداد</td></tr>
+                <tr>
+                    <td>12</td>
+                    <td><strong>Cancel Booking</strong></td>
+                    <td><code>/cancel</code></td>
+                    <td><span class="badge badge-success">✅ مكتمل</span></td>
+                    <td><code>TraveloproService::cancelBooking()</code></td>
+                    <td>يحدث حالة الحجز في DB.</td>
+                </tr>
+                <tr>
+                    <td>13</td>
+                    <td><strong>Void Quote</strong><br><small>عرض رسوم الإلغاء الفوري</small></td>
+                    <td><code>/void_quote</code></td>
+                    <td><span class="badge badge-success">✅ مكتمل</span></td>
+                    <td><code>TraveloproService::voidQuote()</code></td>
+                    <td>متاح.</td>
+                </tr>
+                <tr>
+                    <td>14</td>
+                    <td><strong>Void Ticket</strong><br><small>إلغاء فوري للتذكرة</small></td>
+                    <td><code>/void_ticket</code></td>
+                    <td><span class="badge badge-success">✅ مكتمل</span></td>
+                    <td><code>TraveloproService::voidTicket()</code></td>
+                    <td>يرسل paxDetails مع eTicket.</td>
+                </tr>
+                <tr>
+                    <td>15</td>
+                    <td><strong>Refund Quote</strong></td>
+                    <td><code>/refund_quote</code></td>
+                    <td><span class="badge badge-success">✅ مكتمل</span></td>
+                    <td><code>TraveloproService::refundQuote()</code></td>
+                    <td>متاح.</td>
+                </tr>
+                <tr>
+                    <td>16</td>
+                    <td><strong>Refund Ticket</strong></td>
+                    <td><code>/reissue_ticket</code><br><span class="badge badge-danger" style="margin-top:4px">⚠️ URL مشبوه</span></td>
+                    <td><span class="badge badge-success">✅ مكتمل</span></td>
+                    <td><code>TraveloproService::refundTicket()</code></td>
+                    <td>الوثيقة تُدرج Refund تحت endpoint مشتركة مع Reissue — يحتاج توضيح من المورد.</td>
+                </tr>
+                <tr>
+                    <td>17</td>
+                    <td><strong>Reissue Quote</strong></td>
+                    <td><code>/reissue_quote</code></td>
+                    <td><span class="badge badge-success">✅ مكتمل</span></td>
+                    <td><code>TraveloproService::reissueQuote()</code></td>
+                    <td>متاح.</td>
+                </tr>
+                <tr>
+                    <td>18</td>
+                    <td><strong>Reissue Ticket</strong><br><small>إعادة إصدار تذكرة</small></td>
+                    <td><code>/reissue_ticket</code></td>
+                    <td><span class="badge badge-success">✅ مكتمل</span></td>
+                    <td><code>TraveloproService::reissueTicket()</code></td>
+                    <td>متاح.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- HOTELS -->
+    <div class="section" id="hotels">
+        <div class="section-header">
+            <div class="icon">🏨</div>
+            <h2>عمليات API الفنادق (hotel-api-v6)</h2>
+        </div>
+        <table class="api-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>العملية</th>
+                    <th>نقطة النهاية</th>
+                    <th>حالة التنفيذ</th>
+                    <th>موقع التنفيذ</th>
+                    <th>ملاحظات</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="group-header"><td colspan="6">🔍 مرحلة البحث والتصفية</td></tr>
+                <tr>
+                    <td>1</td>
+                    <td><strong>Hotel Search</strong><br><small>البحث عن فنادق</small></td>
+                    <td><code>/hotel_search</code></td>
+                    <td><span class="badge badge-success">✅ مكتمل</span></td>
+                    <td><code>TraveloproHotelService::search()</code><br><code>HotelController</code></td>
+                    <td>يدعم البحث بالاسم/إحداثيات/كود المدينة. توزيع غرف ذكي. يحفظ النتائج في Session.</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td><strong>Hotel Filter</strong><br><small>تصفية النتائج</small></td>
+                    <td><code>/filterResults</code></td>
+                    <td><span class="badge badge-warning">⚠️ جزئي</span></td>
+                    <td><code>TraveloproHotelService::filter()</code></td>
+                    <td>منفذ في الخدمة لكن غير متكامل كاملاً مع الواجهة الأمامية.</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td><strong>More Results Pagination</strong><br><small>تحميل المزيد</small></td>
+                    <td><code>/moreResultsPagination</code></td>
+                    <td><span class="badge badge-warning">⚠️ جزئي</span></td>
+                    <td><code>TraveloproHotelService::nextToken()</code></td>
+                    <td>الكود موجود لكن التحقق من تكامله مع الواجهة غير مؤكد.</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td><strong>Cities</strong><br><small>قائمة المدن</small></td>
+                    <td><code>/cities</code></td>
+                    <td><span class="badge badge-success">✅ مكتمل</span></td>
+                    <td><code>TraveloproHotelService::getCities()</code><br><code>syncCities()</code></td>
+                    <td>يدعم EN/AR. Fallback للمدن الرئيسية. يُشغَّل من لوحة التحكم.</td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td><strong>Languages</strong></td>
+                    <td><code>/languages</code></td>
+                    <td><span class="badge badge-success">✅ مكتمل</span></td>
+                    <td><code>TraveloproHotelService::getLanguages()</code></td>
+                    <td>متاح.</td>
+                </tr>
+                <tr class="group-header"><td colspan="6">🏨 مرحلة تفاصيل الفندق والغرف</td></tr>
+                <tr>
+                    <td>6</td>
+                    <td><strong>Get Hotel Content</strong><br><small>تفاصيل الفندق</small></td>
+                    <td><code>/hotelDetails</code></td>
+                    <td><span class="badge badge-success">✅ مكتمل</span></td>
+                    <td><code>TraveloproHotelService::getHotelContent()</code></td>
+                    <td>يدعم EN/AR ويسجل مفاتيح الاستجابة.</td>
+                </tr>
+                <tr>
+                    <td>7</td>
+                    <td><strong>Room Rates</strong><br><small>أسعار الغرف</small></td>
+                    <td><code>/get_room_rates</code></td>
+                    <td><span class="badge badge-success">✅ مكتمل</span></td>
+                    <td><code>TraveloproHotelService::getRoomRates()</code></td>
+                    <td>يطبق هامش الربح على perBookingRates و RoomResults.</td>
+                </tr>
+                <tr>
+                    <td>8</td>
+                    <td><strong>Check Room Rates (Rate Rules)</strong><br><small>التحقق من الغرفة</small></td>
+                    <td><code>/get_rate_rules</code></td>
+                    <td><span class="badge badge-success">✅ مكتمل</span></td>
+                    <td><code>TraveloproHotelService::checkRoomRates()</code></td>
+                    <td>يُشغَّل قبل الحجز للحصول على rateBasisId. يطبق الهامش على TotalFare.</td>
+                </tr>
+                <tr>
+                    <td>9</td>
+                    <td><strong>Hotel Static Content</strong><br><small>المحتوى الثابت</small></td>
+                    <td><code>/staticContent</code></td>
+                    <td><span class="badge badge-danger">❌ غير منفذ</span></td>
+                    <td>—</td>
+                    <td>لا يوجد تنفيذ. يُستخدم لجلب صور ووصف الفنادق مسبقاً لتسريع التصفح.</td>
+                </tr>
+                <tr class="group-header"><td colspan="6">📋 مرحلة الحجز والتأكيد</td></tr>
+                <tr>
+                    <td>10</td>
+                    <td><strong>Hotel Booking</strong><br><small>إنشاء الحجز</small></td>
+                    <td><code>/hotel_book</code></td>
+                    <td><span class="badge badge-success">✅ مكتمل</span></td>
+                    <td><code>TraveloproHotelService::book()</code><br><code>PaymentController</code><br><code>PaymentWebController</code></td>
+                    <td>يُحوّل البيانات الداخلية للهيكل الرسمي. يُنفَّذ تلقائياً بعد الدفع.</td>
+                </tr>
+                <tr>
+                    <td>11</td>
+                    <td><strong>Hotel Booking Details</strong><br><small>تفاصيل الحجز</small></td>
+                    <td><code>/bookingDetails</code></td>
+                    <td><span class="badge badge-success">✅ مكتمل</span></td>
+                    <td><code>TraveloproHotelService::getBookingDetails()</code><br><code>BookingController::syncHotelBookingStatus()</code></td>
+                    <td>لمزامنة الحالة مع المورد.</td>
+                </tr>
+                <tr class="group-header"><td colspan="6">❌ مرحلة الإلغاء</td></tr>
+                <tr>
+                    <td>12</td>
+                    <td><strong>Get Cancellation Charge</strong><br><small>رسوم الإلغاء</small></td>
+                    <td><code>/hotel_cancel_charge</code></td>
+                    <td><span class="badge badge-success">✅ مكتمل</span></td>
+                    <td><code>TraveloproHotelService::getCancelCharge()</code></td>
+                    <td>يُعرض للمستخدم قبل تأكيد الإلغاء.</td>
+                </tr>
+                <tr>
+                    <td>13</td>
+                    <td><strong>Cancel Booking</strong></td>
+                    <td><code>/cancel</code></td>
+                    <td><span class="badge badge-success">✅ مكتمل</span></td>
+                    <td><code>TraveloproHotelService::cancel()</code><br><code>BookingController::cancelHotel()</code></td>
+                    <td>يحدث حالة الحجز في DB.</td>
+                </tr>
+                <tr>
+                    <td>14</td>
+                    <td><strong>More Hotel Filter + Pagination</strong></td>
+                    <td><code>/moreFiltersPagination</code></td>
+                    <td><span class="badge badge-danger">❌ غير منفذ</span></td>
+                    <td>—</td>
+                    <td>موثق في API لكن لا يوجد تنفيذ.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- WORKFLOW -->
+    <div class="section" id="workflow">
+        <div class="section-header">
+            <div class="icon">🔄</div>
+            <h2>مطابقة سير العمل مع الوثيقة الرسمية</h2>
+        </div>
+        <div class="grid-2">
+            <div>
+                <h3 style="font-size:1.1rem;font-weight:800;color:var(--primary);margin-bottom:20px;">✈️ سير عمل الطيران</h3>
+                <div class="workflow">
+                    <div class="workflow-step">
+                        <div class="step-num done">1</div>
+                        <div class="step-content">
+                            <h4>Search Engine (بحث)</h4>
+                            <p>✅ يدعم One-Way, Round-Trip, Multi-City مع جميع الفلاتر</p>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-num done">2</div>
+                        <div class="step-content">
+                            <h4>Validate Fare (إعادة التحقق)</h4>
+                            <p>✅ يُشغَّل عند اختيار الرحلة لضمان صحة السعر</p>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-num done">3</div>
+                        <div class="step-content">
+                            <h4>Pre-Booking (بيانات الركاب)</h4>
+                            <p>✅ يجمع بيانات البالغ/الطفل/الرضيع</p>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-num partial">4</div>
+                        <div class="step-content">
+                            <h4>PNR Generation (إنشاء الحجز)</h4>
+                            <p>⚠️ منفذ لكن بنية paxDetails تحتاج مراجعة للتطابق مع الوثيقة</p>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-num done">5</div>
+                        <div class="step-content">
+                            <h4>Payment (الدفع)</h4>
+                            <p>✅ يدعم HyperPay, Tabby, Tamara</p>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-num done">6</div>
+                        <div class="step-content">
+                            <h4>Order Ticket (إصدار التذكرة)</h4>
+                            <p>✅ تلقائي بعد الدفع — يستخرج eTicket ويحفظه</p>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-num partial">7</div>
+                        <div class="step-content">
+                            <h4>Confirm &amp; Voucher</h4>
+                            <p>⚠️ يحتاج مراجعة لعرض eTicket ورقم PNR بوضوح في الواجهة</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <h3 style="font-size:1.1rem;font-weight:800;color:var(--primary);margin-bottom:20px;">🏨 سير عمل الفنادق</h3>
+                <div class="workflow">
+                    <div class="workflow-step">
+                        <div class="step-num done">1</div>
+                        <div class="step-content">
+                            <h4>Search Engine (بحث)</h4>
+                            <p>✅ بحث بالمدينة/الإحداثيات مع توزيع ذكي للغرف</p>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-num partial">2</div>
+                        <div class="step-content">
+                            <h4>Hotel Details + Room Options</h4>
+                            <p>⚠️ يُجلب المحتوى لكن sessionId قد يُفقد بين المراحل</p>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-num done">3</div>
+                        <div class="step-content">
+                            <h4>Get Rate Rules (Check Room Rates)</h4>
+                            <p>✅ يُشغَّل قبل الحجز للحصول على rateBasisId</p>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-num done">4</div>
+                        <div class="step-content">
+                            <h4>Passenger Details</h4>
+                            <p>✅ يجمع البالغين والأطفال لكل غرفة</p>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-num done">5</div>
+                        <div class="step-content">
+                            <h4>Hotel Booking (بعد الدفع)</h4>
+                            <p>✅ تلقائي بعد الدفع — يُحوّل البيانات للهيكل الرسمي</p>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-num done">6</div>
+                        <div class="step-content">
+                            <h4>Confirm &amp; Voucher</h4>
+                            <p>✅ يصدر فوتشر PDF احترافي</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ISSUES -->
+    <div class="section" id="issues">
+        <div class="section-header">
+            <div class="icon">🚨</div>
+            <h2>المشكلات والانحرافات عن الوثيقة الرسمية</h2>
+        </div>
+
+        <div class="issue-card">
+            <div class="issue-tag">خطورة عالية</div>
+            <div class="issue-title">🔴 [فنادق] الـ sessionId قد يُفقد بين مراحل الحجز</div>
+            <div class="issue-body">
+                الوثيقة تؤكد أن <code>sessionId</code> يجب تمريره في جميع مراحل الحجز (Search → Room Rates → Rate Rules → Booking). الكود يبحث عنه في أماكن متعددة مما يشير لعدم اليقين من هيكل الاستجابة الفعلي.
+                <div class="code-block">
+<span class="comment">// المشكلة: البحث في أماكن متعددة = عدم يقين من هيكل الاستجابة</span>
+<span class="danger-code">$sessionId = $statusField['sessionId'] ?? $statusField['session_id'] ?? null;
+// ثم في normalizeHotelResults:
+$sessionId = $response['sessionId'] ?? $response['session_id'] ?? null;</span>
+                </div>
+                <strong>الحل المقترح:</strong> تسجيل الاستجابة الكاملة لحجز فندق حقيقي وتثبيت المسار الصحيح للـ sessionId.
+            </div>
+        </div>
+
+        <div class="issue-card">
+            <div class="issue-tag">خطورة عالية</div>
+            <div class="issue-title">🔴 [طيران] بنية paxDetails في الحجز قد تخالف الوثيقة</div>
+            <div class="issue-body">
+                الوثيقة تُوضح أن <code>paxDetails</code> هو مصفوفة مباشرة، لكن الكود يُغلّف النتيجة داخل مصفوفة إضافية.
+                <div class="code-block">
+<span class="comment">// الكود الحالي (قد يكون خاطئاً — تغليف مزدوج):</span>
+<span class="danger-code">'paxDetails' => [ $this->formatPaxDetails($data['passengers']) ]</span>
+<span class="comment">// الوثيقة تتوقع:</span>
+<span class="good-code">'paxDetails' => $this->formatPaxDetails($data['passengers'])</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="issue-card warning">
+            <div class="issue-tag" style="background:#fef3c7;color:#92400e;">تحذير</div>
+            <div class="issue-title">🟡 [طيران] بناء URLs عبر string replace — نهج هش</div>
+            <div class="issue-body">
+                الكود يبني جميع URLs بتحويل كلمة "availability" في الـ Base URL، مما يجعل أي تغيير بسيط في الـ URL يكسر كل شيء.
+                <div class="code-block">
+<span class="danger-code">$url = str_replace('availability', 'booking', $this->url);
+$url = str_replace('availability', 'ticket_order', $this->url);</span>
+<span class="comment">// الأفضل: تعريف ثوابت لكل endpoint بشكل صريح</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="issue-card warning">
+            <div class="issue-tag" style="background:#fef3c7;color:#92400e;">أمان</div>
+            <div class="issue-title">🟡 [فنادق] تعطيل التحقق من SSL في الاتصال مع Travelopro</div>
+            <div class="issue-body">
+                الكود يستخدم <code>Http::withoutVerifying()</code> في TraveloproHotelService. مقبول للتطوير لكن <strong>خطر أمني كبير في الإنتاج</strong>.
+                <div class="code-block">
+<span class="danger-code">$response = Http::withoutVerifying()->connectTimeout(60)->timeout(120)->post($url, $payload);</span>
+                </div>
+                <strong>الحل:</strong> استخدام <code>Http::withOptions(['verify' => '/path/to/cacert.pem'])</code> في الإنتاج. (المشروع يحتوي بالفعل على <code>cacert.pem</code>!)
+            </div>
+        </div>
+
+        <div class="issue-card warning">
+            <div class="issue-tag" style="background:#fef3c7;color:#92400e;">تحذير</div>
+            <div class="issue-title">🟡 [طيران] Extra Services — جلب بدون واجهة اختيار للمستخدم</div>
+            <div class="issue-body">
+                الوثيقة توفر API كاملة للخدمات الإضافية (أمتعة، مقاعد، وجبات) وتدعم إرسالها في <code>ExtraServiceOutbound/Inbound</code>. الكود يدعم الإرسال لكن لا توجد واجهة مستخدم لعرض الخيارات.
+            </div>
+        </div>
+
+        <div class="issue-card info">
+            <div class="issue-tag" style="background:#dbeafe;color:#1e40af;">ملاحظة</div>
+            <div class="issue-title">🔵 [طيران] passportIssueDate غير مُجمَّع ولا مُرسَل</div>
+            <div class="issue-body">
+                الوثيقة تُشير إلى أن <code>passportIssueDate</code> إلزامي إذا كانت <code>IsPassportFullDetailsMandatory = true</code> في استجابة Validate Fare. الكود لا يتحقق من هذا الشرط ولا يجمع هذا الحقل.
+            </div>
+        </div>
+
+        <div class="issue-card info">
+            <div class="issue-tag" style="background:#dbeafe;color:#1e40af;">ملاحظة</div>
+            <div class="issue-title">🔵 [فنادق] Hotel Static Content API غير مُنفَّذ</div>
+            <div class="issue-body">
+                الوثيقة تتضمن <code>/staticContent</code> لجلب صور مفصّلة وأوصاف ثابتة للفنادق. غياب هذا يعني الاعتماد الكلي على البيانات الديناميكية (البحث) وهي أقل تفصيلاً وأبطأ.
+            </div>
+        </div>
+    </div>
+
+    <!-- MISSING -->
+    <div class="section" id="missing">
+        <div class="section-header">
+            <div class="icon">📭</div>
+            <h2>العمليات الناقصة والمطلوب تنفيذها</h2>
+        </div>
+        <table class="api-table">
+            <thead>
+                <tr>
+                    <th>العملية</th>
+                    <th>المجال</th>
+                    <th>الأولوية</th>
+                    <th>التأثير</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>passportIssueDate — جمع وإرسال</strong></td>
+                    <td><span class="badge badge-purple">✈️ طيران</span></td>
+                    <td><span class="badge badge-danger">🔴 عالية</span></td>
+                    <td>قد يفشل الحجز لدى بعض شركات الطيران التي تُلزم بهذا الحقل</td>
+                </tr>
+                <tr>
+                    <td><strong>Extra Services UI</strong><br><small>واجهة اختيار الأمتعة/المقاعد</small></td>
+                    <td><span class="badge badge-purple">✈️ طيران</span></td>
+                    <td><span class="badge badge-warning">🟡 متوسطة</span></td>
+                    <td>العميل لا يستطيع اختيار الخدمات الإضافية — فرصة إيراد ضائعة</td>
+                </tr>
+                <tr>
+                    <td><strong>Hotel Static Content</strong><br><small>/staticContent endpoint</small></td>
+                    <td><span class="badge badge-info">🏨 فنادق</span></td>
+                    <td><span class="badge badge-warning">🟡 متوسطة</span></td>
+                    <td>ضعف في جودة عرض الفنادق (صور، وصف، مرافق تفصيلية)</td>
+                </tr>
+                <tr>
+                    <td><strong>Hotel Filter UI التكامل الكامل</strong></td>
+                    <td><span class="badge badge-info">🏨 فنادق</span></td>
+                    <td><span class="badge badge-warning">🟡 متوسطة</span></td>
+                    <td>التصفية غير مكتملة بالكامل للمستخدم</td>
+                </tr>
+                <tr>
+                    <td><strong>More Hotel Filter + Pagination</strong><br><small>/moreFiltersPagination</small></td>
+                    <td><span class="badge badge-info">🏨 فنادق</span></td>
+                    <td><span class="badge badge-info">🔵 منخفضة</span></td>
+                    <td>لا يمكن تصفية نتائج الصفحات التالية</td>
+                </tr>
+                <tr>
+                    <td><strong>Webhook / Status Polling</strong><br><small>تحديث تلقائي لحالة الحجوزات</small></td>
+                    <td><span class="badge badge-purple">✈️🏨 كلاهما</span></td>
+                    <td><span class="badge badge-info">🔵 منخفضة</span></td>
+                    <td>تحديث الحالة يدوي فقط — لا تحديث تلقائي من المورد</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- RECOMMENDATIONS -->
+    <div class="section" id="rec">
+        <div class="section-header">
+            <div class="icon">💡</div>
+            <h2>التوصيات والأولويات</h2>
+        </div>
+        <div class="grid-2">
+            <div class="rec-card rec-danger">
+                <h4 style="color:var(--danger)">🔴 إصلاحات عاجلة (P0 — فورية)</h4>
+                <div class="rec-item">إصلاح بنية paxDetails في حجز الطيران لتطابق الوثيقة الرسمية (إزالة التغليف المزدوج)</div>
+                <div class="rec-item">إزالة withoutVerifying() واستخدام cacert.pem الموجود في المشروع</div>
+                <div class="rec-item">تثبيت مسار sessionId الصحيح في مراحل حجز الفنادق بناءً على استجابة API حقيقية</div>
+            </div>
+            <div class="rec-card rec-warning">
+                <h4 style="color:var(--warning)">🟡 تحسينات مهمة (P1)</h4>
+                <div class="rec-item">إعادة هيكلة بناء URLs باستخدام ثوابت بدلاً من string replace</div>
+                <div class="rec-item">إضافة passportIssueDate في نموذج الراكب وإرساله عند الطلب</div>
+                <div class="rec-item">بناء واجهة مستخدم لاختيار Extra Services (أمتعة/مقاعد) قبل حجز الطيران</div>
+                <div class="rec-item">التكامل الكامل لفلتر الفنادق مع الواجهة الأمامية</div>
+            </div>
+            <div class="rec-card rec-success">
+                <h4 style="color:var(--success)">🟢 تحسينات مستقبلية (P2)</h4>
+                <div class="rec-item">تنفيذ Hotel Static Content لتخزين بيانات الفنادق مسبقاً</div>
+                <div class="rec-item">تنفيذ More Hotel Filter + Pagination</div>
+                <div class="rec-item">إضافة Frequent Flyer Number في نموذج الراكب</div>
+                <div class="rec-item">نظام Polling/Webhook لتحديث حالة الحجوزات تلقائياً</div>
+            </div>
+            <div class="rec-card rec-info">
+                <h4 style="color:var(--info)">🔵 نقاط قوة — يجب الإبقاء عليها</h4>
+                <div class="rec-item">نظام هامش الربح المزدوج (طيران + فنادق) بنوعين (نسبة/ثابت) — ممتاز</div>
+                <div class="rec-item">نظام تسجيل HotelApiLog مفصّل — ممتاز للمراقبة</div>
+                <div class="rec-item">Cache للقوائم الثابتة (مطارات/شركات طيران) — اقتصادي وسريع</div>
+                <div class="rec-item">Fallback بيانات للمطارات والمدن — استباقي وذكي</div>
+                <div class="rec-item">تنفيذ الحجز تلقائياً بعد الدفع (هوتيل + طيران) — تجربة مستخدم ممتازة</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="report-footer">
+    <strong>My-Trip Platform — Travelopro API Integration Report</strong><br>
+    تم إعداد هذا التقرير بتاريخ 30 يونيو 2026 بناءً على تحليل شامل للكود المصدري ووثائق Travelopro API الرسمية (aeroVE5 + hotel-api-v6)
+</div>
+
+</body>
+</html>

@@ -944,6 +944,22 @@ $(document).ready(function() {
             currentPage = 1;
             applyFiltersAndPagination();
         });
+
+        // ✅ P1 FIX: Bind "Apply Filters" button — closes sidebar on mobile and triggers filter
+        $('#applyHotelFilters').off('click').on('click', function() {
+            currentPage = 1;
+            applyFiltersAndPagination();
+            // Close sidebar on mobile
+            if (window.innerWidth < 1024) {
+                $('#hotelFilterSidebar').removeClass('active');
+                $('#hotelFiltersOverlay').removeClass('active');
+                $('body').css('overflow', '');
+            }
+            // Visual feedback
+            const btn = $(this);
+            btn.html('<i class="fas fa-check"></i> {{ __("Applied") }}');
+            setTimeout(() => btn.html('{{ __("Apply Filters") }}'), 1500);
+        });
     }
 
     function applyFiltersAndPagination() {

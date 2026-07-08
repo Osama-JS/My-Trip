@@ -1219,6 +1219,20 @@
                     </div>
                 @endif
 
+                <!-- Profile Completion Banner -->
+                @if(auth()->check() && auth()->user()->isCustomer() && !auth()->user()->isProfileComplete() && !request()->routeIs('profile.complete.*') && !request()->routeIs('customer.profile*'))
+                    <div class="alert alert-warning d-flex align-items-center mb-4" role="alert" style="border-radius: 12px; box-shadow: 0 4px 15px rgba(255, 193, 7, 0.15); border: 1px solid #ffc107;">
+                        <i class="fas fa-exclamation-circle fs-24 me-3 rtl-flip" style="color: #d39e00;"></i>
+                        <div class="flex-grow-1 ms-3">
+                            <h5 class="alert-heading mb-1 fw-bold text-dark">{{ __('يجب إكمال بيانات حسابك') }}</h5>
+                            <p class="mb-0 text-dark">{{ __('للاستفادة من كافة مزايا المنصة وإتمام حجوزاتك، يرجى إكمال بيانات ملفك الشخصي.') }}</p>
+                        </div>
+                        <a href="{{ route('profile.complete.form') }}" class="btn btn-dark btn-sm px-4 ms-auto" style="white-space: nowrap; border-radius: 8px;">
+                            {{ __('إكمال البيانات') }}
+                        </a>
+                    </div>
+                @endif
+
                 <!-- Main content -->
                 @yield('content')
             </div>

@@ -27,6 +27,36 @@
     @vite(['resources/css/app.css'])
 
     <style>
+        /* Custom Country Picker */
+        .country-picker-wrapper { position: relative; display: flex; align-items: stretch; }
+        .country-picker-btn {
+            display: flex; align-items: center; gap: 6px; padding: 10px 12px;
+            background: #f8f9fa; border: 1px solid #dee2e6; border-right: none;
+            border-radius: 8px 0 0 8px; cursor: pointer; white-space: nowrap;
+            font-size: 14px; min-width: 95px; transition: background 0.2s;
+        }
+        .country-picker-btn:hover { background: #e9ecef; }
+        .country-picker-dropdown {
+            position: absolute; top: 100%; left: 0; z-index: 9999;
+            background: #fff; border: 1px solid #dee2e6; border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12); width: 280px;
+            display: none; overflow: hidden;
+        }
+        .country-picker-dropdown.open { display: block; }
+        .country-search-box {
+            width: 100%; padding: 10px 14px; border: none; border-bottom: 1px solid #dee2e6;
+            outline: none; font-size: 14px; border-radius: 10px 10px 0 0;
+        }
+        .country-list { max-height: 220px; overflow-y: auto; }
+        .country-item {
+            padding: 9px 14px; cursor: pointer; display: flex; align-items: center;
+            gap: 10px; font-size: 13px; transition: background 0.15s;
+        }
+        .country-item:hover, .country-item.highlighted { background: #f0f4ff; }
+        .country-item .dial { color: #888; font-size: 12px; margin-left: auto; }
+        #phone_input { border-radius: 0 8px 8px 0; border-left: none; }
+    </style>
+    <style>
         body, html {
             height: 100%;
             overflow-x: hidden;
@@ -265,56 +295,125 @@
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('login') }}">
-                @csrf
+            <!-- Tabs Navigation -->
+            <ul class="nav nav-pills mb-4 d-flex" id="loginTab" role="tablist">
+                <li class="nav-item flex-fill text-center" role="presentation">
+                    <button class="nav-link w-100 active" id="phone-tab" data-bs-toggle="pill" data-bs-target="#phone-login" type="button" role="tab" style="font-weight:600; border-radius:10px;">
+                        <i class="fa fa-phone"></i> {{ __('Phone (OTP)') }}
+                    </button>
+                </li>
+                <li class="nav-item flex-fill text-center" role="presentation">
+                    <button class="nav-link w-100" id="email-tab" data-bs-toggle="pill" data-bs-target="#email-login" type="button" role="tab" style="font-weight:600; border-radius:10px;">
+                        <i class="fa fa-envelope"></i> {{ __('Email & Password') }}
+                    </button>
+                </li>
+            </ul>
 
-                <div class="mb-4">
-                    <label class="mb-2 font-weight-bold text-muted">{{ __('Email Address') }}</label>
-                    <div class="position-relative">
-                        <input type="email" name="email" class="form-control" value="{{ old('email') }}" required autofocus placeholder="name@example.com">
+            <div class="tab-content" id="loginTabContent">
+                
+                <!-- Phone (OTP) Login Tab -->
+                <div class="tab-pane fade show active" id="phone-login" role="tabpanel">
+                    
+                    <div id="otp-request-section">
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center gap-2 mb-3 p-3" style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); border-radius: 10px; color: white;">
+                                <i class="fab fa-whatsapp" style="font-size: 22px;"></i>
+                                <span style="font-size: 13px; font-weight: 500;">{{ __('The OTP code will be sent via WhatsApp') }}</span>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="mb-2 font-weight-bold text-muted">{{ __('Phone Number') }}</label>
+                            <div class="country-picker-wrapper" dir="ltr">
+                                <div class="country-picker-btn" id="countryPickerBtn">
+                                    <span id="selectedFlag">🇸🇦</span>
+                                    <span id="selectedDial">+966</span>
+                                    <i class="fa fa-chevron-down" style="font-size:10px; color:#aaa;"></i>
+                                </div>
+                                <div class="country-picker-dropdown" id="countryDropdown">
+                                    <input type="text" class="country-search-box" id="countrySearch" placeholder="{{ __('Search country...') }}" autocomplete="off">
+                                    <div class="country-list" id="countryList"></div>
+                                </div>
+                                <input type="tel" id="phone_input" class="form-control" placeholder="500000000" required>
+                                <input type="hidden" id="country_code" value="966">
+                            </div>
+                            <span class="text-danger small mt-1 d-block" id="phone_error" style="display:none;"></span>
+                        </div>
+                        <button type="button" id="btn-request-otp" class="btn btn-primary w-100">
+                            <i class="fab fa-whatsapp me-2"></i> {{ __('Send OTP via WhatsApp') }}
+                        </button>
                     </div>
-                    @error('email')
-                        <span class="text-danger small mt-1 d-block">{{ $message }}</span>
-                    @enderror
-                </div>
 
-                <div class="mb-4">
-                    <label class="mb-2 font-weight-bold text-muted">{{ __('Password') }}</label>
-                    <input type="password" name="password" class="form-control" required placeholder="••••••••">
-                    @error('password')
-                        <span class="text-danger small mt-1 d-block">{{ $message }}</span>
-                    @enderror
-                </div>
-
-                <div class="d-flex justify-content-between align-items-center mb-5">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="remember" id="remember_me">
-                        <label class="form-check-label text-muted" for="remember_me">
-                            {{ __('Remember me') }}
-                        </label>
+                    <div id="otp-verify-section" style="display:none;">
+                        <div class="alert alert-info small mb-3">
+                            {{ __('An OTP has been sent to your WhatsApp.') }}
+                        </div>
+                        <div class="mb-4">
+                            <label class="mb-2 font-weight-bold text-muted">{{ __('OTP Code') }}</label>
+                            <input type="text" id="otp_input" class="form-control" placeholder="••••" required maxlength="6" style="letter-spacing:10px; font-size:24px; text-align:center;">
+                            <span class="text-danger small mt-1 d-block" id="otp_error" style="display:none;"></span>
+                        </div>
+                        <button type="button" id="btn-verify-otp" class="btn btn-primary">
+                            {{ __('Verify & Login') }} <i class="fa fa-check ms-2"></i>
+                        </button>
+                        <div class="text-center mt-3">
+                            <a href="#" id="btn-back-to-phone" class="text-muted small"><i class="fa fa-arrow-left"></i> {{ __('Change Phone Number') }}</a>
+                        </div>
                     </div>
-                    @if (Route::has('password.request'))
-                        <a href="{{ route('password.request') }}" class="text-danger small font-weight-bold">{{ __('Forgot Password?') }}</a>
-                    @endif
+
                 </div>
 
-                <button type="submit" class="btn btn-primary">
-                    {{ __('Sign In') }} <i class="fa fa-arrow-right ms-2"></i>
-                </button>
+                <!-- Email Login Tab -->
+                <div class="tab-pane fade" id="email-login" role="tabpanel">
+                    <form method="POST" action="{{ route('login') }}">
+                        @csrf
+                        <div class="mb-4">
+                            <label class="mb-2 font-weight-bold text-muted">{{ __('Email Address') }}</label>
+                            <div class="position-relative">
+                                <input type="email" name="email" class="form-control" value="{{ old('email') }}" required placeholder="name@example.com">
+                            </div>
+                            @error('email')
+                                <span class="text-danger small mt-1 d-block">{{ $message }}</span>
+                            @enderror
+                        </div>
 
-                <div class="text-center">
-                    @if($locale == 'ar')
-                        <a href="{{ route('lang.switch', 'en') }}" class="lang-switch-btn">
-                            <i class="fa fa-globe"></i> English
-                        </a>
-                    @else
-                        <a href="{{ route('lang.switch', 'ar') }}" class="lang-switch-btn">
-                            <i class="fa fa-globe"></i> العربية
-                        </a>
-                    @endif
+                        <div class="mb-4">
+                            <label class="mb-2 font-weight-bold text-muted">{{ __('Password') }}</label>
+                            <input type="password" name="password" class="form-control" required placeholder="••••••••">
+                            @error('password')
+                                <span class="text-danger small mt-1 d-block">{{ $message }}</span>
+                            @enderror
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-5">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="remember" id="remember_me">
+                                <label class="form-check-label text-muted" for="remember_me">
+                                    {{ __('Remember me') }}
+                                </label>
+                            </div>
+                            @if (Route::has('password.request'))
+                                <a href="{{ route('password.request') }}" class="text-danger small font-weight-bold">{{ __('Forgot Password?') }}</a>
+                            @endif
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            {{ __('Sign In') }} <i class="fa fa-arrow-right ms-2"></i>
+                        </button>
+                    </form>
                 </div>
+            </div>
 
-            </form>
+            <div class="text-center">
+                @if($locale == 'ar')
+                    <a href="{{ route('lang.switch', 'en') }}" class="lang-switch-btn">
+                        <i class="fa fa-globe"></i> English
+                    </a>
+                @else
+                    <a href="{{ route('lang.switch', 'ar') }}" class="lang-switch-btn">
+                        <i class="fa fa-globe"></i> العربية
+                    </a>
+                @endif
+            </div>
 
             <div class="mt-5 text-center text-muted small">
                 &copy; {{ date('Y') }} {{ config('app.name') }}. {{ __('All rights reserved.') }}
@@ -322,6 +421,210 @@
         </div>
     </div>
 </div>
+
+<!-- Vite JS -->
+{{-- @vite(['resources/js/app.js']) --}}
+<script src="{{ asset('vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+
+<script>
+// Country data
+const COUNTRIES = [
+  {code:'SA',dial:'966',flag:'🇸🇦',name:'Saudi Arabia / السعودية'},
+  {code:'AE',dial:'971',flag:'🇦🇪',name:'UAE / الإمارات'},
+  {code:'KW',dial:'965',flag:'🇰🇼',name:'Kuwait / الكويت'},
+  {code:'BH',dial:'973',flag:'🇧🇭',name:'Bahrain / البحرين'},
+  {code:'OM',dial:'968',flag:'🇴🇲',name:'Oman / عمان'},
+  {code:'QA',dial:'974',flag:'🇶🇦',name:'Qatar / قطر'},
+  {code:'YE',dial:'967',flag:'🇾🇪',name:'Yemen / اليمن'},
+  {code:'EG',dial:'20',flag:'🇪🇬',name:'Egypt / مصر'},
+  {code:'JO',dial:'962',flag:'🇯🇴',name:'Jordan / الأردن'},
+  {code:'LB',dial:'961',flag:'🇱🇧',name:'Lebanon / لبنان'},
+  {code:'SY',dial:'963',flag:'🇸🇾',name:'Syria / سوريا'},
+  {code:'IQ',dial:'964',flag:'🇮🇶',name:'Iraq / العراق'},
+  {code:'MA',dial:'212',flag:'🇲🇦',name:'Morocco / المغرب'},
+  {code:'TN',dial:'216',flag:'🇹🇳',name:'Tunisia / تونس'},
+  {code:'DZ',dial:'213',flag:'🇩🇿',name:'Algeria / الجزائر'},
+  {code:'LY',dial:'218',flag:'🇱🇾',name:'Libya / ليبيا'},
+  {code:'SD',dial:'249',flag:'🇸🇩',name:'Sudan / السودان'},
+  {code:'SO',dial:'252',flag:'🇸🇴',name:'Somalia / الصومال'},
+  {code:'TR',dial:'90',flag:'🇹🇷',name:'Turkey / تركيا'},
+  {code:'PK',dial:'92',flag:'🇵🇰',name:'Pakistan'},
+  {code:'IN',dial:'91',flag:'🇮🇳',name:'India'},
+  {code:'BD',dial:'880',flag:'🇧🇩',name:'Bangladesh'},
+  {code:'PH',dial:'63',flag:'🇵🇭',name:'Philippines'},
+  {code:'ID',dial:'62',flag:'🇮🇩',name:'Indonesia'},
+  {code:'MY',dial:'60',flag:'🇲🇾',name:'Malaysia'},
+  {code:'SG',dial:'65',flag:'🇸🇬',name:'Singapore'},
+  {code:'NG',dial:'234',flag:'🇳🇬',name:'Nigeria'},
+  {code:'KE',dial:'254',flag:'🇰🇪',name:'Kenya'},
+  {code:'ET',dial:'251',flag:'🇪🇹',name:'Ethiopia'},
+  {code:'GH',dial:'233',flag:'🇬🇭',name:'Ghana'},
+  {code:'TZ',dial:'255',flag:'🇹🇿',name:'Tanzania'},
+  {code:'ZA',dial:'27',flag:'🇿🇦',name:'South Africa'},
+  {code:'US',dial:'1',flag:'🇺🇸',name:'United States'},
+  {code:'GB',dial:'44',flag:'🇬🇧',name:'United Kingdom'},
+  {code:'CA',dial:'1',flag:'🇨🇦',name:'Canada'},
+  {code:'AU',dial:'61',flag:'🇦🇺',name:'Australia'},
+  {code:'DE',dial:'49',flag:'🇩🇪',name:'Germany / ألمانيا'},
+  {code:'FR',dial:'33',flag:'🇫🇷',name:'France / فرنسا'},
+  {code:'IT',dial:'39',flag:'🇮🇹',name:'Italy / إيطاليا'},
+  {code:'ES',dial:'34',flag:'🇪🇸',name:'Spain / إسبانيا'},
+  {code:'RU',dial:'7',flag:'🇷🇺',name:'Russia / روسيا'},
+  {code:'CN',dial:'86',flag:'🇨🇳',name:'China / الصين'},
+  {code:'JP',dial:'81',flag:'🇯🇵',name:'Japan / اليابان'},
+  {code:'KR',dial:'82',flag:'🇰🇷',name:'South Korea'},
+  {code:'BR',dial:'55',flag:'🇧🇷',name:'Brazil'},
+  {code:'MX',dial:'52',flag:'🇲🇽',name:'Mexico'},
+  {code:'AR',dial:'54',flag:'🇦🇷',name:'Argentina'},
+  {code:'NL',dial:'31',flag:'🇳🇱',name:'Netherlands'},
+  {code:'SE',dial:'46',flag:'🇸🇪',name:'Sweden'},
+  {code:'NO',dial:'47',flag:'🇳🇴',name:'Norway'},
+  {code:'CH',dial:'41',flag:'🇨🇭',name:'Switzerland'},
+  {code:'AT',dial:'43',flag:'🇦🇹',name:'Austria'},
+  {code:'BE',dial:'32',flag:'🇧🇪',name:'Belgium'},
+];
+
+let selectedDial = '966';
+let countryDropdownOpen = false;
+
+function renderCountryList(filter) {
+    const list = document.getElementById('countryList');
+    list.innerHTML = '';
+    const lower = (filter || '').toLowerCase();
+    COUNTRIES.filter(c => !lower || c.name.toLowerCase().includes(lower) || c.dial.includes(lower))
+    .forEach(c => {
+        const item = document.createElement('div');
+        item.className = 'country-item';
+        item.innerHTML = `<span>${c.flag}</span><span>${c.name}</span><span class="dial">+${c.dial}</span>`;
+        item.addEventListener('click', function() {
+            selectedDial = c.dial;
+            document.getElementById('selectedFlag').textContent = c.flag;
+            document.getElementById('selectedDial').textContent = '+' + c.dial;
+            document.getElementById('country_code').value = c.dial;
+            closeDropdown();
+        });
+        list.appendChild(item);
+    });
+}
+
+function closeDropdown() {
+    document.getElementById('countryDropdown').classList.remove('open');
+    countryDropdownOpen = false;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    renderCountryList('');
+
+    document.getElementById('countryPickerBtn').addEventListener('click', function(e) {
+        e.stopPropagation();
+        const dd = document.getElementById('countryDropdown');
+        countryDropdownOpen = !countryDropdownOpen;
+        dd.classList.toggle('open', countryDropdownOpen);
+        if (countryDropdownOpen) {
+            document.getElementById('countrySearch').focus();
+        }
+    });
+
+    document.getElementById('countrySearch').addEventListener('input', function() {
+        renderCountryList(this.value);
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!document.getElementById('countryPickerBtn').contains(e.target) &&
+            !document.getElementById('countryDropdown').contains(e.target)) {
+            closeDropdown();
+        }
+    });
+});
+
+$(document).ready(function() {
+    let currentPhone = '';
+    let currentCountryCode = '';
+
+    // Step 1: Request OTP
+    $('#btn-request-otp').on('click', function() {
+        let phone = $('#phone_input').val().trim();
+        // Remove leading zero if present
+        if (phone.startsWith('0')) { phone = phone.substring(1); }
+        let countryCode = '+' + $('#country_code').val();
+        currentCountryCode = countryCode;
+
+        if(!phone) {
+            $('#phone_error').text('{{ __("Please enter a valid phone number") }}').show();
+            return;
+        }
+
+        let btn = $(this);
+        btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> {{ __("Sending...") }}');
+
+        $.ajax({
+            url: '{{ route("web.request.otp") }}',
+            method: 'POST',
+            data: { 
+                phone: phone,
+                country_code: countryCode,
+                _token: '{{ csrf_token() }}'
+            },
+            success: function(res) {
+                currentPhone = phone;
+                currentCountryCode = countryCode;
+                $('#otp-request-section').slideUp();
+                $('#otp-verify-section').slideDown();
+                btn.html('{{ __("Send OTP") }} <i class="fa fa-arrow-right ms-2"></i>').prop('disabled', false);
+            },
+            error: function(err) {
+                let msg = err.responseJSON?.message || "{{ __('Failed to send OTP') }}";
+                $('#phone_error').text(msg).show();
+                btn.html('{{ __("Send OTP") }} <i class="fa fa-arrow-right ms-2"></i>').prop('disabled', false);
+            }
+        });
+    });
+
+    // Step 2: Verify OTP
+    $('#btn-verify-otp').click(function() {
+        let otp = $('#otp_input').val().trim();
+        if(!otp) {
+            $('#otp_error').text("{{ __('OTP is required') }}").show();
+            return;
+        }
+        $('#otp_error').hide();
+
+        const btn = $(this);
+        const originalText = btn.html();
+        btn.html('<i class="fa fa-spinner fa-spin"></i>').prop('disabled', true);
+
+        $.ajax({
+            url: '{{ route("web.verify.otp") }}',
+            method: 'POST',
+            data: { 
+                phone: currentPhone, 
+                country_code: currentCountryCode,
+                otp_code: otp,
+                _token: '{{ csrf_token() }}'
+            },
+            success: function(res) {
+                if(res.success) {
+                    window.location.href = res.redirect || '/';
+                }
+            },
+            error: function(err) {
+                let msg = err.responseJSON?.message || "{{ __('Invalid OTP') }}";
+                $('#otp_error').text(msg).show();
+                btn.html(originalText).prop('disabled', false);
+            }
+        });
+    });
+
+    // Back to Phone
+    $('#btn-back-to-phone').on('click', function(e) {
+        e.preventDefault();
+        $('#otp_input').val('');
+        $('#otp_error').hide();
+        $('#otp-verify-section').slideUp();
+        $('#otp-request-section').slideDown();
+    });
+});
+</script>
 
 <!-- Vite JS -->
 {{-- @vite(['resources/js/app.js']) --}}

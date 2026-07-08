@@ -75,6 +75,21 @@
                     @endfor
                 </div>
 
+                {{-- ═══ EXTRA SERVICES SECTION (Baggage / Meals / Seats) ═══ --}}
+                <div class="fe-booking-card" id="extraServicesCard" style="display:none;">
+                    <div class="fe-card-header">
+                        <i class="fas fa-concierge-bell"></i>
+                        <h3>{{ __('Extra Services') }}</h3>
+                        <span style="margin-inline-start:auto;font-size:0.75rem;color:var(--gray-400);font-weight:600;">{{ __('Optional') }}</span>
+                    </div>
+                    <div class="fe-card-body" id="extraServicesBody">
+                        <div style="text-align:center;padding:30px;color:var(--gray-400);">
+                            <i class="fas fa-spinner fa-spin fa-2x" style="margin-bottom:12px;"></i>
+                            <p style="font-weight:600;">{{ __('Loading available services...') }}</p>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="fe-booking-action">
                     <button type="submit" class="fe-btn fe-btn-primary fe-btn-lg fe-btn-block">
                         <i class="fas fa-check-circle"></i> {{ __('Complete Reservation') }}
@@ -211,6 +226,42 @@
     .fe-terms-fine { font-size: 0.75rem; color: var(--gray-500); margin-top: 15px; text-align: center; }
     .fe-terms-fine a { color: var(--primary); font-weight: 700; text-decoration: underline; }
 
+    /* ═══ EXTRA SERVICES ═══ */
+    .es-group { margin-bottom: 28px; }
+    .es-group-title {
+        display: flex; align-items: center; gap: 10px;
+        font-size: 0.9rem; font-weight: 900; color: var(--dark);
+        text-transform: uppercase; letter-spacing: 0.5px;
+        border-bottom: 2px solid var(--gray-100); padding-bottom: 10px; margin-bottom: 16px;
+    }
+    .es-group-title i { color: var(--primary); }
+    .es-passenger-row { margin-bottom: 20px; }
+    .es-pax-label {
+        font-size: 0.82rem; font-weight: 800; color: var(--gray-600);
+        margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+    }
+    .es-options { display: flex; flex-wrap: wrap; gap: 10px; }
+    .es-option {
+        display: flex; align-items: center; gap: 8px;
+        background: var(--gray-50); border: 1.5px solid var(--gray-200);
+        border-radius: 12px; padding: 10px 14px; cursor: pointer;
+        transition: all 0.2s; font-size: 0.85rem; font-weight: 600;
+    }
+    .es-option input[type="radio"] { accent-color: var(--primary); }
+    .es-option:has(input:checked) {
+        border-color: var(--primary); background: var(--primary-50);
+        color: var(--primary);
+    }
+    .es-option-price { color: var(--primary); font-weight: 800; font-size: 0.8rem; }
+    .es-total-badge {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: var(--primary); color: white;
+        padding: 6px 14px; border-radius: 20px;
+        font-size: 0.8rem; font-weight: 800; margin-top: 16px;
+        transition: all 0.3s;
+    }
+    .es-no-services { text-align:center; padding: 24px; color: var(--gray-400); font-weight:700; }
+
     /* Select2 Premium Styling */
     .select2-container--default .select2-selection--single {
         height: 48px !important;
@@ -256,13 +307,137 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
-    // Initialize Select2 for Countries
-    $('.fe-select2').select2({
-        dir: '{{ app()->getLocale() == "ar" ? "rtl" : "ltr" }}',
-        placeholder: '{{ __("Select Country") }}',
-        allowClear: true,
-        width: '100%'
-    });
+    // ═══ EXTRA SERVICES LOADER ═══
+    const sessionId    = $('input[name="flight_session_id"]').val();
+    const fareCode     = $('input[name="fare_source_code"]').val();
+    const totalPax     = {{ $totalPax }};
+    let extraServicesTotal = 0;
+
+    if (sessionId && fareCode) {
+        $('#extraServicesCard').show();
+        $.ajax({
+            url: '{{ route("api.flights.extra-services") }}',
+            method: 'POST',
+            data: { session_id: sessionId, fare_source_code: fareCode, _token: '{{ csrf_token() }}' },
+            success: function(res) {
+                if (!res.error && res.data && res.data.data && res.data.data.length > 0) {
+                    renderExtraServices(res.data.data);
+                } else {
+                    $('#extraServicesBody').html('<div class="es-no-services"><i class="fas fa-info-circle" style="margin-inline-end:8px;"></i>{{ __("No extra services available for this flight.") }}</div>');
+                }
+            },
+            error: function() {
+                $('#extraServicesCard').hide();
+            }
+        });
+    }
+
+    function renderExtraServices(services) {
+        // Group by type then by flight_type
+        const grouped = {};
+        services.forEach(svc => {
+            const key = svc.type + '_' + svc.flight_type;
+            if (!grouped[key]) grouped[key] = { label: svc.type, flight: svc.flight_type, items: [] };
+            grouped[key].items.push(svc);
+        });
+
+        const typeIcons = {
+            baggage: 'fa-suitcase-rolling',
+            meal:    'fa-utensils',
+            seat:    'fa-chair',
+            unknown: 'fa-concierge-bell',
+        };
+        const typeLabels = {
+            baggage: '{{ __("Extra Baggage") }}',
+            meal:    '{{ __("Meal Preference") }}',
+            seat:    '{{ __("Seat Selection") }}',
+            unknown: '{{ __("Additional Service") }}',
+        };
+        const flightLabels = {
+            outbound: '{{ __("Outbound") }}',
+            inbound:  '{{ __("Return") }}',
+        };
+
+        let html = '';
+        Object.entries(grouped).forEach(([key, group]) => {
+            const icon  = typeIcons[group.label] || typeIcons.unknown;
+            const label = (typeLabels[group.label] || group.label) + (group.flight === 'inbound' ? ' — ' + flightLabels.inbound : '');
+
+            html += `<div class="es-group">
+                <div class="es-group-title"><i class="fas ${icon}"></i> ${label}</div>`;
+
+            for (let paxIdx = 0; paxIdx < totalPax; paxIdx++) {
+                const fieldName = group.flight === 'inbound'
+                    ? `passengers[${paxIdx}][extra_services_inbound][]`
+                    : `passengers[${paxIdx}][extra_services_outbound][]`;
+
+                html += `<div class="es-passenger-row">
+                    <div class="es-pax-label"><i class="fas fa-user-circle"></i> {{ __("Passenger") }} #${paxIdx + 1}</div>
+                    <div class="es-options">
+                        <label class="es-option">
+                            <input type="radio" name="extra_${key}_pax${paxIdx}" value="" data-price="0" checked onchange="updateExtraTotal()">
+                            <span>{{ __("None") }}</span>
+                        </label>`;
+
+                group.items.forEach(svc => {
+                    html += `<label class="es-option">
+                        <input type="radio"
+                               name="extra_${key}_pax${paxIdx}"
+                               value="${svc.code}"
+                               data-field="${fieldName}"
+                               data-price="${svc.price}"
+                               onchange="updateExtraTotal()">
+                        <span>${svc.description}</span>
+                        <span class="es-option-price">+${svc.price} ${svc.currency}</span>
+                    </label>`;
+                });
+
+                html += `</div></div>`; // .es-options + .es-passenger-row
+            }
+
+            html += `</div>`; // .es-group
+        });
+
+        html += `<div id="esTotal" class="es-total-badge" style="display:none;">
+            <i class="fas fa-tag"></i>
+            {{ __("Extra Services Total") }}: <strong id="esTotalValue">0 SAR</strong>
+        </div>`;
+
+        $('#extraServicesBody').html(html);
+    }
+
+    window.updateExtraTotal = function() {
+        let total = 0;
+        $('input[name^="extra_"]:checked').each(function() {
+            const price = parseFloat($(this).data('price')) || 0;
+            total += price;
+
+            // Sync to actual form field
+            const fieldName = $(this).data('field');
+            if (fieldName && $(this).val()) {
+                $(`input[name="${fieldName}"]`).remove();
+                $('<input>').attr({ type: 'hidden', name: fieldName, value: $(this).val() }).appendTo('#flightBookingForm');
+            }
+        });
+        extraServicesTotal = total;
+        if (total > 0) {
+            $('#esTotal').show();
+            $('#esTotalValue').text(new Intl.NumberFormat().format(total) + ' SAR');
+        } else {
+            $('#esTotal').hide();
+        }
+    };
+
+    // ═══ DATE PICKERS ═══
+    // Initialize Select2 for Countries (legacy — keep for pax-fields)
+    if ($.fn.select2) {
+        $('.fe-select2').select2({
+            dir: '{{ app()->getLocale() == "ar" ? "rtl" : "ltr" }}',
+            placeholder: '{{ __("Select Country") }}',
+            allowClear: true,
+            width: '100%'
+        });
+    }
 
     // Initialize Flatpickr for Birthday - Adult (> 12y)
     flatpickr(".dob-picker-adult", {
@@ -292,6 +467,13 @@ $(document).ready(function() {
     flatpickr(".expiry-picker", {
         dateFormat: "Y-m-d",
         minDate: "today",
+        locale: "{{ app()->getLocale() }}",
+    });
+
+    // Initialize Flatpickr for Passport Issue Date (Past only)
+    flatpickr(".issue-date-picker", {
+        dateFormat: "Y-m-d",
+        maxDate: "today",
         locale: "{{ app()->getLocale() }}",
     });
 });

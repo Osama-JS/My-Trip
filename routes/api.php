@@ -57,6 +57,11 @@ Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+
+// Phone Auth Routes (WhatsApp OTP)
+Route::post('/phone/request-otp', [AuthController::class, 'requestPhoneOtp']);
+Route::post('/phone/verify-otp', [AuthController::class, 'verifyPhoneOtp']);
+
 Route::get('/payment/callback', [PaymentController::class, 'handleCallback'])->name('payment.callback');
 
 // Flight Routes
@@ -64,6 +69,9 @@ Route::post('/flights/search', [FlightController::class, 'search']);
 Route::get('/flights/airports', [FlightController::class, 'getAirports']);
 Route::get('/flights/airlines', [FlightController::class, 'getAirlines']);
 Route::post('/flights/validate-fare', [FlightController::class, 'validateFare']);
+// Available without auth — needed on the booking form before session is established
+Route::post('/flights/extra-services', [FlightController::class, 'getExtraServices'])->name('api.flights.extra-services');
+Route::post('/flights/fare-rules', [FlightController::class, 'getFareRules'])->name('api.flights.fare-rules');
 
 // Hotel Routes
 Route::post('/hotels/search', [HotelController::class, 'search']);
@@ -83,6 +91,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/flights/book', [FlightController::class, 'book']);
     Route::post('/flights/order-ticket', [FlightController::class, 'orderTicket']);
     Route::post('/flights/trip-details', [FlightController::class, 'getTripDetails']);
+    Route::post('/flights/cancel', [FlightController::class, 'cancelBooking'])->name('api.flights.cancel');
+    Route::post('/flights/post-ticket-status', [FlightController::class, 'getPostTicketStatus'])->name('api.flights.post-ticket-status');
 
     // Hotel Booking Routes (Protected)
     Route::post('/hotels/book', [HotelController::class, 'book']);
@@ -92,6 +102,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/check-token', [AuthController::class, 'checkToken']);
     Route::get('/profile', [AuthController::class, 'profile']);
     Route::post('/profile/update', [AuthController::class, 'updateProfile']);
+    Route::post('/profile/complete', [AuthController::class, 'completeProfile']); // Complete Guest Profile
     Route::post('/profile/change-password', [AuthController::class, 'changePassword']);
     Route::post('/update-fcm-token', [AuthController::class, 'updateFcmToken']);
 

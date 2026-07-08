@@ -413,6 +413,12 @@ class FrontendController extends Controller
      */
     public function hotelBookingForm(Request $request)
     {
+        if (auth()->check() && !auth()->user()->isProfileComplete()) {
+            session()->put('url.intended', url()->full());
+            return redirect()->route('profile.complete.form');
+        }
+
+        $countries = \App\Models\Country::all();
         $details = $request->all();
 
         // Enrich with session data if hotel info is missing from URL params
@@ -652,6 +658,11 @@ class FrontendController extends Controller
      */
     public function flightBookingForm(Request $request)
     {
+        if (auth()->check() && !auth()->user()->isProfileComplete()) {
+            session()->put('url.intended', url()->full());
+            return redirect()->route('profile.complete.form');
+        }
+
         $countries = \App\Models\Country::all();
         // Expecting flight details in session/request to show summary
         return view('frontend.flights.booking', [

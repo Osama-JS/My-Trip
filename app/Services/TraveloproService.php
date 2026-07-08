@@ -10,14 +10,78 @@ class TraveloproService
     protected $userId;
     protected $password;
     protected $access;
-    protected $url;
+    protected $baseUrl;   // e.g. https://travelnext.works/api/aeroVE5
+
+    /**
+     * Explicit endpoint map — avoids fragile str_replace URL building.
+     */
+    protected const ENDPOINTS = [
+        'search'              => 'availability',
+        'revalidate'          => 'revalidate',
+        'booking'             => 'booking',
+        'ticket_order'        => 'ticket_order',
+        'trip_details'        => 'trip_details',
+        'booking_notes'       => 'booking_notes',
+        'cancel'              => 'cancel',
+        'void_quote'          => 'void_quote',
+        'void_ticket'         => 'void_ticket',
+        'refund_quote'        => 'refund_quote',
+        'refund_ticket'       => 'refund_ticket',
+        'reissue_quote'       => 'reissue_quote',
+        'reissue_ticket'      => 'reissue_ticket',
+        'post_ticket_status'  => 'search_post_ticket_status',
+        'extra_services'      => 'extra_services',
+        'fare_rules'          => 'fare_rules',
+        'airport_list'        => 'airport_list',
+        'airline_list'        => 'airline_list',
+    ];
 
     public function __construct()
     {
-        $this->userId = config('services.travelopro.user_id');
+        $this->userId  = config('services.travelopro.user_id');
         $this->password = config('services.travelopro.password');
-        $this->access = config('services.travelopro.access');
-        $this->url = config('services.travelopro.url');
+        $this->access  = config('services.travelopro.access');
+
+        // Derive base URL by stripping the /availability suffix if present
+        $configUrl = config('services.travelopro.url');
+        $this->baseUrl = rtrim(preg_replace('#/availability$#', '', $configUrl), '/');
+    }
+
+    /**
+     * Build a full endpoint URL from the ENDPOINTS map.
+     */
+    private function endpoint(string $key): string
+    {
+        $path = self::ENDPOINTS[$key] ?? $key;
+        return "{$this->baseUrl}/{$path}";
+    }
+
+    /**
+     * Return a pre-configured HTTP client with SSL verification via cacert.pem.
+     */
+    private function httpClient(int $timeout = 60): \Illuminate\Http\Client\PendingRequest
+    {
+        $certPath = base_path('cacert.pem');
+        $options = file_exists($certPath)
+            ? ['verify' => $certPath]
+            : ['verify' => false];   // fallback only if file missing
+
+        return \Illuminate\Support\Facades\Http::withOptions($options)
+            ->connectTimeout(60)
+            ->timeout($timeout);
+    }
+
+    /**
+     * Base auth payload appended to every request.
+     */
+    private function authPayload(): array
+    {
+        return [
+            'user_id'       => $this->userId,
+            'user_password' => $this->password,
+            'access'        => $this->access,
+            'ip_address'    => request()->ip() ?? '127.0.0.1',
+        ];
     }
 
     /**
@@ -28,31 +92,23 @@ class TraveloproService
      */
     public function searchFlights(array $data)
     {
-        // Construct the payload with all available fields
-        $payload = [
-            'user_id' => $this->userId,
-            'user_password' => $this->password,
-            'access' => $this->access,
-            'ip_address' => request()->ip(), // Get user's IP
-            'requiredCurrency' => $data['requiredCurrency'] ?? 'SAR',
-            'journeyType' => $data['journeyType'],
+        $payload = array_merge($this->authPayload(), [
+            'requiredCurrency'      => $data['requiredCurrency'] ?? 'SAR',
+            'journeyType'           => $data['journeyType'],
             'OriginDestinationInfo' => $this->formatItinerary($data['OriginDestinationInfo']),
-            'class' => $data['class'] ?? 'Economy',
-            'adults' => (int)($data['adults'] ?? 1),
-            'childs' => (int)($data['childs'] ?? 0),
-            'infants' => (int)($data['infants'] ?? 0),
-            // Optional fields included even if null/default
-            'airlineCode' => $data['airlineCode'] ?? '',
-            'directFlight' => $data['directFlight'] ?? 'false',
-        ];
+            'class'                 => $data['class'] ?? 'Economy',
+            'adults'                => (int)($data['adults'] ?? 1),
+            'childs'                => (int)($data['childs'] ?? 0),
+            'infants'               => (int)($data['infants'] ?? 0),
+            'airlineCode'           => $data['airlineCode'] ?? '',
+            'directFlight'          => $data['directFlight'] ?? 'false',
+        ]);
 
-        // Log request for debugging (remove sensitive data in production)
-        // Log request for debugging
         Log::info('Travelopro Search Request', ['payload' => $payload]);
 
         $startTime = microtime(true);
         try {
-            $response = Http::timeout(60)->post($this->url, $payload);
+            $response = $this->httpClient(60)->post($this->endpoint('search'), $payload);
             $executionTime = microtime(true) - $startTime;
 
             if ($response->successful()) {
@@ -178,26 +234,16 @@ class TraveloproService
         }
 
         return cache()->remember($cacheKey, 60 * 24, function () use ($params) {
-            $payload = array_merge([
-                'user_id' => $this->userId,
-                'user_password' => $this->password,
-                'access' => $this->access,
-                'ip_address' => request()->ip() ?? '127.0.0.1',
-            ], $params);
-
-            $url = str_replace('availability', 'airport_list', $this->url);
+            $payload = array_merge($this->authPayload(), $params);
+            $url = $this->endpoint('airport_list');
 
             Log::info('Travelopro Airport List Request', ['url' => $url]);
 
             try {
-                // Increased timeouts and added SSL verification bypass more explicitly
-                $response = Http::withoutVerifying()
-                    ->connectTimeout(60)
-                    ->timeout(120)
-                    ->post($url, $payload);
+                $response = $this->httpClient(120)->post($url, $payload);
 
                 if ($response->successful()) {
-                     return $response->json();
+                    return $response->json();
                 }
 
                 Log::error('Travelopro Airport List Error', [
@@ -357,27 +403,21 @@ class TraveloproService
     public function getAirlineList()
     {
         return cache()->remember('travelopro_airlines', 60 * 24, function () {
-            $payload = [
-                'user_id' => $this->userId,
-                'user_password' => $this->password,
-                'access' => $this->access,
-                'ip_address' => request()->ip(),
-            ];
+            $payload = $this->authPayload();
+            $url     = $this->endpoint('airline_list');
 
-            $url = str_replace('availability', 'airline_list', $this->url);
-
-             Log::info('Travelopro Airline List Request');
+            Log::info('Travelopro Airline List Request', ['url' => $url]);
 
             try {
-                $response = Http::timeout(60)->post($url, $payload);
+                $response = $this->httpClient(60)->post($url, $payload);
 
                 if ($response->successful()) {
                     return $response->json();
                 }
 
-                 Log::error('Travelopro Airline List Error', [
+                Log::error('Travelopro Airline List Error', [
                     'status' => $response->status(),
-                    'body' => $response->body()
+                    'body'   => $response->body(),
                 ]);
 
                 return [];
@@ -398,16 +438,16 @@ class TraveloproService
     {
         Log::info('Travelopro Validate Fare Request', ['data' => $data]);
 
-        $payload = [
-            'session_id' => $data['session_id'],
-            'fare_source_code' => $data['fare_source_code'],
+        $payload = array_merge($this->authPayload(), [
+            'session_id'               => $data['session_id'],
+            'fare_source_code'         => $data['fare_source_code'],
             'fare_source_code_inbound' => $data['fare_source_code_inbound'] ?? '',
-        ];
+        ]);
 
-        $url = str_replace('availability', 'revalidate', $this->url);
+        $url = $this->endpoint('revalidate');
 
         try {
-            $response = Http::timeout(60)->post($url, $payload);
+            $response = $this->httpClient(60)->post($url, $payload);
 
             if ($response->successful()) {
                 $result = $response->json();
@@ -460,31 +500,32 @@ class TraveloproService
     {
         Log::info('Travelopro Booking Request', ['data' => $data]);
 
+        // NOTE: paxDetails must be a direct array (not double-wrapped) per Travelopro spec.
+        // formatPaxDetails() already returns the correctly shaped array.
         $payload = [
             'flightBookingInfo' => [
-                'flight_session_id' => $data['flight_session_id'],
-                'fare_source_code' => $data['fare_source_code'],
-                'IsPassportMandatory' => $data['IsPassportMandatory'] ?? false,
-                'areaCode' => $data['areaCode'] ?? '080',
-                'countryCode' => $data['countryCode'] ?? '966',
-                'fareType' => $data['fareType'] ?? 'Private',
+                'flight_session_id'        => $data['flight_session_id'],
+                'fare_source_code'         => $data['fare_source_code'],
+                'IsPassportMandatory'      => $data['IsPassportMandatory'] ?? false,
+                'areaCode'                 => $data['areaCode'] ?? '080',
+                'countryCode'              => $data['countryCode'] ?? '966',
+                'fareType'                 => $data['fareType'] ?? 'Private',
                 'fare_source_code_inbound' => $data['fare_source_code_inbound'] ?? null,
             ],
             'paxInfo' => [
-                'clientRef' => $data['clientRef'] ?? uniqid('TR'),
+                'clientRef'     => $data['clientRef'] ?? uniqid('TR'),
                 'customerEmail' => $data['customerEmail'],
                 'customerPhone' => $data['customerPhone'],
-                'bookingNote' => $data['bookingNote'] ?? '',
-                'paxDetails' => [
-                    $this->formatPaxDetails($data['passengers'])
-                ]
-            ]
+                'bookingNote'   => $data['bookingNote'] ?? '',
+                // ✅ FIX: Pass array directly — no extra [ ] wrapping
+                'paxDetails'    => $this->formatPaxDetails($data['passengers']),
+            ],
         ];
 
-        $url = str_replace('availability', 'booking', $this->url);
+        $url = $this->endpoint('booking');
 
         try {
-            $response = Http::timeout(90)->post($url, $payload);
+            $response = $this->httpClient(90)->post($url, $payload);
 
             if ($response->successful()) {
                 return $response->json();
@@ -539,23 +580,28 @@ class TraveloproService
             if (empty($paxList)) continue;
 
             $details = [
-                'title' => array_column($paxList, 'title'),
-                'firstName' => array_column($paxList, 'first_name'),
-                'lastName' => array_column($paxList, 'last_name'),
-                'dob' => array_column($paxList, 'dob'),
-                'nationality' => array_column($paxList, 'nationality'),
-                'passportNo' => array_column($paxList, 'passport_no'),
+                'title'                => array_column($paxList, 'title'),
+                'firstName'            => array_column($paxList, 'first_name'),
+                'lastName'             => array_column($paxList, 'last_name'),
+                'dob'                  => array_column($paxList, 'dob'),
+                'nationality'          => array_column($paxList, 'nationality'),
+                'passportNo'           => array_column($paxList, 'passport_no'),
                 'passportIssueCountry' => array_column($paxList, 'passport_issue_country'),
-                'passportExpiryDate' => array_column($paxList, 'passport_expiry_date'),
+                'passportExpiryDate'   => array_column($paxList, 'passport_expiry_date'),
             ];
 
-            // Add extra services if present
-            // Simplified handling: assuming extra services are passed as nested arrays
-            if (isset($paxList[0]['extra_services_outbound'])) {
-                 $details['ExtraServiceOutbound'] = array_column($paxList, 'extra_services_outbound');
+            // ✅ P1: passportIssueDate — required when IsPassportFullDetailsMandatory=true
+            $issueDates = array_filter(array_column($paxList, 'passport_issue_date'));
+            if (!empty($issueDates)) {
+                $details['passportIssueDate'] = array_column($paxList, 'passport_issue_date');
             }
-             if (isset($paxList[0]['extra_services_inbound'])) {
-                 $details['ExtraServiceInbound'] = array_column($paxList, 'extra_services_inbound');
+
+            // Extra services (outbound/inbound) — sent when selected by user
+            if (!empty($paxList[0]['extra_services_outbound'])) {
+                $details['ExtraServiceOutbound'] = array_column($paxList, 'extra_services_outbound');
+            }
+            if (!empty($paxList[0]['extra_services_inbound'])) {
+                $details['ExtraServiceInbound'] = array_column($paxList, 'extra_services_inbound');
             }
 
             $formatted[$type] = $details;
@@ -574,18 +620,14 @@ class TraveloproService
     {
         Log::info('Travelopro Order Ticket Request', ['UniqueID' => $uniqueId]);
 
-        $payload = [
-            'user_id' => $this->userId,
-            'user_password' => $this->password,
-            'access' => $this->access,
-            'ip_address' => request()->ip(),
-            'UniqueID' => $uniqueId
-        ];
+        $payload = array_merge($this->authPayload(), [
+            'UniqueID' => $uniqueId,
+        ]);
 
-        $url = str_replace('availability', 'ticket_order', $this->url);
+        $url = $this->endpoint('ticket_order');
 
         try {
-            $response = Http::timeout(60)->post($url, $payload);
+            $response = $this->httpClient(60)->post($url, $payload);
 
             if ($response->successful()) {
                 return $response->json();
@@ -620,19 +662,14 @@ class TraveloproService
      */
     public function getTripDetails(string $uniqueId)
     {
-        // Trip Details Request
-        $payload = [
-            'user_id' => $this->userId,
-            'user_password' => $this->password,
-            'access' => $this->access,
-            'ip_address' => request()->ip(),
-            'UniqueID' => $uniqueId
-        ];
+        $payload = array_merge($this->authPayload(), [
+            'UniqueID' => $uniqueId,
+        ]);
 
-        $url = str_replace('availability', 'trip_details', $this->url);
+        $url = $this->endpoint('trip_details');
 
         try {
-            $response = Http::timeout(60)->post($url, $payload);
+            $response = $this->httpClient(60)->post($url, $payload);
 
             if ($response->successful()) {
                 return $response->json();
@@ -656,6 +693,152 @@ class TraveloproService
                 'message' => 'Service unavailable',
                 'error' => $e->getMessage()
             ];
+        }
+    }
+
+    /**
+     * Retrieve available extra services (baggage, meals, seats) for a booking.
+     *
+     * @param  array  $data  Must contain 'session_id' and 'fare_source_code'
+     * @return array
+     */
+    public function getExtraServices(array $data): array
+    {
+        Log::info('Travelopro Extra Services Request', ['data' => $data]);
+
+        $payload = array_merge($this->authPayload(), [
+            'session_id'      => $data['session_id'],
+            'fare_source_code' => $data['fare_source_code'],
+        ]);
+
+        $url = $this->endpoint('extra_services');
+
+        try {
+            $response = $this->httpClient(60)->post($url, $payload);
+
+            if ($response->successful()) {
+                $raw = $response->json();
+                Log::info('Travelopro Extra Services Response', ['keys' => array_keys($raw ?? [])]);
+                return $this->normalizeExtraServices($raw);
+            }
+
+            Log::error('Travelopro Extra Services Error', [
+                'status' => $response->status(),
+                'body'   => $response->body(),
+            ]);
+
+            return ['status' => 'error', 'message' => 'Failed to get extra services', 'data' => []];
+
+        } catch (\Exception $e) {
+            Log::error('Travelopro Extra Services Exception', ['message' => $e->getMessage()]);
+            return ['status' => 'error', 'message' => 'Service unavailable', 'data' => []];
+        }
+    }
+
+    /**
+     * Normalize the raw ExtraServices response into a predictable structure.
+     *
+     * Travelopro can return either:
+     *   - ExtraServiceResponse → ExtraServiceResult → Services[]
+     *   - a flat 'Services' key at the root
+     */
+    private function normalizeExtraServices(?array $raw): array
+    {
+        if (empty($raw)) {
+            return ['status' => 'ok', 'data' => []];
+        }
+
+        // Drill down to the service list
+        $result  = $raw['ExtraServiceResponse']['ExtraServiceResult'] ?? $raw;
+        $services = $result['Services'] ?? $result['services'] ?? [];
+
+        if (!is_array($services)) {
+            return ['status' => 'ok', 'data' => []];
+        }
+
+        $normalized = [];
+        foreach ($services as $svc) {
+            $normalized[] = [
+                'type'        => $svc['ServiceType']   ?? $svc['type']        ?? 'unknown',
+                'code'        => $svc['ServiceCode']   ?? $svc['code']        ?? '',
+                'description' => $svc['Description']   ?? $svc['description'] ?? '',
+                'price'       => (float)($svc['Price'] ?? $svc['price']       ?? 0),
+                'currency'    => $svc['Currency']      ?? $svc['currency']    ?? 'SAR',
+                'flight_type' => $svc['FlightType']    ?? $svc['flight_type'] ?? 'outbound', // outbound / inbound
+                'pax_index'   => $svc['PaxIndex']      ?? $svc['pax_index']   ?? 0,
+            ];
+        }
+
+        return ['status' => 'ok', 'data' => $normalized];
+    }
+
+    /**
+     * Fetch fare rules for the selected itinerary.
+     */
+    public function getFareRules(array $data): array
+    {
+        Log::info('Travelopro Fare Rules Request', ['data' => $data]);
+
+        $payload = array_merge($this->authPayload(), [
+            'session_id'      => $data['session_id'],
+            'fare_source_code' => $data['fare_source_code'],
+        ]);
+
+        $url = $this->endpoint('fare_rules');
+
+        try {
+            $response = $this->httpClient(60)->post($url, $payload);
+
+            if ($response->successful()) {
+                return $response->json();
+            }
+
+            Log::error('Travelopro Fare Rules Error', [
+                'status' => $response->status(),
+                'body'   => $response->body(),
+            ]);
+
+            return ['status' => 'error', 'message' => 'Failed to get fare rules'];
+
+        } catch (\Exception $e) {
+            Log::error('Travelopro Fare Rules Exception', ['message' => $e->getMessage()]);
+            return ['status' => 'error', 'message' => 'Service unavailable'];
+        }
+    }
+
+    /**
+     * Poll post-ticket booking status (P2 – Polling / Webhook support).
+     *
+     * Used to verify whether the airline has confirmed/rejected a booking
+     * after the initial PNR was created.
+     */
+    public function getPostTicketStatus(array $data): array
+    {
+        Log::info('Travelopro Post-Ticket Status Request', ['data' => $data]);
+
+        $payload = array_merge($this->authPayload(), [
+            'UniqueID' => $data['UniqueID'],
+        ]);
+
+        $url = $this->endpoint('post_ticket_status');
+
+        try {
+            $response = $this->httpClient(60)->post($url, $payload);
+
+            if ($response->successful()) {
+                return $response->json();
+            }
+
+            Log::error('Travelopro Post-Ticket Status Error', [
+                'status' => $response->status(),
+                'body'   => $response->body(),
+            ]);
+
+            return ['status' => 'error', 'message' => 'Failed to get ticket status'];
+
+        } catch (\Exception $e) {
+            Log::error('Travelopro Post-Ticket Status Exception', ['message' => $e->getMessage()]);
+            return ['status' => 'error', 'message' => 'Service unavailable'];
         }
     }
 }

@@ -71,5 +71,16 @@
                 <input type="text" name="passengers[{{ $index }}][passport_expiry_date]" class="fe-input expiry-picker" required readonly placeholder="YYYY-MM-DD">
             </div>
         </div>
+
+        {{-- Passport Issue Date — sent when airline requires IsPassportFullDetailsMandatory --}}
+        <div class="fe-form-row">
+            <div class="fe-form-group">
+                <label class="fe-label">
+                    {{ __('Passport Issue Date') }}
+                    <span style="font-weight:500;color:var(--gray-400);font-size:0.78rem;margin-inline-start:4px;">{{ __('(if required by airline)') }}</span>
+                </label>
+                <input type="text" name="passengers[{{ $index }}][passport_issue_date]" class="fe-input issue-date-picker" readonly placeholder="YYYY-MM-DD">
+            </div>
+        </div>
     </div>
 </div>

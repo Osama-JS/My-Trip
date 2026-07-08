@@ -49,6 +49,12 @@ Route::middleware('guest')->group(function () {
     Route::post('password/verify-otp', [OtpPasswordResetController::class, 'verify']);
     Route::post('password/resend-otp', [OtpPasswordResetController::class, 'resend'])
         ->name('password.resend-otp');
+
+    // WhatsApp Phone OTP Web Routes
+    Route::post('web/phone/request-otp', [AuthenticatedSessionController::class, 'requestWebOtp'])
+        ->name('web.request.otp');
+    Route::post('web/phone/verify-otp', [AuthenticatedSessionController::class, 'verifyWebOtp'])
+        ->name('web.verify.otp');
 });
 
 Route::middleware('auth')->group(function () {
