@@ -4,26 +4,17 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use Illuminate\Auth\Events\Registered;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
-use App\Services\MailService;
+use App\Services\WhatsAppService;
 use Carbon\Carbon;
-
+use Illuminate\Support\Facades\Validator;
 
 class RegisteredUserController extends Controller
 {
-    protected $mailService;
-
-    public function __construct(MailService $mailService)
-    {
-        $this->mailService = $mailService;
-    }
-
     /**
      * Display the registration view.
      */
@@ -33,47 +24,127 @@ class RegisteredUserController extends Controller
     }
 
     /**
-     * Handle an incoming registration request.
-     *
-     * @throws \Illuminate\Validation\ValidationException
+     * Request OTP for full registration.
      */
-    public function store(Request $request): RedirectResponse
+    public function requestOtp(Request $request)
     {
-        // Check if user exists but is not verified
-        $existingUser = User::where('email', $request->email)->first();
-        if ($existingUser && !$existingUser->email_verified_at) {
-            return back()->withInput()->with('unverified_email', $existingUser->email);
+        $validator = Validator::make($request->all(), [
+            'first_name'   => ['required', 'string', 'max:100'],
+            'last_name'    => ['required', 'string', 'max:100'],
+            'email'        => ['required', 'string', 'lowercase', 'email', 'max:255'],
+            'phone'        => ['required', 'string', 'max:20'],
+            'country_code' => ['required', 'string', 'max:10'],
+            'password'     => ['required', 'confirmed', Rules\Password::defaults()],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
         }
 
-        $request->validate([
-            'first_name' => ['required', 'string', 'max:100'],
-            'last_name'  => ['required', 'string', 'max:100'],
-            'email'      => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'phone'      => ['required', 'string', 'max:20', 'unique:'.User::class],
-            'password'   => ['required', 'confirmed', Rules\Password::defaults()],
+        $phone = ltrim($request->phone, '0');
+        $countryCode = '+' . ltrim($request->country_code, '+');
+        $fullPhone = ltrim($countryCode, '+') . $phone;
+
+        // Check if user already exists
+        $user = User::where('phone', $phone)->where('country_code', $countryCode)->first();
+        $emailExists = User::where('email', $request->email)->where('id', '!=', $user?->id)->exists();
+
+        if ($emailExists) {
+            return response()->json(['success' => false, 'message' => __('Email is already registered.')], 422);
+        }
+
+        $otpCode = env('WHATSAPP_SIMULATION', false) ? '1234' : rand(1000, 9999);
+        $hashedOtp = Hash::make($otpCode);
+        $expiresAt = Carbon::now()->addMinutes(10);
+
+        if (!$user) {
+            $user = User::create([
+                'first_name'     => $request->first_name,
+                'last_name'      => $request->last_name,
+                'email'          => $request->email,
+                'phone'          => $phone,
+                'country_code'   => $countryCode,
+                'password'       => Hash::make($request->password),
+                'user_type'      => User::TYPE_CUSTOMER,
+                'is_guest'       => false,
+                'status'         => 'pending',
+                'otp_code'       => $hashedOtp,
+                'otp_expires_at' => $expiresAt,
+            ]);
+        } else {
+            // User exists, if they were a guest, upgrade them. Otherwise just update OTP.
+            // If they are active and not a guest, this means they already have a full account.
+            if (!$user->is_guest && $user->status === 'active') {
+                return response()->json(['success' => false, 'message' => __('Phone number is already registered.')], 422);
+            }
+
+            // Upgrade guest or update pending user
+            $user->first_name     = $request->first_name;
+            $user->last_name      = $request->last_name;
+            $user->email          = $request->email;
+            $user->password       = Hash::make($request->password);
+            $user->is_guest       = false;
+            $user->status         = 'pending';
+            $user->otp_code       = $hashedOtp;
+            $user->otp_expires_at = $expiresAt;
+            $user->save();
+        }
+
+        $whatsAppService = new WhatsAppService();
+        $isSent = $whatsAppService->sendOTP($fullPhone, $otpCode, app()->getLocale());
+
+        if ($isSent || env('WHATSAPP_SIMULATION', false)) {
+            return response()->json(['success' => true]);
+        }
+
+        return response()->json(['success' => false, 'message' => __('Failed to send OTP. Please try again later.')], 500);
+    }
+
+    /**
+     * Verify OTP for full registration.
+     */
+    public function verifyOtp(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'phone'        => 'required|string',
+            'country_code' => 'required|string',
+            'otp_code'     => 'required|string',
         ]);
 
-        $otp = rand(100000, 999999);
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => __('Validation failed.')], 422);
+        }
 
-        $user = User::create([
-            'first_name' => $request->first_name,
-            'last_name'  => $request->last_name,
-            'email'      => $request->email,
-            'phone'      => $request->phone,
-            'password'   => Hash::make($request->password),
-            'user_type'  => User::TYPE_CUSTOMER,
-            'status'     => 'pending',
-            'otp_code'   => $otp,
-            'otp_expires_at' => Carbon::now()->addMinutes(10),
-        ]);
+        $phone = ltrim($request->phone, '0');
+        $countryCode = '+' . ltrim($request->country_code, '+');
+        $user = User::where('phone', $phone)->where('country_code', $countryCode)->first();
 
-        event(new Registered($user));
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => __('User not found.')], 404);
+        }
 
-        // Send OTP via Email
-        $this->mailService->sendVerificationOtp($user, $otp);
+        if (!$user->otp_code || !$user->otp_expires_at || $user->otp_expires_at->isPast()) {
+            return response()->json(['success' => false, 'message' => __('OTP expired or invalid.')], 422);
+        }
 
-        $request->session()->put('unverified_email', $user->email);
+        if (!Hash::check($request->otp_code, $user->otp_code)) {
+            if ($user->otp_code !== $request->otp_code) { // In case it wasn't hashed (fallback)
+                return response()->json(['success' => false, 'message' => __('Invalid OTP.')], 422);
+            }
+        }
 
-        return redirect()->route('auth.verify-otp');
+        $user->phone_verified_at = Carbon::now();
+        $user->email_verified_at = Carbon::now();
+        $user->status = 'active';
+        $user->otp_code = null;
+        $user->otp_expires_at = null;
+        $user->is_guest = false;
+        $user->save();
+
+        app(\App\Services\WalletService::class)->getOrCreateWallet($user->id);
+
+        Auth::login($user, true);
+
+        return response()->json(['success' => true, 'redirect' => route('customer.dashboard')]);
     }
 }
