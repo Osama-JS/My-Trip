@@ -1158,6 +1158,106 @@
                     @endif
                 @endforeach
 
+                @if(auth()->check() && auth()->user()->is_guest)
+                    <div class="guest-banner-wrapper mb-4" style="
+                        background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%);
+                        border-radius: 16px;
+                        padding: 1px;
+                        box-shadow: 0 8px 32px rgba(245, 158, 11, 0.35);
+                        animation: pulse-border 3s ease-in-out infinite;
+                    ">
+                        <div style="
+                            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+                            border-radius: 15px;
+                            padding: 18px 24px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: space-between;
+                            flex-wrap: wrap;
+                            gap: 16px;
+                            position: relative;
+                            overflow: hidden;
+                        ">
+                            {{-- Decorative background circle --}}
+                            <div style="
+                                position: absolute;
+                                top: -30px;
+                                {{ app()->getLocale() === 'ar' ? 'left: -30px;' : 'right: -30px;' }}
+                                width: 120px;
+                                height: 120px;
+                                background: rgba(245, 158, 11, 0.12);
+                                border-radius: 50%;
+                                pointer-events: none;
+                            "></div>
+                            <div style="
+                                position: absolute;
+                                bottom: -20px;
+                                {{ app()->getLocale() === 'ar' ? 'right: 80px;' : 'left: 80px;' }}
+                                width: 80px;
+                                height: 80px;
+                                background: rgba(217, 119, 6, 0.08);
+                                border-radius: 50%;
+                                pointer-events: none;
+                            "></div>
+
+                            {{-- Icon + Text --}}
+                            <div style="display: flex; align-items: center; gap: 16px; z-index: 1;">
+                                <div style="
+                                    width: 52px;
+                                    height: 52px;
+                                    background: linear-gradient(135deg, #f59e0b, #d97706);
+                                    border-radius: 14px;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.5);
+                                    flex-shrink: 0;
+                                ">
+                                    <i class="fas fa-user-shield" style="font-size: 1.3rem; color: #fff;"></i>
+                                </div>
+                                <div>
+                                    <div style="font-weight: 800; font-size: 0.95rem; color: #78350f; margin-bottom: 3px; font-family: 'Tajawal', sans-serif;">
+                                        {{ __('Complete Your Profile') }}
+                                    </div>
+                                    <div style="font-size: 0.82rem; color: #92400e; font-family: 'Tajawal', sans-serif; line-height: 1.5;">
+                                        {{ __('You must complete your profile information to unlock all platform features.') }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- CTA Button --}}
+                            <a href="{{ route('customer.profile') }}" style="
+                                background: linear-gradient(135deg, #f59e0b, #d97706);
+                                color: #fff;
+                                font-weight: 800;
+                                font-size: 0.88rem;
+                                padding: 10px 22px;
+                                border-radius: 10px;
+                                text-decoration: none !important;
+                                display: inline-flex;
+                                align-items: center;
+                                gap: 8px;
+                                box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+                                transition: all 0.25s ease;
+                                white-space: nowrap;
+                                z-index: 1;
+                                font-family: 'Tajawal', sans-serif;
+                            "
+                            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(245,158,11,0.55)';"
+                            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(245,158,11,0.4)';">
+                                <i class="fas fa-arrow-{{ app()->getLocale() === 'ar' ? 'left' : 'right' }}" style="font-size: 0.8rem;"></i>
+                                {{ __('Complete Now') }}
+                            </a>
+                        </div>
+                    </div>
+                    <style>
+                        @keyframes pulse-border {
+                            0%, 100% { box-shadow: 0 8px 32px rgba(245, 158, 11, 0.35); }
+                            50% { box-shadow: 0 8px 40px rgba(245, 158, 11, 0.6); }
+                        }
+                    </style>
+                @endif
+
                 @yield('content')
             </main>
 
