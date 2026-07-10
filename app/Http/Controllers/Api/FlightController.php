@@ -463,7 +463,7 @@ class FlightController extends Controller
 
         if (isset($result['status']) && $result['status'] === 'error') {
             Log::error('Travelopro Booking Service Error', ['error' => $result]);
-            return $this->apiResponse(true, $result['message'], $result['details'] ?? $result['error'], null, 500);
+            return $this->apiResponse(true, $result['message'] ?? 'Error', $result['details'] ?? ($result['error'] ?? null), null, 500);
         }
 
         // Persist booking to local database
