@@ -34,7 +34,9 @@ class TripAddonController extends Controller
 
             return response()->json(['success' => true, 'message' => __('Add-on created successfully')]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            \Log::channel('single')->error('Addon store error: ' . $e->getMessage());
+            file_put_contents(storage_path('logs/custom_error.log'), $e->getMessage() . "\n", FILE_APPEND);
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
         }
     }
 
@@ -62,7 +64,9 @@ class TripAddonController extends Controller
 
             return response()->json(['success' => true, 'message' => __('Add-on updated successfully')]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            \Log::channel('single')->error('Addon update error: ' . $e->getMessage());
+            file_put_contents(storage_path('logs/custom_error.log'), $e->getMessage() . "\n", FILE_APPEND);
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
         }
     }
 

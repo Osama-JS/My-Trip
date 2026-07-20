@@ -104,7 +104,7 @@
                                     <th class="text-end">{{ __('Actions') }}</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="addons-list">
                                 @forelse($trip->addons as $addon)
                                     <tr>
                                         <td>
@@ -132,7 +132,7 @@
         </div>
 
         {{-- Packages & Pricing Grid --}}
-        <div class="col-xl-8 col-md-7">
+        <div class="col-xl-8 col-md-7" id="packages-container">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h4 class="mb-0 font-w600"><i class="fas fa-box-open text-primary me-2"></i>{{ __('Booking Packages') }}</h4>
                 <button type="button" class="btn btn-primary btn-rounded shadow-sm" onclick="openPackageModal()">
@@ -423,7 +423,7 @@
         e.preventDefault();
         const id = $('#s_id').val();
         const url = id 
-            ? "{{ route('admin.seasons.update', ['trip' => $trip->id, 'season' => ':id']) }}".replace(':id', id)
+            ? "{{ route('admin.seasons.update', ['trip' => $trip->id, 'season' => '__ID__']) }}".replace('__ID__', id)
             : "{{ route('admin.seasons.store', ['trip' => $trip->id]) }}";
         
         submitAjaxForm({
@@ -431,10 +431,11 @@
             url: url,
             method: 'POST',
             usePut: !!id,
+            modalId: 'seasonModal',
             successMessage: "{{ __('Season saved successfully') }}",
             useSweetAlert: true,
-            complete: function() {
-                location.reload();
+            onSuccess: function() {
+                refreshPricingUI();
             }
         });
     });
@@ -448,13 +449,13 @@
             confirmButtonColor: '#041741',
             confirmButtonText: "{{ __('Yes, delete it!') }}"
         }).then((result) => {
-            if (result.isConfirmed) {
+            if (result.isConfirmed || result.value) {
                 $.ajax({
-                    url: "{{ route('admin.seasons.destroy', ['trip' => $trip->id, 'season' => ':id']) }}".replace(':id', id),
+                    url: "{{ route('admin.seasons.destroy', ['trip' => $trip->id, 'season' => '__ID__']) }}".replace('__ID__', id),
                     type: 'DELETE',
                     success: function(res) {
                         toastr.success(res.message);
-                        location.reload();
+                        refreshPricingUI();
                     }
                 });
             }
@@ -495,10 +496,11 @@
             url: url,
             method: 'POST',
             usePut: !!id,
+            modalId: 'packageModal',
             successMessage: "{{ __('Package saved successfully') }}",
             useSweetAlert: true,
-            complete: function() {
-                location.reload();
+            onSuccess: function() {
+                refreshPricingUI();
             }
         });
     });
@@ -512,13 +514,13 @@
             confirmButtonColor: '#041741',
             confirmButtonText: "{{ __('Yes, delete it!') }}"
         }).then((result) => {
-            if (result.isConfirmed) {
+            if (result.isConfirmed || result.value) {
                 $.ajax({
-                    url: "{{ route('admin.packages.destroy', ['trip' => $trip->id, 'package' => ':id']) }}".replace(':id', id),
+                    url: "{{ route('admin.packages.destroy', ['trip' => $trip->id, 'package' => '__ID__']) }}".replace('__ID__', id),
                     type: 'DELETE',
                     success: function(res) {
                         toastr.success(res.message);
-                        location.reload();
+                        refreshPricingUI();
                     }
                 });
             }
@@ -537,7 +539,7 @@
         $(input).css('background-color', '#fff3cd');
 
         $.ajax({
-            url: "{{ route('admin.packages.update', ['trip' => $trip->id, 'package' => ':id']) }}".replace(':id', packageId),
+            url: "{{ route('admin.packages.update', ['trip' => $trip->id, 'package' => '__ID__']) }}".replace('__ID__', packageId),
             type: 'PUT',
             data: {
                 package_id: packageId,
@@ -588,7 +590,7 @@
         e.preventDefault();
         const id = $('#a_id').val();
         const url = id 
-            ? "{{ route('admin.addons.update', ['trip' => $trip->id, 'addon' => ':id']) }}".replace(':id', id)
+            ? "{{ route('admin.addons.update', ['trip' => $trip->id, 'addon' => '__ID__']) }}".replace('__ID__', id)
             : "{{ route('admin.addons.store', ['trip' => $trip->id]) }}";
 
         submitAjaxForm({
@@ -596,10 +598,11 @@
             url: url,
             method: 'POST',
             usePut: !!id,
+            modalId: 'addonModal',
             successMessage: "{{ __('Add-on saved successfully') }}",
             useSweetAlert: true,
-            complete: function() {
-                location.reload();
+            onSuccess: function() {
+                refreshPricingUI();
             }
         });
     });
@@ -613,15 +616,33 @@
             confirmButtonColor: '#041741',
             confirmButtonText: "{{ __('Yes, delete it!') }}"
         }).then((result) => {
-            if (result.isConfirmed) {
+            if (result.isConfirmed || result.value) {
                 $.ajax({
-                    url: "{{ route('admin.addons.destroy', ['trip' => $trip->id, 'addon' => ':id']) }}".replace(':id', id),
+                    url: "{{ route('admin.addons.destroy', ['trip' => $trip->id, 'addon' => '__ID__']) }}".replace('__ID__', id),
                     type: 'DELETE',
                     success: function(res) {
                         toastr.success(res.message);
-                        location.reload();
+                        refreshPricingUI();
                     }
                 });
+            }
+        });
+    }
+
+    function refreshPricingUI() {
+        // Show loading spinner on container if desired
+        $('#seasons-list, #addons-list, #packages-container').css('opacity', '0.5');
+        
+        $.get(window.location.href, function(html) {
+            const parsed = $(html);
+            $('#seasons-list').html(parsed.find('#seasons-list').html());
+            $('#addons-list').html(parsed.find('#addons-list').html());
+            $('#packages-container').html(parsed.find('#packages-container').html());
+            
+            $('#seasons-list, #addons-list, #packages-container').css('opacity', '1');
+            
+            if($.fn.niceSelect) {
+                $('.default-select').niceSelect();
             }
         });
     }

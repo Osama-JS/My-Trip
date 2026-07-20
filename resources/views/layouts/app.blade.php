@@ -106,7 +106,8 @@
             buttonText = "{{ __('Save') }}",
             usePut = false,
             resetSelect2 = true,
-            useSweetAlert = false
+            useSweetAlert = false,
+            onSuccess = null
         }) {
             const form = document.getElementById(formId);
             let formData = new FormData(form);
@@ -155,6 +156,10 @@
                             });
                         } else {
                             toastr.success(response.message ?? successMessage);
+                        }
+
+                        if (typeof onSuccess === 'function') {
+                            onSuccess(response);
                         }
                     } else {
                         toastr.error(response.message || "{{ __('Something went wrong') }}");
@@ -1340,14 +1345,22 @@
     <script>
     (function() {
         function initTranslations() {
-            // Find all inputs and textareas that end with _ar
-            document.querySelectorAll('input[name$="_ar"], textarea[name$="_ar"]').forEach(arField => {
+            // Find all inputs and textareas that end with _ar or are named 'name'
+            document.querySelectorAll('input[name$="_ar"], textarea[name$="_ar"], input[name="name"], textarea[name="name"]').forEach(arField => {
                 const nameAr = arField.getAttribute('name');
                 if (!nameAr) return;
                 
-                // Generate the matching English field name (supporting array format like packages[0][name_ar])
-                const nameEn = nameAr.replace(/_ar(\]?)$/, '_en$1');
-                const enField = document.querySelector(`[name="${nameEn}"]`);
+                // Determine the matching English field name
+                let nameEn;
+                if (nameAr === 'name') {
+                    nameEn = 'en_name';
+                } else {
+                    nameEn = nameAr.replace(/_ar(\]?)$/, '_en$1');
+                }
+                
+                // Find the closest container (form, modal, or document) to prevent matching across different modals
+                const container = arField.closest('form, .modal, .card, body') || document;
+                const enField = container.querySelector(`[name="${nameEn}"]`);
                 
                 if (enField) {
                     // If we found a pair, let's add translate buttons if not already added
@@ -1362,22 +1375,36 @@
             if (field.dataset.hasTranslateBtn === 'true') return;
             
             // Find parent form-group or input container
-            const parent = field.closest('.form-group, .mb-3, .col-md-12, .col-md-6, .col-12, td');
+            const parent = field.closest('.form-group, .mb-3, .mb-4, .col-md-12, .col-md-6, .col-md-4, .col-12, .col-lg-6, .col-lg-12, .col-xl-6, .col-xl-12, .tab-pane, td');
             if (!parent) return;
             
-            const label = parent.querySelector('label');
-            if (!label) return;
+            let label = parent.querySelector('label');
+            
+            // If no label, create a small container for the translate button above the field
+            if (!label) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'translate-btn-wrapper mb-1';
+                wrapper.style.display = 'flex';
+                wrapper.style.justifyContent = 'flex-end';
+                field.parentNode.insertBefore(wrapper, field);
+                label = wrapper;
+            }
             
             // Mark field as handled
             field.dataset.hasTranslateBtn = 'true';
             
-            // Ensure label styling allows alignment (flexbox layout)
-            label.style.display = 'flex';
-            label.style.justifyContent = 'space-between';
-            label.style.alignItems = 'center';
-            label.style.width = '100%';
-            label.style.flexWrap = 'wrap';
-            label.style.gap = '4px';
+            // Check if it's a floating label (used in Banner modal)
+            const isFloating = field.closest('.form-floating') !== null;
+            
+            // For standard labels, ensure flex alignment
+            if (!isFloating) {
+                label.style.display = 'flex';
+                label.style.justifyContent = 'space-between';
+                label.style.alignItems = 'center';
+                label.style.width = '100%';
+                label.style.flexWrap = 'wrap';
+                label.style.gap = '4px';
+            }
             
             // Create premium translation button
             const btn = document.createElement('button');
@@ -1477,8 +1504,38 @@
                     }
                 });
             });
-            
-            label.appendChild(btn);
+            if (isFloating) {
+                const floatingContainer = field.closest('.form-floating');
+                
+                // Convert form-floating to standard layout:
+                // 1. Remove form-floating class so Bootstrap doesn't force the label inside
+                floatingContainer.classList.remove('form-floating');
+                
+                // 2. Move the label BEFORE the input (out of the floating container, above it)
+                const floatingLabel = floatingContainer.querySelector('label');
+                if (floatingLabel) {
+                    // Style the label like a standard form-label
+                    floatingLabel.classList.add('form-label', 'fw-semibold');
+                    floatingLabel.style.display = 'flex';
+                    floatingLabel.style.justifyContent = 'space-between';
+                    floatingLabel.style.alignItems = 'center';
+                    floatingLabel.style.width = '100%';
+                    floatingLabel.style.flexWrap = 'wrap';
+                    floatingLabel.style.gap = '4px';
+                    
+                    // Insert label before the container (now just a position-relative div)
+                    parent.insertBefore(floatingLabel, floatingContainer);
+                    
+                    // Append translate button inside the label
+                    floatingLabel.appendChild(btn);
+                } else {
+                    // Fallback: insert button before the container
+                    parent.insertBefore(btn, floatingContainer);
+                }
+            } else {
+                // Default behavior for normal labels
+                label.appendChild(btn);
+            }
         }
 
         

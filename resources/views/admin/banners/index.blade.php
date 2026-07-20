@@ -103,37 +103,33 @@
                     <div class="row g-4">
 
                         <!-- Title Arabic -->
-                        <div class="col-md-6">
-                            <div class="form-floating position-relative">
-                                <input type="text" name="title_ar" class="form-control ps-5" placeholder="Arabic Title" required>
-                                <label>{{ __('Title (Arabic)') }}</label>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">{{ __('Title (Arabic)') }}</label>
+                            <div class="position-relative">
+                                <input type="text" name="title_ar" class="form-control ps-5" placeholder="{{ __('Arabic Title') }}" required>
                                 <i class="fas fa-language position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
                             </div>
                         </div>
 
                         <!-- Title English -->
-                        <div class="col-md-6">
-                            <div class="form-floating position-relative">
-                                <input type="text" name="title_en" class="form-control ps-5" placeholder="English Title" required>
-                                <label>{{ __('Title (English)') }}</label>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">{{ __('Title (English)') }}</label>
+                            <div class="position-relative">
+                                <input type="text" name="title_en" class="form-control ps-5" placeholder="{{ __('English Title') }}" required>
                                 <i class="fas fa-font position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
                             </div>
                         </div>
 
                         <!-- Description Arabic -->
-                        <div class="col-md-6">
-                            <div class="form-floating position-relative">
-                                <textarea name="description_ar" class="form-control ps-3" placeholder="Arabic Description" rows="3"></textarea>
-                                <label>{{ __('Description (Arabic)') }}</label>
-                            </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">{{ __('Description (Arabic)') }}</label>
+                            <textarea name="description_ar" class="form-control" placeholder="{{ __('Arabic Description') }}" rows="3"></textarea>
                         </div>
 
                         <!-- Description English -->
-                        <div class="col-md-6">
-                            <div class="form-floating position-relative">
-                                <textarea name="description_en" class="form-control ps-3" placeholder="English Description" rows="3"></textarea>
-                                <label>{{ __('Description (English)') }}</label>
-                            </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">{{ __('Description (English)') }}</label>
+                            <textarea name="description_en" class="form-control" placeholder="{{ __('English Description') }}" rows="3"></textarea>
                         </div>
 
                         <!-- Banner Image -->
@@ -143,15 +139,15 @@
                                     <i class="fas fa-image me-2 text-primary"></i>
                                     {{ __('Banner Image') }}
                                 </label>
-                                <x-forms.file-upload name="image_path" class="form-control" accept="image/*" preview />
+                                <x-forms.file-upload name="image_path" class="form-control" accept="image/*" preview required />
                             </div>
                         </div>
 
                         <!-- Link URL -->
-                        <div class="col-md-6">
-                            <div class="form-floating position-relative">
-                                <input type="text" name="link" class="form-control ps-5" placeholder="Link URL">
-                                <label>{{ __('Link URL') }}</label>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">{{ __('Link URL') }}</label>
+                            <div class="position-relative">
+                                <input type="text" name="link" class="form-control ps-5" placeholder="https://example.com">
                                 <i class="fas fa-link position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
                             </div>
                         </div>
@@ -159,8 +155,8 @@
                         <!-- Trip Selection -->
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">{{ __('Trip') }}</label>
-                            <select name="trip_id" class="form-select" required>
-                                <option value="" disabled selected>{{ __('Select a Trip') }}</option>
+                            <select name="trip_id" class="form-select">
+                                <option value="">{{ __('No Trip (Global Banner)') }}</option>
                                 @foreach($trips as $trip)
                                     <option value="{{ $trip->id }}">{{ $trip->title_ar }}</option>
                                 @endforeach
@@ -168,10 +164,10 @@
                         </div>
 
                         <!-- Sort Order -->
-                        <div class="col-md-6">
-                            <div class="form-floating position-relative">
-                                <input type="number" name="sort_order" class="form-control ps-5" placeholder="Display Order">
-                                <label>{{ __('Display Order') }}</label>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">{{ __('Display Order') }}</label>
+                            <div class="position-relative">
+                                <input type="number" name="sort_order" class="form-control ps-5" placeholder="1">
                                 <i class="fas fa-sort-numeric-up position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
                             </div>
                         </div>
@@ -229,33 +225,29 @@
                     <div class="row g-4">
 
                         <!-- Titles -->
-                        <div class="col-md-6">
-                            <div class="form-floating position-relative">
-                                <input type="text" name="title_ar" id="edit_title_ar" class="form-control ps-5" placeholder="Arabic Title">
-                                <label>{{ __('Title (Arabic)') }}</label>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">{{ __('Title (Arabic)') }}</label>
+                            <div class="position-relative">
+                                <input type="text" name="title_ar" id="edit_title_ar" class="form-control ps-5" placeholder="{{ __('Arabic Title') }}" required>
                                 <i class="fas fa-language position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="form-floating position-relative">
-                                <input type="text" name="title_en" id="edit_title_en" class="form-control ps-5" placeholder="English Title">
-                                <label>{{ __('Title (English)') }}</label>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">{{ __('Title (English)') }}</label>
+                            <div class="position-relative">
+                                <input type="text" name="title_en" id="edit_title_en" class="form-control ps-5" placeholder="{{ __('English Title') }}" required>
                                 <i class="fas fa-font position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
                             </div>
                         </div>
 
                         <!-- Descriptions -->
-                        <div class="col-md-6">
-                            <div class="form-floating">
-                                <textarea name="description_ar" id="edit_description_ar" class="form-control ps-3" placeholder="Arabic Description" rows="3"></textarea>
-                                <label>{{ __('Description (Arabic)') }}</label>
-                            </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">{{ __('Description (Arabic)') }}</label>
+                            <textarea name="description_ar" id="edit_description_ar" class="form-control" placeholder="{{ __('Arabic Description') }}" rows="3"></textarea>
                         </div>
-                        <div class="col-md-6">
-                            <div class="form-floating">
-                                <textarea name="description_en" id="edit_description_en" class="form-control ps-3" placeholder="English Description" rows="3"></textarea>
-                                <label>{{ __('Description (English)') }}</label>
-                            </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">{{ __('Description (English)') }}</label>
+                            <textarea name="description_en" id="edit_description_en" class="form-control" placeholder="{{ __('English Description') }}" rows="3"></textarea>
                         </div>
 
                         <!-- Banner Image -->
@@ -269,11 +261,11 @@
                             </div>
                         </div>
 
-                        <!-- Link and Trip -->
-                        <div class="col-md-6">
-                            <div class="form-floating position-relative">
-                                <input type="text" name="link" id="edit_link" class="form-control ps-5" placeholder="Link URL">
-                                <label>{{ __('Link URL') }}</label>
+                        <!-- Link URL -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">{{ __('Link URL') }}</label>
+                            <div class="position-relative">
+                                <input type="text" name="link" id="edit_link" class="form-control ps-5" placeholder="https://example.com">
                                 <i class="fas fa-link position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
                             </div>
                         </div>
@@ -281,6 +273,7 @@
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">{{ __('Trip') }}</label>
                             <select id="edit_trip_id" name="trip_id" class="form-select">
+                                <option value="">{{ __('No Trip (Global Banner)') }}</option>
                                 @foreach($trips as $trip)
                                     <option value="{{ $trip->id }}">{{ $trip->title_ar }}</option>
                                 @endforeach
@@ -288,10 +281,10 @@
                         </div>
 
                         <!-- Sort Order -->
-                        <div class="col-md-6">
-                            <div class="form-floating position-relative">
-                                <input type="number" name="sort_order" id="edit_sort_order" class="form-control ps-5" placeholder="Display Order">
-                                <label>{{ __('Display Order') }}</label>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">{{ __('Display Order') }}</label>
+                            <div class="position-relative">
+                                <input type="number" name="sort_order" id="edit_sort_order" class="form-control ps-5" placeholder="1">
                                 <i class="fas fa-sort-numeric-up position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
                             </div>
                         </div>
@@ -319,8 +312,9 @@
     </div>
 </div>
 
-{{-- Include jQuery UI for Drag and Drop --}}
-<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+@push('scripts')
+{{-- Include SortableJS for Drag and Drop --}}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
 
 <script>
@@ -349,39 +343,39 @@
             rowCallback: function(row, data) {
                 $(row).attr('data-id', data.id);
                 $(row).addClass('draggable-row');
+            },
+            drawCallback: function() {
+                // Initialize SortableJS after table draws
+                const tbody = document.querySelector("#banners-table tbody");
+                if (tbody) {
+                    Sortable.create(tbody, {
+                        animation: 150,
+                        handle: '.draggable-row', // Use rows as handles
+                        onEnd: function (evt) {
+                            let sort_order = [];
+                            $('#banners-table tbody tr').each(function() {
+                                sort_order.push($(this).data('id'));
+                            });
+
+                            $.ajax({
+                                url: "{{ route('admin.banners.reorder') }}",
+                                type: "POST",
+                                data: {
+                                    _token: "{{ csrf_token() }}",
+                                    order: sort_order
+                                },
+                                success: function(response) {
+                                    if (response.success) {
+                                        toastr.success(response.message);
+                                        bannersTable.ajax.reload(null, false);
+                                    }
+                                }
+                            });
+                        }
+                    });
+                }
             }
         });
-
-        // Enable Drag and Drop Reordering
-        $("#banners-table tbody").sortable({
-            helper: function(e, ui) {
-                ui.children().each(function() {
-                    $(this).width($(this).width());
-                });
-                return ui;
-            },
-            update: function(event, ui) {
-                let sort_order = [];
-                $('#banners-table tbody tr').each(function() {
-                    sort_order.push($(this).data('id'));
-                });
-
-                $.ajax({
-                    url: "{{ route('admin.banners.reorder') }}",
-                    type: "POST",
-                    data: {
-                        _token: "{{ csrf_token() }}",
-                        order: sort_order
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            toastr.success(response.message);
-                            bannersTable.ajax.reload(null, false);
-                        }
-                    }
-                });
-            }
-        }).disableSelection();
 
         // Add Banner Form Submit
         $('#addBannerForm').on('submit', function(e) {
@@ -510,6 +504,7 @@
         });
     }
 </script>
+@endpush
 
 @push('styles')
 <style>

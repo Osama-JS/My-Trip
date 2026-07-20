@@ -343,7 +343,7 @@
                 @csrf
                 @method('PUT')
                 <div class="modal-body">
-                    <input type="hidden" id="edit_id">
+                    <input type="hidden" id="edit_id" name="id">
                     <div class="mb-3">
                         <label class="form-label">{{ __('Day Number') }}</label>
                         <input type="number" id="edit_day_number" name="day_number" class="form-control" required>
@@ -418,28 +418,17 @@
     document.getElementById('editItineraryForm').addEventListener('submit', function(e) {
         e.preventDefault();
         const id = document.getElementById('edit_id').value;
-        const formData = new FormData(this);
-        const data = Object.fromEntries(formData.entries());
-
-        fetch(`/admin/trips/itinerary/${id}`, {
-            method: 'POST', // Trick to use PUT with FormData
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': data._token
-            },
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
+        
+        submitAjaxForm({
+            formId: 'editItineraryForm',
+            url: `{{ url('admin/trips/itinerary') }}/${id}`,
+            method: 'POST',
+            modalId: 'editItineraryModal',
+            successMessage: "{{ __('Itinerary updated successfully') }}",
+            usePut: true,
+            onSuccess: function() {
                 location.reload();
-            } else {
-                toastr.error(data.message || 'Error updating itinerary');
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            toastr.error('Connection error');
         });
     });
 </script>

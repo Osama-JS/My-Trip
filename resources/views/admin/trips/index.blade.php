@@ -441,7 +441,7 @@
         const imgHtml = `
             <div class="img-thumb-wrap" id="admin-img-${id}">
                 <img src="${url}" alt="">
-                <button class="del-btn" onclick="deleteAdminImage(${id})" title="{{ __('Delete') }}">
+                <button type="button" class="del-btn" onclick="deleteAdminImage(${id})" title="{{ __('Delete') }}">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
@@ -465,13 +465,14 @@
             cancelButtonText: '{{ __("Cancel") }}',
             reverseButtons: true
         }).then(result => {
-            if (result.isConfirmed) {
-                const deleteUrl = "{{ parse_url(route('admin.trips.images-destroy', ':id'), PHP_URL_PATH) }}".replace(':id', id);
+            if (result.isConfirmed || result.value) {
+                const deleteUrl = "{{ url('admin/trips') }}/" + id + "/destroyimages";
                 $.ajax({
                     url: deleteUrl,
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    method: 'POST',
+                    data: {
+                        _method: 'DELETE',
+                        _token: $('meta[name="csrf-token"]').attr('content')
                     },
                     success: function(response) {
                         if (response.success) {

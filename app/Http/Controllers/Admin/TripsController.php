@@ -60,6 +60,29 @@ class TripsController extends Controller
         return redirect()->back()->with('success', __('Itinerary deleted successfully'));
     }
 
+    public function updateItinerary(Request $request, TripItinerary $itinerary)
+    {
+        $request->validate([
+            'day_number'  => 'required|integer',
+            'title'       => 'required|string',
+            'description' => 'nullable|string',
+        ]);
+        $itinerary->update($request->all());
+        return response()->json(['success' => true, 'message' => __('Itinerary updated successfully')]);
+    }
+
+    public function reorderItinerary(Request $request)
+    {
+        $request->validate([
+            'order'   => 'required|array',
+            'order.*' => 'exists:trip_itineraries,id',
+        ]);
+        foreach ($request->order as $index => $id) {
+            TripItinerary::where('id', $id)->update(['sort_order' => $index + 1]);
+        }
+        return response()->json(['success' => true, 'message' => __('Itinerary reordered successfully')]);
+    }
+
     public function getData(Request $request)
     {
          $query = Trip::with(['company','fromCountry','toCountry', 'fromCity', 'toCity']);
@@ -428,8 +451,8 @@ class TripsController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => __('Sorry, an error occurred while trying to delete.'),
-            ], 500);
+                'message' => $e->getMessage(),
+            ], 200);
         }
     }
 
