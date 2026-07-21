@@ -1433,8 +1433,18 @@
             
             btn.addEventListener('click', function(e) {
                 e.preventDefault();
-                const sourceText = field.value.trim();
-                if (!sourceText) {
+                
+                let sourceText = field.value;
+                if (field.ckeditorInstance) {
+                    sourceText = field.ckeditorInstance.getData();
+                } else if (typeof jQuery !== 'undefined' && typeof jQuery(field).summernote === 'function' && jQuery(field).data('summernote')) {
+                    sourceText = jQuery(field).summernote('code');
+                } else if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances[field.id]) {
+                    sourceText = CKEDITOR.instances[field.id].getData();
+                }
+                sourceText = sourceText.trim();
+                
+                if (!sourceText || sourceText === '<p><br></p>') {
                     if (typeof toastr !== 'undefined') {
                         toastr.warning(type === 'ar' ? 'يرجى كتابة نص للترجمة أولاً' : 'Please type text to translate first');
                     } else {
@@ -1463,6 +1473,16 @@
                     success: function(response) {
                         if (response.success) {
                             targetField.value = response.translated;
+                            
+                            // Update rich text editor instances if they exist
+                            if (targetField.ckeditorInstance) {
+                                targetField.ckeditorInstance.setData(response.translated);
+                            } else if (typeof jQuery !== 'undefined' && typeof jQuery(targetField).summernote === 'function' && jQuery(targetField).data('summernote')) {
+                                jQuery(targetField).summernote('code', response.translated);
+                            } else if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances[targetField.id]) {
+                                CKEDITOR.instances[targetField.id].setData(response.translated);
+                            }
+                            
                             // Trigger change event to notify any plugins/editors
                             targetField.dispatchEvent(new Event('change'));
                             

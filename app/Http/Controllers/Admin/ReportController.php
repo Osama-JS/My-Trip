@@ -18,10 +18,11 @@ class ReportController extends Controller
             $logs = FlightApiLog::with('user')->latest()->limit(200)->get();
             return response()->json([
                 'data' => $logs->map(function($log) {
+                    $userName = $log->user ? trim($log->user->first_name . ' ' . $log->user->last_name) : 'Guest';
                     return [
                         'id' => $log->id,
                         'endpoint' => $log->endpoint,
-                        'user' => $log->user->name ?? 'Guest',
+                        'user' => $userName,
                         'status' => $log->status_code == 200 ? '<span class="badge badge-success">200</span>' : '<span class="badge badge-danger">'.$log->status_code.'</span>',
                         'time' => $log->created_at->format('Y-m-d H:i:s'),
                         'action' => '<button class="btn btn-xs btn-info" onclick="viewLogPayload('.$log->id.')">View</button>'
@@ -41,8 +42,9 @@ class ReportController extends Controller
             $logs = FlightSearchLog::with('user')->latest()->limit(500)->get();
             return response()->json([
                 'data' => $logs->map(function($log) {
+                    $userName = $log->user ? trim($log->user->first_name . ' ' . $log->user->last_name) : 'Guest/App';
                     return [
-                        'user' => $log->user->name ?? 'Guest/App',
+                        'user' => $userName,
                         'origin' => $log->origin,
                         'destination' => $log->destination,
                         'date' => $log->departure_date,

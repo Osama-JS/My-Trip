@@ -117,24 +117,28 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize CKEditor for Arabic
-        ClassicEditor
-            .create(document.querySelector('#editor_ar'), {
-                language: 'ar',
-                contentsLangDirection: 'rtl'
-            })
-            .catch(error => {
-                console.error(error);
-            });
+        const elAr = document.querySelector('#editor_ar');
+        if (elAr) {
+            ClassicEditor
+                .create(elAr, {
+                    language: 'ar',
+                    contentsLangDirection: 'rtl'
+                })
+                .then(editor => { elAr.ckeditorInstance = editor; })
+                .catch(error => console.error(error));
+        }
 
         // Initialize CKEditor for English
-        ClassicEditor
-            .create(document.querySelector('#editor_en'), {
-                language: 'en',
-                contentsLangDirection: 'ltr'
-            })
-            .catch(error => {
-                console.error(error);
-            });
+        const elEn = document.querySelector('#editor_en');
+        if (elEn) {
+            ClassicEditor
+                .create(elEn, {
+                    language: 'en',
+                    contentsLangDirection: 'ltr'
+                })
+                .then(editor => { elEn.ckeditorInstance = editor; })
+                .catch(error => console.error(error));
+        }
     });
 </script>
 @endpush

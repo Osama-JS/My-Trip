@@ -413,14 +413,23 @@
         toolbar: [ 'heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', 'insertTable', 'undo', 'redo' ]
     };
 
-    ClassicEditor.create(document.querySelector('#description_ar'), editorConfig).catch(error => console.error(error));
-    ClassicEditor.create(document.querySelector('#description_en'), editorConfig).catch(error => console.error(error));
-    ClassicEditor.create(document.querySelector('#includes_ar'), editorConfig).catch(error => console.error(error));
-    ClassicEditor.create(document.querySelector('#includes_en'), editorConfig).catch(error => console.error(error));
-    ClassicEditor.create(document.querySelector('#excludes_ar'), editorConfig).catch(error => console.error(error));
-    ClassicEditor.create(document.querySelector('#excludes_en'), editorConfig).catch(error => console.error(error));
-    ClassicEditor.create(document.querySelector('#children_policy_ar'), editorConfig).catch(error => console.error(error));
-    ClassicEditor.create(document.querySelector('#children_policy_en'), editorConfig).catch(error => console.error(error));
+    const initCKEditor = (selector) => {
+        const el = document.querySelector(selector);
+        if (el) {
+            ClassicEditor.create(el, editorConfig)
+                .then(editor => { el.ckeditorInstance = editor; })
+                .catch(error => console.error(error));
+        }
+    };
+
+    initCKEditor('#description_ar');
+    initCKEditor('#description_en');
+    initCKEditor('#includes_ar');
+    initCKEditor('#includes_en');
+    initCKEditor('#excludes_ar');
+    initCKEditor('#excludes_en');
+    initCKEditor('#children_policy_ar');
+    initCKEditor('#children_policy_en');
 
 
     $(document).ready(function() {

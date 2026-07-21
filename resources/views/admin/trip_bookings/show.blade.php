@@ -200,7 +200,7 @@
                         </li>
                     </ul>
                     <div class="mt-3 text-center">
-                         <a href="{{ route('admin.users.show', $booking->user->id) }}" class="btn btn-outline-primary btn-sm btn-block">{{ __('View Profile') }}</a>
+                         <a href="{{ route('admin.users.activity', $booking->user->id) }}" class="btn btn-outline-primary btn-sm btn-block">{{ __('View Profile') }}</a>
                     </div>
                 @else
                     <div class="alert alert-warning mb-0">

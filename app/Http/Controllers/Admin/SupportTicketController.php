@@ -54,7 +54,9 @@ class SupportTicketController extends Controller
         //     $ticket->update(['status' => 'pending', 'assigned_to' => auth()->id()]);
         // }
 
-        return view('admin.support.show', compact('ticket'));
+        $admins = \App\Models\User::where('user_type', \App\Models\User::TYPE_ADMIN)->get();
+
+        return view('admin.support.show', compact('ticket', 'admins'));
     }
 
     public function reply(Request $request, $id)

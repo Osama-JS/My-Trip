@@ -75,13 +75,15 @@
                                 <span>{{ __('Actions') }}</span>
                                 <span>
                                     @if($ticket->status != 'closed')
-                                        <form action="{{ route('admin.support.close', $ticket->id) }}" method="POST" class="d-inline">
+                                        <form action="{{ route('admin.support.status', $ticket->id) }}" method="POST" class="d-inline">
                                             @csrf
+                                            <input type="hidden" name="status" value="closed">
                                             <button type="submit" class="btn btn-danger btn-xs">{{ __('Close Ticket') }}</button>
                                         </form>
                                     @else
-                                        <form action="{{ route('admin.support.reopen', $ticket->id) }}" method="POST" class="d-inline">
+                                        <form action="{{ route('admin.support.status', $ticket->id) }}" method="POST" class="d-inline">
                                             @csrf
+                                            <input type="hidden" name="status" value="open">
                                             <button type="submit" class="btn btn-success btn-xs">{{ __('Re-open Ticket') }}</button>
                                         </form>
                                     @endif
@@ -119,22 +121,22 @@
                         </div>
 
                         <!-- Conversation Replies -->
-                        @foreach($ticket->replies as $reply)
-                            <div class="mb-4 p-3 rounded {{ $reply->user->role === 'admin' ? 'bg-primary-light border-start border-primary border-3' : 'bg-light border-start border-secondary border-3' }}">
+                        @foreach($ticket->messages as $message)
+                            <div class="mb-4 p-3 rounded {{ $message->sender && $message->sender->isAdmin() ? 'bg-primary-light border-start border-primary border-3' : 'bg-light border-start border-secondary border-3' }}">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span class="fw-bold text-dark">{{ $reply->user->first_name }} {{ $reply->user->last_name }} 
-                                        @if($reply->user->role === 'admin')
+                                    <span class="fw-bold text-dark">{{ $message->sender ? $message->sender->first_name . ' ' . $message->sender->last_name : __('Unknown User') }} 
+                                        @if($message->sender && $message->sender->isAdmin())
                                             <span class="badge bg-primary btn-xs ms-1">{{ __('Staff') }}</span>
                                         @endif
                                     </span>
-                                    <small class="text-muted">{{ $reply->created_at->diffForHumans() }}</small>
+                                    <small class="text-muted">{{ $message->created_at->diffForHumans() }}</small>
                                 </div>
-                                <p class="mb-2 text-dark">{{ $reply->message }}</p>
-                                @if($reply->attachments)
+                                <p class="mb-2 text-dark">{{ $message->message }}</p>
+                                @if($message->attachments)
                                     <div class="attachments mt-2">
                                         <h6 class="small text-muted">{{ __('Attachments:') }}</h6>
-                                        @foreach($reply->attachments as $file)
-                                            <a href="{{ asset('storage/' . $file) }}" target="_blank" class="btn btn-outline-secondary btn-xs me-1 mt-1"><i class="fa fa-paperclip"></i> View File</a>
+                                        @foreach($message->attachments as $file)
+                                            <a href="{{ asset('storage/' . $file) }}" target="_blank" class="btn btn-outline-secondary btn-xs me-1 mt-1"><i class="fa fa-paperclip"></i> {{ __('View File') }}</a>
                                         @endforeach
                                     </div>
                                 @endif

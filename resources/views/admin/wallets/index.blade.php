@@ -39,7 +39,7 @@
                     @forelse($wallets as $wallet)
                         <tr>
                             <td>{{ $wallet->id }}</td>
-                            <td>{{ $wallet->user->name ?? 'N/A' }}</td>
+                            <td>{{ $wallet->user ? $wallet->user->first_name . ' ' . $wallet->user->last_name : 'N/A' }}</td>
                             <td>
                                 {{ $wallet->user->email ?? 'N/A' }} <br>
                                 <small class="text-muted">{{ $wallet->user->phone ?? 'N/A' }}</small>
