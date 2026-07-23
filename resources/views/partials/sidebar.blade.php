@@ -166,6 +166,11 @@
                         </a>
                     </li>
                     <li>
+                        <a href="{{ route('admin.commissions.index') }}">
+                            <i class="fas fa-hand-holding-usd"></i>{{ __('Platform Commissions') }}
+                        </a>
+                    </li>
+                    <li>
                         <a href="{{ route('admin.banners.index') }}">
                             <i class="fa fa-image"></i>{{ __('Banners') }}
                         </a>
