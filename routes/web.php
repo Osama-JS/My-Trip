@@ -367,6 +367,9 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
         Route::get('api-logs', [App\Http\Controllers\Admin\ReportController::class, 'apiLogs'])->name('api_logs');
         Route::get('search-logs', [App\Http\Controllers\Admin\ReportController::class, 'searchLogs'])->name('search_logs');
     });
+
+    // Commissions & Profits
+    Route::get('commissions', [\App\Http\Controllers\Admin\CommissionController::class, 'index'])->name('commissions.index');
 });
 
 
