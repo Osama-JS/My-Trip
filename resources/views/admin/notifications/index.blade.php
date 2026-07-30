@@ -13,97 +13,103 @@
 
 @push('styles')
 <style>
-    .notif-type-badge {
-        font-size: 0.75rem;
-        padding: 4px 10px;
-        border-radius: 20px;
-        font-weight: 500;
-    }
-    .notif-type-badge.general { background: #e3f2fd; color: #1565c0; }
-    .notif-type-badge.promotion { background: #fce4ec; color: #c62828; }
-    .notif-type-badge.new_trip { background: #e8f5e9; color: #2e7d32; }
-    .notif-type-badge.payment_success { background: #e8f5e9; color: #1b5e20; }
-    .notif-type-badge.payment_failed { background: #ffebee; color: #b71c1c; }
-    .notif-type-badge.booking_confirmed { background: #e3f2fd; color: #0d47a1; }
-    .notif-type-badge.booking_cancelled { background: #fff3e0; color: #e65100; }
-    .notif-type-badge.booking_reminder { background: #f3e5f5; color: #6a1b9a; }
-    .notif-type-badge.favorite_trip_update { background: #fff8e1; color: #f57f17; }
+    :root { --dash-navy:#041741; --dash-surface:#ffffff; --dash-text:#1e293b; --dash-muted:#64748b; --dash-border:#e8edf5; --dash-radius:16px; --dash-shadow:0 4px 24px rgba(4,23,65,0.06); --dash-shadow-hover:0 12px 36px rgba(4,23,65,0.13); }
 
-    .user-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        background: #f0f4f8;
-        border: 1px solid #d0d7de;
-        border-radius: 20px;
-        padding: 4px 12px 4px 8px;
-        margin: 3px;
-        font-size: 0.85rem;
-        transition: all 0.2s;
-    }
-    .user-chip:hover { background: #e3e8ed; }
-    .user-chip .remove-user {
-        cursor: pointer;
-        color: #cf222e;
-        font-weight: bold;
-        font-size: 1rem;
-        line-height: 1;
-    }
-    .user-chip .fcm-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        display: inline-block;
-    }
-    .user-chip .fcm-dot.active { background: #2da44e; }
-    .user-chip .fcm-dot.inactive { background: #cf222e; }
+    /* KPI Cards */
+    .kpi-card { display:flex; align-items:flex-start; gap:18px; background:var(--dash-surface); border-radius:var(--dash-radius); padding:24px; box-shadow:var(--dash-shadow); border:1px solid var(--dash-border); transition:all 0.3s ease; height:100%; animation:kpiFadeIn 0.6s ease backwards; }
+    .kpi-card:hover { transform:translateY(-5px); box-shadow:var(--dash-shadow-hover); }
+    @keyframes kpiFadeIn { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+    .kpi-icon-wrap { flex-shrink:0; width:52px; height:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:1.3rem; }
+    .kpi-card--blue  .kpi-icon-wrap { background:rgba(4,23,65,0.09); color:var(--dash-navy); }
+    .kpi-card--green .kpi-icon-wrap { background:rgba(16,185,129,0.12); color:#059669; }
+    .kpi-card--amber .kpi-icon-wrap { background:rgba(245,158,11,0.12); color:#d97706; }
+    .kpi-card--purple .kpi-icon-wrap { background:rgba(139,92,246,0.12); color:#7c3aed; }
+    .kpi-card--blue { border-left:4px solid var(--dash-navy); } .kpi-card--green { border-left:4px solid #10b981; } .kpi-card--amber { border-left:4px solid #f59e0b; } .kpi-card--purple { border-left:4px solid #8b5cf6; }
+    [dir="rtl"] .kpi-card { border-left:none !important; }
+    [dir="rtl"] .kpi-card--blue { border-right:4px solid var(--dash-navy); } [dir="rtl"] .kpi-card--green { border-right:4px solid #10b981; } [dir="rtl"] .kpi-card--amber { border-right:4px solid #f59e0b; } [dir="rtl"] .kpi-card--purple { border-right:4px solid #8b5cf6; }
+    .kpi-info { flex:1; } .kpi-label { font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.6px; color:var(--dash-muted); display:block; margin-bottom:6px; } .kpi-value { font-size:1.85rem; font-weight:800; color:var(--dash-text); margin-bottom:0; line-height:1.1; }
 
-    .search-results-dropdown {
-        position: absolute;
-        z-index: 1050;
-        width: 100%;
-        max-height: 250px;
-        overflow-y: auto;
-        background: #fff;
-        border: 1px solid #d0d7de;
-        border-radius: 8px;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-        display: none;
-    }
-    .search-results-dropdown .search-item {
-        padding: 10px 14px;
-        cursor: pointer;
-        border-bottom: 1px solid #f0f0f0;
-        transition: background 0.15s;
-    }
-    .search-results-dropdown .search-item:hover { background: #f6f8fa; }
-    .search-results-dropdown .search-item:last-child { border-bottom: none; }
-    .search-results-dropdown .search-item .user-info { font-weight: 500; }
-    .search-results-dropdown .search-item .user-meta { font-size: 0.8rem; color: #656d76; }
+    /* Cards */
+    .dash-card { background:var(--dash-surface); border-radius:var(--dash-radius); border:1px solid var(--dash-border); box-shadow:var(--dash-shadow); overflow:hidden; transition:box-shadow 0.3s; margin-bottom:28px; }
+    .dash-card:hover { box-shadow:var(--dash-shadow-hover); }
+    .dash-card-header { display:flex; justify-content:space-between; align-items:center; padding:20px 24px; border-bottom:1px solid var(--dash-border); flex-wrap:wrap; gap:12px; background:#f8fafc; }
+    .dash-card-title { font-size:15px; font-weight:700; color:var(--dash-text); margin:0; display:flex; align-items:center; gap:8px; }
+    .dash-card-title i { color:var(--dash-navy); }
+    .dash-card-body { padding:24px; }
 
-    .char-counter { font-size: 0.8rem; color: #656d76; text-align: left; }
-    .char-counter.warning { color: #cf222e; }
+    /* Table */
+    .notif-table { width:100%; border-collapse:collapse; }
+    .notif-table thead th { background:#f8fafc; color:var(--dash-muted); font-weight:700; font-size:12px; text-transform:uppercase; letter-spacing:0.5px; padding:14px 16px; border-bottom:1px solid var(--dash-border); white-space:nowrap; }
+    .notif-table tbody td { padding:13px 16px; vertical-align:middle; color:var(--dash-text); font-size:13.5px; border-bottom:1px solid var(--dash-border); }
+    .notif-table tbody tr:last-child td { border-bottom:none; }
+    .notif-table tbody tr:hover { background:rgba(4,23,65,0.025); }
 
-    .send-mode-tabs .nav-link {
-        border-radius: 8px !important;
-        margin-left: 4px;
-        margin-right: 4px;
-        font-weight: 500;
-    }
-    .send-mode-tabs .nav-link.active {
-        background: var(--primary) !important;
-        color: #fff !important;
-    }
+    /* Notification type badges */
+    .notif-type-badge { font-size:11px; padding:4px 12px; border-radius:50px; font-weight:600; display:inline-flex; align-items:center; }
+    .notif-type-badge.general      { background:rgba(14,165,233,0.12); color:#0284c7; }
+    .notif-type-badge.promotion    { background:rgba(239,68,68,0.10); color:#dc2626; }
+    .notif-type-badge.new_trip     { background:rgba(16,185,129,0.12); color:#059669; }
+    .notif-type-badge.payment_success { background:rgba(16,185,129,0.12); color:#059669; }
+    .notif-type-badge.payment_failed  { background:rgba(239,68,68,0.10); color:#dc2626; }
+    .notif-type-badge.booking_confirmed  { background:rgba(14,165,233,0.12); color:#0284c7; }
+    .notif-type-badge.booking_cancelled  { background:rgba(245,158,11,0.12); color:#b45309; }
+    .notif-type-badge.booking_reminder   { background:rgba(139,92,246,0.12); color:#7c3aed; }
+    .notif-type-badge.favorite_trip_update { background:rgba(245,158,11,0.12); color:#b45309; }
 
-    .stats-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.3rem;
-    }
+    /* Status badges */
+    .badge-state { display:inline-flex; align-items:center; font-size:11px; font-weight:600; padding:4px 12px; border-radius:50px; }
+    .badge-state--blue { background:rgba(14,165,233,0.12); color:#0284c7; }
+    .badge-state--default { background:#f1f5f9; color:#64748b; }
+
+    /* Action button */
+    .act-action-btn { display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:8px; background:rgba(239,68,68,0.08); color:#dc2626; text-decoration:none; transition:all 0.2s ease; font-size:13px; border:none; cursor:pointer; }
+    .act-action-btn:hover { background:#dc2626; color:#fff; transform:translateY(-1px); }
+    .act-action-btn.btn-view { background:rgba(4,23,65,0.07); color:var(--dash-navy); }
+    .act-action-btn.btn-view:hover { background:var(--dash-navy); color:#fff; }
+
+    /* User chip */
+    .user-chip { display:inline-flex; align-items:center; gap:6px; background:#f0f4f8; border:1px solid var(--dash-border); border-radius:50px; padding:4px 12px 4px 8px; margin:3px; font-size:0.85rem; transition:all 0.2s; }
+    .user-chip:hover { background:#e3e8ed; }
+    .user-chip .remove-user { cursor:pointer; color:#dc2626; font-weight:bold; font-size:1rem; line-height:1; }
+    .user-chip .fcm-dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+    .user-chip .fcm-dot.active { background:#059669; } .user-chip .fcm-dot.inactive { background:#dc2626; }
+
+    /* Search dropdown */
+    .search-results-dropdown { position:absolute; z-index:1050; width:100%; max-height:250px; overflow-y:auto; background:#fff; border:1px solid var(--dash-border); border-radius:12px; box-shadow:var(--dash-shadow-hover); display:none; }
+    .search-results-dropdown .search-item { padding:10px 14px; cursor:pointer; border-bottom:1px solid var(--dash-border); transition:background 0.15s; font-size:13.5px; }
+    .search-results-dropdown .search-item:hover { background:#f8fafc; }
+    .search-results-dropdown .search-item:last-child { border-bottom:none; }
+    .search-results-dropdown .search-item .user-info { font-weight:600; } .search-results-dropdown .search-item .user-meta { font-size:0.8rem; color:var(--dash-muted); }
+
+    /* Char counter */
+    .char-counter { font-size:0.75rem; color:var(--dash-muted); text-align:start; margin-top:4px; }
+    .char-counter.warning { color:#dc2626; }
+
+    /* Send mode tabs */
+    .send-mode-tabs .nav-link { border-radius:10px !important; margin:0 2px; font-weight:600; font-size:13px; color:var(--dash-muted); border:1px solid var(--dash-border) !important; padding:7px 16px; }
+    .send-mode-tabs .nav-link.active { background:var(--dash-navy) !important; color:#fff !important; border-color:var(--dash-navy) !important; }
+
+    /* Notification preview box */
+    .notif-preview { padding:16px; background:#f8fafc; border-radius:12px; border:1px solid var(--dash-border); display:flex; align-items:flex-start; gap:14px; }
+    .notif-preview-icon { width:46px; height:46px; border-radius:12px; background:rgba(4,23,65,0.09); color:var(--dash-navy); display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0; }
+
+    /* Filter inputs */
+    .dash-filter-input { height:38px; border-radius:10px; border:1px solid var(--dash-border); font-size:13px; color:var(--dash-text); background:#f8fafc; padding:0 12px; outline:none; }
+    .dash-filter-input:focus { border-color:var(--dash-navy); box-shadow:0 0 0 3px rgba(4,23,65,0.08); }
+    .dash-filter-select { height:38px; border-radius:10px; border:1px solid var(--dash-border); font-size:13px; color:var(--dash-text); background:#f8fafc; padding:0 12px; outline:none; }
+    .dash-filter-select:focus { border-color:var(--dash-navy); box-shadow:0 0 0 3px rgba(4,23,65,0.08); }
+
+    /* Pagination */
+    .page-link { border-radius:8px !important; border:1px solid var(--dash-border) !important; color:var(--dash-muted); font-size:13px; font-weight:600; padding:6px 13px; }
+    .page-item.active .page-link { background:var(--dash-navy) !important; border-color:var(--dash-navy) !important; color:#fff; }
+    .page-item.disabled .page-link { background:#f8fafc; color:#cbd5e1; }
+
+    [data-theme-version="dark"] .kpi-card, [data-theme-version="dark"] .dash-card { background:#1e1e2d !important; border-color:rgba(255,255,255,0.06) !important; }
+    [data-theme-version="dark"] .kpi-value, [data-theme-version="dark"] .dash-card-title { color:#fff !important; }
+    [data-theme-version="dark"] .dash-card-header { background:#161625 !important; }
+    [data-theme-version="dark"] .notif-table thead th { background:#161625 !important; }
+    [data-theme-version="dark"] .notif-table tbody td { color:#e2e8f0 !important; border-color:rgba(255,255,255,0.05) !important; }
+    [data-theme-version="dark"] .notif-preview { background:#161625 !important; }
 </style>
 @endpush
 
@@ -111,55 +117,39 @@
 
 {{-- Stats Cards --}}
 <div class="row mb-4">
-    <div class="col-xl-3 col-sm-6 mb-3">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-body d-flex align-items-center gap-3">
-                <div class="stats-icon bg-primary bg-opacity-10 text-primary">
-                    <i class="fas fa-bell"></i>
-                </div>
-                <div>
-                    <h3 class="mb-0 fw-bold">{{ number_format($stats['total']) }}</h3>
-                    <small class="text-muted">{{ __('Total Notifications') }}</small>
-                </div>
+    <div class="col-xl-3 col-sm-6 mb-3" style="animation-delay:0.05s">
+        <div class="kpi-card kpi-card--blue">
+            <div class="kpi-icon-wrap"><i class="fas fa-bell"></i></div>
+            <div class="kpi-info">
+                <span class="kpi-label">{{ __('Total Notifications') }}</span>
+                <h3 class="kpi-value">{{ number_format($stats['total']) }}</h3>
             </div>
         </div>
     </div>
-    <div class="col-xl-3 col-sm-6 mb-3">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-body d-flex align-items-center gap-3">
-                <div class="stats-icon bg-warning bg-opacity-10 text-warning">
-                    <i class="fas fa-envelope"></i>
-                </div>
-                <div>
-                    <h3 class="mb-0 fw-bold">{{ number_format($stats['unread']) }}</h3>
-                    <small class="text-muted">{{ __('Unread') }}</small>
-                </div>
+    <div class="col-xl-3 col-sm-6 mb-3" style="animation-delay:0.1s">
+        <div class="kpi-card kpi-card--amber">
+            <div class="kpi-icon-wrap"><i class="fas fa-envelope"></i></div>
+            <div class="kpi-info">
+                <span class="kpi-label">{{ __('Unread') }}</span>
+                <h3 class="kpi-value">{{ number_format($stats['unread']) }}</h3>
             </div>
         </div>
     </div>
-    <div class="col-xl-3 col-sm-6 mb-3">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-body d-flex align-items-center gap-3">
-                <div class="stats-icon bg-success bg-opacity-10 text-success">
-                    <i class="fas fa-paper-plane"></i>
-                </div>
-                <div>
-                    <h3 class="mb-0 fw-bold">{{ number_format($stats['today']) }}</h3>
-                    <small class="text-muted">{{ __('Sent Today') }}</small>
-                </div>
+    <div class="col-xl-3 col-sm-6 mb-3" style="animation-delay:0.15s">
+        <div class="kpi-card kpi-card--green">
+            <div class="kpi-icon-wrap"><i class="fas fa-paper-plane"></i></div>
+            <div class="kpi-info">
+                <span class="kpi-label">{{ __('Sent Today') }}</span>
+                <h3 class="kpi-value">{{ number_format($stats['today']) }}</h3>
             </div>
         </div>
     </div>
-    <div class="col-xl-3 col-sm-6 mb-3">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-body d-flex align-items-center gap-3">
-                <div class="stats-icon bg-info bg-opacity-10 text-info">
-                    <i class="fas fa-mobile-alt"></i>
-                </div>
-                <div>
-                    <h3 class="mb-0 fw-bold">{{ number_format($stats['users_with_fcm']) }} <small class="text-muted fw-normal">/ {{ $stats['total_users'] }}</small></h3>
-                    <small class="text-muted">{{ __('FCM Active Users') }}</small>
-                </div>
+    <div class="col-xl-3 col-sm-6 mb-3" style="animation-delay:0.2s">
+        <div class="kpi-card kpi-card--purple">
+            <div class="kpi-icon-wrap"><i class="fas fa-mobile-alt"></i></div>
+            <div class="kpi-info">
+                <span class="kpi-label">{{ __('FCM Active Users') }}</span>
+                <h3 class="kpi-value">{{ number_format($stats['users_with_fcm']) }} <small style="font-size:14px; font-weight:500; color:var(--dash-muted);">/ {{ $stats['total_users'] }}</small></h3>
             </div>
         </div>
     </div>
@@ -168,17 +158,17 @@
 {{-- Send Notification Card --}}
 <div class="row">
     <div class="col-12">
-        <div class="card shadow-sm">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h4 class="card-title mb-0"><i class="fas fa-paper-plane me-2"></i>{{ __('Send Notification') }}</h4>
+        <div class="dash-card">
+            <div class="dash-card-header">
+                <h6 class="dash-card-title"><i class="fas fa-paper-plane"></i> {{ __('Send Notification') }}</h6>
             </div>
-            <div class="card-body">
+            <div class="dash-card-body">
                 <form id="sendNotificationForm">
                     @csrf
 
                     {{-- Target Selection Tabs --}}
                     <div class="mb-4">
-                        <label class="form-label fw-bold">{{ __('Send To') }}</label>
+                        <label class="form-label fw-bold" style="font-size:13px; color:var(--dash-muted); text-transform:uppercase; letter-spacing:0.5px;">{{ __('Send To') }}</label>
                         <ul class="nav nav-pills send-mode-tabs" role="tablist">
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link active" data-bs-toggle="pill" data-target-mode="all" type="button">
@@ -196,10 +186,11 @@
 
                     {{-- User Selection (hidden by default) --}}
                     <div id="userSelectionBox" style="display: none;" class="mb-4">
-                        <label class="form-label fw-bold">{{ __('Search Users') }}</label>
+                        <label class="form-label fw-bold" style="font-size:13px;">{{ __('Search Users') }}</label>
                         <div class="position-relative">
                             <input type="text" id="userSearchInput" class="form-control"
-                                   placeholder="{{ __('Search by name, email or phone...') }}" autocomplete="off">
+                                   placeholder="{{ __('Search by name, email or phone...') }}" autocomplete="off"
+                                   style="border-radius:12px; border:1px solid var(--dash-border); font-size:13.5px;">
                             <div id="searchResultsDropdown" class="search-results-dropdown"></div>
                         </div>
                         <div id="selectedUsersContainer" class="mt-2"></div>
@@ -208,8 +199,8 @@
 
                     {{-- Notification Type --}}
                     <div class="mb-4">
-                        <label class="form-label fw-bold">{{ __('Notification Type') }}</label>
-                        <select name="type" class="form-select" id="notifType">
+                        <label class="form-label fw-bold" style="font-size:13px;">{{ __('Notification Type') }}</label>
+                        <select name="type" class="form-select" id="notifType" style="border-radius:12px; border:1px solid var(--dash-border); font-size:13.5px;">
                             <option value="general">{{ __('General') }} 📢</option>
                             <option value="promotion">{{ __('Promotion') }} 🎁</option>
                             <option value="new_trip">{{ __('New Trip') }} ✈️</option>
@@ -221,15 +212,17 @@
                     {{-- Title --}}
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">{{ __('Title (Arabic)') }} <span class="text-danger">*</span></label>
+                            <label class="form-label fw-bold" style="font-size:13px;">{{ __('Title (Arabic)') }} <span class="text-danger">*</span></label>
                             <input type="text" name="title_ar" class="form-control" maxlength="255"
-                                   placeholder="{{ __('عنوان الإشعار بالعربية') }}" required dir="rtl">
+                                   placeholder="{{ __('عنوان الإشعار بالعربية') }}" required dir="rtl"
+                                   style="border-radius:12px; border:1px solid var(--dash-border); font-size:13.5px;">
                             <div class="char-counter"><span class="title-ar-count">0</span>/255</div>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">{{ __('Title (English)') }} <span class="text-danger">*</span></label>
+                            <label class="form-label fw-bold" style="font-size:13px;">{{ __('Title (English)') }} <span class="text-danger">*</span></label>
                             <input type="text" name="title_en" class="form-control" maxlength="255"
-                                   placeholder="Notification title in English" required dir="ltr">
+                                   placeholder="Notification title in English" required dir="ltr"
+                                   style="border-radius:12px; border:1px solid var(--dash-border); font-size:13.5px;">
                             <div class="char-counter"><span class="title-en-count">0</span>/255</div>
                         </div>
                     </div>
@@ -237,42 +230,40 @@
                     {{-- Body --}}
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">{{ __('Body (Arabic)') }} <span class="text-danger">*</span></label>
+                            <label class="form-label fw-bold" style="font-size:13px;">{{ __('Body (Arabic)') }} <span class="text-danger">*</span></label>
                             <textarea name="body_ar" class="form-control" rows="4" maxlength="1000"
-                                      placeholder="{{ __('نص الإشعار بالعربية') }}" required dir="rtl"></textarea>
+                                      placeholder="{{ __('نص الإشعار بالعربية') }}" required dir="rtl"
+                                      style="border-radius:12px; border:1px solid var(--dash-border); font-size:13.5px;"></textarea>
                             <div class="char-counter"><span class="body-ar-count">0</span>/1000</div>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">{{ __('Body (English)') }} <span class="text-danger">*</span></label>
+                            <label class="form-label fw-bold" style="font-size:13px;">{{ __('Body (English)') }} <span class="text-danger">*</span></label>
                             <textarea name="body_en" class="form-control" rows="4" maxlength="1000"
-                                      placeholder="Notification body in English" required dir="ltr"></textarea>
+                                      placeholder="Notification body in English" required dir="ltr"
+                                      style="border-radius:12px; border:1px solid var(--dash-border); font-size:13.5px;"></textarea>
                             <div class="char-counter"><span class="body-en-count">0</span>/1000</div>
                         </div>
                     </div>
 
                     {{-- Preview --}}
-                    <div class="card bg-light border-0 mb-4">
-                        <div class="card-body p-3">
-                            <h6 class="mb-2"><i class="fas fa-eye me-1"></i> {{ __('Preview') }}</h6>
-                            <div class="d-flex align-items-start gap-3 bg-white rounded p-3 shadow-sm">
-                                <div class="stats-icon bg-primary bg-opacity-10 text-primary" style="min-width: 48px;">
-                                    <i class="fas fa-bell"></i>
-                                </div>
-                                <div>
-                                    <strong id="previewTitle">{{ __('Notification Title') }}</strong>
-                                    <p class="mb-0 text-muted" id="previewBody">{{ __('Notification body text...') }}</p>
-                                </div>
+                    <div class="mb-4">
+                        <label class="form-label" style="font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--dash-muted);"><i class="fas fa-eye me-1"></i> {{ __('Preview') }}</label>
+                        <div class="notif-preview">
+                            <div class="notif-preview-icon"><i class="fas fa-bell"></i></div>
+                            <div>
+                                <strong id="previewTitle" style="font-size:14px; color:var(--dash-text);">{{ __('Notification Title') }}</strong>
+                                <p class="mb-0" id="previewBody" style="font-size:13px; color:var(--dash-muted); margin-top:4px;">{{ __('Notification body text...') }}</p>
                             </div>
                         </div>
                     </div>
 
                     {{-- Send Button --}}
                     <div class="d-flex justify-content-end gap-2">
-                        <button type="reset" class="btn btn-outline-secondary">
+                        <button type="reset" class="btn btn-outline-secondary" style="border-radius:10px; font-weight:600; font-size:13px;">
                             <i class="fas fa-redo me-1"></i> {{ __('Reset') }}
                         </button>
-                        <button type="submit" class="btn btn-primary px-4" id="sendBtn">
-                            <i class="fas fa-paper-plane me-1"></i> {{ __('Send Notification') }}
+                        <button type="submit" class="btn btn-primary px-5" id="sendBtn" style="border-radius:10px; background:var(--dash-navy); border-color:var(--dash-navy); font-weight:700; font-size:13px;">
+                            <i class="fas fa-paper-plane me-2"></i> {{ __('Send Notification') }}
                         </button>
                     </div>
                 </form>
@@ -282,45 +273,34 @@
 </div>
 
 {{-- Notifications History --}}
-<div class="row mt-4">
+<div class="row mt-2">
     <div class="col-12">
-        <div class="card shadow-sm">
-            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <h4 class="card-title mb-0"><i class="fas fa-history me-2"></i>{{ __('Notification History') }}</h4>
-                <div class="d-flex gap-2 flex-wrap align-items-center">
-                    <div class="filter-wrapper m-0">
-                        <i class="fas fa-filter filter-icon"></i>
-                        <select id="filterType" class="form-select select2" data-hide-search="true" style="width: 200px;">
-                            <option value="">{{ __('All Types') }}</option>
-                            <option value="general">{{ __('General') }}</option>
-                            <option value="promotion">{{ __('Promotion') }}</option>
-                            <option value="new_trip">{{ __('New Trip') }}</option>
-                            <option value="payment_success">{{ __('Payment Success') }}</option>
-                            <option value="payment_failed">{{ __('Payment Failed') }}</option>
-                            <option value="booking_confirmed">{{ __('Booking Confirmed') }}</option>
-                            <option value="booking_cancelled">{{ __('Booking Cancelled') }}</option>
-                            <option value="booking_reminder">{{ __('Booking Reminder') }}</option>
-                            <option value="favorite_trip_update">{{ __('Favorite Update') }}</option>
-                        </select>
-                    </div>
-                    <div class="filter-wrapper m-0">
-                        <i class="fas fa-calendar-alt filter-icon"></i>
-                        <input type="date" id="filterFromDate" class="form-control" style="width: 150px; border-radius: 50px; padding-left: 40px; height: 42px;"
-                               placeholder="{{ __('From Date') }}">
-                    </div>
-                    <div class="filter-wrapper m-0">
-                        <i class="fas fa-calendar-alt filter-icon"></i>
-                        <input type="date" id="filterToDate" class="form-control" style="width: 150px; border-radius: 50px; padding-left: 40px; height: 42px;"
-                               placeholder="{{ __('To Date') }}">
-                    </div>
-                    <button class="btn btn-primary rounded-pill shadow-sm px-4" onclick="loadHistory()" style="height: 42px;">
+        <div class="dash-card">
+            <div class="dash-card-header">
+                <h6 class="dash-card-title"><i class="fas fa-history"></i> {{ __('Notification History') }}</h6>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                    <select id="filterType" class="dash-filter-select" style="min-width:160px;">
+                        <option value="">{{ __('All Types') }}</option>
+                        <option value="general">{{ __('General') }}</option>
+                        <option value="promotion">{{ __('Promotion') }}</option>
+                        <option value="new_trip">{{ __('New Trip') }}</option>
+                        <option value="payment_success">{{ __('Payment Success') }}</option>
+                        <option value="payment_failed">{{ __('Payment Failed') }}</option>
+                        <option value="booking_confirmed">{{ __('Booking Confirmed') }}</option>
+                        <option value="booking_cancelled">{{ __('Booking Cancelled') }}</option>
+                        <option value="booking_reminder">{{ __('Booking Reminder') }}</option>
+                        <option value="favorite_trip_update">{{ __('Favorite Update') }}</option>
+                    </select>
+                    <input type="date" id="filterFromDate" class="dash-filter-input" placeholder="{{ __('From Date') }}" style="width:150px;">
+                    <input type="date" id="filterToDate" class="dash-filter-input" placeholder="{{ __('To Date') }}" style="width:150px;">
+                    <button class="btn btn-primary rounded-pill px-4" onclick="loadHistory()" style="height:38px; font-weight:600; font-size:13px; background:var(--dash-navy); border-color:var(--dash-navy);">
                         <i class="fas fa-search me-1"></i> {{ __('Search') }}
                     </button>
                 </div>
             </div>
-            <div class="card-body">
+            <div style="padding:0;">
                 <div class="table-responsive">
-                    <table class="table table-hover" id="historyTable">
+                    <table class="notif-table" id="historyTable">
                         <thead>
                             <tr>
                                 <th>{{ __('Type') }}</th>
@@ -334,7 +314,7 @@
                         </thead>
                         <tbody id="historyBody">
                             <tr>
-                                <td colspan="7" class="text-center text-muted py-4">
+                                <td colspan="7" style="text-align:center; padding:40px; color:var(--dash-muted);">
                                     <i class="fas fa-spinner fa-spin me-2"></i>{{ __('Loading...') }}
                                 </td>
                             </tr>
@@ -342,7 +322,7 @@
                     </table>
                 </div>
                 {{-- Pagination --}}
-                <div id="historyPagination" class="d-flex justify-content-center mt-3"></div>
+                <div id="historyPagination" class="d-flex justify-content-center" style="padding:16px;"></div>
             </div>
         </div>
     </div>
@@ -597,8 +577,8 @@
 
             response.data.forEach(n => {
                 const readBadge = n.is_read
-                    ? '<span class="badge bg-secondary">{{ __("Read") }}</span>'
-                    : '<span class="badge bg-primary">{{ __("Unread") }}</span>';
+                    ? '<span class="badge-state badge-state--default">{{ __("Read") }}</span>'
+                    : '<span class="badge-state badge-state--blue">{{ __("Unread") }}</span>';
 
                 tbody.append(`
                     <tr>
@@ -606,16 +586,16 @@
                         <td><strong>${n.title}</strong></td>
                         <td>${n.content}</td>
                         <td>
-                            <div>${n.user_name}</div>
-                            <small class="text-muted">${n.user_email}</small>
+                            <div style="font-size:13.5px; font-weight:600;">${n.user_name}</div>
+                            <small style="color:var(--dash-muted);">${n.user_email}</small>
                         </td>
                         <td>${readBadge}</td>
                         <td>
-                            <div>${n.created_at}</div>
-                            <small class="text-muted">${n.time_ago}</small>
+                            <div style="font-size:13.5px;">${n.created_at}</div>
+                            <small style="color:var(--dash-muted);">${n.time_ago}</small>
                         </td>
                         <td>
-                            <button class="btn btn-sm btn-outline-danger" onclick="deleteNotification(${n.id})">
+                            <button class="act-action-btn" onclick="deleteNotification(${n.id})" title="{{ __('Delete') }}">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </td>

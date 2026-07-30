@@ -17,163 +17,75 @@
 
 @section('content')
 <div class="row my-2">
-    <div class="col-xl-4 col-sm-6">
-        <x-stats-card
-            :label="__('Total Companies')"
-            :value="$stats['total']"
-            icon="fas fa-building"
-            color="primary"
-        />
+    <div class="col-xl-4 col-sm-6 my-2">
+        <div class="kpi-card kpi-card--blue">
+            <div class="kpi-icon-wrap"><i class="fas fa-building"></i></div>
+            <div class="kpi-info"><span class="kpi-label">{{ __('Total Companies') }}</span><h3 class="kpi-value">{{ number_format($stats['total']) }}</h3></div>
+        </div>
     </div>
-    <div class="col-xl-4 col-sm-6">
-        <x-stats-card
-            :label="__('Active')"
-            :value="$stats['active']"
-            icon="fas fa-check-circle"
-            color="success"
-        />
+    <div class="col-xl-4 col-sm-6 my-2">
+        <div class="kpi-card kpi-card--green">
+            <div class="kpi-icon-wrap"><i class="fas fa-check-circle"></i></div>
+            <div class="kpi-info"><span class="kpi-label">{{ __('Active') }}</span><h3 class="kpi-value">{{ number_format($stats['active']) }}</h3></div>
+        </div>
     </div>
-    <div class="col-xl-4 col-sm-12">
-        <x-stats-card
-            :label="__('Inactive')"
-            :value="$stats['inactive']"
-            icon="fas fa-times-circle"
-            color="danger"
-        />
+    <div class="col-xl-4 col-sm-12 my-2">
+        <div class="kpi-card kpi-card--red">
+            <div class="kpi-icon-wrap"><i class="fas fa-times-circle"></i></div>
+            <div class="kpi-info"><span class="kpi-label">{{ __('Inactive') }}</span><h3 class="kpi-value">{{ number_format($stats['inactive']) }}</h3></div>
+        </div>
     </div>
 </div>
 
 @push('styles')
 <style>
-    /* Premium Table Styling */
-    .custom-table {
-        width: 100% !important;
-        margin-top: 10px;
-        border-collapse: collapse !important;
-    }
-    .custom-table thead th {
-        border-bottom: 2px solid #e2e8f0 !important;
-        background-color: #f8fafc !important;
-        color: #475569 !important;
-        font-weight: 700 !important;
-        font-size: 13px !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.5px !important;
-        padding: 14px 16px !important;
-        text-align: left;
-    }
-    [dir="rtl"] .custom-table thead th {
-        text-align: right;
-    }
-    .custom-table tbody tr {
-        background-color: #ffffff !important;
-        transition: background-color 0.2s ease !important;
-        border-bottom: 1px solid #f1f5f9 !important;
-    }
-    .custom-table tbody tr:hover {
-        background-color: #f8fafc !important;
-    }
-    .custom-table tbody td {
-        padding: 14px 16px !important;
-        vertical-align: middle !important;
-        color: #334155 !important;
-        font-size: 13.5px !important;
-        background: transparent !important;
-    }
-
-    /* Custom Scrollbar for Responsive Table */
-    .table-responsive {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        padding-bottom: 10px;
-        margin-top: 10px;
-    }
-    .table-responsive::-webkit-scrollbar {
-        height: 8px;
-    }
-    .table-responsive::-webkit-scrollbar-track {
-        background: #f1f5f9;
-        border-radius: 10px;
-    }
-    .table-responsive::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
-        border-radius: 10px;
-    }
-    .table-responsive::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8;
-    }
-
-    /* Empty state styling */
-    .empty-state {
-        text-align: center;
-        padding: 60px 20px;
-        background: #fff;
-        border-radius: 12px;
-    }
-    .empty-state i {
-        font-size: 3.5rem;
-        color: #cbd5e1;
-        margin-bottom: 20px;
-    }
-    .empty-state h5 {
-        color: #475569;
-        font-weight: 700;
-        font-size: 18px;
-    }
-    .empty-state p {
-        color: #94a3b8;
-        font-size: 14px;
-        margin-bottom: 0;
-    }
-
-    /* DataTables Specific Overrides for cleaner look */
-    .dataTables_wrapper .dataTables_paginate .paginate_button.current, 
-    .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
-        background: #041741 !important;
-        color: #fff !important;
-        border: none !important;
-        border-radius: 8px !important;
-        box-shadow: 0 4px 10px rgba(4, 23, 65, 0.2) !important;
-    }
-    .dataTables_wrapper .dataTables_paginate .paginate_button {
-        border-radius: 8px !important;
-        border: none !important;
-        transition: all 0.2s ease !important;
-    }
-    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-        background: #f1f5f9 !important;
-        color: #1e293b !important;
-    }
-    table.dataTable.no-footer {
-        border-bottom: none !important;
-    }
-
-    /* Visual Section Header inside Modals */
-    .modal-section-header {
-        font-size: 0.75rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        color: #041741;
-        letter-spacing: 0.5px;
-        border-bottom: 2px solid #f1f5f9;
-        padding-bottom: 5px;
-        margin-top: 15px;
-        margin-bottom: 15px;
-    }
+    :root { --dash-navy:#041741; --dash-surface:#ffffff; --dash-text:#1e293b; --dash-muted:#64748b; --dash-border:#e8edf5; --dash-radius:16px; --dash-shadow:0 4px 24px rgba(4,23,65,0.06); --dash-shadow-hover:0 12px 36px rgba(4,23,65,0.13); }
+    .kpi-card { display:flex; align-items:flex-start; gap:18px; background:var(--dash-surface); border-radius:var(--dash-radius); padding:24px; box-shadow:var(--dash-shadow); border:1px solid var(--dash-border); transition:all 0.3s ease; height:100%; animation:kpiFadeIn 0.6s ease backwards; }
+    .kpi-card:hover { transform:translateY(-5px); box-shadow:var(--dash-shadow-hover); }
+    @keyframes kpiFadeIn { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+    .kpi-icon-wrap { flex-shrink:0; width:52px; height:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:1.3rem; }
+    .kpi-card--blue  .kpi-icon-wrap { background:rgba(4,23,65,0.09); color:var(--dash-navy); }
+    .kpi-card--green .kpi-icon-wrap { background:rgba(16,185,129,0.12); color:#059669; }
+    .kpi-card--red   .kpi-icon-wrap { background:rgba(239,68,68,0.12); color:#dc2626; }
+    .kpi-card--blue { border-left:4px solid var(--dash-navy); } .kpi-card--green { border-left:4px solid #10b981; } .kpi-card--red { border-left:4px solid #ef4444; }
+    [dir="rtl"] .kpi-card--blue { border-left:none; border-right:4px solid var(--dash-navy); } [dir="rtl"] .kpi-card--green { border-left:none; border-right:4px solid #10b981; } [dir="rtl"] .kpi-card--red { border-left:none; border-right:4px solid #ef4444; }
+    .kpi-info { flex:1; } .kpi-label { font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.6px; color:var(--dash-muted); display:block; margin-bottom:6px; } .kpi-value { font-size:1.85rem; font-weight:800; color:var(--dash-text); margin-bottom:8px; line-height:1.1; }
+    .dash-table-card { background:var(--dash-surface); border-radius:var(--dash-radius); border:1px solid var(--dash-border); box-shadow:var(--dash-shadow); overflow:hidden; transition:box-shadow 0.3s; margin-bottom:30px; }
+    .dash-table-card:hover { box-shadow:var(--dash-shadow-hover); }
+    .subs-card-header { display:flex; justify-content:space-between; align-items:center; padding:22px 24px 16px; border-bottom:1px solid var(--dash-border); flex-wrap:wrap; gap:16px; }
+    .dash-chart-title { font-size:15px; font-weight:700; color:var(--dash-text); margin-bottom:3px; } .dash-chart-sub { font-size:11.5px; color:var(--dash-muted); margin:0; }
+    .subs-search-wrap { display:flex; align-items:center; background:#f8fafc; border:1px solid var(--dash-border); border-radius:50px; padding:0 14px; height:38px; min-width:180px; transition:all 0.25s; }
+    .subs-search-wrap:focus-within { border-color:var(--dash-navy); box-shadow:0 0 0 3px rgba(4,23,65,0.08); background:#fff; }
+    .subs-search-icon { color:var(--dash-muted); font-size:13px; flex-shrink:0; }
+    .subs-search-input { border:none; background:transparent; outline:none; font-size:13px; color:var(--dash-text); width:100%; padding:0 0 0 10px; font-weight:500; } [dir="rtl"] .subs-search-input { padding:0 10px 0 0; }
+    .subs-datatable { width:100% !important; } .subs-datatable thead th { background:#f8fafc !important; color:var(--dash-muted) !important; font-weight:700 !important; font-size:12px !important; text-transform:uppercase !important; letter-spacing:0.5px !important; padding:14px 16px !important; border-bottom:1px solid var(--dash-border) !important; border-top:none !important; white-space:nowrap; }
+    .subs-datatable tbody tr:hover { background:rgba(4,23,65,0.025) !important; } .subs-datatable tbody td { padding:13px 16px !important; vertical-align:middle !important; color:var(--dash-text) !important; font-size:13.5px !important; border-bottom:1px solid var(--dash-border) !important; background:transparent !important; } .subs-datatable tbody tr:last-child td { border-bottom:none !important; } table.dataTable.no-footer { border-bottom:none !important; }
+    .dataTables_wrapper .dataTables_paginate { display:flex; justify-content:flex-end; gap:4px; padding:12px 20px !important; } .dataTables_wrapper .dataTables_paginate .paginate_button { padding:6px 13px !important; border:1px solid var(--dash-border) !important; border-radius:8px !important; background:#fff !important; color:var(--dash-muted) !important; font-weight:600 !important; font-size:13px !important; transition:all 0.2s !important; } .dataTables_wrapper .dataTables_paginate .paginate_button:hover { background:#f1f5f9 !important; color:var(--dash-navy) !important; } .dataTables_wrapper .dataTables_paginate .paginate_button.current, .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover { background:var(--dash-navy) !important; border-color:var(--dash-navy) !important; color:#fff !important; }
+    .dataTables_wrapper .dataTables_info { color:var(--dash-muted) !important; font-size:13px !important; padding:12px 20px !important; }
+    .badge-state { display:inline-flex; align-items:center; font-size:11px; font-weight:600; padding:4px 12px; border-radius:50px; }
+    .badge-state--green { background:rgba(16,185,129,0.12); color:#059669; } .badge-state--red { background:rgba(239,68,68,0.10); color:#dc2626; } .badge-state--default { background:#f1f5f9; color:#64748b; }
+    .act-action-btn { display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:8px; background:rgba(4,23,65,0.07); color:var(--dash-navy); text-decoration:none; transition:all 0.2s ease; font-size:13px; border:none; } .act-action-btn:hover { background:var(--dash-navy); color:#fff; transform:translateY(-1px); }
+    .filter-wrapper { position:relative; display:inline-flex; align-items:center; }
+    .filter-icon { position:absolute; inset-inline-start:10px; color:var(--dash-muted); font-size:12px; z-index:1; pointer-events:none; }
+    .filter-wrapper .form-select { padding-inline-start:28px; height:38px; border-radius:10px; border:1px solid var(--dash-border); font-size:13px; background:#f8fafc; }
+    .modal-section-header { font-size:0.75rem; font-weight:700; text-transform:uppercase; color:#041741; letter-spacing:0.5px; border-bottom:2px solid #f1f5f9; padding-bottom:5px; margin-top:15px; margin-bottom:15px; }
 </style>
 @endpush
 
 <div class="row">
     <div class="col-12">
-        <div class="card border-0 shadow-sm rounded-4">
-            <div class="card-header border-0 pb-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <h4 class="card-title mb-0">{{ __('Company Management') }}</h4>
+        <div class="dash-table-card">
+            <div class="subs-card-header">
+                <div>
+                    <h6 class="dash-chart-title">{{ __('Company Management') }}</h6>
+                    <p class="dash-chart-sub">{{ __('View and manage all registered companies') }}</p>
+                </div>
                 <!-- Advanced Filter Bar -->
-                <div class="d-flex align-items-center mt-3 mt-md-0 gap-2 flex-wrap">
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                     <!-- Search Input -->
-                    <div class="input-group input-group-sm rounded-pill border bg-white overflow-hidden px-2 align-items-center shadow-sm" style="width: 200px; height: 38px; border-color: #d1d9e6 !important;">
-                        <span class="text-muted"><i class="fas fa-search"></i></span>
-                        <input type="text" id="custom-search" class="form-control border-0 bg-transparent text-dark ps-2" placeholder="{{ __('Search...') }}" style="box-shadow: none; font-size: 13px;">
+                    <div class="subs-search-wrap">
+                        <i class="fas fa-search subs-search-icon"></i>
+                        <input type="text" id="custom-search" class="subs-search-input" placeholder="{{ __('Search...') }}">
                     </div>
                     <!-- Status Filter -->
                     <div class="filter-wrapper">
@@ -186,9 +98,9 @@
                     </div>
                 </div>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0 pt-2">
                 <div class="table-responsive">
-                    <table id="Companys-table" class="display custom-table" style="min-width: 845px">
+                    <table id="Companys-table" class="display subs-datatable" style="min-width: 845px">
                         <thead>
                             <tr>
                                 <th>{{ __('Logo') }}</th>

@@ -5,180 +5,221 @@
 
 @push('styles')
 <style>
-    /* Premium Settings Card */
-    .settings-card {
-        background: #ffffff;
-        border-radius: 20px;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.05);
-        border: none;
-        overflow: hidden;
-        position: relative;
+    /* ─── Design System Vars ─── */
+    :root {
+        --dash-navy: #041741;
+        --dash-surface: #ffffff;
+        --dash-text: #1e293b;
+        --dash-muted: #64748b;
+        --dash-border: #e8edf5;
+        --dash-radius: 16px;
+        --dash-shadow: 0 4px 24px rgba(4,23,65,0.06);
+        --dash-shadow-hover: 0 12px 36px rgba(4,23,65,0.13);
     }
 
-    /* Decoration Accents */
+    /* ─── Settings Card Shell ─── */
+    .settings-card {
+        background: var(--dash-surface);
+        border-radius: 20px;
+        box-shadow: var(--dash-shadow);
+        border: 1px solid var(--dash-border);
+        overflow: hidden;
+        position: relative;
+        animation: cardFadeIn 0.5s ease backwards;
+    }
+    @keyframes cardFadeIn { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+
     .settings-card::before {
         content: '';
         position: absolute;
-        top: -100px;
-        right: -50px;
-        width: 300px;
-        height: 300px;
-        background: radial-gradient(circle, rgba(4, 23, 65, 0.03) 0%, rgba(255, 255, 255, 0) 70%);
+        top: -80px;
+        right: -60px;
+        width: 260px;
+        height: 260px;
+        background: radial-gradient(circle, rgba(4,23,65,0.035) 0%, rgba(255,255,255,0) 70%);
         border-radius: 50%;
         pointer-events: none;
     }
 
     .settings-card .card-header {
-        background: transparent;
-        border-bottom: 1px solid #f0f0f0;
-        padding: 1.5rem 2rem;
+        background: #f8fafc;
+        border-bottom: 1px solid var(--dash-border);
+        padding: 20px 28px;
         position: relative;
         z-index: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 
     .settings-card .card-title {
         font-weight: 700;
-        color: #222;
-        font-size: 1.25rem;
+        color: var(--dash-text);
+        font-size: 15px;
         margin: 0;
         display: flex;
         align-items: center;
+        gap: 10px;
     }
 
-    .settings-card .card-title i {
-        color: #041741;
-        background: rgba(4, 23, 65, 0.08);
-        width: 36px;
-        height: 36px;
+    .settings-card .card-title .title-icon {
+        color: var(--dash-navy);
+        background: rgba(4, 23, 65, 0.09);
+        width: 38px;
+        height: 38px;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 10px;
-        margin-right: 12px;
-        font-size: 1.1rem;
+        border-radius: 11px;
+        font-size: 1rem;
+        flex-shrink: 0;
     }
 
-    /* Custom Tabs */
+    /* ─── Tabs ─── */
     .settings-tabs {
-        border-bottom: 0;
-        padding: 0 1.5rem;
-        margin-top: 1rem;
+        border-bottom: 1px solid var(--dash-border);
+        padding: 0 20px;
+        margin-top: 0;
         display: flex;
-        gap: 0.5rem;
+        gap: 4px;
+        overflow-x: auto;
+        scrollbar-width: none;
     }
+    .settings-tabs::-webkit-scrollbar { display: none; }
 
     .settings-tabs .nav-link {
-        border: 0;
+        border: none;
         background: transparent;
-        color: #666;
+        color: var(--dash-muted);
         font-weight: 600;
-        padding: 0.8rem 1.2rem;
-        border-radius: 12px;
-        transition: all 0.3s ease;
+        font-size: 13px;
+        padding: 14px 16px;
+        border-radius: 0;
+        border-bottom: 3px solid transparent;
+        transition: all 0.25s ease;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        white-space: nowrap;
+        margin-bottom: -1px;
+    }
+
+    .settings-tabs .nav-link i {
+        font-size: 0.95rem;
+        opacity: 0.7;
+    }
+
+    .settings-tabs .nav-link:hover {
+        color: var(--dash-navy);
+        background: rgba(4,23,65,0.04);
+        border-bottom-color: rgba(4,23,65,0.2);
+    }
+
+    .settings-tabs .nav-link.active {
+        color: var(--dash-navy) !important;
+        font-weight: 700;
+        border-bottom-color: var(--dash-navy) !important;
+        background: transparent !important;
+    }
+
+    .settings-tabs .nav-link.active i { opacity: 1; }
+
+    /* ─── Section Title ─── */
+    .form-section-title {
+        font-size: 11px;
+        color: var(--dash-muted);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px dashed var(--dash-border);
         display: flex;
         align-items: center;
         gap: 8px;
     }
-
-    .settings-tabs .nav-link:hover {
-        background: #f8f9fa;
-        color: #041741;
+    .form-section-title::before {
+        content: '';
+        display: inline-block;
+        width: 4px;
+        height: 16px;
+        background: var(--dash-navy);
+        border-radius: 2px;
     }
 
-    .settings-tabs .nav-link.active {
-        background: rgba(4, 23, 65, 0.08) !important;
-        color: #041741 !important;
-        font-weight: 700;
-    }
-
-    .settings-tabs .nav-link i {
-        font-size: 1.1rem;
-    }
-
-    /* Form Styles */
-    .form-section-title {
-        font-size: 0.95rem;
-        color: #888;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 1.5rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 1px dashed #eee;
-    }
-
+    /* ─── Form Fields ─── */
     .form-group label {
-        font-size: 0.9rem;
+        font-size: 12.5px;
         font-weight: 600;
-        color: #444;
-        margin-bottom: 0.6rem;
+        color: var(--dash-text);
+        margin-bottom: 7px;
+        display: block;
     }
 
     .form-control, .form-select {
-        background-color: #fcfcfc;
-        border: 1px solid #e0e0e0;
+        background-color: #f8fafc;
+        border: 1px solid var(--dash-border);
         border-radius: 12px;
-        padding: 0.75rem 1rem;
-        font-size: 0.95rem;
-        transition: all 0.3s ease;
-        color: #333;
+        padding: 10px 14px;
+        font-size: 13.5px;
+        transition: all 0.25s ease;
+        color: var(--dash-text);
     }
 
     .form-control:focus, .form-select:focus {
-        border-color: #041741;
-        box-shadow: 0 0 0 4px rgba(4, 23, 65, 0.05);
+        border-color: var(--dash-navy);
+        box-shadow: 0 0 0 3px rgba(4, 23, 65, 0.08);
         background-color: #fff;
     }
 
-    /* Premium Image Upload Component */
+    .input-group-text {
+        background: #f1f5f9;
+        border: 1px solid var(--dash-border);
+        border-radius: 12px;
+        color: var(--dash-muted);
+        font-size: 13px;
+        padding: 0 14px;
+    }
+
+    /* ─── Image Upload ─── */
     .image-upload-wrapper {
         position: relative;
         background: #f8fafc;
-        border: 2px dashed #e2e8f0;
-        border-radius: 20px;
+        border: 2px dashed var(--dash-border);
+        border-radius: var(--dash-radius);
         padding: 2.5rem;
         text-align: center;
         transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
     .image-upload-wrapper:hover {
-        border-color: #041741;
+        border-color: var(--dash-navy);
         background: #fff;
-        transform: translateY(-4px);
-        box-shadow: 0 15px 30px rgba(0,0,0,0.05);
+        transform: translateY(-3px);
+        box-shadow: var(--dash-shadow-hover);
     }
     .image-preview-container {
         width: 100%;
         max-width: 280px;
         height: 160px;
         margin: 0 auto 1.5rem;
-        border-radius: 16px;
+        border-radius: 14px;
         background: #fff;
-        box-shadow: 0 8px 15px rgba(0,0,0,0.06);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.06);
         display: flex;
         align-items: center;
         justify-content: center;
         overflow: hidden;
-        position: relative;
-        border: 1px solid #eee;
+        border: 1px solid var(--dash-border);
     }
-    .image-preview-container img {
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: contain;
-    }
-    .image-upload-controls {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        align-items: center;
-    }
+    .image-preview-container img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .image-upload-controls { display:flex; flex-direction:column; gap:12px; align-items:center; }
     .upload-btn-label {
-        background: #041741;
+        background: var(--dash-navy);
         color: white;
-        padding: 10px 24px;
-        border-radius: 100px;
+        padding: 9px 22px;
+        border-radius: 50px;
         font-weight: 700;
-        font-size: 0.85rem;
+        font-size: 13px;
         cursor: pointer;
         display: flex;
         align-items: center;
@@ -187,111 +228,86 @@
         transition: all 0.2s;
         margin: 0;
     }
-    .upload-btn-label:hover {
-        background: #062261;
-        transform: scale(1.05);
-    }
-    .upload-info-text {
-        font-size: 0.75rem;
-        color: #94a3b8;
-        font-weight: 500;
-    }
-    .file-input-hidden {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        opacity: 0;
-        overflow: hidden;
-    }
+    .upload-btn-label:hover { background: #062261; transform: scale(1.04); }
+    .upload-info-text { font-size: 11.5px; color: var(--dash-muted); font-weight: 500; }
+    .file-input-hidden { position:absolute; width:1px; height:1px; opacity:0; overflow:hidden; }
 
-    /* Save Button */
+    /* ─── Save Button ─── */
     .btn-save {
-        background: #041741;
+        background: var(--dash-navy);
         color: white;
         border: none;
-        padding: 12px 30px;
-        border-radius: 12px;
+        padding: 10px 28px;
+        border-radius: 50px;
         font-weight: 700;
-        box-shadow: 0 8px 20px rgba(4, 23, 65, 0.25);
-        transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-        display: flex;
+        font-size: 13px;
+        box-shadow: 0 6px 18px rgba(4, 23, 65, 0.25);
+        transition: all 0.3s ease;
+        display: inline-flex;
         align-items: center;
         gap: 8px;
     }
-
     .btn-save:hover {
         background: #062261;
         transform: translateY(-2px);
-        box-shadow: 0 12px 25px rgba(4, 23, 65, 0.35);
+        box-shadow: 0 10px 24px rgba(4, 23, 65, 0.35);
         color: white;
     }
 
-    /* Maintenance Switch */
-    .maintenance-options {
-        display: flex;
-        gap: 15px;
-    }
-
-    .maintenance-option {
-        flex: 1;
-        position: relative;
-    }
-
-    .maintenance-option input {
-        position: absolute;
-        opacity: 0;
-        cursor: pointer;
-    }
-
+    /* ─── Maintenance Toggle ─── */
+    .maintenance-options { display:flex; gap:14px; }
+    .maintenance-option { flex:1; position:relative; }
+    .maintenance-option input { position:absolute; opacity:0; cursor:pointer; }
     .maintenance-option label {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 1.5rem;
-        border: 2px solid #eee;
-        border-radius: 16px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        height: 100%;
-        text-align: center;
+        display:flex; flex-direction:column; align-items:center; justify-content:center;
+        padding:1.4rem;
+        border: 2px solid var(--dash-border);
+        border-radius:14px;
+        cursor:pointer;
+        transition:all 0.3s ease;
+        height:100%;
+        text-align:center;
     }
-
     .maintenance-option input:checked + label {
-        border-color: #041741;
-        background: rgba(4, 23, 65, 0.04);
+        border-color: var(--dash-navy);
+        background: rgba(4,23,65,0.04);
+    }
+    .maintenance-option input:checked + label i { color:var(--dash-navy); transform:scale(1.1); }
+    .maintenance-option label i { font-size:1.8rem; margin-bottom:0.7rem; color:#cbd5e1; transition:all 0.3s ease; }
+    .maintenance-option label span { font-weight:600; font-size:13px; color:var(--dash-text); }
+
+    /* ─── Pricing Blocks ─── */
+    .pricing-block {
+        background: #f8fafc;
+        border-radius: 14px;
+        border: 1px solid var(--dash-border);
+        padding: 20px 24px;
+        margin-bottom: 18px;
+        transition: box-shadow 0.2s;
+    }
+    .pricing-block:hover { box-shadow: var(--dash-shadow); }
+    .pricing-block h6 { font-size:13px; font-weight:700; color:var(--dash-text); margin-bottom:16px; }
+
+    /* ─── Card Footer ─── */
+    .card-footer {
+        background: #f8fafc;
+        border-top: 1px solid var(--dash-border);
+        padding: 18px 28px;
     }
 
-    .maintenance-option input:checked + label i {
-        color: #041741;
-        transform: scale(1.1);
-    }
+    /* ─── RTL ─── */
+    [dir="rtl"] .settings-card .card-title .title-icon { margin-right:0; margin-left:10px; }
+    [dir="rtl"] .settings-card::before { right:auto; left:-60px; }
+    [dir="rtl"] .form-section-title::before { margin-right:0; }
 
-    .maintenance-option label i {
-        font-size: 2rem;
-        margin-bottom: 0.8rem;
-        color: #ccc;
-        transition: all 0.3s ease;
-    }
-
-    .maintenance-option label span {
-        font-weight: 600;
-        color: #444;
-    }
-
-    /* RTL Support */
-    [dir="rtl"] .settings-card .card-title i {
-        margin-right: 0;
-        margin-left: 12px;
-    }
-    [dir="rtl"] .settings-card::before {
-        right: auto;
-        left: -50px;
-    }
-    [dir="rtl"] .settings-tabs .nav-link {
-        margin-right: 0;
-        margin-left: 0.5rem;
-    }
+    /* ─── Dark mode ─── */
+    [data-theme-version="dark"] .settings-card { background:#1e1e2d !important; border-color:rgba(255,255,255,0.06) !important; }
+    [data-theme-version="dark"] .settings-card .card-header { background:#161625 !important; }
+    [data-theme-version="dark"] .settings-tabs { border-color:rgba(255,255,255,0.07) !important; }
+    [data-theme-version="dark"] .form-control, [data-theme-version="dark"] .form-select { background:#161625 !important; border-color:rgba(255,255,255,0.08) !important; color:#e2e8f0 !important; }
+    [data-theme-version="dark"] .pricing-block { background:#161625 !important; border-color:rgba(255,255,255,0.06) !important; }
+    [data-theme-version="dark"] .image-upload-wrapper { background:#161625 !important; }
+    [data-theme-version="dark"] .card-footer { background:#161625 !important; border-color:rgba(255,255,255,0.06) !important; }
 </style>
 @endpush
 
@@ -314,48 +330,51 @@
             @csrf
 
             <div class="card settings-card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h4 class="card-title"><i class="flaticon-381-settings-2"></i> {{ __('Platform Settings') }}</h4>
-                    <button type="submit" class="btn btn-save">
-                        <i class="fa fa-save"></i> {{ __('Save Changes') }}
-                    </button>
-                </div>
+            <div class="card-header">
+                <h5 class="card-title">
+                    <span class="title-icon"><i class="fas fa-sliders-h"></i></span>
+                    {{ __('Platform Settings') }}
+                </h5>
+                <button type="submit" class="btn-save">
+                    <i class="fa fa-save"></i> {{ __('Save Changes') }}
+                </button>
+            </div>
 
                 <!-- Tabs Navigation -->
-                <ul class="nav nav-tabs settings-tabs" id="myTab" role="tablist">
+                <ul class="nav settings-tabs" id="myTab" role="tablist">
                     <li class="nav-item" role="presentation">
                         <button class="nav-link active" id="general-tab" data-bs-toggle="tab" data-bs-target="#general" type="button" role="tab">
-                            <i class="flaticon-381-dashboard-1"></i> {{ __('General') }}
+                            <i class="fas fa-cog"></i> {{ __('General') }}
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="media-tab" data-bs-toggle="tab" data-bs-target="#media" type="button" role="tab">
-                            <i class="flaticon-381-picture"></i> {{ __('Logo & Icons') }}
+                            <i class="fas fa-image"></i> {{ __('Logo & Icons') }}
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="contact-tab" data-bs-toggle="tab" data-bs-target="#contact" type="button" role="tab">
-                            <i class="flaticon-381-smartphone-2"></i> {{ __('Contact') }}
+                            <i class="fas fa-phone"></i> {{ __('Contact') }}
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="app-settings-tab" data-bs-toggle="tab" data-bs-target="#app-settings" type="button" role="tab">
-                            <i class="flaticon-381-smartphone"></i> {{ __('App Settings') }}
+                            <i class="fas fa-mobile-alt"></i> {{ __('App Settings') }}
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="our-values-tab" data-bs-toggle="tab" data-bs-target="#our-values" type="button" role="tab">
-                            <i class="flaticon-381-smartphone"></i> {{ __('Our Values') }}
+                            <i class="fas fa-star"></i> {{ __('Our Values') }}
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="our-mission-tab" data-bs-toggle="tab" data-bs-target="#our-mission" type="button" role="tab">
-                            <i class="flaticon-381-smartphone"></i> {{ __('About Page') }}
+                            <i class="fas fa-info-circle"></i> {{ __('About Page') }}
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="pricing-tab" data-bs-toggle="tab" data-bs-target="#pricing" type="button" role="tab">
-                            <i class="fa fa-percentage"></i> {{ __('Pricing & Margins') }}
+                            <i class="fas fa-percentage"></i> {{ __('Pricing & Margins') }}
                         </button>
                     </li>
                 </ul>
@@ -792,8 +811,8 @@
                             <p class="text-muted mb-4">{{ __('Set the profit margin to be added on top of the base price from the supplier. Choose between a percentage of the total price or a fixed amount per booking.') }}</p>
 
                             {{-- Flight Margin --}}
-                            <div class="card border-0 bg-light rounded-3 p-3 mb-4">
-                                <h6 class="fw-bold mb-3"><i class="fa fa-plane text-primary me-2"></i>{{ __('Flights Margin') }}</h6>
+                            <div class="pricing-block">
+                                <h6><i class="fa fa-plane text-primary me-2"></i>{{ __('Flights Margin') }}</h6>
                                 <div class="row align-items-end">
                                     <div class="col-md-4 mb-3 form-group">
                                         <label class="form-label">{{ __('Margin Type') }}</label>
@@ -829,7 +848,7 @@
                             </div>
 
                             {{-- Hotel Margin --}}
-                            <div class="card border-0 bg-light rounded-3 p-3 mb-4">
+                            <div class="pricing-block">
                                 <h6 class="fw-bold mb-3"><i class="fa fa-hotel text-success me-2"></i>{{ __('Hotels Margin') }}</h6>
                                 <div class="row align-items-end">
                                     <div class="col-md-4 mb-3 form-group">
@@ -886,9 +905,9 @@
                     </div>
                 </div>
 
-                <!-- Floating Footer for larger screens or mobile -->
-                <div class="card-footer text-end p-4 border-top">
-                     <button type="submit" class="btn btn-save ms-auto">
+                <!-- Card Footer -->
+                <div class="card-footer d-flex justify-content-end">
+                    <button type="submit" class="btn-save">
                         <i class="fa fa-save"></i> {{ __('Save Changes') }}
                     </button>
                 </div>

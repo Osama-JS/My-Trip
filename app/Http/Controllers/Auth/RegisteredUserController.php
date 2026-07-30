@@ -53,8 +53,13 @@ class RegisteredUserController extends Controller
             return response()->json(['success' => false, 'message' => __('Email is already registered.')], 422);
         }
 
-        $otpCode = env('WHATSAPP_SIMULATION', false) ? '1234' : rand(1000, 9999);
-        $hashedOtp = Hash::make($otpCode);
+        $whatsAppService = new WhatsAppService();
+        $verificationId = $whatsAppService->startVerification($fullPhone);
+
+        if (!$verificationId) {
+            return response()->json(['success' => false, 'message' => __('Failed to send OTP. Please try again later.')], 500);
+        }
+
         $expiresAt = Carbon::now()->addMinutes(10);
 
         if (!$user) {
@@ -68,7 +73,7 @@ class RegisteredUserController extends Controller
                 'user_type'      => User::TYPE_CUSTOMER,
                 'is_guest'       => false,
                 'status'         => 'pending',
-                'otp_code'       => $hashedOtp,
+                'otp_code'       => $verificationId, // Store plain verification_id
                 'otp_expires_at' => $expiresAt,
             ]);
         } else {
@@ -85,19 +90,12 @@ class RegisteredUserController extends Controller
             $user->password       = Hash::make($request->password);
             $user->is_guest       = false;
             $user->status         = 'pending';
-            $user->otp_code       = $hashedOtp;
+            $user->otp_code       = $verificationId; // Store plain verification_id
             $user->otp_expires_at = $expiresAt;
             $user->save();
         }
 
-        $whatsAppService = new WhatsAppService();
-        $isSent = $whatsAppService->sendOTP($fullPhone, $otpCode, app()->getLocale());
-
-        if ($isSent || env('WHATSAPP_SIMULATION', false)) {
-            return response()->json(['success' => true]);
-        }
-
-        return response()->json(['success' => false, 'message' => __('Failed to send OTP. Please try again later.')], 500);
+        return response()->json(['success' => true]);
     }
 
     /**
@@ -127,10 +125,11 @@ class RegisteredUserController extends Controller
             return response()->json(['success' => false, 'message' => __('OTP expired or invalid.')], 422);
         }
 
-        if (!Hash::check($request->otp_code, $user->otp_code)) {
-            if ($user->otp_code !== $request->otp_code) { // In case it wasn't hashed (fallback)
-                return response()->json(['success' => false, 'message' => __('Invalid OTP.')], 422);
-            }
+        $whatsAppService = new WhatsAppService();
+        $isApproved = $whatsAppService->checkVerification($user->otp_code, $request->otp_code);
+
+        if (!$isApproved) {
+            return response()->json(['success' => false, 'message' => __('Invalid OTP.')], 422);
         }
 
         $user->phone_verified_at = Carbon::now();

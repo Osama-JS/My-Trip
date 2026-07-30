@@ -109,39 +109,40 @@ class TripsController extends Controller
             'data' => $trips->map(function ($trip) {
                 $isExpired = $trip->expiry_date && $trip->expiry_date < now()->format('Y-m-d');
 
-                $actionButtons = '
-                        <a href="'.route('admin.trips.edit', $trip->id).'" class="btn btn-sm btn-primary" title="'.__('Edit').'">
+                $actionButtons = '<div class="d-flex align-items-center gap-1">
+                        <a href="'.route('admin.trips.edit', $trip->id).'" class="act-action-btn" title="'.__('Edit').'">
                             <i class="fas fa-edit"></i>
                         </a>
-                        <a href="'.route('admin.trips.itinerary', $trip->id).'" class="btn btn-sm btn-info" title="'.__('Itinerary').'">
+                        <a href="'.route('admin.trips.itinerary', $trip->id).'" class="act-action-btn" style="color: #0ea5e9; background: rgba(14,165,233,0.1);" title="'.__('Itinerary').'">
                             <i class="fas fa-list-ul"></i>
                         </a>
-                        <button class="btn btn-sm btn-secondary" onclick="openImageUpload('.$trip->id.', \''.addslashes($trip->title).'\')" title="'.__('Upload Images').'">
+                        <button class="act-action-btn" style="color: #64748b; background: rgba(100,116,139,0.1); border:none;" onclick="openImageUpload('.$trip->id.', \''.addslashes($trip->title).'\')" title="'.__('Upload Images').'">
                             <i class="fas fa-camera"></i>
                         </button>
-                        <a href="'.route('admin.trips.stats', $trip->id).'" class="btn btn-sm btn-dark" title="'.__('Statistics').'">
+                        <a href="'.route('admin.trips.stats', $trip->id).'" class="act-action-btn" style="color: #8b5cf6; background: rgba(139,92,246,0.1);" title="'.__('Statistics').'">
                             <i class="fas fa-chart-line"></i>
                         </a>
-                        <a href="'.route('admin.trips.pricing', $trip->id).'" class="btn btn-sm btn-warning" title="'.__('Pricing & Packages').'">
+                        <a href="'.route('admin.trips.pricing', $trip->id).'" class="act-action-btn act-action-btn--gold" title="'.__('Pricing & Packages').'">
                             <i class="fas fa-tags"></i>
                         </a>';
 
                 if ($isExpired) {
                     $actionButtons .= '
-                        <button class="btn btn-sm btn-success" onclick="renewTrip('.$trip->id.')" title="تجديد الرحلة">
+                        <button class="act-action-btn" style="color: #10b981; background: rgba(16,185,129,0.1); border:none;" onclick="renewTrip('.$trip->id.')" title="'.__('Renew Trip').'">
                             <i class="fas fa-sync-alt"></i>
                         </button>';
                 } else {
                     $actionButtons .= '
-                        <button class="btn btn-sm btn-warning" onclick="toggleTripStatus('.$trip->id.')">
+                        <button class="act-action-btn" style="color: #f59e0b; background: rgba(245,158,11,0.1); border:none;" onclick="toggleTripStatus('.$trip->id.')" title="'.__('Toggle Status').'">
                             <i class="fas fa-ban"></i>
                         </button>';
                 }
 
                 $actionButtons .= '
-                        <button class="btn btn-sm btn-danger" onclick="deleteTrip('.$trip->id.')" title="'.__('Delete').'">
+                        <button class="act-action-btn" style="color: #ef4444; background: rgba(239,68,68,0.1); border:none;" onclick="deleteTrip('.$trip->id.')" title="'.__('Delete').'">
                             <i class="fas fa-trash"></i>
-                        </button>';
+                        </button>
+                    </div>';
 
                 return [
                     'title_ar' => $trip->title_ar ?? '---',
@@ -159,8 +160,8 @@ class TripsController extends Controller
                     'price'    => $trip->price,
                     'expiry_date' => $trip->expiry_date,
                     'status'      => $isExpired
-                                    ? '<span class="badge bg-dark">' . __('Expired') . '</span>'
-                                    : ($trip->active ? '<span class="badge bg-success">' . __('Active') . '</span>' : '<span class="badge bg-danger">' . __('Inactive') . '</span>'),
+                                    ? '<span class="badge-state badge-state--default">' . __('Expired') . '</span>'
+                                    : ($trip->active ? '<span class="badge-state badge-state--green">' . __('Active') . '</span>' : '<span class="badge-state badge-state--red">' . __('Inactive') . '</span>'),
                     'actions' => $actionButtons,
                 ];
             })

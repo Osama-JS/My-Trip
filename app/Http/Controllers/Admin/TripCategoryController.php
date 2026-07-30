@@ -77,15 +77,13 @@ class TripCategoryController extends Controller
                     'name_ar' => '<strong class="text-dark">' . $category->name_ar . '</strong>',
                     'name_en' => '<strong class="text-dark">' . $category->name_en . '</strong>',
                     'actions' => '
-                        <div class="dropdown">
-                            <button type="button" class="btn btn-light btn-sm rounded-circle border-0 shadow-sm" data-bs-toggle="dropdown" aria-expanded="false" style="width:32px; height:32px; padding:0; display:inline-flex; align-items:center; justify-content:center;">
-                                <i class="fas fa-ellipsis-v text-muted"></i>
+                        <div class="d-flex align-items-center gap-1">
+                            <button type="button" class="act-action-btn" onclick="editCategory(' . $category->id . ')" title="'.__('Edit').'">
+                                <i class="fas fa-edit"></i>
                             </button>
-                            <div class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 py-2">
-                                <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="editCategory(' . $category->id . ')"><i class="fas fa-pencil-alt text-primary me-3 w-15px"></i> '.__('Edit').'</a>
-                                <div class="dropdown-divider my-1"></div>
-                                <a class="dropdown-item text-danger py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="deleteCategory(' . $category->id . ')"><i class="fa fa-trash text-danger me-3 w-15px"></i> '.__('Delete').'</a>
-                            </div>
+                            <button type="button" class="act-action-btn" style="color: #ef4444; background: rgba(239,68,68,0.1); border:none;" onclick="deleteCategory(' . $category->id . ')" title="'.__('Delete').'">
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </div>'
                 ];
             })

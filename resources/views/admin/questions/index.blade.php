@@ -23,55 +23,63 @@
 @endphp
 
 <div class="container-fluid">
-    {{-- Premium Stats Cards (Under the header, above the table) --}}
-    <div class="mb-4">
-        @include('components.stats-cards', ['stats' => [
-            [
-                'title' => __('Total Questions'),
-                'value' => $totalQuestions,
-                'icon' => 'fa-question-circle',
-                'color' => 'primary',
-            ],
-            [
-                'title' => __('Active Questions'),
-                'value' => $activeQuestions,
-                'icon' => 'fa-check-circle',
-                'color' => 'success',
-            ],
-            [
-                'title' => __('Inactive Questions'),
-                'value' => $inactiveQuestions,
-                'icon' => 'fa-times-circle',
-                'color' => 'danger',
-            ],
-        ]])
+    {{-- KPI Cards --}}
+    <div class="row mb-4">
+        <div class="col-xl-4 col-sm-6 mb-3 mb-xl-0">
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background:linear-gradient(135deg,#041741,#0c2b73);"><i class="fas fa-question-circle"></i></div>
+                <div class="kpi-body">
+                    <div class="kpi-value">{{ $totalQuestions }}</div>
+                    <div class="kpi-label">{{ __('Total Questions') }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-sm-6 mb-3 mb-xl-0">
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background:linear-gradient(135deg,#10b981,#059669);"><i class="fas fa-check-circle"></i></div>
+                <div class="kpi-body">
+                    <div class="kpi-value">{{ $activeQuestions }}</div>
+                    <div class="kpi-label">{{ __('Active Questions') }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-sm-6">
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background:linear-gradient(135deg,#f59e0b,#b45309);"><i class="fas fa-times-circle"></i></div>
+                <div class="kpi-body">
+                    <div class="kpi-value">{{ $inactiveQuestions }}</div>
+                    <div class="kpi-label">{{ __('Inactive Questions') }}</div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="row">
         <div class="col-12">
-            <div class="card shadow border-0" style="border-radius: 16px;">
-                <div class="card-header d-flex justify-content-between align-items-center bg-white border-bottom py-3" style="border-top-left-radius: 16px; border-top-right-radius: 16px;">
-                    <h4 class="card-title fw-bold mb-0 text-primary">
-                        <i class="fas fa-list-ul me-2"></i>{{ __('Questions List') }}
-                    </h4>
+            <div class="dash-table-card">
+                <div class="subs-card-header">
+                    <div>
+                        <h6 class="dash-chart-title">{{ __('Questions List') }}</h6>
+                        <p class="dash-chart-sub">{{ __('Manage FAQ questions and answers') }}</p>
+                    </div>
                 </div>
-                <div class="card-body p-4">
-                    <div class="table-responsive rounded-3 shadow-sm border border-light-subtle">
-                        <table id="question-table" class="display table table-hover mb-0" style="min-width: 845px; width: 100%;">
-                            <thead class="bg-primary text-white">
+                <div class="p-0">
+                    <div class="table-responsive">
+                        <table id="question-table" class="display subs-datatable" style="min-width:845px; width:100%;">
+                            <thead>
                                 <tr>
-                                    <th style="width: 40%; font-weight: 600;" class="text-white">{{ __('Question') }}</th>
-                                    <th style="width: 40%; font-weight: 600;" class="text-white">{{ __('Answer') }}</th>
-                                    <th style="width: 10%; font-weight: 600;" class="text-white">{{ __('Status') }}</th>
-                                    <th style="width: 10%; font-weight: 600;" class="text-white text-end">{{ __('Actions') }}</th>
+                                    <th style="width:40%;">{{ __('Question') }}</th>
+                                    <th style="width:40%;">{{ __('Answer') }}</th>
+                                    <th style="width:10%;">{{ __('Status') }}</th>
+                                    <th style="width:10%;" class="text-end">{{ __('Actions') }}</th>
                                 </tr>
                             </thead>
-                            <tfoot class="bg-primary text-white border-top">
+                            <tfoot>
                                 <tr>
-                                    <th class="text-white" style="font-weight: 600;">{{ __('Question') }}</th>
-                                    <th class="text-white" style="font-weight: 600;">{{ __('Answer') }}</th>
-                                    <th class="text-white" style="font-weight: 600;">{{ __('Status') }}</th>
-                                    <th class="text-white text-end" style="font-weight: 600;">{{ __('Actions') }}</th>
+                                    <th>{{ __('Question') }}</th>
+                                    <th>{{ __('Answer') }}</th>
+                                    <th>{{ __('Status') }}</th>
+                                    <th class="text-end">{{ __('Actions') }}</th>
                                 </tr>
                             </tfoot>
                         </table>
@@ -86,9 +94,9 @@
 <div class="modal fade" id="addQuestionModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-primary text-white border-0 py-3">
-                <h5 class="modal-title fw-bold text-white"><i class="fas fa-plus-circle me-2"></i>{{ __('Add New Question') }}</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i>{{ __('Add New Question') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             
             <form id="addQuestionForm">
@@ -142,11 +150,9 @@
 <div class="modal fade" id="editQuestionModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-primary text-white border-0 py-3"> 
-                <h5 class="modal-title fw-bold text-white">
-                    <i class="fas fa-edit me-2"></i>{{ __('Edit Question') }}
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-edit me-2"></i>{{ __('Edit Question') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             
             <form id="editQuestionForm">
@@ -201,132 +207,39 @@
 
 @push('styles')
 <style>
-    .custom-switch .form-check-input { cursor: pointer; width: 3em; height: 1.5em; }
-    .custom-switch .form-check-label { cursor: pointer; padding-top: 3px; }
-    
-    /* Premium overrides to Navy color #041741 */
-    .bg-primary {
-        background-color: #041741 !important;
-    }
-    .text-primary {
-        color: #041741 !important;
-    }
-    .btn-primary {
-        background-color: #041741 !important;
-        border-color: #041741 !important;
-        box-shadow: 0 4px 10px rgba(4, 23, 65, 0.2) !important;
-    }
-    .btn-primary:hover {
-        background-color: #062261 !important;
-        border-color: #062261 !important;
-        box-shadow: 0 6px 15px rgba(4, 23, 65, 0.3) !important;
-    }
-    .form-control:focus {
-        border-color: #041741 !important;
-        box-shadow: 0 0 0 4px rgba(4, 23, 65, 0.1) !important;
-    }
-    
-    /* Backdrop blur for modals */
-    .modal {
-        backdrop-filter: blur(5px);
-    }
-    .modal-content {
-        border-radius: 16px !important;
-        overflow: hidden;
-    }
-    
-    /* Premium DataTables Overrides */
-    table.dataTable thead th, table.dataTable tfoot th {
-        color: #fff !important;
-        border-bottom: none !important;
-    }
-    table.dataTable.no-footer {
-        border-bottom: 1px solid #e9ecef !important;
-    }
-    table.dataTable tbody tr:hover {
-        background-color: rgba(4, 23, 65, 0.03) !important;
-    }
-    table.dataTable tbody td {
-        vertical-align: middle;
-    }
-    .dataTables_wrapper .dataTables_paginate .paginate_button.current, 
-    .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
-        background: #041741 !important;
-        color: white !important;
-        border: 1px solid #041741 !important;
-        border-radius: 8px;
-        box-shadow: 0 2px 5px rgba(4, 23, 65, 0.2);
-    }
-    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-        background: rgba(4, 23, 65, 0.1) !important;
-        color: #041741 !important;
-        border: 1px solid transparent !important;
-        border-radius: 8px;
-    }
-    .dataTables_wrapper .dataTables_filter input {
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        padding: 5px 12px;
-        outline: none;
-        transition: all 0.3s ease;
-    }
-    .dataTables_wrapper .dataTables_filter input:focus {
-        border-color: #041741;
-        box-shadow: 0 0 0 3px rgba(4, 23, 65, 0.1);
-    }
-    .dataTables_wrapper .dataTables_length select {
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        padding: 4px;
-        outline: none;
-    }
-    .dataTables_wrapper {
-        padding-top: 10px;
-    }
-    
-    /* Action Buttons Hover Effect */
-    .action-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
-    .badge.light {
-        background-color: rgba(23, 162, 184, 0.1);
-    }
-    .badge-success.light {
-        background-color: rgba(40, 167, 69, 0.1);
-        color: #28a745;
-    }
-    
-    /* Replaces the red color of Inactive/Danger elements with #041741 */
-    .text-danger {
-        color: #041741 !important;
-    }
-    .badge-danger.light {
-        background-color: rgba(4, 23, 65, 0.1) !important;
-        color: #041741 !important;
-    }
-    .btn-outline-danger {
-        color: #041741 !important;
-        border-color: #041741 !important;
-    }
-    .btn-outline-danger:hover {
-        background-color: #041741 !important;
-        color: #fff !important;
-    }
-    .btn-danger {
-        background-color: #041741 !important;
-        border-color: #041741 !important;
-        box-shadow: 0 4px 10px rgba(4, 23, 65, 0.2) !important;
-    }
-    .btn-danger:hover {
-        background-color: #062261 !important;
-        border-color: #062261 !important;
-    }
-    
-    /* Replace danger icon color gradient in stats cards component */
-    .stat-icon.danger {
-        background: linear-gradient(135deg, #041741 0%, #0c2b73 100%) !important;
-    }
+    :root { --dash-navy:#041741; --dash-surface:#ffffff; --dash-text:#1e293b; --dash-muted:#64748b; --dash-border:#e8edf5; --dash-radius:16px; --dash-shadow:0 4px 24px rgba(4,23,65,0.06); }
+    /* KPI Cards */
+    .kpi-card { display:flex; align-items:center; gap:16px; background:var(--dash-surface); border:1px solid var(--dash-border); border-radius:var(--dash-radius); padding:20px 22px; box-shadow:var(--dash-shadow); transition:box-shadow 0.3s; }
+    .kpi-card:hover { box-shadow:0 12px 36px rgba(4,23,65,0.13); }
+    .kpi-icon { width:52px; height:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.3rem; flex-shrink:0; }
+    .kpi-value { font-size:26px; font-weight:800; color:var(--dash-text); line-height:1; margin-bottom:4px; }
+    .kpi-label { font-size:12px; color:var(--dash-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.5px; }
+    /* Table Card */
+    .dash-table-card { background:var(--dash-surface); border-radius:var(--dash-radius); border:1px solid var(--dash-border); box-shadow:var(--dash-shadow); overflow:hidden; margin-bottom:30px; }
+    .subs-card-header { display:flex; justify-content:space-between; align-items:center; padding:22px 24px 16px; border-bottom:1px solid var(--dash-border); flex-wrap:wrap; gap:12px; }
+    .dash-chart-title { font-size:15px; font-weight:700; color:var(--dash-text); margin-bottom:3px; }
+    .dash-chart-sub { font-size:11.5px; color:var(--dash-muted); margin:0; }
+    .subs-datatable { width:100% !important; }
+    .subs-datatable thead th { background:#f8fafc; color:var(--dash-muted); font-weight:700; font-size:12px; text-transform:uppercase; letter-spacing:0.5px; padding:14px 16px; border-bottom:1px solid var(--dash-border); border-top:none; }
+    .subs-datatable tbody tr:hover { background:rgba(4,23,65,0.025); }
+    .subs-datatable tbody td { padding:13px 16px; vertical-align:middle; color:var(--dash-text); font-size:13.5px; border-bottom:1px solid var(--dash-border); }
+    .subs-datatable tfoot th { background:#f8fafc; color:var(--dash-muted); font-size:11px; padding:10px 16px; }
+    /* Modal */
+    .modal { backdrop-filter:blur(4px); }
+    .modal-content { border-radius:16px !important; overflow:hidden; border:none !important; }
+    .modal-header { background:var(--dash-navy); color:#fff; padding:18px 24px; }
+    .modal-header .modal-title { color:#fff; font-weight:700; font-size:15px; }
+    .modal-header .btn-close { filter:invert(1); }
+    .modal-footer { background:#f8fafc; border-top:1px solid var(--dash-border); padding:14px 24px; }
+    /* Buttons */
+    .btn-primary { background:var(--dash-navy) !important; border-color:var(--dash-navy) !important; box-shadow:0 4px 10px rgba(4,23,65,0.2) !important; }
+    .btn-primary:hover { background:#062261 !important; border-color:#062261 !important; }
+    .form-control:focus, .form-select:focus { border-color:var(--dash-navy) !important; box-shadow:0 0 0 3px rgba(4,23,65,0.1) !important; }
+    .custom-switch .form-check-input { cursor:pointer; width:3em; height:1.5em; }
+    /* DataTables */
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current, .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover { background:var(--dash-navy) !important; color:#fff !important; border:1px solid var(--dash-navy) !important; border-radius:8px; }
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover { background:rgba(4,23,65,0.1) !important; color:var(--dash-navy) !important; border-radius:8px; }
+    #question-table_filter { display:none !important; }
 </style>
 @endpush
 

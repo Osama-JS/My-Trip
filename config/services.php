@@ -66,9 +66,11 @@ return [
         'credentials_path' => env('FIREBASE_CREDENTIALS_PATH', 'storage/app/firebase/service-account.json'),
     ],
 
-    'green_api' => [
-        'id_instance' => env('GREEN_API_ID_INSTANCE'),
-        'token_instance' => env('GREEN_API_TOKEN_INSTANCE'),
+    'automize' => [
+        'url' => env('AUTOMIZE_API_URL', 'https://api.saei.automize.sa/api'), // Automize REST API
+        'phone_number_id' => env('AUTOMIZE_PHONE_NUMBER_ID'),
+        'token' => env('AUTOMIZE_ACCESS_TOKEN'),
+        'template_id' => env('AUTOMIZE_TEMPLATE_ID'),
     ],
 
     'whatsapp' => [

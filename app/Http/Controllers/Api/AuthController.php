@@ -266,9 +266,17 @@ class AuthController extends Controller
 
         $phone = ltrim($request->phone, '0');
         $countryCode = '+' . ltrim($request->country_code, '+');
-        $user = User::where('phone', $phone)->where('country_code', $countryCode)->first();
+        $fullPhone = ltrim($countryCode, '+') . $phone;
+        
+        // Send WhatsApp OTP via Automize
+        $whatsAppService = new WhatsAppService();
+        $verificationId = $whatsAppService->startVerification($fullPhone);
 
-        $otpCode = env('WHATSAPP_SIMULATION', false) ? '1234' : rand(1000, 9999);
+        if (!$verificationId) {
+            return $this->apiResponse(true, __('Failed to send OTP. Please try again later.'), null, null, 500);
+        }
+
+        $user = User::where('phone', $phone)->where('country_code', $countryCode)->first();
 
         if (!$user) {
             // Create Guest User
@@ -281,27 +289,17 @@ class AuthController extends Controller
                 'password' => Hash::make(\Illuminate\Support\Str::random(16)),
                 'user_type' => User::TYPE_CUSTOMER,
                 'is_guest' => true,
-                'otp_code' => Hash::make($otpCode),
+                'otp_code' => $verificationId, // Store plain verification_id
                 'otp_expires_at' => Carbon::now()->addMinutes(10),
                 'status' => 'active'
             ]);
         } else {
-            $user->otp_code = Hash::make($otpCode);
+            $user->otp_code = $verificationId; // Store plain verification_id
             $user->otp_expires_at = Carbon::now()->addMinutes(10);
             $user->save();
         }
 
-        // Send WhatsApp OTP
-        $whatsAppService = new WhatsAppService();
-        $fullPhone = ltrim($request->country_code, '+') . ltrim($phone, '0');
-        
-        $isSent = $whatsAppService->sendOTP($fullPhone, $otpCode, app()->getLocale());
-
-        if ($isSent || env('WHATSAPP_SIMULATION', false)) {
-            return $this->apiResponse(false, __('OTP sent successfully to your WhatsApp.'), null, null, 200);
-        }
-
-        return $this->apiResponse(true, __('Failed to send OTP. Please try again later.'), null, null, 500);
+        return $this->apiResponse(false, __('OTP sent successfully to your WhatsApp.'), null, null, 200);
     }
 
     #[OA\Post(
@@ -351,11 +349,11 @@ class AuthController extends Controller
             return $this->apiResponse(true, __('OTP expired or invalid.'), null, null, 422);
         }
 
-        if (!Hash::check($request->otp_code, $user->otp_code)) {
-            // Also check for raw match if not hashed previously (fallback)
-            if ($user->otp_code !== $request->otp_code) {
-                return $this->apiResponse(true, __('Invalid OTP.'), null, null, 422);
-            }
+        $whatsAppService = new WhatsAppService();
+        $isApproved = $whatsAppService->checkVerification($user->otp_code, $request->otp_code);
+
+        if (!$isApproved) {
+            return $this->apiResponse(true, __('Invalid OTP.'), null, null, 422);
         }
 
         // Success

@@ -43,23 +43,23 @@ class TripBookingController extends Controller
 
             $data = $bookings->map(function ($booking) {
                 $stateMap = [
-                    TripBooking::STATE_AWAITING_PAYMENT => ['class' => 'warning', 'label' => __('Awaiting Payment')],
-                    TripBooking::STATE_PREPARING => ['class' => 'info', 'label' => __('Preparing')],
-                    TripBooking::STATE_ISSUING_TICKETS => ['class' => 'primary', 'label' => __('Issuing Tickets')],
-                    TripBooking::STATE_TICKETS_UPLOADED => ['class' => 'success', 'label' => __('Tickets Uploaded')],
-                    TripBooking::STATE_COMPLETED => ['class' => 'success', 'label' => __('Completed')],
-                    TripBooking::STATE_CANCELLED => ['class' => 'danger', 'label' => __('Cancelled')],
+                    TripBooking::STATE_AWAITING_PAYMENT => ['class' => 'badge-state--amber', 'label' => __('Awaiting Payment')],
+                    TripBooking::STATE_PREPARING => ['class' => 'badge-state--blue', 'label' => __('Preparing')],
+                    TripBooking::STATE_ISSUING_TICKETS => ['class' => 'badge-state--blue', 'label' => __('Issuing Tickets')],
+                    TripBooking::STATE_TICKETS_UPLOADED => ['class' => 'badge-state--green', 'label' => __('Tickets Uploaded')],
+                    TripBooking::STATE_COMPLETED => ['class' => 'badge-state--green', 'label' => __('Completed')],
+                    TripBooking::STATE_CANCELLED => ['class' => 'badge-state--red', 'label' => __('Cancelled')],
                 ];
 
-                $stateInfo = $stateMap[$booking->booking_state] ?? ['class' => 'secondary', 'label' => $booking->booking_state];
-                $statusBadge = '<span class="badge badge-' . $stateInfo['class'] . '">' . $stateInfo['label'] . '</span>';
+                $stateInfo = $stateMap[$booking->booking_state] ?? ['class' => 'badge-state--default', 'label' => $booking->booking_state];
+                $statusBadge = '<span class="badge-state ' . $stateInfo['class'] . '">' . $stateInfo['label'] . '</span>';
 
                 return [
                     'id' => $booking->id,
                     'user' => $booking->user ? $booking->user->full_name . '<br><small class="text-muted">' . $booking->user->phone . '</small>' : __('Guest'),
                     'trip' => $booking->trip ? $booking->trip->title . '<br><small class="text-muted">' . $booking->booking_date->format('Y-m-d') . '</small>' : __('Deleted Trip'),
                     'price' => number_format($booking->total_price, 2) . ' ' . __('SAR'),
-                    'tickets' => '<span class="badge badge-info">' . $booking->tickets_count . '</span>',
+                    'tickets' => '<span class="badge-state badge-state--default">' . $booking->tickets_count . '</span>',
                     'status' => $statusBadge,
                     'created_at' => $booking->created_at->format('Y-m-d H:i'),
                     'actions' => $this->getActionButtons($booking),
@@ -76,7 +76,7 @@ class TripBookingController extends Controller
     {
         $showBtn = '';
         if (auth()->user()->can('view bookings')) {
-            $showBtn = '<a href="' . route('admin.trip-bookings.show', $booking->id) . '" class="btn btn-primary btn-sm me-1" title="' . __('View Details') . '"><i class="fas fa-eye"></i></a>';
+            $showBtn = '<a href="' . route('admin.trip-bookings.show', $booking->id) . '" class="act-action-btn" title="' . __('View Details') . '"><i class="fas fa-eye"></i></a>';
         }
 
         // Status Buttons
@@ -85,11 +85,11 @@ class TripBookingController extends Controller
             $statusBtns .= '<form action="' . route('admin.trip-bookings.destroy', $booking->id) . '" method="POST" class="d-inline confirm-action" data-confirm-message="' . __('Are you sure you want to delete this booking?') . '">
                 ' . csrf_field() . '
                 ' . method_field('DELETE') . '
-                <button type="submit" class="btn btn-danger btn-sm" title="' . __('Delete') . '"><i class="fas fa-trash"></i></button>
+                <button type="submit" class="act-action-btn" style="color: #ef4444; background: rgba(239,68,68,0.1); border:none;" title="' . __('Delete') . '"><i class="fas fa-trash"></i></button>
             </form>';
         }
 
-        return '<div class="d-flex">' . $showBtn . $statusBtns . '</div>';
+        return '<div class="d-flex align-items-center gap-1">' . $showBtn . $statusBtns . '</div>';
     }
 
     /**

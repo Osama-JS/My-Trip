@@ -8,62 +8,125 @@ use Illuminate\Support\Facades\Log;
 class WhatsAppService
 {
     /**
-     * Send an OTP via WhatsApp (Green API)
+     * Start OTP Verification via Automize Managed OTP API
      *
      * @param string $phone
-     * @param string $code
-     * @param string $lang
-     * @return bool
+     * @return string|false Returns verification_id on success, false on failure.
      */
-    public function sendOTP($phone, $code, $lang = 'ar')
+    public function startVerification($phone)
     {
         // For testing/simulation, we can use a hardcoded OTP (e.g. 1234)
         if (config('services.whatsapp.simulation', false)) {
-            Log::info("SIMULATED WHATSAPP OTP sent to {$phone}: {$code}");
-            return true;
+            Log::info("SIMULATED WHATSAPP OTP sent to {$phone}");
+            // Return a dummy verification ID for simulation
+            return 'sim_' . time();
         }
 
-        $idInstance = config('services.green_api.id_instance');
-        $apiTokenInstance = config('services.green_api.token_instance');
+        $apiUrl = config('services.automize.url'); // Expected: https://api.saei.automize.sa/api
+        $phoneNumberId = config('services.automize.phone_number_id');
+        $token = config('services.automize.token');
+        $templateId = config('services.automize.template_id');
 
-        if (!$idInstance || !$apiTokenInstance) {
-            Log::warning('Green API credentials are not set. idInstance=' . ($idInstance ? 'set' : 'MISSING') . ', token=' . ($apiTokenInstance ? 'set' : 'MISSING'));
+        if (!$apiUrl || !$phoneNumberId || !$token || !$templateId) {
+            Log::warning('Automize credentials are not fully set.');
             return false;
         }
 
-        $messages = [
-            'ar' => "مرحباً بك في تطبيق Flyvio.\nكود التحقق الخاص بك هو: *{$code}*\nالرجاء عدم مشاركة هذا الكود مع أي شخص اخر.",
-            'en' => "Welcome to Flyvio App.\nYour verification code is: *{$code}*\nPlease do not share this code with anyone else.",
+        // Format phone to E.164 format with +
+        $phoneFormatted = '+' . ltrim($phone, '+');
+        
+        $endpoint = rtrim($apiUrl, '/') . '/v1/verify/start';
+
+        $payload = [
+            'to' => $phoneFormatted,
+            'from' => $phoneNumberId,
+            'template_id' => (int) $templateId
         ];
 
-        // Format phone to international format without +
-        $phoneFormatted = ltrim($phone, '+');
-        $chatId = $phoneFormatted . '@c.us';
-
-        $url = "https://api.green-api.com/waInstance{$idInstance}/sendMessage/{$apiTokenInstance}";
-
-        // Normalize language code
-        $langCode = explode('_', $lang)[0];
-        $message = $messages[$langCode] ?? $messages['ar'];
-
         try {
-            $response = Http::post($url, [
-                'chatId' => $chatId,
-                'message' => $message,
-            ]);
+            $response = Http::withToken($token)
+                ->post($endpoint, $payload);
 
             if ($response->successful()) {
-                Log::info("WhatsApp OTP sent successfully to {$phone}");
-                return true;
+                $responseData = $response->json();
+                $verificationId = $responseData['verification_id'] ?? null;
+                
+                if ($verificationId) {
+                    Log::info("WhatsApp OTP verification started via Automize for {$phone}. ID: {$verificationId}");
+                    return (string) $verificationId;
+                } else {
+                    Log::error("Automize verification started but no verification_id returned for {$phone}", ['response' => $responseData]);
+                    return false;
+                }
             } else {
-                Log::error("Failed to send WhatsApp OTP to {$phone}", [
+                Log::error("Failed to start WhatsApp OTP via Automize for {$phone}", [
                     'response' => $response->json(),
-                    'status' => $response->status()
+                    'status' => $response->status(),
+                    'payload' => $payload
                 ]);
                 return false;
             }
         } catch (\Exception $e) {
-            Log::error("WhatsApp OTP Exception: " . $e->getMessage());
+            Log::error("WhatsApp OTP (Automize Start) Exception: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Check OTP Verification via Automize Managed OTP API
+     *
+     * @param string $verificationId
+     * @param string $code
+     * @return bool Returns true if approved, false otherwise.
+     */
+    public function checkVerification($verificationId, $code)
+    {
+        if (config('services.whatsapp.simulation', false)) {
+            Log::info("SIMULATED WHATSAPP OTP checked. ID: {$verificationId}, Code: {$code}");
+            // In simulation mode, accept '1234' as valid code
+            return $code === '1234';
+        }
+
+        $apiUrl = config('services.automize.url');
+        $token = config('services.automize.token');
+
+        if (!$apiUrl || !$token) {
+            Log::warning('Automize credentials are not fully set for checking verification.');
+            return false;
+        }
+
+        $endpoint = rtrim($apiUrl, '/') . '/v1/verify/check';
+
+        $payload = [
+            'verification_id' => $verificationId,
+            'code' => $code
+        ];
+
+        try {
+            $response = Http::withToken($token)
+                ->post($endpoint, $payload);
+
+            if ($response->successful()) {
+                $responseData = $response->json();
+                $status = $responseData['status'] ?? '';
+                
+                if ($status === 'approved') {
+                    Log::info("WhatsApp OTP checked successfully via Automize. ID: {$verificationId}");
+                    return true;
+                } else {
+                    Log::warning("WhatsApp OTP check denied/expired via Automize. ID: {$verificationId}, Status: {$status}");
+                    return false;
+                }
+            } else {
+                Log::error("Failed to check WhatsApp OTP via Automize.", [
+                    'response' => $response->json(),
+                    'status' => $response->status(),
+                    'payload' => $payload
+                ]);
+                return false;
+            }
+        } catch (\Exception $e) {
+            Log::error("WhatsApp OTP (Automize Check) Exception: " . $e->getMessage());
             return false;
         }
     }

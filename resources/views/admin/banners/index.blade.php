@@ -20,44 +20,53 @@
 @section('content')
 
     <div class="row my-2">
-        <div class="col-xl-4 col-sm-6">
-            <x-stats-card
-                :label="__('Total Banners')"
-                :value="$stats['total']"
-                icon="fas fa-images"
-                color="primary"
-            />
+        <div class="col-xl-4 col-sm-6 mb-3 mb-xl-0">
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background:linear-gradient(135deg,#041741,#0c2b73);"><i class="fas fa-images"></i></div>
+                <div class="kpi-body">
+                    <div class="kpi-value">{{ $stats['total'] }}</div>
+                    <div class="kpi-label">{{ __('Total Banners') }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-sm-6 mb-3 mb-xl-0">
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background:linear-gradient(135deg,#10b981,#059669);"><i class="fas fa-check-circle"></i></div>
+                <div class="kpi-body">
+                    <div class="kpi-value">{{ $stats['active'] }}</div>
+                    <div class="kpi-label">{{ __('Active') }}</div>
+                </div>
+            </div>
         </div>
         <div class="col-xl-4 col-sm-6">
-            <x-stats-card
-                :label="__('Active')"
-                :value="$stats['active']"
-                icon="fas fa-check-circle"
-                color="success"
-            />
-        </div>
-        <div class="col-xl-4 col-sm-6">
-            <x-stats-card
-                :label="__('Inactive')"
-                :value="$stats['inactive']"
-                icon="fas fa-times-circle"
-                color="danger"
-            />
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background:linear-gradient(135deg,#f59e0b,#b45309);"><i class="fas fa-times-circle"></i></div>
+                <div class="kpi-body">
+                    <div class="kpi-value">{{ $stats['inactive'] }}</div>
+                    <div class="kpi-label">{{ __('Inactive') }}</div>
+                </div>
+            </div>
         </div>
     </div>
 
     <div class="row">
         <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h4 class="card-title">{{ __('Banners List') }}</h4>
-                </div>
-                <div class="card-body">
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i> {{ __('يمكنك إعادة ترتيب البانرات بسحب الصفوف في الجدول.') }}
+            <div class="dash-table-card">
+                <div class="subs-card-header">
+                    <div>
+                        <h6 class="dash-chart-title">{{ __('Banners List') }}</h6>
+                        <p class="dash-chart-sub">{{ __('Drag rows to reorder banners') }}</p>
                     </div>
+                </div>
+                <div class="p-3 pb-0">
+                    <div class="banner-info-bar">
+                        <i class="fas fa-grip-vertical me-2"></i>
+                        {{ __('يمكنك إعادة ترتيب البانرات بسحب الصفوف في الجدول.') }}
+                    </div>
+                </div>
+                <div class="p-0">
                     <div class="table-responsive">
-                        <table id="banners-table" class="display" style="min-width: 845px">
+                        <table id="banners-table" class="display subs-datatable" style="min-width:845px">
                             <thead>
                                 <tr>
                                     <th>{{ __('Image') }}</th>
@@ -85,11 +94,10 @@
 <div class="modal fade" id="addBannerModal" tabindex="-1">
     <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4">
-
             <!-- Header -->
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold">
-                    <i class="fas fa-image text-primary me-2"></i>
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-image me-2"></i>
                     {{ __('Add New Banner') }}
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -206,11 +214,10 @@
 <div class="modal fade" id="editBannerModal" tabindex="-1">
     <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4">
-
             <!-- Header -->
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold">
-                    <i class="fas fa-edit text-primary me-2"></i>
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>
                     {{ __('Edit Banner') }}
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -508,34 +515,43 @@
 
 @push('styles')
 <style>
-    /* Override danger badge (Inactive status) to light navy theme */
-    .badge-danger {
-        background-color: rgba(4, 23, 65, 0.1) !important;
-        color: #041741 !important;
-    }
-    
-    /* Override danger button (Delete button) to navy theme */
-    .btn-danger {
-        background-color: #041741 !important;
-        border-color: #041741 !important;
-        color: #fff !important;
-        box-shadow: 0 4px 10px rgba(4, 23, 65, 0.2) !important;
-    }
-    .btn-danger:hover {
-        background-color: #062261 !important;
-        border-color: #062261 !important;
-        color: #fff !important;
-    }
-    
-    /* Override danger icon color gradient in stats card component to navy */
-    .stat-icon.danger {
-        background: linear-gradient(135deg, #041741 0%, #0c2b73 100%) !important;
-    }
-    
-    /* Ensure general validation / text-danger matches navy theme if present */
-    .text-danger {
-        color: #041741 !important;
-    }
+    :root { --dash-navy:#041741; --dash-surface:#ffffff; --dash-text:#1e293b; --dash-muted:#64748b; --dash-border:#e8edf5; --dash-radius:16px; --dash-shadow:0 4px 24px rgba(4,23,65,0.06); --dash-shadow-hover:0 12px 36px rgba(4,23,65,0.13); }
+    /* KPI */
+    .kpi-card { display:flex; align-items:center; gap:16px; background:var(--dash-surface); border:1px solid var(--dash-border); border-radius:var(--dash-radius); padding:20px 22px; box-shadow:var(--dash-shadow); transition:box-shadow 0.3s,transform 0.2s; }
+    .kpi-card:hover { box-shadow:var(--dash-shadow-hover); transform:translateY(-2px); }
+    .kpi-icon { width:52px; height:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.3rem; flex-shrink:0; }
+    .kpi-value { font-size:26px; font-weight:800; color:var(--dash-text); line-height:1; margin-bottom:4px; }
+    .kpi-label { font-size:12px; color:var(--dash-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.5px; }
+    /* Table Card */
+    .dash-table-card { background:var(--dash-surface); border-radius:var(--dash-radius); border:1px solid var(--dash-border); box-shadow:var(--dash-shadow); overflow:hidden; margin-bottom:30px; transition:box-shadow 0.3s; }
+    .dash-table-card:hover { box-shadow:var(--dash-shadow-hover); }
+    .subs-card-header { display:flex; justify-content:space-between; align-items:center; padding:22px 24px 16px; border-bottom:1px solid var(--dash-border); flex-wrap:wrap; gap:12px; }
+    .dash-chart-title { font-size:15px; font-weight:700; color:var(--dash-text); margin-bottom:3px; }
+    .dash-chart-sub { font-size:11.5px; color:var(--dash-muted); margin:0; }
+    .subs-datatable { width:100% !important; }
+    .subs-datatable thead th { background:#f8fafc; color:var(--dash-muted); font-weight:700; font-size:12px; text-transform:uppercase; letter-spacing:0.5px; padding:14px 16px; border-bottom:1px solid var(--dash-border); border-top:none; white-space:nowrap; }
+    .subs-datatable tbody tr:hover { background:rgba(4,23,65,0.025); }
+    .subs-datatable tbody td { padding:13px 16px; vertical-align:middle; color:var(--dash-text); font-size:13.5px; border-bottom:1px solid var(--dash-border); }
+    /* Info bar */
+    .banner-info-bar { background:rgba(4,23,65,0.05); border:1px solid rgba(4,23,65,0.12); border-radius:10px; padding:10px 16px; font-size:13px; color:var(--dash-navy); font-weight:600; margin-bottom:0; }
+    /* Modal */
+    .modal { backdrop-filter:blur(4px); }
+    .modal-content { border-radius:16px !important; overflow:hidden; border:none !important; }
+    .modal-header { background:var(--dash-navy) !important; padding:18px 24px !important; border-bottom:none !important; }
+    .modal-header .modal-title { color:#fff !important; font-weight:700 !important; font-size:15px !important; }
+    .modal-header .btn-close { filter:invert(1) !important; }
+    .modal-footer { background:#f8fafc; border-top:1px solid var(--dash-border); }
+    /* Buttons */
+    .btn-primary { background:var(--dash-navy) !important; border-color:var(--dash-navy) !important; box-shadow:0 4px 10px rgba(4,23,65,0.2) !important; }
+    .btn-primary:hover { background:#062261 !important; border-color:#062261 !important; }
+    .form-control:focus, .form-select:focus { border-color:var(--dash-navy) !important; box-shadow:0 0 0 3px rgba(4,23,65,0.1) !important; }
+    /* Badge danger overrides */
+    .badge-danger { background-color:rgba(4,23,65,0.1) !important; color:#041741 !important; }
+    /* DataTables */
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current, .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover { background:var(--dash-navy) !important; color:#fff !important; border:1px solid var(--dash-navy) !important; border-radius:8px; }
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover { background:rgba(4,23,65,0.1) !important; color:var(--dash-navy) !important; border-radius:8px; }
+    /* Drag rows */
+    .draggable-row { cursor:grab; } .draggable-row:active { cursor:grabbing; }
 </style>
 @endpush
 

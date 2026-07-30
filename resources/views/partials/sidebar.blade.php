@@ -20,12 +20,7 @@
                 </a>
             </li>
 
-            <li>
-                <a href="{{ route('admin.notifications.index') }}" aria-expanded="false">
-                    <i class="fas fa-bell"></i>
-                    <span class="nav-text">{{ __('Notifications') }}</span>
-                </a>
-            </li>
+
 
             <li>
                 <a href="{{ route('admin.subscribers.index') }}" aria-expanded="false">

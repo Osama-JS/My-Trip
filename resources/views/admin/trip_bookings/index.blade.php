@@ -13,171 +13,145 @@
     
     @push('styles')
     <style>
-        .premium-filter-bar {
-            background: #fff;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.05);
-            margin-bottom: 35px;
-            border: 1px solid #f0f0f0;
-            display: block;
-            width: 100%;
-        }
-        .filter-group {
-            position: relative;
-            margin-bottom: 0;
-        }
-        .filter-group i {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #488eff;
-            z-index: 10;
-        }
-        .filter-group .form-control {
-            padding-left: 40px;
-            height: 50px;
-            border-radius: 10px;
-            border: 1px solid #eef2f7;
-            background: #fcfdfe;
-            transition: all 0.3s ease;
-        }
-        .filter-group .form-control:focus {
-            border-color: #488eff;
-            box-shadow: 0 0 0 4px rgba(72, 142, 255, 0.1);
-            background: #fff;
-        }
-        .filter-label {
-            font-size: 13px;
-            font-weight: 700;
-            color: #4a5568;
-            margin-bottom: 10px;
-            display: block;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-        }
-        .form-section-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: #2d3748;
-            margin: 20px 0 15px 0;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #edf2f7;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .modal-xl { max-width: 1200px; }
-        .border-dashed { border-style: dashed !important; }
-
-        /* Fix for RTL if needed, but assuming LTR for now as per code items */
-        .ms-auto { margin-right: 0 !important; margin-left: auto !important; }
-
-        .custom-table {
-            border-collapse: separate;
-            border-spacing: 0 10px;
-            width: 100%;
-        }
-        .custom-table thead th {
-            border: none;
-            background: #f8f9fa;
-            color: #6c757d;
-            font-weight: 600;
-            font-size: 13px;
-            text-transform: uppercase;
-            padding: 15px;
-        }
-        .custom-table tbody tr {
-            background: #fff;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-        .custom-table tbody tr:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(4, 23, 65, 0.08);
-        }
-        .custom-table tbody td {
-            border: none;
-            padding: 15px;
-            vertical-align: middle;
-        }
-        .custom-table tbody td:first-child {
-            border-top-left-radius: 8px;
-            border-bottom-left-radius: 8px;
-        }
-        .custom-table tbody td:last-child {
-            border-top-right-radius: 8px;
-            border-bottom-right-radius: 8px;
+        :root {
+            --dash-navy: #041741;
+            --dash-navy-2: #0a2456;
+            --dash-gold: #f5a623;
+            --dash-surface: #ffffff;
+            --dash-text: #1e293b;
+            --dash-muted: #64748b;
+            --dash-border: #e8edf5;
+            --dash-radius: 16px;
+            --dash-shadow: 0 4px 24px rgba(4, 23, 65, 0.06);
+            --dash-shadow-hover: 0 12px 36px rgba(4, 23, 65, 0.13);
         }
 
-        /* Empty state styling */
-        .empty-state {
-            text-align: center;
-            padding: 50px 20px;
-        }
-        .empty-state i {
-            font-size: 4rem;
-            color: #e2e8f0;
-            margin-bottom: 15px;
-        }
-        .empty-state h5 {
-            color: #64748b;
-            font-weight: 600;
-        }
-        .empty-state p {
-            color: #94a3b8;
-            font-size: 14px;
-        }
+        .kpi-card { display: flex; align-items: flex-start; gap: 18px; background: var(--dash-surface); border-radius: var(--dash-radius); padding: 24px; box-shadow: var(--dash-shadow); border: 1px solid var(--dash-border); transition: all 0.3s ease; height: 100%; animation: kpiFadeIn 0.6s ease backwards; }
+        .kpi-card:hover { transform: translateY(-5px); box-shadow: var(--dash-shadow-hover); }
+        @keyframes kpiFadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+        .kpi-card:nth-child(1) { animation-delay: 0.00s; } .kpi-card:nth-child(2) { animation-delay: 0.08s; } .kpi-card:nth-child(3) { animation-delay: 0.16s; } .kpi-card:nth-child(4) { animation-delay: 0.24s; }
+        .kpi-icon-wrap { flex-shrink: 0; width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
+        .kpi-card--blue   .kpi-icon-wrap { background: rgba(4,23,65,0.09);   color: var(--dash-navy); }
+        .kpi-card--green  .kpi-icon-wrap { background: rgba(16,185,129,0.12); color: #059669; }
+        .kpi-card--amber  .kpi-icon-wrap { background: rgba(245,158,11,0.12); color: #d97706; }
+        .kpi-card--red    .kpi-icon-wrap { background: rgba(239,68,68,0.12);  color: #dc2626; }
+        .kpi-card--blue   { border-left: 4px solid var(--dash-navy); }
+        .kpi-card--green  { border-left: 4px solid #10b981; }
+        .kpi-card--amber  { border-left: 4px solid #f59e0b; }
+        .kpi-card--red    { border-left: 4px solid #ef4444; }
+        [dir="rtl"] .kpi-card--blue  { border-left: none; border-right: 4px solid var(--dash-navy); }
+        [dir="rtl"] .kpi-card--green { border-left: none; border-right: 4px solid #10b981; }
+        [dir="rtl"] .kpi-card--amber { border-left: none; border-right: 4px solid #f59e0b; }
+        [dir="rtl"] .kpi-card--red   { border-left: none; border-right: 4px solid #ef4444; }
+        .kpi-info { flex: 1; }
+        .kpi-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: var(--dash-muted); display: block; margin-bottom: 6px; }
+        .kpi-value { font-size: 1.85rem; font-weight: 800; color: var(--dash-text); margin-bottom: 8px; line-height: 1.1; }
+
+        .dash-table-card { background: var(--dash-surface); border-radius: var(--dash-radius); border: 1px solid var(--dash-border); box-shadow: var(--dash-shadow); overflow: hidden; transition: box-shadow 0.3s; margin-bottom: 30px; }
+        .dash-table-card:hover { box-shadow: var(--dash-shadow-hover); }
+        .subs-card-header { display: flex; justify-content: space-between; align-items: center; padding: 22px 24px 16px; border-bottom: 1px solid var(--dash-border); flex-wrap: wrap; gap: 16px; }
+        .dash-chart-title { font-size: 15px; font-weight: 700; color: var(--dash-text); margin-bottom: 3px; }
+        .dash-chart-sub   { font-size: 11.5px; color: var(--dash-muted); margin: 0; }
+
+        .subs-filters { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .subs-search-wrap { position: relative; display: flex; align-items: center; background: #f8fafc; border: 1px solid var(--dash-border); border-radius: 50px; padding: 0 14px; height: 38px; min-width: 180px; transition: all 0.25s ease; }
+        .subs-search-wrap:focus-within { border-color: var(--dash-navy); box-shadow: 0 0 0 3px rgba(4,23,65,0.08); background: #fff; }
+        .subs-search-icon { color: var(--dash-muted); font-size: 13px; flex-shrink: 0; }
+        .subs-search-input { border: none; background: transparent; outline: none; font-size: 13px; color: var(--dash-text); width: 100%; padding: 0 0 0 10px; font-weight: 500; }
+        [dir="rtl"] .subs-search-input { padding: 0 10px 0 0; }
+
+        .subs-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .subs-datatable { width: 100% !important; margin-top: 0 !important; }
+        .subs-datatable thead th { background: #f8fafc !important; color: var(--dash-muted) !important; font-weight: 700 !important; font-size: 12px !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; padding: 14px 16px !important; border-bottom: 1px solid var(--dash-border) !important; border-top: none !important; white-space: nowrap; }
+        .subs-datatable tbody tr { transition: background 0.15s ease; }
+        .subs-datatable tbody tr:hover { background: rgba(4,23,65,0.025) !important; }
+        .subs-datatable tbody td { padding: 13px 16px !important; vertical-align: middle !important; color: var(--dash-text) !important; font-size: 13.5px !important; border-bottom: 1px solid var(--dash-border) !important; background: transparent !important; }
+        .subs-datatable tbody tr:last-child td { border-bottom: none !important; }
+        table.dataTable.no-footer { border-bottom: none !important; }
+
+        .dataTables_wrapper .dataTables_paginate { margin-top: 0 !important; display: flex; justify-content: flex-end; gap: 4px; padding: 12px 20px !important; }
+        .dataTables_wrapper .dataTables_paginate .paginate_button { padding: 6px 13px !important; border: 1px solid var(--dash-border) !important; border-radius: 8px !important; background: #fff !important; color: var(--dash-muted) !important; font-weight: 600 !important; font-size: 13px !important; transition: all 0.2s !important; cursor: pointer; }
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover { background: #f1f5f9 !important; color: var(--dash-navy) !important; }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current, .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover { background: var(--dash-navy) !important; border-color: var(--dash-navy) !important; color: #fff !important; }
+        .dataTables_wrapper .dataTables_info { color: var(--dash-muted) !important; font-size: 13px !important; padding: 12px 20px !important; }
+
+        .badge-state { display: inline-flex; align-items: center; font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 50px; }
+        .badge-state--blue    { background: rgba(14,165,233,0.12); color: #0284c7; }
+        .badge-state--green   { background: rgba(16,185,129,0.12); color: #059669; }
+        .badge-state--amber   { background: rgba(245,158,11,0.12); color: #b45309; }
+        .badge-state--red     { background: rgba(239,68,68,0.10);  color: #dc2626; }
+        .badge-state--default { background: #f1f5f9; color: #64748b; }
+
+        .act-action-btn { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; background: rgba(4,23,65,0.07); color: var(--dash-navy); text-decoration: none; transition: all 0.2s ease; font-size: 13px; border: none; }
+        .act-action-btn:hover { background: var(--dash-navy); color: #fff; transform: translateY(-1px); }
+
+        [data-theme-version="dark"] .kpi-card, [data-theme-version="dark"] .dash-table-card { background: #1e1e2d !important; border-color: rgba(255,255,255,0.06) !important; }
+        [data-theme-version="dark"] .kpi-value, [data-theme-version="dark"] .dash-chart-title { color: #fff !important; }
+        [data-theme-version="dark"] .subs-card-header { border-color: rgba(255,255,255,0.06) !important; }
+        [data-theme-version="dark"] .subs-datatable thead th { background: #161625 !important; border-color: rgba(255,255,255,0.06) !important; }
+        [data-theme-version="dark"] .subs-datatable tbody td { color: #e2e8f0 !important; border-color: rgba(255,255,255,0.05) !important; }
+        [data-theme-version="dark"] .subs-datatable tbody tr:hover { background: rgba(255,255,255,0.03) !important; }
+        [data-theme-version="dark"] .subs-search-wrap { background: #161625; border-color: rgba(255,255,255,0.08); }
     </style>
     @endpush
 
     <div class="row my-2">
-        <div class="col-xl-3 col-sm-6">
-            <x-stats-card
-                :label="__('Total Bookings')"
-                :value="$stats['total']"
-                icon="fas fa-calendar-check"
-                color="primary"
-            />
-        </div>
-        <div class="col-xl-3 col-sm-6">
-            <x-stats-card
-                :label="__('Confirmed')"
-                :value="$stats['confirmed']"
-                icon="fas fa-check-circle"
-                color="success"
-            />
-        </div>
-        <div class="col-xl-3 col-sm-6">
-            <x-stats-card
-                :label="__('Pending')"
-                :value="$stats['pending']"
-                icon="fas fa-clock"
-                color="danger"
-
-            />
-        </div>
-        <div class="col-xl-3 col-sm-6">
-            <x-stats-card
-                :label="__('Cancelled')"
-                :value="$stats['cancelled']"
-                icon="fas fa-times-circle"
-                color="warning"
-            />
-        </div>
+                <div class="col-xl-3 col-sm-6 my-2">
+                    <div class="kpi-card kpi-card--blue">
+                        <div class="kpi-icon-wrap"><i class="fas fa-calendar-check"></i></div>
+                        <div class="kpi-info">
+                            <span class="kpi-label">{{ __('Total Bookings') }}</span>
+                            <h3 class="kpi-value">{{ number_format($stats['total']) }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-sm-6 my-2">
+                    <div class="kpi-card kpi-card--green">
+                        <div class="kpi-icon-wrap"><i class="fas fa-check-circle"></i></div>
+                        <div class="kpi-info">
+                            <span class="kpi-label">{{ __('Confirmed') }}</span>
+                            <h3 class="kpi-value">{{ number_format($stats['confirmed']) }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-sm-6 my-2">
+                    <div class="kpi-card kpi-card--red">
+                        <div class="kpi-icon-wrap"><i class="fas fa-clock"></i></div>
+                        <div class="kpi-info">
+                            <span class="kpi-label">{{ __('Pending') }}</span>
+                            <h3 class="kpi-value">{{ number_format($stats['pending']) }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-sm-6 my-2">
+                    <div class="kpi-card kpi-card--amber">
+                        <div class="kpi-icon-wrap"><i class="fas fa-times-circle"></i></div>
+                        <div class="kpi-info">
+                            <span class="kpi-label">{{ __('Cancelled') }}</span>
+                            <h3 class="kpi-value">{{ number_format($stats['cancelled']) }}</h3>
+                        </div>
+                    </div>
+                </div>
     </div>
 
     <div class="row">
         <div class="col-12">
-            <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-header border-0 pb-0">
-                    <h4 class="card-title">{{ __('Trip Bookings') }}</h4>
+            <div class="dash-table-card">
+                <div class="subs-card-header">
+                    <div>
+                        <h6 class="dash-chart-title">{{ __('Trip Bookings') }}</h6>
+                        <p class="dash-chart-sub">{{ __('Manage and view all trip bookings') }}</p>
+                    </div>
+                    <div class="subs-filters" style="flex:1; justify-content:flex-end;">
+                        <div class="subs-search-wrap">
+                            <i class="fas fa-search subs-search-icon"></i>
+                            <input type="text" id="custom-search" class="subs-search-input" placeholder="{{ __('Search...') }}">
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table id="bookings-table" class="display custom-table" style="min-width: 845px">
+                <div class="card-body p-0 pt-2">
+                    <div class="table-responsive subs-table-wrap">
+                        <table id="bookings-table" class="display subs-datatable" style="min-width: 845px">
                             <thead>
                                 <tr>
                                     <th>{{ __('ID') }}</th>
@@ -227,6 +201,14 @@
                                </div>`
             },
             order: [[0, 'desc']] // Order by ID desc
+        });
+
+        // إخفاء حقل البحث الافتراضي
+        $('#bookings-table_filter').hide();
+
+        // بحث مخصص
+        $('#custom-search').on('keyup', function() {
+            table.search(this.value).draw();
         });
 
         // Initialize tooltips

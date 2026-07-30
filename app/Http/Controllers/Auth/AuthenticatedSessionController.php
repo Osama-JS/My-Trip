@@ -60,8 +60,16 @@ class AuthenticatedSessionController extends Controller
 
         $phone = ltrim($request->phone, '0');
         $countryCode = '+' . ltrim($request->country_code, '+');
+        $fullPhone = ltrim($countryCode, '+') . $phone;
+        
+        $whatsAppService = new WhatsAppService();
+        $verificationId = $whatsAppService->startVerification($fullPhone);
+
+        if (!$verificationId) {
+            return response()->json(['success' => false, 'message' => __('Failed to send OTP. Please try again later.')], 500);
+        }
+
         $user = User::where('phone', $phone)->where('country_code', $countryCode)->first();
-        $otpCode = env('WHATSAPP_SIMULATION', false) ? '1234' : rand(1000, 9999);
 
         if (!$user) {
             $user = User::create([
@@ -73,25 +81,17 @@ class AuthenticatedSessionController extends Controller
                 'password' => Hash::make(\Illuminate\Support\Str::random(16)),
                 'user_type' => User::TYPE_CUSTOMER,
                 'is_guest' => true,
-                'otp_code' => Hash::make($otpCode),
+                'otp_code' => $verificationId, // Store plain verification_id
                 'otp_expires_at' => Carbon::now()->addMinutes(10),
                 'status' => 'active'
             ]);
         } else {
-            $user->otp_code = Hash::make($otpCode);
+            $user->otp_code = $verificationId; // Store plain verification_id
             $user->otp_expires_at = Carbon::now()->addMinutes(10);
             $user->save();
         }
 
-        $whatsAppService = new WhatsAppService();
-        $fullPhone = ltrim($countryCode, '+') . ltrim($phone, '0');
-        $isSent = $whatsAppService->sendOTP($fullPhone, $otpCode, app()->getLocale());
-
-        if ($isSent || env('WHATSAPP_SIMULATION', false)) {
-            return response()->json(['success' => true]);
-        }
-
-        return response()->json(['success' => false, 'message' => __('Failed to send OTP. Please try again later.')], 500);
+        return response()->json(['success' => true]);
     }
 
     /**
@@ -121,10 +121,11 @@ class AuthenticatedSessionController extends Controller
             return response()->json(['success' => false, 'message' => __('OTP expired or invalid.')], 422);
         }
 
-        if (!Hash::check($request->otp_code, $user->otp_code)) {
-            if ($user->otp_code !== $request->otp_code) {
-                return response()->json(['success' => false, 'message' => __('Invalid OTP.')], 422);
-            }
+        $whatsAppService = new WhatsAppService();
+        $isApproved = $whatsAppService->checkVerification($user->otp_code, $request->otp_code);
+
+        if (!$isApproved) {
+            return response()->json(['success' => false, 'message' => __('Invalid OTP.')], 422);
         }
 
         $user->phone_verified_at = Carbon::now();

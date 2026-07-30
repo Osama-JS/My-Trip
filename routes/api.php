@@ -62,6 +62,10 @@ Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 Route::post('/phone/request-otp', [AuthController::class, 'requestPhoneOtp']);
 Route::post('/phone/verify-otp', [AuthController::class, 'verifyPhoneOtp']);
 
+// Automize / Meta Webhook
+Route::get('/webhooks/whatsapp', [\App\Http\Controllers\Api\WebhookController::class, 'verifyAutomize']);
+Route::post('/webhooks/whatsapp', [\App\Http\Controllers\Api\WebhookController::class, 'handleAutomize']);
+
 Route::get('/payment/callback', [PaymentController::class, 'handleCallback'])->name('payment.callback');
 
 // Flight Routes
