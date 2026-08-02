@@ -438,6 +438,35 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <div class="form-section-title mt-4">{{ __('Login & Register Page Status') }}</div>
+                            <div class="row align-items-start">
+                                <div class="col-md-8 mb-4 form-group">
+                                    <label class="d-block mb-3">{{ __('Auth Pages Status (Coming Soon)') }}</label>
+                                    <div class="maintenance-options">
+                                        <div class="maintenance-option">
+                                            <input type="radio" name="auth_maintenance_mode" id="auth_mode_live" value="0" {{ \App\Models\Setting::get('auth_maintenance_mode') == '0' ? 'checked' : '' }}>
+                                            <label for="auth_mode_live">
+                                                <i class="fa fa-door-open text-success"></i>
+                                                <span>{{ __('Available') }}</span>
+                                            </label>
+                                        </div>
+                                        <div class="maintenance-option">
+                                            <input type="radio" name="auth_maintenance_mode" id="auth_mode_maint" value="1" {{ \App\Models\Setting::get('auth_maintenance_mode') == '1' ? 'checked' : '' }}>
+                                            <label for="auth_mode_maint">
+                                                <i class="fa fa-lock text-warning"></i>
+                                                <span>{{ __('Coming Soon') }}</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted mt-2 d-block">{{ __('If enabled, visitors will see a Coming Soon banner instead of login/register forms.') }}</small>
+                                </div>
+                                <div class="col-md-4 mb-4 form-group">
+                                    <label>{{ __('Admin Bypass Secret') }}</label>
+                                    <input type="text" class="form-control" name="auth_maintenance_secret" value="{{ \App\Models\Setting::get('auth_maintenance_secret') }}" placeholder="e.g. admin123">
+                                    <small class="text-muted mt-2 d-block">{{ __('Append ?secret=YOUR_SECRET to the login URL to bypass.') }}</small>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Media Tab -->

@@ -199,6 +199,87 @@
     <link href="{{ asset('vendor/select2/css/select2.min.css') }}" rel="stylesheet">
     <link href="{{ asset('vendor/toastr/css/toastr.min.css') }}" rel="stylesheet">
 
+    {{-- ═══ PREMIUM DATATABLE OVERRIDES ═══ --}}
+    <style>
+        /* ══════════════════════════════════════════════════════════════ */
+        /* DATATABLE — Premium Global Overrides                         */
+        /* ══════════════════════════════════════════════════════════════ */
+
+        /* ── Outer column padding (first & last th/td) ── */
+        table.dataTable thead th:first-child,
+        table.dataTable thead td:first-child,
+        table.dataTable tbody th:first-child,
+        table.dataTable tbody td:first-child,
+        table.dataTable tfoot th:first-child,
+        table.dataTable tfoot td:first-child {
+            padding-left: 20px !important;
+        }
+
+        table.dataTable thead th:last-child,
+        table.dataTable thead td:last-child,
+        table.dataTable tbody th:last-child,
+        table.dataTable tbody td:last-child,
+        table.dataTable tfoot th:last-child,
+        table.dataTable tfoot td:last-child {
+            padding-right: 20px !important;
+        }
+
+        /* RTL: mirror the padding */
+        [dir="rtl"] table.dataTable thead th:first-child,
+        [dir="rtl"] table.dataTable thead td:first-child,
+        [dir="rtl"] table.dataTable tbody th:first-child,
+        [dir="rtl"] table.dataTable tbody td:first-child,
+        [dir="rtl"] table.dataTable tfoot th:first-child,
+        [dir="rtl"] table.dataTable tfoot td:first-child {
+            padding-left: 10px !important;
+            padding-right: 20px !important;
+        }
+
+        [dir="rtl"] table.dataTable thead th:last-child,
+        [dir="rtl"] table.dataTable thead td:last-child,
+        [dir="rtl"] table.dataTable tbody th:last-child,
+        [dir="rtl"] table.dataTable tbody td:last-child,
+        [dir="rtl"] table.dataTable tfoot th:last-child,
+        [dir="rtl"] table.dataTable tfoot td:last-child {
+            padding-right: 10px !important;
+            padding-left: 20px !important;
+        }
+
+        /* ── Consistent cell padding for all rows ── */
+        table.dataTable thead th,
+        table.dataTable thead td {
+            padding-top: 14px !important;
+            padding-bottom: 14px !important;
+        }
+
+        table.dataTable tbody th,
+        table.dataTable tbody td {
+            padding-top: 12px !important;
+            padding-bottom: 12px !important;
+            vertical-align: middle !important;
+        }
+
+        /* ── Wrapper padding — so the controls (length/search) don't touch edges ── */
+        .dataTables_wrapper {
+            padding: 0 !important;
+        }
+
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter {
+            padding: 12px 20px !important;
+        }
+
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {
+            padding: 12px 20px !important;
+        }
+
+        /* ── Table container no overflow clipping ── */
+        .table-responsive {
+            border-radius: 0 0 10px 10px;
+        }
+    </style>
+
     {{-- ═══ PREMIUM TOASTR OVERRIDES ═══ --}}
     <style>
         /* ── Container: bottom-center ── */

@@ -260,7 +260,12 @@
                         </div>
                     </li>
 
-
+                    {{-- Layout Toggle Button (Navbar ↔ Sidebar) --}}
+                    <li class="nav-item d-none d-lg-flex align-items-center" title="{{ __('Toggle Layout') }}">
+                        <button id="layout-toggle-btn" class="nav-link lang-switcher-btn layout-toggle-btn" type="button" onclick="toggleAdminLayout()" style="background: none; border: none; cursor: pointer;">
+                            <i id="layout-toggle-icon" class="fas fa-columns"></i>
+                        </button>
+                    </li>
 
                     <li class="nav-item dropdown header-profile">
                         <a class="nav-link" href="javascript:void(0);" role="button" data-bs-toggle="dropdown">
@@ -292,6 +297,381 @@
         </nav>
     </div>
 </div>
+
+<style>
+/* ═══════════════════════════════════════════
+   LAYOUT TOGGLE BUTTON — Premium Style
+   ═══════════════════════════════════════════ */
+.layout-toggle-btn {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    color: #64748b !important;
+}
+.layout-toggle-btn:hover {
+    background: rgba(4, 23, 65, 0.07) !important;
+    color: #041741 !important;
+    transform: scale(1.05);
+}
+.layout-toggle-btn i {
+    font-size: 15px;
+    transition: all 0.3s ease;
+}
+/* Tooltip */
+.layout-toggle-btn::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: -38px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #041741;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 9999;
+}
+.layout-toggle-btn:hover::after {
+    opacity: 1;
+}
+[dir="rtl"] .layout-toggle-btn::after {
+    left: auto;
+    right: 50%;
+    transform: translateX(50%);
+}
+
+/* ═══════════════════════════════════════════
+   SMOOTH TRANSITIONS (global)
+   ═══════════════════════════════════════════ */
+.dlabnav,
+.content-body,
+.header,
+.footer,
+.nav-header {
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* ═══════════════════════════════════════════
+   SIDEBAR MODE — Desktop only (≥ 992px)
+   ═══════════════════════════════════════════ */
+@media (min-width: 992px) {
+
+    /* ── Nav Header (Logo bar) — pinned flush to left ── */
+    body.sidebar-mode .nav-header {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: auto !important;
+        width: 260px !important;
+        height: 70px !important;
+        z-index: 10001 !important;
+        display: flex !important;
+        align-items: center !important;
+        padding: 0 20px !important;
+        margin: 0 !important;
+    }
+    [dir="rtl"] body.sidebar-mode .nav-header {
+        left: auto !important;
+        right: 0 !important;
+    }
+
+    /* ── Header bar — flush right of sidebar with NO gap ── */
+    body.sidebar-mode .header {
+        /* Use left/right to fill remaining space exactly */
+        position: fixed !important;
+        top: 0 !important;
+        left: 260px !important;
+        right: 0 !important;
+        width: auto !important;
+        /* Remove any margin that could cause a gap */
+        margin: 0 !important;
+        z-index: 9999 !important;
+    }
+    [dir="rtl"] body.sidebar-mode .header {
+        left: 0 !important;
+        right: 260px !important;
+        margin: 0 !important;
+    }
+
+    /* ── Header content fills the full available width ── */
+    body.sidebar-mode .header .header-content {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    body.sidebar-mode .header .navbar {
+        width: 100% !important;
+        flex-wrap: nowrap !important;
+    }
+    body.sidebar-mode .header .collapse.navbar-collapse {
+        display: flex !important;
+        width: 100% !important;
+        justify-content: space-between !important;
+        flex-wrap: nowrap !important;
+        overflow: visible !important;
+    }
+
+    /* ── Sidebar (dlabnav) — flush left ── */
+    body.sidebar-mode .dlabnav {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: auto !important;
+        width: 260px !important;
+        height: 100vh !important;
+        flex-direction: column !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        box-shadow: 2px 0 12px rgba(0,0,0,0.1) !important;
+        z-index: 10000 !important;
+        padding-top: 70px !important;
+        align-items: flex-start !important;
+        margin: 0 !important;
+    }
+    [dir="rtl"] body.sidebar-mode .dlabnav {
+        left: auto !important;
+        right: 0 !important;
+        box-shadow: -2px 0 12px rgba(0,0,0,0.1) !important;
+    }
+
+    /* ── Dlabnav scroll area ── */
+    body.sidebar-mode .dlabnav .dlabnav-scroll {
+        width: 100% !important;
+        height: 100% !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        padding: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        transform: none !important;
+    }
+
+    /* ── Metismenu vertical layout ── */
+    body.sidebar-mode .dlabnav .metismenu {
+        display: flex !important;
+        flex-direction: column !important;
+        flex-wrap: nowrap !important;
+        width: 100% !important;
+        transform: none !important;
+        padding: 8px 0 !important;
+        overflow: visible !important;
+    }
+
+    body.sidebar-mode .dlabnav .metismenu > li {
+        display: block !important;
+        width: 100% !important;
+        flex-shrink: 0 !important;
+        position: relative !important;
+    }
+
+    /* ── Top-level menu items ── */
+    body.sidebar-mode .dlabnav .metismenu > li > a {
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+        padding: 10px 16px !important;
+        white-space: nowrap !important;
+        border-radius: 8px !important;
+        margin: 1px 8px !important;
+        /* Width = 100% minus the left+right margin (8px each = 16px total) */
+        width: calc(100% - 16px) !important;
+        box-sizing: border-box !important;
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        overflow: hidden !important;
+    }
+
+    body.sidebar-mode .dlabnav .metismenu > li > a i,
+    body.sidebar-mode .dlabnav .metismenu > li > a [class^="flaticon"],
+    body.sidebar-mode .dlabnav .metismenu > li > a [class*="flaticon"] {
+        min-width: 20px !important;
+        flex-shrink: 0 !important;
+        text-align: center !important;
+        font-size: 15px !important;
+    }
+
+    body.sidebar-mode .dlabnav .metismenu > li > a .nav-text {
+        flex: 1 !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+
+    /* ── Sub-menu container — no distortion ── */
+    body.sidebar-mode .dlabnav .metismenu ul {
+        position: static !important;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        /* Full sidebar width */
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        /* Indent with left padding only */
+        padding: 2px 8px 4px 44px !important;
+        z-index: auto !important;
+        display: none !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+        border-left: 2px solid rgba(4,23,65,0.1) !important;
+        overflow: hidden !important;
+    }
+    [dir="rtl"] body.sidebar-mode .dlabnav .metismenu ul {
+        padding: 2px 44px 4px 8px !important;
+        border-left: none !important;
+        border-right: 2px solid rgba(4,23,65,0.1) !important;
+    }
+
+    /* MetisMenu controlled open state */
+    body.sidebar-mode .dlabnav .metismenu ul.mm-show,
+    body.sidebar-mode .dlabnav .metismenu li.mm-active > ul {
+        display: block !important;
+    }
+
+    /* ── Sub-menu items ── */
+    body.sidebar-mode .dlabnav .metismenu ul li {
+        width: 100% !important;
+        display: block !important;
+    }
+
+    body.sidebar-mode .dlabnav .metismenu ul li a {
+        padding: 7px 12px !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        font-size: 12.5px !important;
+        border-radius: 6px !important;
+        margin: 1px 0 !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+
+    /* ── Arrow (chevron) for accordion ── */
+    body.sidebar-mode .dlabnav .metismenu > li > a.has-arrow::after {
+        display: block !important;
+        flex-shrink: 0 !important;
+        margin-left: auto !important;
+        transition: transform 0.3s ease !important;
+    }
+    [dir="rtl"] body.sidebar-mode .dlabnav .metismenu > li > a.has-arrow::after {
+        margin-left: 0 !important;
+        margin-right: auto !important;
+    }
+    body.sidebar-mode .dlabnav .metismenu li.mm-active > a.has-arrow::after {
+        transform: rotate(90deg) !important;
+    }
+
+    /* ── Disable hover-triggered dropdowns ── */
+    body.sidebar-mode .dlabnav .metismenu li:hover > ul:not(.mm-show) {
+        display: none !important;
+    }
+
+    /* ── Hide horizontal scroll arrows ── */
+    body.sidebar-mode .nav-control-btn {
+        display: none !important;
+    }
+
+    /* ── Content body: offset for fixed sidebar + fixed header ── */
+    body.sidebar-mode .content-body {
+        margin-left: 260px !important;
+        margin-right: 0 !important;
+        padding-top: 70px !important;
+    }
+    [dir="rtl"] body.sidebar-mode .content-body {
+        margin-right: 260px !important;
+        margin-left: 0 !important;
+    }
+
+    /* ── Footer ── */
+    body.sidebar-mode .footer {
+        margin-left: 260px !important;
+        margin-right: 0 !important;
+    }
+    [dir="rtl"] body.sidebar-mode .footer {
+        margin-right: 260px !important;
+        margin-left: 0 !important;
+    }
+}
+</style>
+
+<script>
+// ═══ LAYOUT TOGGLE — Navbar ↔ Sidebar ═══
+(function() {
+    const STORAGE_KEY = 'admin_layout_mode';
+    const SIDEBAR_MODE = 'sidebar';
+    const NAVBAR_MODE = 'navbar';
+
+    function applyLayout(mode) {
+        const body = document.body;
+        const btn = document.getElementById('layout-toggle-btn');
+        const icon = document.getElementById('layout-toggle-icon');
+
+        if (mode === SIDEBAR_MODE) {
+            body.classList.add('sidebar-mode');
+            if (icon) icon.className = 'fas fa-grip-lines-vertical';
+            if (btn) btn.setAttribute('data-tooltip', '{{ __("Switch to Navbar") }}');
+
+            // Reinitialize MetisMenu in click-only (accordion) mode
+            reinitMetisMenu();
+        } else {
+            body.classList.remove('sidebar-mode');
+            if (icon) icon.className = 'fas fa-columns';
+            if (btn) btn.setAttribute('data-tooltip', '{{ __("Switch to Sidebar") }}');
+        }
+    }
+
+    function reinitMetisMenu() {
+        if (typeof $ !== 'undefined' && $.fn.metisMenu) {
+            // Destroy existing instance
+            try { $('#menu').metisMenu('dispose'); } catch(e) {}
+            // Re-init with accordion behavior
+            $('#menu').metisMenu({
+                toggle: true,
+                triggerElement: 'a',
+                parentTrigger: 'li',
+                subMenu: 'ul'
+            });
+        }
+    }
+
+    // On page load, apply saved preference
+    const savedMode = localStorage.getItem(STORAGE_KEY) || NAVBAR_MODE;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        applyLayout(savedMode);
+    });
+
+    // Global toggle function called by button
+    window.toggleAdminLayout = function() {
+        const current = localStorage.getItem(STORAGE_KEY) || NAVBAR_MODE;
+        const next = current === NAVBAR_MODE ? SIDEBAR_MODE : NAVBAR_MODE;
+        localStorage.setItem(STORAGE_KEY, next);
+        applyLayout(next);
+
+        // Animate the button
+        const btn = document.getElementById('layout-toggle-btn');
+        if (btn) {
+            btn.style.transform = 'scale(0.85) rotate(15deg)';
+            setTimeout(() => { btn.style.transform = ''; }, 250);
+        }
+    };
+})();
+</script>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {

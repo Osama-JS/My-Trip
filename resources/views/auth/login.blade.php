@@ -150,24 +150,32 @@
         }
 
         .brand-logo {
-            margin-bottom: 2.5rem;
-            display: block;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .brand-logo img {
-            max-height: 50px;
+            max-height: 70px;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.06));
+        }
+
+        .welcome-text {
+            text-align: center;
         }
 
         .welcome-text h3 {
-            font-weight: 700;
-            color: #333;
+            font-weight: 800;
+            color: #1e293b;
             margin-bottom: 0.5rem;
-            font-size: 2rem;
+            font-size: 1.8rem;
         }
 
         .welcome-text p {
-            color: #777;
+            color: #64748b;
             margin-bottom: 2.5rem;
+            font-size: 0.95rem;
         }
 
         .form-control {
@@ -283,6 +291,23 @@
                 <img src="{{ asset(\App\Models\Setting::get('site_logo', 'images/logo-full.png')) }}" alt="Logo">
             </div>
 
+            @php
+                $maintenanceMode = \App\Models\Setting::get('auth_maintenance_mode') == '1';
+                $secretKey = \App\Models\Setting::get('auth_maintenance_secret');
+                $isBypassed = !empty($secretKey) && request()->query('secret') === $secretKey;
+            @endphp
+            @if($maintenanceMode && !$isBypassed)
+                <div class="maintenance-banner text-center py-5">
+                    <div class="icon-box mx-auto mb-4" style="width: 80px; height: 80px; background: linear-gradient(135deg, rgba(245,166,35,0.2) 0%, rgba(245,166,35,0) 100%); border: 1px solid rgba(245, 166, 35, 0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: #f5a623;">
+                        <i class="fas fa-rocket"></i>
+                    </div>
+                    <h3 style="font-weight: 800; font-size: 2rem; color: #333; margin-bottom: 1rem;">{{ __('Coming Soon') }}</h3>
+                    <p style="color: #777; font-size: 1.1rem; line-height: 1.6; max-width: 400px; margin: 0 auto;">{{ __('We are preparing something amazing. Our new platform will be launched very soon.') }}</p>
+                    <a href="{{ route('home') }}" class="btn btn-primary mt-4 mx-auto" style="max-width: 200px;">
+                        {{ __('Back to Home') }}
+                    </a>
+                </div>
+            @else
             <div class="welcome-text">
                 <h3>{{ __('Welcome Back!') }}</h3>
                 <p>{{ __('Please sign in to continue.') }}</p>
@@ -364,7 +389,7 @@
 
                 <!-- Email Login Tab -->
                 <div class="tab-pane fade" id="email-login" role="tabpanel">
-                    <form method="POST" action="{{ route('login') }}">
+                    <form method="POST" action="{{ route('login', request()->has('secret') ? ['secret' => request()->query('secret')] : []) }}">
                         @csrf
                         <div class="mb-4">
                             <label class="mb-2 font-weight-bold text-muted">{{ __('Email Address') }}</label>
@@ -402,6 +427,7 @@
                     </form>
                 </div>
             </div>
+            @endif
 
             <div class="text-center">
                 @if($locale == 'ar')

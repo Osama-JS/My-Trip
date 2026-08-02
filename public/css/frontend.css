@@ -303,7 +303,9 @@ ul, ol { list-style: none; }
     min-height: 90vh;
     display: flex;
     align-items: center;
-    padding-top: 72px;
+    /* Increased to push all content away from the fixed navbar */
+    padding-top: 110px;
+    padding-bottom: 50px;
     background: linear-gradient(135deg, #0a1628 0%, #0f2d4a 40%, #143d63 100%);
     overflow: hidden;
 }
@@ -397,11 +399,13 @@ ul, ol { list-style: none; }
 .fe-hero-image {
     position: relative;
     animation: fadeInRight 1s ease 0.5s both;
+    /* Small top padding to visually detach image from the navbar area */
+    padding-top: 24px;
 }
 
 .fe-hero-img-main {
     width: 100%;
-    height: 480px;
+    height: 450px;
     object-fit: cover;
     border-radius: var(--radius-2xl);
     box-shadow: var(--shadow-2xl);

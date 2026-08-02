@@ -33,6 +33,8 @@ class SettingController extends Controller
                 'snapchat_url' => 'nullable|url',
                 'tiktok_url' => 'nullable|url',
                 'maintenance_mode' => 'nullable|in:0,1',
+                'auth_maintenance_mode' => 'nullable|in:0,1',
+                'auth_maintenance_secret' => 'nullable|string|max:100',
                 'flight_margin'      => 'nullable|numeric|min:0',
                 'flight_margin_type' => 'nullable|in:percentage,fixed',
                 'hotel_margin'       => 'nullable|numeric|min:0',

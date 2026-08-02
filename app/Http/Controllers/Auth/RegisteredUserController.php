@@ -18,8 +18,14 @@ class RegisteredUserController extends Controller
     /**
      * Display the registration view.
      */
-    public function create(): View
+    public function create()
     {
+        if (\App\Models\Setting::get('auth_maintenance_mode') == '1') {
+            $secret = \App\Models\Setting::get('auth_maintenance_secret');
+            
+            // We no longer store it in the session
+        }
+
         return view('auth.register');
     }
 
