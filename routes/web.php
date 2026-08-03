@@ -31,8 +31,8 @@ Route::get('/trips/{id}', [FrontendController::class, 'tripDetails'])->name('tri
 Route::get('/flights', [FrontendController::class, 'flights'])->name('flights');
 Route::get('/flights/results', [FrontendController::class, 'flightResults'])->name('flights.results');
 Route::get('/flights/revalidate', [FrontendController::class, 'flightRevalidate'])->name('flights.revalidate');
-Route::get('/flights/booking', [FrontendController::class, 'flightBookingForm'])->name('flights.booking.form');
-Route::post('/flights/book', [FrontendController::class, 'processFlightBooking'])->name('flights.book.process');
+Route::get('/flights/booking', [FrontendController::class, 'flightBookingForm'])->name('flights.booking.form')->middleware('auth');
+Route::post('/flights/book', [FrontendController::class, 'processFlightBooking'])->name('flights.book.process')->middleware('auth');
 Route::get('/flights/payment/{booking_id}', [FrontendController::class, 'flightSelectPayment'])->name('flights.payment.select')->middleware('auth');
 Route::get('/airports/search', [FrontendController::class, 'searchAirports'])->name('airports.search');
 Route::get('/airports/sync', [FrontendController::class, 'syncAirports'])->name('airports.sync');

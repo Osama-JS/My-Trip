@@ -19,6 +19,19 @@
         <input type="hidden" name="from" value="{{ $details['from'] ?? '' }}">
         <input type="hidden" name="to" value="{{ $details['to'] ?? '' }}">
         <input type="hidden" name="departDate" value="{{ $details['departDate'] ?? '' }}">
+        <input type="hidden" name="airline" value="{{ $details['airline'] ?? '' }}">
+        <input type="hidden" name="dep_time" value="{{ $details['dep_time'] ?? '' }}">
+        <input type="hidden" name="arr_time" value="{{ $details['arr_time'] ?? '' }}">
+        <input type="hidden" name="stops" value="{{ $details['stops'] ?? 0 }}">
+        <input type="hidden" name="duration" value="{{ $details['duration'] ?? '' }}">
+        @if(!empty($details['segments']) && is_array($details['segments']))
+            @foreach($details['segments'] as $i => $seg)
+                <input type="hidden" name="segments[{{ $i }}][from]" value="{{ $seg['from'] ?? '' }}">
+                <input type="hidden" name="segments[{{ $i }}][to]" value="{{ $seg['to'] ?? '' }}">
+                <input type="hidden" name="segments[{{ $i }}][dep]" value="{{ $seg['dep'] ?? '' }}">
+                <input type="hidden" name="segments[{{ $i }}][arr]" value="{{ $seg['arr'] ?? '' }}">
+            @endforeach
+        @endif
         
         @php
             $adultCount = (int)(is_array($details['adults'] ?? 1) ? reset($details['adults']) : ($details['adults'] ?? 1));
@@ -125,10 +138,50 @@
                             </div>
                             
                             <div class="fe-summary-details" style="border:none; padding:15px 0 0;">
+                                @if(!empty($details['airline']))
+                                <div class="fe-summary-item">
+                                    <span class="label"><i class="fas fa-plane-departure"></i> {{ __('Airline') }}</span>
+                                    <span class="value">{{ $details['airline'] }}</span>
+                                </div>
+                                @endif
                                 <div class="fe-summary-item">
                                     <span class="label"><i class="far fa-calendar-alt"></i> {{ __('Departure') }}</span>
                                     <span class="value">{{ $details['departDate'] ?? '' }}</span>
                                 </div>
+                                @if(!empty($details['dep_time']))
+                                <div class="fe-summary-item">
+                                    <span class="label"><i class="far fa-clock"></i> {{ __('Time') }}</span>
+                                    <span class="value">{{ $details['dep_time'] }} - {{ $details['arr_time'] ?? '' }}</span>
+                                </div>
+                                @endif
+                                @if(isset($details['stops']))
+                                <div class="fe-summary-item">
+                                    <span class="label"><i class="fas fa-route"></i> {{ __('Stops') }}</span>
+                                    <span class="value">{{ $details['stops'] == 0 ? __('Non-stop') : $details['stops'] . ' ' . ($details['stops'] == 1 ? __('Stop') : __('Stops')) }}</span>
+                                </div>
+                                
+                                @if(!empty($details['segments']) && is_array($details['segments']))
+                                    <div class="fe-summary-segments" style="margin: 10px 0 15px; background: var(--gray-50); border-radius: 8px; padding: 12px; font-size: 0.85rem; border: 1px dashed var(--gray-200);">
+                                        <div style="font-weight: 700; color: var(--dark); margin-bottom: 8px; font-size: 0.8rem; text-transform: uppercase;">{{ __('Flight Route Details') }}</div>
+                                        @foreach($details['segments'] as $index => $seg)
+                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: {{ $loop->last ? '0' : '8px' }};">
+                                                <span style="font-weight: 700; color: var(--primary);">
+                                                    {{ $seg['from'] ?? '' }} 
+                                                    <i class="fas fa-arrow-right" style="font-size:0.7rem; margin:0 6px; color: var(--gray-400);"></i> 
+                                                    {{ $seg['to'] ?? '' }}
+                                                </span>
+                                                <span style="color: var(--dark-600); font-weight: 600;">{{ $seg['dep'] ?? '' }} - {{ $seg['arr'] ?? '' }}</span>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+                                @endif
+                                @if(!empty($details['duration']))
+                                <div class="fe-summary-item">
+                                    <span class="label"><i class="fas fa-hourglass-half"></i> {{ __('Duration') }}</span>
+                                    <span class="value">{{ $details['duration'] }}</span>
+                                </div>
+                                @endif
                                 <div class="fe-summary-item">
                                     <span class="label"><i class="fas fa-users"></i> {{ __('Travelers') }}</span>
                                     <span class="value">{{ $totalPax }} {{ __('Person(s)') }}</span>

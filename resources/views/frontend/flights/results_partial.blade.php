@@ -62,6 +62,9 @@
                 $maxStops = 0;
                 $totalDurationMinutes = 0;
                 $firstDepTime = null;
+                $lastArrTime = null;
+                $totalDurationStr = '';
+                $outboundSegmentsData = [];
                 foreach($options as $opt) {
                     $segs = isset($opt['OriginDestinationOption']['FlightSegment'])
                         ? [$opt['OriginDestinationOption']]
@@ -69,7 +72,22 @@
                     $d1 = \Carbon\Carbon::parse($segs[0]['FlightSegment']['DepartureDateTime']);
                     $d2 = \Carbon\Carbon::parse(end($segs)['FlightSegment']['ArrivalDateTime']);
                     $totalDurationMinutes += $d1->diffInMinutes($d2);
-                    if (!$firstDepTime) $firstDepTime = $d1->format('H:i');
+                    if (!$firstDepTime) {
+                        $firstDepTime = $d1->format('H:i');
+                        $totalDurationStr = $d1->diff($d2)->format('%hh %im');
+                        
+                        // Extract outbound segments for summary display
+                        foreach($segs as $seg) {
+                            $s = $seg['FlightSegment'];
+                            $outboundSegmentsData[] = [
+                                'from' => $s['DepartureAirportLocationCode'],
+                                'to' => $s['ArrivalAirportLocationCode'],
+                                'dep' => \Carbon\Carbon::parse($s['DepartureDateTime'])->format('H:i'),
+                                'arr' => \Carbon\Carbon::parse($s['ArrivalDateTime'])->format('H:i')
+                            ];
+                        }
+                    }
+                    $lastArrTime = $d2->format('H:i');
                     $sCount = count($segs) - 1;
                     if ($sCount > $maxStops) $maxStops = $sCount;
                 }
@@ -144,7 +162,13 @@
                     <a href="{{ route('flights.booking.form', array_merge($searchParams ?? [], [
                         'fare_source_code' => $fareInfo['FareSourceCode'],
                         'session_id' => $sessionId,
-                        'total_amount' => $price
+                        'total_amount' => $price,
+                        'airline' => $validatingCarrier,
+                        'dep_time' => $firstDepTime,
+                        'arr_time' => $lastArrTime,
+                        'stops' => $maxStops,
+                        'duration' => $totalDurationStr,
+                        'segments' => $outboundSegmentsData
                     ])) }}" class="fe-btn fe-btn-primary fr-select-btn">
                         {{ __('Select') }} <i class="fas fa-arrow-right"></i>
                     </a>
