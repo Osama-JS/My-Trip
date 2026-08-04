@@ -59,11 +59,23 @@ class RegisteredUserController extends Controller
             return response()->json(['success' => false, 'message' => __('Email is already registered.')], 422);
         }
 
-        $whatsAppService = new WhatsAppService();
-        $verificationId = $whatsAppService->startVerification($fullPhone);
+        $otpMethod = \App\Models\Setting::get('otp_method', 'whatsapp');
 
-        if (!$verificationId) {
-            return response()->json(['success' => false, 'message' => __('Failed to send OTP. Please try again later.')], 500);
+        if ($otpMethod === 'email') {
+            $verificationId = (string) rand(100000, 999999);
+            try {
+                \Illuminate\Support\Facades\Mail::to($request->email)->send(new \App\Mail\OtpMail($verificationId));
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Email OTP Failed: " . $e->getMessage());
+                return response()->json(['success' => false, 'message' => __('Failed to send OTP email. Please try again later.')], 500);
+            }
+        } else {
+            $whatsAppService = new WhatsAppService();
+            $verificationId = $whatsAppService->startVerification($fullPhone);
+
+            if (!$verificationId) {
+                return response()->json(['success' => false, 'message' => __('Failed to send OTP. Please try again later.')], 500);
+            }
         }
 
         $expiresAt = Carbon::now()->addMinutes(10);
@@ -131,8 +143,17 @@ class RegisteredUserController extends Controller
             return response()->json(['success' => false, 'message' => __('OTP expired or invalid.')], 422);
         }
 
-        $whatsAppService = new WhatsAppService();
-        $isApproved = $whatsAppService->checkVerification($user->otp_code, $request->otp_code);
+        $otpMethod = \App\Models\Setting::get('otp_method', 'whatsapp');
+
+        if ($otpMethod === 'email') {
+            if ($user->otp_code !== $request->otp_code) {
+                return response()->json(['success' => false, 'message' => __('Invalid OTP.')], 422);
+            }
+            $isApproved = true;
+        } else {
+            $whatsAppService = new WhatsAppService();
+            $isApproved = $whatsAppService->checkVerification($user->otp_code, $request->otp_code);
+        }
 
         if (!$isApproved) {
             return response()->json(['success' => false, 'message' => __('Invalid OTP.')], 422);

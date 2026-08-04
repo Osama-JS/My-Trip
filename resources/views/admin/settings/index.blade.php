@@ -466,6 +466,30 @@
                                     <input type="text" class="form-control" name="auth_maintenance_secret" value="{{ \App\Models\Setting::get('auth_maintenance_secret') }}" placeholder="e.g. admin123">
                                     <small class="text-muted mt-2 d-block">{{ __('Append ?secret=YOUR_SECRET to the login URL to bypass.') }}</small>
                                 </div>
+                        </div>
+
+                            <div class="form-section-title mt-4">{{ __('Authentication Settings') }}</div>
+                            <div class="row align-items-start">
+                                <div class="col-md-12 mb-4 form-group">
+                                    <label class="d-block mb-3">{{ __('OTP Verification Method') }}</label>
+                                    <div class="maintenance-options">
+                                        <div class="maintenance-option">
+                                            <input type="radio" name="otp_method" id="otp_whatsapp" value="whatsapp" {{ \App\Models\Setting::get('otp_method', 'whatsapp') == 'whatsapp' ? 'checked' : '' }}>
+                                            <label for="otp_whatsapp">
+                                                <i class="fab fa-whatsapp text-success"></i>
+                                                <span>{{ __('WhatsApp') }}</span>
+                                            </label>
+                                        </div>
+                                        <div class="maintenance-option">
+                                            <input type="radio" name="otp_method" id="otp_email" value="email" {{ \App\Models\Setting::get('otp_method') == 'email' ? 'checked' : '' }}>
+                                            <label for="otp_email">
+                                                <i class="fas fa-envelope text-primary"></i>
+                                                <span>{{ __('Email') }}</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted mt-2 d-block">{{ __('Select whether to send OTP codes via WhatsApp or Email during user registration and login.') }}</small>
+                                </div>
                             </div>
                         </div>
 

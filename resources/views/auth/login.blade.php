@@ -2,6 +2,7 @@
 @php
     $locale = session('locale', app()->getLocale());
     $dir = $locale == 'ar' ? 'rtl' : 'ltr';
+    $otpMethod = \App\Models\Setting::get('otp_method', 'email');
 @endphp
 <html lang="{{ str_replace('_', '-', $locale) }}" dir="{{ $dir }}">
 <head>
@@ -324,7 +325,11 @@
             <ul class="nav nav-pills mb-4 d-flex" id="loginTab" role="tablist">
                 <li class="nav-item flex-fill text-center" role="presentation">
                     <button class="nav-link w-100 active" id="phone-tab" data-bs-toggle="pill" data-bs-target="#phone-login" type="button" role="tab" style="font-weight:600; border-radius:10px;">
-                        <i class="fa fa-phone"></i> {{ __('Phone (OTP)') }}
+                        @if($otpMethod === 'email')
+                            <i class="fa fa-envelope"></i> {{ __('Email (OTP)') }}
+                        @else
+                            <i class="fa fa-phone"></i> {{ __('Phone (OTP)') }}
+                        @endif
                     </button>
                 </li>
                 <li class="nav-item flex-fill text-center" role="presentation">
@@ -336,10 +341,20 @@
 
             <div class="tab-content" id="loginTabContent">
                 
-                <!-- Phone (OTP) Login Tab -->
+                <!-- OTP Login Tab (Email or Phone based on settings) -->
                 <div class="tab-pane fade show active" id="phone-login" role="tabpanel">
                     
                     <div id="otp-request-section">
+                        @if($otpMethod === 'email')
+                        <div class="mb-4">
+                            <label class="mb-2 font-weight-bold text-muted">{{ __('Email Address') }}</label>
+                            <input type="email" id="email_input" class="form-control" placeholder="name@example.com" required>
+                            <span class="text-danger small mt-1 d-block" id="phone_error" style="display:none;"></span>
+                        </div>
+                        <button type="button" id="btn-request-otp" class="btn btn-primary w-100">
+                            <i class="fas fa-envelope me-2"></i> {{ __('Send OTP via Email') }}
+                        </button>
+                        @else
                         <div class="mb-3">
                             <div class="d-flex align-items-center gap-2 mb-3 p-3" style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); border-radius: 10px; color: white;">
                                 <i class="fab fa-whatsapp" style="font-size: 22px;"></i>
@@ -366,11 +381,12 @@
                         <button type="button" id="btn-request-otp" class="btn btn-primary w-100">
                             <i class="fab fa-whatsapp me-2"></i> {{ __('Send OTP via WhatsApp') }}
                         </button>
+                        @endif
                     </div>
 
                     <div id="otp-verify-section" style="display:none;">
                         <div class="alert alert-info small mb-3">
-                            {{ __('An OTP has been sent to your WhatsApp.') }}
+                            {{ $otpMethod === 'email' ? __('An OTP has been sent to your email.') : __('An OTP has been sent to your WhatsApp.') }}
                         </div>
                         <div class="mb-4">
                             <label class="mb-2 font-weight-bold text-muted">{{ __('OTP Code') }}</label>
@@ -381,7 +397,7 @@
                             {{ __('Verify & Login') }} <i class="fa fa-check ms-2"></i>
                         </button>
                         <div class="text-center mt-3">
-                            <a href="#" id="btn-back-to-phone" class="text-muted small"><i class="fa fa-arrow-left"></i> {{ __('Change Phone Number') }}</a>
+                            <a href="#" id="btn-back-to-phone" class="text-muted small"><i class="fa fa-arrow-left"></i> {{ $otpMethod === 'email' ? __('Change Email Address') : __('Change Phone Number') }}</a>
                         </div>
                     </div>
 
@@ -563,71 +579,83 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-$(document).ready(function() {
-    let currentPhone = '';
-    let currentCountryCode = '';
+    $(document).ready(function() {
+        let currentPhone = '';
+        let currentCountryCode = '';
+        let currentEmail = '';
 
-    // Step 1: Request OTP
-    $('#btn-request-otp').on('click', function() {
-        let phone = $('#phone_input').val().trim();
-        // Remove leading zero if present
-        if (phone.startsWith('0')) { phone = phone.substring(1); }
-        let countryCode = '+' + $('#country_code').val();
-        currentCountryCode = countryCode;
+        // Step 1: Request OTP
+        $('#btn-request-otp').on('click', function() {
+            let data = {};
+            @if($otpMethod === 'email')
+                let email = $('#email_input').val().trim();
+                if(!email) {
+                    $('#phone_error').text('{{ __("Please enter a valid email address") }}').show();
+                    return;
+                }
+                data = { email: email, _token: '{{ csrf_token() }}' };
+            @else
+                let phone = $('#phone_input').val().trim();
+                if (phone.startsWith('0')) { phone = phone.substring(1); }
+                let countryCode = '+' + $('#country_code').val();
+                if(!phone) {
+                    $('#phone_error').text('{{ __("Please enter a valid phone number") }}').show();
+                    return;
+                }
+                data = { phone: phone, country_code: countryCode, _token: '{{ csrf_token() }}' };
+            @endif
 
-        if(!phone) {
-            $('#phone_error').text('{{ __("Please enter a valid phone number") }}').show();
-            return;
-        }
+            let btn = $(this);
+            const originalBtnText = btn.html();
+            btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> {{ __("Sending...") }}');
 
-        let btn = $(this);
-        btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> {{ __("Sending...") }}');
-
-        $.ajax({
-            url: '{{ route("web.request.otp") }}',
-            method: 'POST',
-            data: { 
-                phone: phone,
-                country_code: countryCode,
-                _token: '{{ csrf_token() }}'
-            },
-            success: function(res) {
-                currentPhone = phone;
-                currentCountryCode = countryCode;
-                $('#otp-request-section').slideUp();
-                $('#otp-verify-section').slideDown();
-                btn.html('{{ __("Send OTP") }} <i class="fa fa-arrow-right ms-2"></i>').prop('disabled', false);
-            },
-            error: function(err) {
-                let msg = err.responseJSON?.message || "{{ __('Failed to send OTP') }}";
-                $('#phone_error').text(msg).show();
-                btn.html('{{ __("Send OTP") }} <i class="fa fa-arrow-right ms-2"></i>').prop('disabled', false);
-            }
+            $.ajax({
+                url: '{{ route("web.request.otp") }}',
+                method: 'POST',
+                data: data,
+                success: function(res) {
+                    @if($otpMethod === 'email')
+                        currentEmail = email;
+                    @else
+                        currentPhone = phone;
+                        currentCountryCode = countryCode;
+                    @endif
+                    $('#otp-request-section').slideUp();
+                    $('#otp-verify-section').slideDown();
+                    btn.html(originalBtnText).prop('disabled', false);
+                },
+                error: function(err) {
+                    let msg = err.responseJSON?.message || "{{ __('Failed to send OTP') }}";
+                    $('#phone_error').text(msg).show();
+                    btn.html(originalBtnText).prop('disabled', false);
+                }
+            });
         });
-    });
 
-    // Step 2: Verify OTP
-    $('#btn-verify-otp').click(function() {
-        let otp = $('#otp_input').val().trim();
-        if(!otp) {
-            $('#otp_error').text("{{ __('OTP is required') }}").show();
-            return;
-        }
-        $('#otp_error').hide();
+        // Step 2: Verify OTP
+        $('#btn-verify-otp').click(function() {
+            let otp = $('#otp_input').val().trim();
+            if(!otp) {
+                $('#otp_error').text("{{ __('OTP is required') }}").show();
+                return;
+            }
+            $('#otp_error').hide();
 
-        const btn = $(this);
-        const originalText = btn.html();
-        btn.html('<i class="fa fa-spinner fa-spin"></i>').prop('disabled', true);
+            const btn = $(this);
+            const originalText = btn.html();
+            btn.html('<i class="fa fa-spinner fa-spin"></i>').prop('disabled', true);
 
-        $.ajax({
-            url: '{{ route("web.verify.otp") }}',
-            method: 'POST',
-            data: { 
-                phone: currentPhone, 
-                country_code: currentCountryCode,
-                otp_code: otp,
-                _token: '{{ csrf_token() }}'
-            },
+            let data = {};
+            @if($otpMethod === 'email')
+                data = { email: currentEmail, otp_code: otp, _token: '{{ csrf_token() }}' };
+            @else
+                data = { phone: currentPhone, country_code: currentCountryCode, otp_code: otp, _token: '{{ csrf_token() }}' };
+            @endif
+
+            $.ajax({
+                url: '{{ route("web.verify.otp") }}',
+                method: 'POST',
+                data: data,
             success: function(res) {
                 if(res.success) {
                     window.location.href = res.redirect || '/';

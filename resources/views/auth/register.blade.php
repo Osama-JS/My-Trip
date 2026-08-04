@@ -2,6 +2,7 @@
 @php
     $locale = session('locale', app()->getLocale());
     $dir = $locale == 'ar' ? 'rtl' : 'ltr';
+    $otpMethod = \App\Models\Setting::get('otp_method', 'whatsapp');
 @endphp
 <html lang="{{ str_replace('_', '-', $locale) }}" dir="{{ $dir }}">
 <head>
@@ -383,6 +384,22 @@
                 <div class="tab-pane fade show active" id="guest-register" role="tabpanel">
                     
                     <div id="guest-otp-request-section">
+                        @if($otpMethod === 'email')
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center gap-2 mb-3 p-3" style="background: linear-gradient(135deg, #0f4c81 0%, #1a73e8 100%); border-radius: 10px; color: white;">
+                                <i class="fas fa-envelope" style="font-size: 22px;"></i>
+                                <span style="font-size: 13px; font-weight: 500;">{{ __('A verification code will be sent to your email.') }}</span>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="mb-2 font-weight-bold text-muted">{{ __('Email Address') }}</label>
+                            <input type="email" id="guest_email_input" class="form-control" placeholder="name@example.com" required>
+                            <span class="text-danger small mt-1 d-block" id="guest_phone_error" style="display:none;"></span>
+                        </div>
+                        <button type="button" id="btn-guest-request-otp" class="btn btn-primary w-100">
+                            <i class="fas fa-envelope me-2"></i> {{ __('Register via Email') }}
+                        </button>
+                        @else
                         <div class="mb-3">
                             <div class="d-flex align-items-center gap-2 mb-3 p-3" style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); border-radius: 10px; color: white;">
                                 <i class="fab fa-whatsapp" style="font-size: 22px;"></i>
@@ -409,11 +426,12 @@
                         <button type="button" id="btn-guest-request-otp" class="btn btn-primary w-100">
                             <i class="fab fa-whatsapp me-2"></i> {{ __('Register via WhatsApp') }}
                         </button>
+                        @endif
                     </div>
 
                     <div id="guest-otp-verify-section" style="display:none;">
                         <div class="alert alert-info small mb-3">
-                            {{ __('An OTP has been sent to your WhatsApp.') }}
+                            {{ $otpMethod === 'email' ? __('An OTP has been sent to your email.') : __('An OTP has been sent to your WhatsApp.') }}
                         </div>
                         <div class="mb-4">
                             <label class="mb-2 font-weight-bold text-muted">{{ __('OTP Code') }}</label>
@@ -424,7 +442,7 @@
                             {{ __('Verify & Register') }} <i class="fa fa-check ms-2"></i>
                         </button>
                         <div class="text-center mt-3">
-                            <a href="#" id="btn-guest-back" class="text-muted small"><i class="fa fa-arrow-left"></i> {{ __('Change Phone Number') }}</a>
+                            <a href="#" id="btn-guest-back" class="text-muted small"><i class="fa fa-arrow-left"></i> {{ $otpMethod === 'email' ? __('Change Email Address') : __('Change Phone Number') }}</a>
                         </div>
                     </div>
 
@@ -487,7 +505,7 @@
 
                     <div id="full-otp-verify-section" style="display:none;">
                         <div class="alert alert-info small mb-3">
-                            {{ __('An OTP has been sent to your WhatsApp to verify your account.') }}
+                            {{ $otpMethod === 'email' ? __('An OTP has been sent to your email to verify your account.') : __('An OTP has been sent to your WhatsApp to verify your account.') }}
                         </div>
                         <div class="mb-4">
                             <label class="mb-2 font-weight-bold text-muted">{{ __('OTP Code') }}</label>
@@ -615,39 +633,52 @@ $(document).ready(function() {
     // ---- Guest Registration Flow ----
     let guestPhone = '';
     let guestCountryCode = '';
+    let guestEmail = '';
 
     $('#btn-guest-request-otp').on('click', function() {
-        let phone = $('#guest_phone_input').val().trim();
-        if (phone.startsWith('0')) { phone = phone.substring(1); }
-        let countryCode = '+' + $('#guest_country_code').val();
+        let data = {};
+        @if($otpMethod === 'email')
+            let email = $('#guest_email_input').val().trim();
+            if(!email) {
+                $('#guest_phone_error').text('{{ __("Please enter a valid email address") }}').show();
+                return;
+            }
+            data = { email: email, _token: '{{ csrf_token() }}' };
+        @else
+            let phone = $('#guest_phone_input').val().trim();
+            if (phone.startsWith('0')) { phone = phone.substring(1); }
+            let countryCode = '+' + $('#guest_country_code').val();
 
-        if(!phone) {
-            $('#guest_phone_error').text('{{ __("Please enter a valid phone number") }}').show();
-            return;
-        }
+            if(!phone) {
+                $('#guest_phone_error').text('{{ __("Please enter a valid phone number") }}').show();
+                return;
+            }
+            data = { phone: phone, country_code: countryCode, _token: '{{ csrf_token() }}' };
+        @endif
 
         let btn = $(this);
+        const originalBtnText = btn.html();
         btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> {{ __("Sending...") }}');
 
         $.ajax({
             url: '{{ route("web.request.otp") }}', // Same endpoint as Login for Guest
             method: 'POST',
-            data: { 
-                phone: phone,
-                country_code: countryCode,
-                _token: '{{ csrf_token() }}'
-            },
+            data: data,
             success: function(res) {
-                guestPhone = phone;
-                guestCountryCode = countryCode;
+                @if($otpMethod === 'email')
+                    guestEmail = email;
+                @else
+                    guestPhone = phone;
+                    guestCountryCode = countryCode;
+                @endif
                 $('#guest-otp-request-section').slideUp();
                 $('#guest-otp-verify-section').slideDown();
-                btn.html('<i class="fab fa-whatsapp me-2"></i> {{ __("Register via WhatsApp") }}').prop('disabled', false);
+                btn.html(originalBtnText).prop('disabled', false);
             },
             error: function(err) {
                 let msg = err.responseJSON?.message || "{{ __('Failed to send OTP') }}";
                 $('#guest_phone_error').text(msg).show();
-                btn.html('<i class="fab fa-whatsapp me-2"></i> {{ __("Register via WhatsApp") }}').prop('disabled', false);
+                btn.html(originalBtnText).prop('disabled', false);
             }
         });
     });
@@ -663,15 +694,17 @@ $(document).ready(function() {
         const btn = $(this);
         btn.html('<i class="fa fa-spinner fa-spin"></i>').prop('disabled', true);
 
+        let data = {};
+        @if($otpMethod === 'email')
+            data = { email: guestEmail, otp_code: otp, _token: '{{ csrf_token() }}' };
+        @else
+            data = { phone: guestPhone, country_code: guestCountryCode, otp_code: otp, _token: '{{ csrf_token() }}' };
+        @endif
+
         $.ajax({
             url: '{{ route("web.verify.otp") }}',
             method: 'POST',
-            data: { 
-                phone: guestPhone, 
-                country_code: guestCountryCode, 
-                otp_code: otp,
-                _token: '{{ csrf_token() }}'
-            },
+            data: data,
             success: function(res) {
                 if(res.success) {
                     window.location.href = res.redirect;

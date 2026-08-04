@@ -9,18 +9,18 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class otpMail extends Mailable implements ShouldQueue
+class OtpMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $otp;
+    public $otpCode;
 
     /**
      * Create a new message instance.
      */
-    public function __construct($otp)
+    public function __construct($otpCode)
     {
-        $this->otp = $otp;
+        $this->otpCode = $otpCode;
     }
 
     /**
@@ -29,7 +29,7 @@ class otpMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Verification Code - ' . config('app.name'),
+            subject: 'Your Flyvio OTP Verification Code',
         );
     }
 
@@ -39,7 +39,7 @@ class otpMail extends Mailable implements ShouldQueue
     public function content(): Content
     {
         return new Content(
-            view: 'emails.otp',
+            markdown: 'emails.auth.otp',
         );
     }
 
