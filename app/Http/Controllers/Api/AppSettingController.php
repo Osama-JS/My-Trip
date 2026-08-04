@@ -37,7 +37,8 @@ class AppSettingController extends Controller
                             new OA\Property(property: "app_min_version", type: "string", example: "1.0.0"),
                             new OA\Property(property: "android_url", type: "string", example: "https://play.google.com/..."),
                             new OA\Property(property: "ios_url", type: "string", example: "https://apps.apple.com/..."),
-                            new OA\Property(property: "site_name", type: "string", example: "My Trip")
+                            new OA\Property(property: "site_name", type: "string", example: "My Trip"),
+                            new OA\Property(property: "otp_method", type: "string", example: "whatsapp", description: "The method used for OTP verification (whatsapp or email)")
                         ])
                     ]
                 )
@@ -52,6 +53,7 @@ class AppSettingController extends Controller
             'android_url' => Setting::get('android_url', ''),
             'ios_url' => Setting::get('ios_url', ''),
             'site_name' => app()->getLocale() == 'ar' ? Setting::get('site_name_ar') : Setting::get('site_name_en'),
+            'otp_method' => Setting::get('otp_method', 'whatsapp'),
         ];
 
         return $this->apiResponse(false, __('App settings retrieved successfully.'), $settings);

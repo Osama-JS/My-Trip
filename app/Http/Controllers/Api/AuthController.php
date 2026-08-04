@@ -246,6 +246,7 @@ class AuthController extends Controller
                 properties: [
                     new OA\Property(property: "phone", type: "string", example: "966500000000"),
                     new OA\Property(property: "country_code", type: "string", example: "+966"),
+                    new OA\Property(property: "email", type: "string", example: "user@example.com", description: "Required instead of phone if otp_method is email"),
                 ]
             )
         ),
@@ -255,51 +256,98 @@ class AuthController extends Controller
     )]
     public function requestPhoneOtp(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'phone' => 'required|string|max:20',
-            'country_code' => 'required|string|max:10',
-        ]);
+        $otpMethod = \App\Models\Setting::get('otp_method', 'whatsapp');
 
-        if ($validator->fails()) {
-            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
-        }
-
-        $phone = ltrim($request->phone, '0');
-        $countryCode = '+' . ltrim($request->country_code, '+');
-        $fullPhone = ltrim($countryCode, '+') . $phone;
-        
-        // Send WhatsApp OTP via Automize
-        $whatsAppService = new WhatsAppService();
-        $verificationId = $whatsAppService->startVerification($fullPhone);
-
-        if (!$verificationId) {
-            return $this->apiResponse(true, __('Failed to send OTP. Please try again later.'), null, null, 500);
-        }
-
-        $user = User::where('phone', $phone)->where('country_code', $countryCode)->first();
-
-        if (!$user) {
-            // Create Guest User
-            $user = User::create([
-                'phone' => $phone,
-                'country_code' => $countryCode,
-                'email' => $phone . '@guest.flyvio.com',
-                'first_name' => 'Guest',
-                'last_name' => 'User',
-                'password' => Hash::make(\Illuminate\Support\Str::random(16)),
-                'user_type' => User::TYPE_CUSTOMER,
-                'is_guest' => true,
-                'otp_code' => $verificationId, // Store plain verification_id
-                'otp_expires_at' => Carbon::now()->addMinutes(10),
-                'status' => 'active'
+        if ($otpMethod === 'email') {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email|max:255',
             ]);
-        } else {
-            $user->otp_code = $verificationId; // Store plain verification_id
-            $user->otp_expires_at = Carbon::now()->addMinutes(10);
-            $user->save();
-        }
 
-        return $this->apiResponse(false, __('OTP sent successfully to your WhatsApp.'), null, null, 200);
+            if ($validator->fails()) {
+                return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+            }
+
+            $email = $request->email;
+            $user = User::where('email', $email)->first();
+
+            $verificationId = (string) rand(100000, 999999);
+
+            try {
+                \Illuminate\Support\Facades\Mail::to($email)->send(new \App\Mail\OtpMail($verificationId));
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Email OTP Failed: " . $e->getMessage());
+                return $this->apiResponse(true, __('Failed to send OTP email. Please try again later.'), null, null, 500);
+            }
+
+            if (!$user) {
+                // Create Guest User
+                $user = User::create([
+                    'email' => $email,
+                    'phone' => null,
+                    'country_code' => null,
+                    'first_name' => 'Guest',
+                    'last_name' => 'User',
+                    'password' => Hash::make(\Illuminate\Support\Str::random(16)),
+                    'user_type' => User::TYPE_CUSTOMER,
+                    'is_guest' => true,
+                    'otp_code' => $verificationId,
+                    'otp_expires_at' => Carbon::now()->addMinutes(10),
+                    'status' => 'active'
+                ]);
+            } else {
+                $user->otp_code = $verificationId;
+                $user->otp_expires_at = Carbon::now()->addMinutes(10);
+                $user->save();
+            }
+
+            return $this->apiResponse(false, __('OTP sent successfully to your email.'), null, null, 200);
+        } else {
+            $validator = Validator::make($request->all(), [
+                'phone' => 'required|string|max:20',
+                'country_code' => 'required|string|max:10',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+            }
+
+            $phone = ltrim($request->phone, '0');
+            $countryCode = '+' . ltrim($request->country_code, '+');
+            $fullPhone = ltrim($countryCode, '+') . $phone;
+            
+            // Send WhatsApp OTP via Automize
+            $whatsAppService = new WhatsAppService();
+            $verificationId = $whatsAppService->startVerification($fullPhone);
+
+            if (!$verificationId) {
+                return $this->apiResponse(true, __('Failed to send OTP. Please try again later.'), null, null, 500);
+            }
+
+            $user = User::where('phone', $phone)->where('country_code', $countryCode)->first();
+
+            if (!$user) {
+                // Create Guest User
+                $user = User::create([
+                    'phone' => $phone,
+                    'country_code' => $countryCode,
+                    'email' => $phone . '@guest.flyvio.com',
+                    'first_name' => 'Guest',
+                    'last_name' => 'User',
+                    'password' => Hash::make(\Illuminate\Support\Str::random(16)),
+                    'user_type' => User::TYPE_CUSTOMER,
+                    'is_guest' => true,
+                    'otp_code' => $verificationId, // Store plain verification_id
+                    'otp_expires_at' => Carbon::now()->addMinutes(10),
+                    'status' => 'active'
+                ]);
+            } else {
+                $user->otp_code = $verificationId; // Store plain verification_id
+                $user->otp_expires_at = Carbon::now()->addMinutes(10);
+                $user->save();
+            }
+
+            return $this->apiResponse(false, __('OTP sent successfully to your WhatsApp.'), null, null, 200);
+        }
     }
 
     #[OA\Post(
@@ -313,6 +361,8 @@ class AuthController extends Controller
                 required: ["phone", "otp_code"],
                 properties: [
                     new OA\Property(property: "phone", type: "string", example: "966500000000"),
+                    new OA\Property(property: "country_code", type: "string", example: "+966"),
+                    new OA\Property(property: "email", type: "string", example: "user@example.com", description: "Required instead of phone if otp_method is email"),
                     new OA\Property(property: "otp_code", type: "string", example: "1234"),
                     new OA\Property(property: "fcm_token", type: "string"),
                     new OA\Property(property: "device_type", type: "string", enum: ["android", "ios"]),
@@ -325,35 +375,64 @@ class AuthController extends Controller
     )]
     public function verifyPhoneOtp(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'phone' => 'required|string',
-            'country_code' => 'required|string',
-            'otp_code' => 'required|string',
-            'fcm_token' => 'nullable|string',
-            'device_type' => 'nullable|string|in:android,ios',
-        ]);
+        $otpMethod = \App\Models\Setting::get('otp_method', 'whatsapp');
 
-        if ($validator->fails()) {
-            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
-        }
+        if ($otpMethod === 'email') {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|string|email',
+                'otp_code' => 'required|string',
+                'fcm_token' => 'nullable|string',
+                'device_type' => 'nullable|string|in:android,ios',
+            ]);
 
-        $phone = ltrim($request->phone, '0');
-        $countryCode = '+' . ltrim($request->country_code, '+');
-        $user = User::where('phone', $phone)->where('country_code', $countryCode)->first();
+            if ($validator->fails()) {
+                return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+            }
 
-        if (!$user) {
-            return $this->apiResponse(true, __('User not found.'), null, null, 404);
-        }
+            $user = User::where('email', $request->email)->first();
 
-        if (!$user->otp_code || !$user->otp_expires_at || $user->otp_expires_at->isPast()) {
-            return $this->apiResponse(true, __('OTP expired or invalid.'), null, null, 422);
-        }
+            if (!$user) {
+                return $this->apiResponse(true, __('User not found.'), null, null, 404);
+            }
 
-        $whatsAppService = new WhatsAppService();
-        $isApproved = $whatsAppService->checkVerification($user->otp_code, $request->otp_code);
+            if (!$user->otp_code || !$user->otp_expires_at || $user->otp_expires_at->isPast()) {
+                return $this->apiResponse(true, __('OTP expired or invalid.'), null, null, 422);
+            }
 
-        if (!$isApproved) {
-            return $this->apiResponse(true, __('Invalid OTP.'), null, null, 422);
+            if ($user->otp_code !== $request->otp_code) {
+                return $this->apiResponse(true, __('Invalid OTP.'), null, null, 422);
+            }
+        } else {
+            $validator = Validator::make($request->all(), [
+                'phone' => 'required|string',
+                'country_code' => 'required|string',
+                'otp_code' => 'required|string',
+                'fcm_token' => 'nullable|string',
+                'device_type' => 'nullable|string|in:android,ios',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+            }
+
+            $phone = ltrim($request->phone, '0');
+            $countryCode = '+' . ltrim($request->country_code, '+');
+            $user = User::where('phone', $phone)->where('country_code', $countryCode)->first();
+
+            if (!$user) {
+                return $this->apiResponse(true, __('User not found.'), null, null, 404);
+            }
+
+            if (!$user->otp_code || !$user->otp_expires_at || $user->otp_expires_at->isPast()) {
+                return $this->apiResponse(true, __('OTP expired or invalid.'), null, null, 422);
+            }
+
+            $whatsAppService = new WhatsAppService();
+            $isApproved = $whatsAppService->checkVerification($user->otp_code, $request->otp_code);
+
+            if (!$isApproved) {
+                return $this->apiResponse(true, __('Invalid OTP.'), null, null, 422);
+            }
         }
 
         // Success
