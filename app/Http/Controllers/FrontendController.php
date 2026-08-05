@@ -719,7 +719,13 @@ class FrontendController extends Controller
 
             // 4. Save Passengers for detailed view and ticketing
             $passengersInput = $request->get('passengers', []);
-            foreach ($passengersInput as $pax) {
+            foreach ($passengersInput as $index => $pax) {
+                $passportImagePath = null;
+                if ($request->hasFile("passengers.{$index}.passport_image")) {
+                    $file = $request->file("passengers.{$index}.passport_image");
+                    $passportImagePath = $file->store('passports', 'public');
+                }
+
                 \App\Models\BookingPassenger::create([
                     'booking_id'      => $booking->id,
                     'hotel_booking_id' => null,
@@ -733,7 +739,7 @@ class FrontendController extends Controller
                     'nationality'      => $pax['nationality'] ?? null,
                     'passport_issue_country' => $pax['passport_issue_country'] ?? null,
                     'passport_expiry'   => $pax['passport_expiry_date'] ?? null,
-                    'passport_image'   => $pax['passport_image'] ?? null,
+                    'passport_image'   => $passportImagePath ?? ($pax['passport_image'] ?? null),
                 ]);
             }
 
@@ -905,7 +911,11 @@ class FrontendController extends Controller
             'addons' => 'nullable|array',
             'addons.*' => 'exists:trip_addons,id',
             'passengers' => 'required|array|min:1',
-            'passengers.*.name' => 'required|string|max:255',
+            'passengers.*.first_name' => 'required|string|max:255',
+            'passengers.*.last_name' => 'required|string|max:255',
+            'passengers.*.title' => 'nullable|string|max:10',
+            'passengers.*.dob' => 'nullable|date',
+            'passengers.*.passport_issue_country' => 'nullable|string|max:50',
             'passengers.*.phone' => 'required|string|max:50',
             'passengers.*.nationality' => 'required|string|max:100',
             'passengers.*.passport_number' => 'required|string|max:100',
@@ -978,18 +988,21 @@ class FrontendController extends Controller
                 $passportImagePath = $file->store('passports', 'public');
             }
 
+            $fullName = trim(($pax['first_name'] ?? '') . ' ' . ($pax['last_name'] ?? ''));
+
             \App\Models\BookingPassenger::create([
                 'trip_booking_id' => $booking->id,
-                'name' => $pax['name'],
+                'name' => $fullName,
+                'first_name' => $pax['first_name'] ?? '',
+                'last_name' => $pax['last_name'] ?? '',
+                'title' => $pax['title'] ?? 'Mr',
+                'dob' => $pax['dob'] ?? null,
+                'passport_issue_country' => $pax['passport_issue_country'] ?? null,
                 'phone' => $pax['phone'],
                 'nationality' => $pax['nationality'],
                 'passport_number' => $pax['passport_number'],
                 'passport_expiry' => $pax['passport_expiry'],
                 'passport_image' => $passportImagePath,
-                // Assign dummy title/name split if required by older components
-                'first_name' => explode(' ', $pax['name'])[0],
-                'last_name' => count(explode(' ', $pax['name'])) > 1 ? explode(' ', $pax['name'])[1] : '',
-                'title' => 'Mr', 
             ]);
         }
 

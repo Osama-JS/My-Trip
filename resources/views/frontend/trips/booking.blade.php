@@ -73,17 +73,46 @@
                         </div>
                         <div class="fe-pax-body">
                             
-                            <div class="fe-input-row full">
+                            @if(\App\Models\Setting::get('allow_manual_passport_edit', '1') == '1')
+                            
+                            <div class="fe-form-row mt-3">
+                                <div class="fe-form-group" style="max-width: 200px;">
+                                    <label class="fe-label">{{ __('Title') }}</label>
+                                    <select name="passengers[{{ $i }}][title]" class="fe-input" onchange="document.getElementById('hidden_title_{{ $i }}').value = this.value">
+                                        <option value="Mr">{{ __('Mr') }}</option>
+                                        <option value="Mrs">{{ __('Mrs') }}</option>
+                                        <option value="Ms">{{ __('Ms') }}</option>
+                                        <option value="Master">{{ __('Master') }}</option>
+                                        <option value="Miss">{{ __('Miss') }}</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="fe-input-row">
                                 <div class="fe-input-group">
-                                    <label>{{ __('Full Name') }} <span>*</span></label>
+                                    <label>{{ __('First Name') }} <span>*</span></label>
                                     <div class="fe-input-icon">
-                                        <i class="fas fa-user-tie"></i>
-                                        <input type="text" name="passengers[{{ $i }}][name]" placeholder="{{ __('Exactly as in passport') }}" value="{{ old('passengers.'.$i.'.name') }}" required>
+                                        <i class="fas fa-user"></i>
+                                        <input type="text" name="passengers[{{ $i }}][first_name]" placeholder="{{ __('As in passport') }}" value="{{ old('passengers.'.$i.'.first_name') }}" required>
+                                    </div>
+                                </div>
+                                <div class="fe-input-group">
+                                    <label>{{ __('Last Name') }} <span>*</span></label>
+                                    <div class="fe-input-icon">
+                                        <i class="fas fa-user-tag"></i>
+                                        <input type="text" name="passengers[{{ $i }}][last_name]" placeholder="{{ __('As in passport') }}" value="{{ old('passengers.'.$i.'.last_name') }}" required>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="fe-input-row">
+                                <div class="fe-input-group">
+                                    <label>{{ __('Date of Birth') }} <span>*</span></label>
+                                    <div class="fe-input-icon">
+                                        <i class="fas fa-calendar-alt"></i>
+                                        <input type="date" name="passengers[{{ $i }}][dob]" value="{{ old('passengers.'.$i.'.dob') }}" required>
+                                    </div>
+                                </div>
                                 <div class="fe-input-group">
                                     <label>{{ __('WhatsApp/Phone') }} <span>*</span></label>
                                     <div class="fe-input-icon">
@@ -91,16 +120,16 @@
                                         <input type="text" name="passengers[{{ $i }}][phone]" placeholder="05xxxxxxxx" value="{{ old('passengers.'.$i.'.phone') }}" required>
                                     </div>
                                 </div>
+                            </div>
+
+                            <div class="fe-input-row">
                                 <div class="fe-input-group">
                                     <label>{{ __('Nationality') }} <span>*</span></label>
                                     <div class="fe-input-icon">
                                         <i class="fas fa-globe-americas"></i>
-                                        <input type="text" name="passengers[{{ $i }}][nationality]" placeholder="{{ __('e.g., Saudi') }}" value="{{ old('passengers.'.$i.'.nationality') }}" required>
+                                        <input type="text" name="passengers[{{ $i }}][nationality]" placeholder="{{ __('e.g., SA') }}" value="{{ old('passengers.'.$i.'.nationality') }}" required>
                                     </div>
                                 </div>
-                            </div>
-                            
-                            <div class="fe-input-row">
                                 <div class="fe-input-group">
                                     <label>{{ __('Passport Number') }} <span>*</span></label>
                                     <div class="fe-input-icon">
@@ -108,6 +137,9 @@
                                         <input type="text" name="passengers[{{ $i }}][passport_number]" value="{{ old('passengers.'.$i.'.passport_number') }}" required>
                                     </div>
                                 </div>
+                            </div>
+                            
+                            <div class="fe-input-row">
                                 <div class="fe-input-group">
                                     <label>{{ __('Passport Expiry') }} <span>*</span></label>
                                     <div class="fe-input-icon">
@@ -115,19 +147,101 @@
                                         <input type="date" name="passengers[{{ $i }}][passport_expiry]" value="{{ old('passengers.'.$i.'.passport_expiry') }}" required>
                                     </div>
                                 </div>
+                                <div class="fe-input-group">
+                                    <label>{{ __('Issue Country') }} <span>*</span></label>
+                                    <div class="fe-input-icon">
+                                        <i class="fas fa-flag"></i>
+                                        <input type="text" name="passengers[{{ $i }}][passport_issue_country]" placeholder="{{ __('e.g., SA') }}" value="{{ old('passengers.'.$i.'.passport_issue_country') }}" required>
+                                    </div>
+                                </div>
+                            </div>
+                            @else
+                            <!-- Hidden Inputs for AI Data -->
+                            <input type="hidden" name="passengers[{{ $i }}][title]" id="hidden_title_{{ $i }}" value="Mr">
+                            <input type="hidden" name="passengers[{{ $i }}][first_name]" id="hidden_first_name_{{ $i }}">
+                            <input type="hidden" name="passengers[{{ $i }}][last_name]" id="hidden_last_name_{{ $i }}">
+                            <input type="hidden" name="passengers[{{ $i }}][dob]" id="hidden_dob_{{ $i }}">
+                            <input type="hidden" name="passengers[{{ $i }}][nationality]" id="hidden_nationality_{{ $i }}">
+                            <input type="hidden" name="passengers[{{ $i }}][passport_number]" id="hidden_passport_number_{{ $i }}">
+                            <input type="hidden" name="passengers[{{ $i }}][passport_expiry]" id="hidden_passport_expiry_{{ $i }}">
+                            <input type="hidden" name="passengers[{{ $i }}][passport_issue_country]" id="hidden_passport_issue_country_{{ $i }}">
+                            
+                            <!-- Phone is still manual -->
+                            <div class="fe-input-row full mt-3">
+                                <div class="fe-input-group">
+                                    <label>{{ __('WhatsApp/Phone') }} <span>*</span></label>
+                                    <div class="fe-input-icon">
+                                        <i class="fab fa-whatsapp"></i>
+                                        <input type="text" name="passengers[{{ $i }}][phone]" placeholder="05xxxxxxxx" value="{{ old('passengers.'.$i.'.phone') }}" required>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div class="fe-upload-zone">
-                                <input type="file" name="passengers[{{ $i }}][passport_image]" id="passport_img_{{ $i }}" accept="image/*,application/pdf" class="fe-upload-input" onchange="updateFileName(this, {{ $i }})">
-                                <label for="passport_img_{{ $i }}" class="fe-upload-label">
+                            <!-- Readonly List View -->
+                            <div class="fe-form-row mt-2 mb-3">
+                                <div class="fe-form-group" style="width: 100%;">
+                                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px;">
+                                        <h6 style="color: #334155; font-weight: 700; margin-bottom: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">
+                                            <i class="fas fa-passport text-primary" style="margin-inline-end: 8px;"></i>{{ __('Extracted Passport Data') }}
+                                        </h6>
+                                        
+                                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                                            <div>
+                                                <span style="font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">{{ __('Title') }}</span>
+                                                <div style="font-weight: 600; color: #0f172a; font-size: 0.95rem; margin-top: 2px;" class="ai-display-title-{{ $i }}">---</div>
+                                            </div>
+                                            <div>
+                                                <span style="font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">{{ __('First Name') }}</span>
+                                                <div style="font-weight: 600; color: #0f172a; font-size: 0.95rem; margin-top: 2px;" class="ai-display-first_name-{{ $i }}">---</div>
+                                            </div>
+                                            <div>
+                                                <span style="font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">{{ __('Last Name') }}</span>
+                                                <div style="font-weight: 600; color: #0f172a; font-size: 0.95rem; margin-top: 2px;" class="ai-display-last_name-{{ $i }}">---</div>
+                                            </div>
+                                            <div>
+                                                <span style="font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">{{ __('Date of Birth') }}</span>
+                                                <div style="font-weight: 600; color: #0f172a; font-size: 0.95rem; margin-top: 2px;" class="ai-display-dob-{{ $i }}">---</div>
+                                            </div>
+                                            <div>
+                                                <span style="font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">{{ __('Passport Number') }}</span>
+                                                <div style="font-weight: 600; color: #0f172a; font-size: 0.95rem; margin-top: 2px;" class="ai-display-passport_number-{{ $i }}">---</div>
+                                            </div>
+                                            <div>
+                                                <span style="font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">{{ __('Nationality') }}</span>
+                                                <div style="font-weight: 600; color: #0f172a; font-size: 0.95rem; margin-top: 2px;" class="ai-display-nationality-{{ $i }}">---</div>
+                                            </div>
+                                            <div>
+                                                <span style="font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">{{ __('Issue Country') }}</span>
+                                                <div style="font-weight: 600; color: #0f172a; font-size: 0.95rem; margin-top: 2px;" class="ai-display-passport_issue_country-{{ $i }}">---</div>
+                                            </div>
+                                            <div>
+                                                <span style="font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">{{ __('Passport Expiry') }}</span>
+                                                <div style="font-weight: 600; color: #0f172a; font-size: 0.95rem; margin-top: 2px;" class="ai-display-passport_expiry-{{ $i }}">---</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            @endif
+
+                            <div class="fe-upload-zone" id="passport_dropzone_{{ $i }}" onclick="openPassportModal({{ $i }})" style="cursor: pointer;">
+                                <input type="file" name="passengers[{{ $i }}][passport_image]" id="hidden_passport_input_{{ $i }}" accept="image/*" class="d-none">
+                                <label class="fe-upload-label" style="pointer-events: none;">
                                     <div class="fe-upload-icon"><i class="fas fa-camera-retro"></i></div>
                                     <div class="fe-upload-text">
-                                        <b id="file_name_{{ $i }}">{{ __('Scan/Upload Passport') }}</b>
+                                        <b id="file_name_display_{{ $i }}">{{ __('Scan/Upload Passport') }}</b>
                                         <span>{{ __('Required for international insurance') }}</span>
                                     </div>
                                 </label>
+                                
+                                <div class="ai-loading-overlay d-none align-items-center justify-content-center" id="ai-loading-{{ $i }}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 10; border-radius: 14px;">
+                                    <div class="text-center">
+                                        <i class="fas fa-circle-notch fa-spin fa-3x mb-3" style="color: var(--primary);"></i>
+                                        <div style="font-weight: 800; color: var(--dark); font-size: 1.1rem;">{{ __('Scanning AI Data...') }}</div>
+                                        <p class="text-muted small mt-1">{{ __('Extracting your details automatically') }}</p>
+                                    </div>
+                                </div>
                             </div>
-
                         </div>
                     </div>
                 @endfor
@@ -354,6 +468,12 @@
         .fe-booking-sidebar { order: -1; }
         .fe-summary-glass { position: static; }
     }
+    .readonly-field-1, .readonly-field-2, .readonly-field-3, .readonly-field-4, .readonly-field-5, .readonly-field-6, .readonly-field-7, .readonly-field-8, .readonly-field-9 {
+        pointer-events: none !important;
+        background-color: #f8fafc !important;
+        opacity: 0.8 !important;
+        border-color: #e2e8f0 !important;
+    }
 </style>
 @endpush
 
@@ -374,4 +494,311 @@
         btn.disabled = true;
     });
 </script>
+<script>
+    // OCR Logic    
+    let currentUploadIndex = null;
+    let currentModalFile = null;
+    let cropper = null;
+
+    function openPassportModal(index) {
+        currentUploadIndex = index;
+        const hiddenInput = document.getElementById('hidden_passport_input_' + index);
+        // We use a separate input for file selection to trigger onChange repeatedly if needed
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = 'image/*';
+        fileInput.onchange = function(e) {
+            if(e.target.files && e.target.files.length > 0) {
+                currentModalFile = e.target.files[0];
+                showCropperModal();
+            }
+        };
+        fileInput.click();
+    }
+
+    function showCropperModal() {
+        if(!currentModalFile) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            $('#cropperImage').attr('src', e.target.result);
+            
+            // Re-initialize modal completely manually to avoid BS4/BS5 conflicts
+            $('#passportUploadModal').css({
+                'display': 'block',
+                'background': 'rgba(0,0,0,0.5)',
+                'opacity': '1'
+            }).addClass('show');
+            $('body').append('<div class="modal-backdrop fade show"></div>');
+            $('body').addClass('modal-open');
+
+            if (cropper) cropper.destroy();
+            const image = document.getElementById('cropperImage');
+            cropper = new Cropper(image, {
+                viewMode: 1,
+                dragMode: 'move',
+                autoCropArea: 1,
+                restore: false,
+                guides: true,
+                center: true,
+                highlight: false,
+                cropBoxMovable: true,
+                cropBoxResizable: true,
+                toggleDragModeOnDblclick: false,
+            });
+        }
+        reader.readAsDataURL(currentModalFile);
+    }
+    
+    function closePassportModal() {
+        $('#passportUploadModal').removeClass('show').css('display', 'none');
+        $('.modal-backdrop').remove();
+        $('body').removeClass('modal-open');
+        if(cropper) cropper.destroy();
+    }
+    
+    $('#cancelCropBtn').on('click', closePassportModal);
+
+    $('#confirmCropBtn').on('click', function() {
+        if (!cropper) return;
+        const btn = $(this);
+        const originalText = btn.html();
+        btn.html('<i class="fas fa-spinner fa-spin"></i> {{ __("Processing...") }}').prop('disabled', true);
+
+        cropper.getCroppedCanvas({
+            maxWidth: 2000,
+            maxHeight: 2000,
+            imageSmoothingEnabled: true,
+            imageSmoothingQuality: 'high',
+        }).toBlob(function(blob) {
+            if (!blob) {
+                btn.html(originalText).prop('disabled', false);
+                return;
+            }
+            
+            let originalName = currentModalFile.name;
+            if(!originalName.toLowerCase().endsWith('.jpg') && !originalName.toLowerCase().endsWith('.jpeg') && !originalName.toLowerCase().endsWith('.png')) {
+                originalName += '.jpg';
+            }
+            const croppedFile = new File([blob], originalName, { type: 'image/jpeg' });
+            
+            commitFile(croppedFile);
+            
+            btn.html(originalText).prop('disabled', false);
+            closePassportModal();
+        }, 'image/jpeg', 0.85);
+    });
+
+    function commitFile(file) {
+        const hiddenInput = document.getElementById('hidden_passport_input_' + currentUploadIndex);
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        hiddenInput.files = dt.files;
+
+        // Update UI
+        const dropzone = $('#passport_dropzone_' + currentUploadIndex);
+        dropzone.addClass('has-file');
+        $('#file_name_display_' + currentUploadIndex).text(file.name);
+
+        triggerTripOcr(hiddenInput, currentUploadIndex);
+    }
+
+    function triggerTripOcr(input, index) {
+        const file = input.files[0];
+        if (!file) return;
+
+        $('#scan_error_' + index).remove();
+
+        const loader = $('#ai-loading-' + index);
+        loader.removeClass('d-none').css('display', 'flex').show();
+        
+        const formData = new FormData();
+        formData.append('passport_image', file);
+        formData.append('_token', '{{ csrf_token() }}');
+        
+        $.ajax({
+            url: '{{ route("ocr.passport") }}',
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.success && response.data) {
+                    const data = response.data;
+
+                    if (data.error) {
+                        Swal.fire({ icon: 'error', title: '{{ __("Scan Failed") }}', text: data.error, confirmButtonColor: '#0ea5e9' });
+                        $('#hidden_passport_input_' + index).val('');
+                        const dropzone = $('#passport_dropzone_' + index);
+                        dropzone.removeClass('has-file');
+                        
+                        $('#scan_error_' + index).remove();
+                        const errorHtml = `
+                        <div id="scan_error_${index}" class="mt-3 d-flex align-items-center" style="border-radius: 12px; background-color: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 12px 16px; box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.1); animation: fadeIn 0.3s ease;">
+                            <i class="fas fa-exclamation-triangle fa-lg" style="color: #ef4444; margin-inline-end: 12px;"></i>
+                            <div style="text-align: start;">
+                                <div style="font-weight: 800; font-size: 0.95rem; margin-bottom: 2px;">{{ __("Scan Failed") }}</div>
+                                <div style="font-weight: 500; font-size: 0.85rem; opacity: 0.9;">${data.error}</div>
+                            </div>
+                        </div>`;
+                        dropzone.after(errorHtml);
+                        return;
+                    }
+                    
+                    // Fill text fields
+                    let fullName = '';
+                    if (data.first_name) fullName += data.first_name + ' ';
+                    if (data.last_name) fullName += data.last_name;
+                    if (data.first_name) {
+                        $('input[name="passengers['+index+'][first_name]"]').val(data.first_name);
+                        $('#hidden_first_name_'+index).val(data.first_name);
+                        $('.ai-display-first_name-'+index).text(data.first_name);
+                    }
+                    if (data.last_name) {
+                        $('input[name="passengers['+index+'][last_name]"]').val(data.last_name);
+                        $('#hidden_last_name_'+index).val(data.last_name);
+                        $('.ai-display-last_name-'+index).text(data.last_name);
+                    }
+                    if (data.dob) {
+                        $('input[name="passengers['+index+'][dob]"]').val(data.dob);
+                        $('#hidden_dob_'+index).val(data.dob);
+                        $('.ai-display-dob-'+index).text(data.dob);
+                    }
+                    if (data.nationality) {
+                        $('input[name="passengers['+index+'][nationality]"]').val(data.nationality);
+                        $('#hidden_nationality_'+index).val(data.nationality);
+                        $('.ai-display-nationality-'+index).text(data.nationality);
+                    }
+                    if (data.passport_no) {
+                        $('input[name="passengers['+index+'][passport_number]"]').val(data.passport_no);
+                        $('#hidden_passport_number_'+index).val(data.passport_no);
+                        $('.ai-display-passport_number-'+index).text(data.passport_no);
+                    }
+                    if (data.passport_expiry_date) {
+                        $('input[name="passengers['+index+'][passport_expiry]"]').val(data.passport_expiry_date);
+                        $('#hidden_passport_expiry_'+index).val(data.passport_expiry_date);
+                        $('.ai-display-passport_expiry-'+index).text(data.passport_expiry_date);
+                    }
+                    if (data.passport_issue_country) {
+                        $('input[name="passengers['+index+'][passport_issue_country]"]').val(data.passport_issue_country);
+                        $('#hidden_passport_issue_country_'+index).val(data.passport_issue_country);
+                        $('.ai-display-passport_issue_country-'+index).text(data.passport_issue_country);
+                    }
+                    
+                    if (data.gender) {
+                        let gender = data.gender.toUpperCase().trim();
+                        let title = 'Mr';
+                        
+                        if (gender === 'M' || gender === 'MALE' || gender === 'ذكر' || gender === 'ذ') {
+                            title = 'Mr';
+                        } else if (gender === 'F' || gender === 'FEMALE' || gender === 'أنثى' || gender === 'أ') {
+                            title = 'Ms';
+                        }
+                        
+                        if (title) {
+                            $('select[name="passengers['+index+'][title]"]').val(title).trigger('change');
+                            $('#hidden_title_'+index).val(title);
+                            $('.ai-display-title-'+index).text(title);
+                        }
+                    }
+                    
+                    if(typeof toastr !== 'undefined') {
+                        toastr.success('{{ __("Passport data extracted successfully.") }}');
+                    } else if(typeof Swal !== 'undefined') {
+                        Swal.fire({ icon: 'success', title: '{{ __("Success") }}', text: '{{ __("Passport data extracted successfully.") }}', toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
+                    }
+                } else {
+                    if(typeof toastr !== 'undefined') {
+                        toastr.warning('{{ __("Could not extract data perfectly. Please fill manually.") }}');
+                    }
+                }
+            },
+            error: function(xhr) {
+                Swal.fire({ icon: 'error', title: '{{ __("Scan Failed") }}', text: '{{ __("Error scanning passport. Please try again.") }}', confirmButtonColor: '#0ea5e9' });
+                $('#hidden_passport_input_' + index).val('');
+                const dropzone = $('#passport_dropzone_' + index);
+                dropzone.removeClass('has-file');
+                
+                $('#scan_error_' + index).remove();
+                const errorHtml = `
+                <div id="scan_error_${index}" class="mt-3 d-flex align-items-center" style="border-radius: 12px; background-color: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 12px 16px; box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.1); animation: fadeIn 0.3s ease;">
+                    <i class="fas fa-exclamation-triangle fa-lg" style="color: #ef4444; margin-inline-end: 12px;"></i>
+                    <div style="text-align: start;">
+                        <div style="font-weight: 800; font-size: 0.95rem; margin-bottom: 2px;">{{ __("Scan Failed") }}</div>
+                        <div style="font-weight: 500; font-size: 0.85rem; opacity: 0.9;">{{ __("Please upload a clearer image of the passport data page.") }}</div>
+                    </div>
+                </div>`;
+                dropzone.after(errorHtml);
+            },
+            complete: function() {
+                loader.addClass('d-none').hide();
+            }
+        });
+    }
+
+    // Form Validation before submit
+    $('#tripBookingForm').on('submit', function(e) {
+        let allowManualEdit = "{{ \App\Models\Setting::get('allow_manual_passport_edit', '1') }}";
+        if (allowManualEdit !== '1') {
+            let isValid = true;
+            let totalPax = {{ $ticketsCount }};
+            
+            for (let i = 0; i < totalPax; i++) {
+                let requiredFields = [
+                    '#hidden_first_name_' + i,
+                    '#hidden_last_name_' + i,
+                    '#hidden_dob_' + i,
+                    '#hidden_nationality_' + i,
+                    '#hidden_passport_number_' + i,
+                    '#hidden_passport_expiry_' + i,
+                    '#hidden_passport_issue_country_' + i
+                ];
+                
+                for (let j = 0; j < requiredFields.length; j++) {
+                    let field = $(requiredFields[j]);
+                    if (field.length > 0 && !field.val().trim()) {
+                        isValid = false;
+                        break;
+                    }
+                }
+                
+                if (!isValid) break;
+            }
+            
+            if (!isValid) {
+                e.preventDefault();
+                
+                // Show error message above the submit button
+                let errorContainer = $('#form-submit-error');
+                if (errorContainer.length === 0) {
+                    $('.fe-booking-action').prepend('<div id="form-submit-error" class="alert alert-danger" style="border-radius: 12px; background-color: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 12px 16px; margin-bottom: 15px; text-align: center; font-weight: 700; box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.1);"><i class="fas fa-exclamation-circle me-2"></i> {{ __("Please ensure all passenger data is filled out by uploading clear passport images for all passengers.") }}</div>');
+                    
+                    // Scroll to the error message
+                    $('html, body').animate({
+                        scrollTop: $('.fe-booking-action').offset().top - 100
+                    }, 500);
+                } else {
+                    // Shake effect if already visible
+                    errorContainer.addClass('shake');
+                    setTimeout(function() {
+                        errorContainer.removeClass('shake');
+                    }, 500);
+                }
+            }
+        }
+    });
+
+</script>
+<style>
+@keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  50% { transform: translateX(5px); }
+  75% { transform: translateX(-5px); }
+  100% { transform: translateX(0); }
+}
+.shake {
+  animation: shake 0.4s;
+}
+</style>
 @endpush

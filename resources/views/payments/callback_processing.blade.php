@@ -77,6 +77,7 @@
                 method: "POST",
                 data:   payload,
 
+                dataType: "json",
                 success: function (response) {
                     if (!response.error) {
                         // Build success redirect URL with all context
@@ -93,9 +94,14 @@
                 },
 
                 error: function (xhr) {
-                    const msg = xhr.responseJSON?.message
-                              ?? xhr.responseJSON?.errors
-                              ?? 'حدث خطأ أثناء التحقق من الدفع';
+                    let msg = 'حدث خطأ أثناء التحقق من الدفع';
+                    if (xhr && xhr.responseJSON) {
+                        if (xhr.responseJSON.message) {
+                            msg = xhr.responseJSON.message;
+                        } else if (xhr.responseJSON.errors) {
+                            msg = xhr.responseJSON.errors;
+                        }
+                    }
                     showError(typeof msg === 'string' ? msg : JSON.stringify(msg));
                 }
             });

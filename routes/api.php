@@ -138,5 +138,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/user/tickets/{id}/reply', [App\Http\Controllers\Api\SupportTicketController::class, 'reply']);
     Route::post('/user/tickets/{id}/rate', [App\Http\Controllers\Api\SupportTicketController::class, 'rate']);
 
+    // OCR
+    Route::post('/ocr/passport', [\App\Http\Controllers\OcrController::class, 'scanPassport']);
+
     Route::post('/logout', [AuthController::class, 'logout']);
 });

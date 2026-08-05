@@ -212,13 +212,69 @@
         </div>
     </form>
 </div>
+
+<!-- Master Passport Upload & Crop Modal (Custom) -->
+<div class="fe-modal-overlay d-none" id="passportUploadModal">
+  <div class="fe-modal-dialog">
+    <div class="fe-modal-content">
+      <div class="fe-modal-header">
+        <h5 style="margin: 0; font-weight: 800; color: #0f172a;"><i class="fas fa-id-card text-primary me-2"></i> {{ __('Upload & Edit Passport') }}</h5>
+        <button type="button" class="fe-btn-close" onclick="closePassportModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="fe-modal-body bg-light">
+        
+        <!-- Drag & Drop Area (Visible Initially) -->
+        <div id="modalDropArea" class="p-5 text-center" style="border: 2px dashed #cbd5e1; margin: 20px; border-radius: 15px; background: white; cursor: pointer; transition: all 0.3s;">
+            <i class="fas fa-cloud-upload-alt" style="font-size: 3rem; color: #94a3b8; margin-bottom: 15px;"></i>
+            <h4 style="font-weight: 700; color: #334155;">{{ __('Drag & Drop here or Click to Browse') }}</h4>
+            <p style="color: #64748b; font-size: 0.9rem;">{{ __('Ensure the data page is clear and readable.') }}</p>
+            <input type="file" id="modalFileInput" class="d-none" accept="image/*">
+        </div>
+
+        <!-- Cropper Area (Hidden Initially) -->
+        <div id="modalCropperArea" class="d-none" style="padding: 20px;">
+            <div style="max-height: 50vh; display:flex; justify-content:center; background: #000; border-radius: 10px; overflow: hidden;">
+                <img id="modalImageToCrop" src="" alt="Picture" style="max-width: 100%;">
+            </div>
+            <p class="text-muted text-center mt-3 mb-0" style="font-size: 0.85rem;"><i class="fas fa-crop-alt"></i> {{ __('Adjust the frame to focus tightly on the passport data page for optimal AI scanning.') }}</p>
+        </div>
+
+      </div>
+      <div class="fe-modal-footer">
+        <button type="button" class="fe-btn fe-btn-light fw-bold" id="btnChangeImage" style="display:none; padding: 10px 20px;"><i class="fas fa-undo"></i> {{ __('Change Image') }}</button>
+        <button type="button" class="fe-btn fe-btn-outline fw-bold ms-auto" onclick="closePassportModal()" style="padding: 10px 20px;">{{ __('Cancel') }}</button>
+        <button type="button" class="fe-btn fe-btn-primary fw-bold" id="btnConfirmUpload" disabled style="padding: 10px 20px;">{{ __('Confirm & Scan') }} <i class="fas fa-magic ms-1"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
 @endsection
 
 @push('styles')
+<link href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.css" rel="stylesheet">
 <style>
     .fe-booking-header { background: linear-gradient(135deg, var(--primary) 0%, #1a3a5a 100%); padding: 80px 0 100px; color: white; text-align: center; }
     .fe-booking-header h1 { color: white; margin-bottom: 10px; font-weight: 900; font-size: 2.5rem; }
     .fe-booking-header p { opacity: 0.9; font-size: 1.1rem; color: white; }
+
+    /* Custom Modal Styling */
+    .fe-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: all 0.3s ease; }
+    .fe-modal-overlay.show { opacity: 1; visibility: visible; }
+    .fe-modal-overlay.d-none { display: none !important; }
+    .fe-modal-dialog { background: white; border-radius: 20px; width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto; transform: translateY(-20px); transition: all 0.3s ease; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+    .fe-modal-overlay.show .fe-modal-dialog { transform: translateY(0); }
+    .fe-modal-header { padding: 20px 25px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
+    .fe-btn-close { background: transparent; border: none; font-size: 1.5rem; color: #64748b; cursor: pointer; transition: color 0.2s; }
+    .fe-btn-close:hover { color: #0f172a; }
+    .fe-modal-body { padding: 0; background: #f8fafc; }
+    .fe-modal-footer { padding: 15px 25px; border-top: 1px solid #e2e8f0; display: flex; gap: 10px; align-items: center; background: #f8fafc; }
+    .ms-auto { margin-inline-start: auto; }
+    .me-2 { margin-inline-end: 8px; }
+    .p-0 { padding: 0 !important; }
+    .p-5 { padding: 3rem !important; }
+    .text-center { text-align: center; }
+    .d-none { display: none !important; }
+    .bg-light { background-color: #f8fafc !important; }
 
     .fe-booking-grid { display: grid; grid-template-columns: 1fr 380px; gap: 30px; align-items: start; }
     @media (max-width: 1024px) {
@@ -247,6 +303,15 @@
     .fe-guest-badge { background: var(--primary); color: white; padding: 2px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
     .fe-guest-name { font-weight: 800; color: var(--dark); font-size: 0.95rem; }
 
+    /* Passport Dropzone Styling */
+    .passport-dropzone { border: 2px dashed var(--primary-300, #93c5fd); border-radius: 16px; background: #f8fafc; padding: 30px 20px; text-align: center; cursor: pointer; transition: all 0.3s ease; position: relative; overflow: hidden; }
+    .passport-dropzone:hover { background: #f0f9ff; border-color: var(--primary); }
+    .passport-dropzone h5 { font-weight: 800; font-size: 1.1rem; color: #1e293b; margin-top: 10px; }
+    .passport-dropzone.has-file { border: 2px solid #10b981; background: #f0fdf4; }
+    .passport-dropzone.has-file h5, .passport-dropzone.has-file p.text-muted { display: none; }
+    .passport-dropzone.has-file i.fa-cloud-upload-alt { display: none; }
+    .passport-dropzone .success-indicator { display: flex !important; flex-direction: column; align-items: center; justify-content: center; }
+
     /* Summary Card Styling */
     .fe-summary-card { background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 1px solid var(--gray-100); position: sticky; top: 100px; }
     .fe-summary-header { padding: 20px 24px; background: var(--dark); color: white; border-radius: 20px 20px 0 0; }
@@ -270,6 +335,16 @@
     .total-value .currency { font-size: 1rem; font-weight: 800; margin-inline-end: 4px; }
     .total-value .amount { font-size: 2rem; font-weight: 900; }
     .total-note { font-size: 0.7rem; color: var(--gray-500); margin-top: 5px; font-weight: 600; }
+
+    .fe-btn-light { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+    .fe-btn-light:hover { background: #e2e8f0; color: #334155; }
+    
+    .readonly-field-0, .readonly-field-1, .readonly-field-2, .readonly-field-3, .readonly-field-4, .readonly-field-5, .readonly-field-6, .readonly-field-7, .readonly-field-8, .readonly-field-9 {
+        pointer-events: none !important;
+        background-color: #f8fafc !important;
+        opacity: 0.8 !important;
+        border-color: #e2e8f0 !important;
+    }
 
     .fe-policy-card { background: #fffcf0; border: 1px solid #ffeeba; border-radius: 15px; padding: 18px; margin-top: 20px; }
     .fe-policy-card h4 { font-size: 0.9rem; font-weight: 800; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
@@ -358,6 +433,12 @@
 </style>
 @endpush
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+@if(app()->getLocale() == 'ar')
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ar.js"></script>
+@endif
+
 <script>
 $(document).ready(function() {
     // ═══ EXTRA SERVICES LOADER ═══
@@ -481,6 +562,316 @@ $(document).ready(function() {
         }
     };
 
+    // ═══ PASSPORT OCR LOGIC WITH MODAL & CROPPER ═══
+    let currentUploadIndex = null;
+    let currentModalFile = null;
+    let cropper = null;
+
+    window.openPassportModal = function(index) {
+        currentUploadIndex = index;
+        resetModalState();
+        const modal = document.getElementById('passportUploadModal');
+        modal.classList.remove('d-none');
+        setTimeout(() => modal.classList.add('show'), 10);
+        document.body.style.overflow = 'hidden';
+    };
+
+    window.closePassportModal = function() {
+        const modal = document.getElementById('passportUploadModal');
+        modal.classList.remove('show');
+        setTimeout(() => {
+            modal.classList.add('d-none');
+            document.body.style.overflow = '';
+            if(cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+        }, 300);
+    };
+
+    function resetModalState() {
+        currentModalFile = null;
+        if(cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+        $('#modalFileInput').val('');
+        $('#modalImageToCrop').attr('src', '');
+        $('#modalDropArea').removeClass('d-none');
+        $('#modalCropperArea').addClass('d-none');
+        $('#btnChangeImage').hide();
+        $('#btnConfirmUpload').prop('disabled', true).html('{{ __("Confirm & Scan") }} <i class="fas fa-magic ms-1"></i>');
+    }
+
+    // Handle Drag & Drop on Modal
+    const dropArea = document.getElementById('modalDropArea');
+    dropArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropArea.style.borderColor = 'var(--primary)';
+        dropArea.style.background = '#f0f9ff';
+    });
+    dropArea.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        dropArea.style.borderColor = '#cbd5e1';
+        dropArea.style.background = 'white';
+    });
+    dropArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropArea.style.borderColor = '#cbd5e1';
+        dropArea.style.background = 'white';
+        if(e.dataTransfer.files.length) {
+            handleModalFile(e.dataTransfer.files[0]);
+        }
+    });
+    dropArea.addEventListener('click', () => {
+        $('#modalFileInput').click();
+    });
+    $('#modalFileInput').on('change', function() {
+        if(this.files.length) {
+            handleModalFile(this.files[0]);
+        }
+    });
+
+    function handleModalFile(file) {
+        currentModalFile = file;
+        $('#modalDropArea').addClass('d-none');
+        $('#btnChangeImage').show();
+        $('#btnConfirmUpload').prop('disabled', false);
+
+        $('#modalCropperArea').removeClass('d-none').html('<div style="max-height: 50vh; display:flex; justify-content:center; background: #000; border-radius: 10px; overflow: hidden;"><img id="modalImageToCrop" src="" style="max-width: 100%;"></div><p class="text-muted text-center mt-3 mb-0" style="font-size: 0.85rem;"><i class="fas fa-crop-alt"></i> {{ __("Adjust the frame to focus tightly on the passport data page for optimal AI scanning.") }}</p>');
+        
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = document.getElementById('modalImageToCrop');
+            img.src = event.target.result;
+            cropper = new Cropper(img, {
+                viewMode: 2,
+                autoCropArea: 1,
+                responsive: true,
+                background: false
+            });
+        };
+        reader.readAsDataURL(file);
+    }
+
+    $('#btnChangeImage').on('click', function() {
+        resetModalState();
+    });
+
+    $('#btnConfirmUpload').on('click', function() {
+        if(!currentModalFile) return;
+
+        const btn = $(this);
+        const originalText = btn.html();
+        btn.html('<i class="fas fa-spinner fa-spin"></i> Processing...').prop('disabled', true);
+
+        if(!cropper) return;
+        cropper.getCroppedCanvas({ maxWidth: 2000, maxHeight: 2000 }).toBlob(function(blob) {
+            let originalName = currentModalFile.name;
+            if(!originalName.toLowerCase().endsWith('.jpg') && !originalName.toLowerCase().endsWith('.jpeg') && !originalName.toLowerCase().endsWith('.png')) {
+                originalName += '.jpg';
+            }
+            const croppedFile = new File([blob], originalName, { type: 'image/jpeg' });
+            
+            commitFile(croppedFile);
+            
+            btn.html(originalText).prop('disabled', false);
+            closePassportModal();
+        }, 'image/jpeg', 0.85);
+    });
+
+    function commitFile(file) {
+        const hiddenInput = document.getElementById('hidden_passport_input_' + currentUploadIndex);
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        hiddenInput.files = dt.files;
+
+        // Update UI
+        const dropzone = $('#passport_dropzone_' + currentUploadIndex);
+        dropzone.addClass('has-file');
+        dropzone.find('.success-indicator').removeClass('d-none');
+        $('#file_name_display_' + currentUploadIndex).text(file.name);
+
+        processOcr(hiddenInput, file, currentUploadIndex);
+    }
+
+    function processOcr(inputElement, fileBlob, index) {
+        const loader = $('#ai-loading-' + index);
+        loader.removeClass('d-none').show();
+        
+        $('#scan_error_' + index).remove();
+        
+        const formData = new FormData();
+        const fileName = (fileBlob.name) ? fileBlob.name : "passport_cropped.jpg";
+        formData.append('passport_image', fileBlob, fileName);
+        formData.append('_token', '{{ csrf_token() }}');
+        
+        $.ajax({
+            url: '{{ route("ocr.passport") }}',
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.success && response.data) {
+                    const data = response.data;
+                    
+                    if (data.error) {
+                        Swal.fire({ icon: 'error', title: '{{ __("Scan Failed") }}', text: data.error, confirmButtonColor: '#0ea5e9' });
+                        
+                        $('#hidden_passport_input_' + index).val('');
+                        const dropzone = $('#passport_dropzone_' + index);
+                        dropzone.removeClass('has-file');
+                        dropzone.find('.success-indicator').addClass('d-none');
+                        
+                        $('#scan_error_' + index).remove();
+                        const errorHtml = `
+                        <div id="scan_error_${index}" class="mt-3 d-flex align-items-center" style="border-radius: 12px; background-color: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 12px 16px; box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.1); animation: fadeIn 0.3s ease;">
+                            <i class="fas fa-exclamation-triangle fa-lg" style="color: #ef4444; margin-inline-end: 12px;"></i>
+                            <div style="text-align: start;">
+                                <div style="font-weight: 800; font-size: 0.95rem; margin-bottom: 2px;">{{ __("Scan Failed") }}</div>
+                                <div style="font-weight: 500; font-size: 0.85rem; opacity: 0.9;">${data.error}</div>
+                            </div>
+                        </div>`;
+                        dropzone.after(errorHtml);
+                        return;
+                    }
+
+                    // Fill text fields & list spans
+                    if (data.first_name) {
+                        $('input[name="passengers['+index+'][first_name]"]').val(data.first_name);
+                        $('#hidden_first_name_'+index).val(data.first_name);
+                        $('.ai-display-first_name-'+index).text(data.first_name);
+                    }
+                    if (data.last_name) {
+                        $('input[name="passengers['+index+'][last_name]"]').val(data.last_name);
+                        $('#hidden_last_name_'+index).val(data.last_name);
+                        $('.ai-display-last_name-'+index).text(data.last_name);
+                    }
+                    if (data.passport_no) {
+                        $('input[name="passengers['+index+'][passport_no]"]').val(data.passport_no);
+                        $('#hidden_passport_number_'+index).val(data.passport_no);
+                        $('.ai-display-passport_no-'+index).text(data.passport_no);
+                    }
+                    
+                    // Fill date fields
+                    if (data.dob) {
+                        const dobInput = $('input[name="passengers['+index+'][dob]"]')[0];
+                        if (dobInput && dobInput._flatpickr) {
+                            dobInput._flatpickr.setDate(data.dob);
+                        } else {
+                            $('input[name="passengers['+index+'][dob]"]').val(data.dob);
+                        }
+                        $('#hidden_dob_'+index).val(data.dob);
+                        $('.ai-display-dob-'+index).text(data.dob);
+                    }
+                    if (data.passport_expiry_date) {
+                        const expInput = $('input[name="passengers['+index+'][passport_expiry_date]"]')[0];
+                        if (expInput && expInput._flatpickr) {
+                            expInput._flatpickr.setDate(data.passport_expiry_date);
+                        } else {
+                            $('input[name="passengers['+index+'][passport_expiry_date]"]').val(data.passport_expiry_date);
+                        }
+                        $('#hidden_passport_expiry_'+index).val(data.passport_expiry_date);
+                        $('.ai-display-passport_expiry_date-'+index).text(data.passport_expiry_date);
+                    }
+                    if (data.passport_issue_date) {
+                        const issueInput = $('input[name="passengers['+index+'][passport_issue_date]"]')[0];
+                        if (issueInput && issueInput._flatpickr) {
+                            issueInput._flatpickr.setDate(data.passport_issue_date);
+                        } else {
+                            $('input[name="passengers['+index+'][passport_issue_date]"]').val(data.passport_issue_date);
+                        }
+                        $('#hidden_passport_issue_date_'+index).val(data.passport_issue_date);
+                        // optional issue date list view text here if it was added
+                    }
+
+                    // Fill selects (Nationality & Issue Country)
+                    if (data.nationality) {
+                        $('input[name="passengers['+index+'][nationality]"]').val(data.nationality.toUpperCase());
+                        $('select[name="passengers['+index+'][nationality]"]').val(data.nationality.toUpperCase()).trigger('change');
+                        $('#hidden_nationality_'+index).val(data.nationality.toUpperCase());
+                        $('.ai-display-nationality-'+index).text(data.nationality.toUpperCase());
+                    }
+                    if (data.passport_issue_country) {
+                        $('input[name="passengers['+index+'][passport_issue_country]"]').val(data.passport_issue_country.toUpperCase());
+                        $('select[name="passengers['+index+'][passport_issue_country]"]').val(data.passport_issue_country.toUpperCase()).trigger('change');
+                        $('#hidden_passport_issue_country_'+index).val(data.passport_issue_country.toUpperCase());
+                        $('.ai-display-passport_issue_country-'+index).text(data.passport_issue_country.toUpperCase());
+                    }
+
+                    // Map gender to title
+                    if (data.gender) {
+                        let gender = data.gender.toUpperCase().trim();
+                        let type = $('input[name="passengers['+index+'][type]"]').val();
+                        let title = '';
+                        
+                        if (gender === 'M' || gender === 'MALE' || gender === 'ذكر' || gender === 'ذ') {
+                            title = type === 'adult' ? 'Mr' : 'Master';
+                        } else if (gender === 'F' || gender === 'FEMALE' || gender === 'أنثى' || gender === 'أ') {
+                            title = type === 'adult' ? 'Ms' : 'Miss';
+                        }
+                        
+                        if (title) {
+                            $('select[name="passengers['+index+'][title]"]').val(title).trigger('change');
+                            $('#hidden_title_'+index).val(title);
+                            $('.ai-display-title-'+index).text(title);
+                        }
+                    }
+                    
+                    if(typeof toastr !== 'undefined') {
+                        toastr.success('{{ __("Passport data extracted successfully.") }}');
+                    } else if(typeof Swal !== 'undefined') {
+                        Swal.fire({ icon: 'success', title: '{{ __("Success") }}', text: '{{ __("Passport data extracted successfully.") }}', toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
+                    } else {
+                        alert('{{ __("Passport data extracted successfully.") }}');
+                    }
+                } else {
+                    if(typeof toastr !== 'undefined') {
+                        toastr.warning('{{ __("Could not extract data perfectly. Please fill manually.") }}');
+                    } else if(typeof Swal !== 'undefined') {
+                        Swal.fire({ icon: 'warning', title: '{{ __("Warning") }}', text: '{{ __("Could not extract data perfectly. Please fill manually.") }}', confirmButtonColor: '#f59e0b' });
+                    } else {
+                        alert('{{ __("Could not extract data perfectly. Please fill manually.") }}');
+                    }
+                }
+            },
+            error: function(xhr) {
+                if(typeof toastr !== 'undefined') {
+                    toastr.error('{{ __("Error scanning passport.") }}');
+                } else if(typeof Swal !== 'undefined') {
+                    Swal.fire({ icon: 'error', title: '{{ __("Scan Failed") }}', text: '{{ __("Error scanning passport. Please try again or enter details manually.") }}', confirmButtonColor: '#0ea5e9' });
+                } else {
+                    alert('{{ __("Error scanning passport.") }}');
+                }
+                
+                // Clear the input and show visual error
+                $('#hidden_passport_input_' + index).val('');
+                const dropzone = $('#passport_dropzone_' + index);
+                dropzone.removeClass('has-file');
+                dropzone.find('.success-indicator').addClass('d-none');
+                
+                // Remove existing error if any
+                $('#scan_error_' + index).remove();
+                // Append error message
+                const errorHtml = `
+                <div id="scan_error_${index}" class="mt-3 d-flex align-items-center" style="border-radius: 12px; background-color: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 12px 16px; box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.1); animation: fadeIn 0.3s ease;">
+                    <i class="fas fa-exclamation-triangle fa-lg" style="color: #ef4444; margin-inline-end: 12px;"></i>
+                    <div style="text-align: start;">
+                        <div style="font-weight: 800; font-size: 0.95rem; margin-bottom: 2px;">{{ __("Scan Failed") }}</div>
+                        <div style="font-weight: 500; font-size: 0.85rem; opacity: 0.9;">{{ __("Please upload a clearer image of the passport data page.") }}</div>
+                    </div>
+                </div>`;
+                dropzone.after(errorHtml);
+                
+                console.error(xhr);
+            },
+            complete: function() {
+                loader.addClass('d-none').hide();
+            }
+        });
+    }
+
     // ═══ DATE PICKERS ═══
     // Initialize Select2 for Countries (legacy — keep for pax-fields)
     if ($.fn.select2) {
@@ -529,6 +920,70 @@ $(document).ready(function() {
         maxDate: "today",
         locale: "{{ app()->getLocale() }}",
     });
+
+    // Form Validation before submit (especially for AI extracted data)
+    $('#flightBookingForm').on('submit', function(e) {
+        let allowManualEdit = "{{ \App\Models\Setting::get('allow_manual_passport_edit', '1') }}";
+        if (allowManualEdit !== '1') {
+            let isValid = true;
+            let totalPax = {{ $totalPax }};
+            
+            for (let i = 0; i < totalPax; i++) {
+                let requiredFields = [
+                    '#hidden_first_name_' + i,
+                    '#hidden_last_name_' + i,
+                    '#hidden_dob_' + i,
+                    '#hidden_nationality_' + i,
+                    '#hidden_passport_number_' + i,
+                    '#hidden_passport_expiry_' + i,
+                    '#hidden_passport_issue_country_' + i
+                ];
+                
+                for (let j = 0; j < requiredFields.length; j++) {
+                    let field = $(requiredFields[j]);
+                    if (field.length > 0 && !field.val().trim()) {
+                        isValid = false;
+                        break;
+                    }
+                }
+                
+                if (!isValid) break;
+            }
+            
+            if (!isValid) {
+                e.preventDefault();
+                
+                // Show error message above the submit button
+                let errorContainer = $('#form-submit-error');
+                if (errorContainer.length === 0) {
+                    $('.fe-booking-action').prepend('<div id="form-submit-error" class="alert alert-danger" style="border-radius: 12px; background-color: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 12px 16px; margin-bottom: 15px; text-align: center; font-weight: 700; box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.1);"><i class="fas fa-exclamation-circle me-2"></i> {{ __("Please ensure all passenger data is filled out by uploading clear passport images for all passengers.") }}</div>');
+                    
+                    // Scroll to the error message
+                    $('html, body').animate({
+                        scrollTop: $('.fe-booking-action').offset().top - 100
+                    }, 500);
+                } else {
+                    // Shake effect if already visible
+                    errorContainer.addClass('shake');
+                    setTimeout(function() {
+                        errorContainer.removeClass('shake');
+                    }, 500);
+                }
+            }
+        }
+    });
 });
 </script>
+<style>
+@keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  50% { transform: translateX(5px); }
+  75% { transform: translateX(-5px); }
+  100% { transform: translateX(0); }
+}
+.shake {
+  animation: shake 0.4s;
+}
+</style>
 @endpush

@@ -377,6 +377,11 @@
                             <i class="fas fa-percentage"></i> {{ __('Pricing & Margins') }}
                         </button>
                     </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="ai-settings-tab" data-bs-toggle="tab" data-bs-target="#ai-settings" type="button" role="tab">
+                            <i class="fas fa-robot"></i> {{ __('AI Settings') }}
+                        </button>
+                    </li>
                 </ul>
 
                 <div class="card-body p-4">
@@ -489,6 +494,42 @@
                                         </div>
                                     </div>
                                     <small class="text-muted mt-2 d-block">{{ __('Select whether to send OTP codes via WhatsApp or Email during user registration and login.') }}</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- AI Settings Tab -->
+                        <div class="tab-pane fade" id="ai-settings" role="tabpanel">
+                            <div class="form-section-title">{{ __('AI & OCR Settings') }}</div>
+                            <div class="row">
+                                <div class="col-md-12 mb-4 form-group">
+                                    <label class="d-block mb-3">{{ __('Allow Manual Passport Edit') }}</label>
+                                    <div class="maintenance-options" style="max-width: 500px;">
+                                        <div class="maintenance-option">
+                                            <input type="radio" name="allow_manual_passport_edit" id="allow_manual_yes" value="1" {{ \App\Models\Setting::get('allow_manual_passport_edit', '1') == '1' ? 'checked' : '' }}>
+                                            <label for="allow_manual_yes">
+                                                <i class="fa fa-unlock text-success"></i>
+                                                <span>{{ __('Allowed') }}</span>
+                                            </label>
+                                        </div>
+                                        <div class="maintenance-option">
+                                            <input type="radio" name="allow_manual_passport_edit" id="allow_manual_no" value="0" {{ \App\Models\Setting::get('allow_manual_passport_edit', '1') == '0' ? 'checked' : '' }}>
+                                            <label for="allow_manual_no">
+                                                <i class="fa fa-lock text-danger"></i>
+                                                <span>{{ __('Not Allowed') }}</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted mt-2 d-block">{{ __('If allowed, a button will appear in the booking page to let users type their passport details manually. If not allowed, users MUST use the AI scanner.') }}</small>
+                                </div>
+                                
+                                <div class="col-md-12 mb-4 form-group mt-3">
+                                    <label>{{ __('AI Passport OCR Prompt (Gemini Flash)') }}</label>
+                                    @php
+                                        $defaultPrompt = "استخرج البيانات التالية من صورة جواز السفر المرفقة: الاسم الأول، اسم العائلة، تاريخ الميلاد بصيغة (YYYY-MM-DD)، رقم الجواز، الجنسية (كود ISO من حرفين)، بلد الإصدار (كود ISO من حرفين)، وتاريخ الانتهاء بصيغة (YYYY-MM-DD). قواعد هامة جداً: 1. تحقق أولاً: إذا لم تكن الصورة لجواز سفر، أو كانت الصورة غير واضحة ومغلوشة ويصعب قراءة البيانات منها بدقة، يجب عليك إرجاع رسالة خطأ فقط بالصيغة التالية: {\"error\": \"الصورة غير واضحة أو ليست لجواز سفر، يرجى رفع صورة واضحة لصفحة بيانات الجواز.\"} 2. إذا كانت الصورة واضحة، قم بإرجاع كائن JSON صحيح يحتوي فقط على المفاتيح التالية: first_name, last_name, dob, passport_no, nationality, passport_issue_country, passport_expiry_date. 3. لا تقم بتضمين أي علامات أو أكواد مثل ```json أو أي نص آخر خارج كائن الـ JSON على الإطلاق.";
+                                    @endphp
+                                    <textarea class="form-control" name="ai_passport_prompt" rows="8" dir="auto">{{ \App\Models\Setting::get('ai_passport_prompt', $defaultPrompt) }}</textarea>
+                                    <small class="text-muted mt-2 d-block">{{ __('This prompt is sent to Google Gemini for passport data extraction. You can modify the instructions or error message in Arabic/English here.') }}</small>
                                 </div>
                             </div>
                         </div>
@@ -954,7 +995,7 @@
                                 document.getElementById('hotel_margin_type').addEventListener('change', () => syncMarginUI('hotel'));
                             </script>
                             @endpush
-                        </div>
+
                     </div>
                 </div>
 

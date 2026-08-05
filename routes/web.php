@@ -37,6 +37,8 @@ Route::get('/flights/payment/{booking_id}', [FrontendController::class, 'flightS
 Route::get('/airports/search', [FrontendController::class, 'searchAirports'])->name('airports.search');
 Route::get('/airports/sync', [FrontendController::class, 'syncAirports'])->name('airports.sync');
 
+Route::post('/ocr/passport', [\App\Http\Controllers\OcrController::class, 'scanPassport'])->name('ocr.passport')->middleware('auth');
+
 // Hotel Routes
 Route::get('/hotels', [FrontendController::class, 'hotels'])->name('hotels');
 Route::get('/hotels/results', [FrontendController::class, 'hotelResults'])->name('hotels.results');

@@ -40,6 +40,7 @@ class SettingController extends Controller
                 'hotel_margin'       => 'nullable|numeric|min:0',
                 'hotel_margin_type'  => 'nullable|in:percentage,fixed',
                 'otp_method'         => 'nullable|in:whatsapp,email',
+                'ai_passport_prompt' => 'nullable|string',
             ]);
 
             $data = $request->except(['_token', 'site_logo', 'site_favicon', 'about_story_image']);

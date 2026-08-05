@@ -430,6 +430,12 @@ class PaymentWebController extends Controller
             }
 
             $result    = $this->hyperPayService->getPaymentStatus($checkoutId, $paymentType);
+            
+            if (!$result) {
+                Log::error("WebVerify (HyperPay): Failed to get payment status for CheckoutID: {$checkoutId}");
+                return response()->json(['error' => true, 'message' => 'Failed to retrieve payment status from gateway.'], 400);
+            }
+
             $code      = $result['result']['code'] ?? '';
             $isSuccess = $this->hyperPayService->isSuccessful($code);
 
