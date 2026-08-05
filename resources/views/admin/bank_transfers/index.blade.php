@@ -12,6 +12,79 @@
 </div>
 @endsection
 
+@push('styles')
+<style>
+    :root { --dash-navy:#041741; --dash-surface:#ffffff; --dash-text:#1e293b; --dash-muted:#64748b; --dash-border:#e8edf5; --dash-radius:16px; --dash-shadow:0 4px 24px rgba(4,23,65,0.06); --dash-shadow-hover:0 12px 36px rgba(4,23,65,0.13); }
+
+    /* KPI Cards */
+    .kpi-card { display:flex; align-items:flex-start; gap:18px; background:var(--dash-surface); border-radius:var(--dash-radius); padding:24px; box-shadow:var(--dash-shadow); border:1px solid var(--dash-border); transition:all 0.3s ease; height:100%; animation:kpiFadeIn 0.6s ease backwards; }
+    .kpi-card:hover { transform:translateY(-5px); box-shadow:var(--dash-shadow-hover); }
+    @keyframes kpiFadeIn { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+    .kpi-icon-wrap { flex-shrink:0; width:52px; height:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:1.3rem; }
+    .kpi-card--blue  .kpi-icon-wrap { background:rgba(4,23,65,0.09); color:var(--dash-navy); }
+    .kpi-card--green .kpi-icon-wrap { background:rgba(16,185,129,0.12); color:#059669; }
+    .kpi-card--red   .kpi-icon-wrap { background:rgba(239,68,68,0.12); color:#dc2626; }
+    .kpi-card--amber .kpi-icon-wrap { background:rgba(245,158,11,0.12); color:#d97706; }
+    .kpi-card--blue  { border-left:4px solid var(--dash-navy); }
+    .kpi-card--green { border-left:4px solid #10b981; }
+    .kpi-card--red   { border-left:4px solid #ef4444; }
+    .kpi-card--amber { border-left:4px solid #f59e0b; }
+    [dir="rtl"] .kpi-card { border-left:none !important; }
+    [dir="rtl"] .kpi-card--blue  { border-right:4px solid var(--dash-navy); }
+    [dir="rtl"] .kpi-card--green { border-right:4px solid #10b981; }
+    [dir="rtl"] .kpi-card--red   { border-right:4px solid #ef4444; }
+    [dir="rtl"] .kpi-card--amber { border-right:4px solid #f59e0b; }
+    .kpi-info { flex:1; }
+    .kpi-label { font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.6px; color:var(--dash-muted); display:block; margin-bottom:6px; }
+    .kpi-value { font-size:1.85rem; font-weight:800; color:var(--dash-text); margin-bottom:0; line-height:1.1; }
+
+    /* Table Card */
+    .dash-table-card { background:var(--dash-surface); border-radius:var(--dash-radius); border:1px solid var(--dash-border); box-shadow:var(--dash-shadow); overflow:hidden; transition:box-shadow 0.3s; margin-bottom:30px; }
+    .dash-table-card:hover { box-shadow:var(--dash-shadow-hover); }
+    .subs-card-header { display:flex; justify-content:space-between; align-items:center; padding:22px 24px 16px; border-bottom:1px solid var(--dash-border); flex-wrap:wrap; gap:16px; }
+    .dash-chart-title { font-size:15px; font-weight:700; color:var(--dash-text); margin-bottom:3px; }
+    .dash-chart-sub { font-size:11.5px; color:var(--dash-muted); margin:0; }
+    .subs-search-wrap { display:flex; align-items:center; background:#f8fafc; border:1px solid var(--dash-border); border-radius:50px; padding:0 14px; height:38px; min-width:180px; transition:all 0.25s; }
+    .subs-search-wrap:focus-within { border-color:var(--dash-navy); box-shadow:0 0 0 3px rgba(4,23,65,0.08); background:#fff; }
+    .subs-search-icon { color:var(--dash-muted); font-size:13px; flex-shrink:0; }
+    .subs-search-input { border:none; background:transparent; outline:none; font-size:13px; color:var(--dash-text); width:100%; padding:0 0 0 10px; font-weight:500; }
+    [dir="rtl"] .subs-search-input { padding:0 10px 0 0; }
+    .subs-datatable { width:100% !important; }
+    .subs-datatable thead th { background:#f8fafc !important; color:var(--dash-muted) !important; font-weight:700 !important; font-size:12px !important; text-transform:uppercase !important; letter-spacing:0.5px !important; padding:14px 16px !important; border-bottom:1px solid var(--dash-border) !important; border-top:none !important; white-space:nowrap; }
+    .subs-datatable tbody tr:hover { background:rgba(4,23,65,0.025) !important; }
+    .subs-datatable tbody td { padding:13px 16px !important; vertical-align:middle !important; color:var(--dash-text) !important; font-size:13.5px !important; border-bottom:1px solid var(--dash-border) !important; background:transparent !important; }
+    .subs-datatable tbody tr:last-child td { border-bottom:none !important; }
+    table.dataTable.no-footer { border-bottom:none !important; }
+    .dataTables_wrapper .dataTables_paginate { display:flex; justify-content:flex-end; gap:4px; padding:12px 20px !important; }
+    .dataTables_wrapper .dataTables_paginate .paginate_button { padding:6px 13px !important; border:1px solid var(--dash-border) !important; border-radius:8px !important; background:#fff !important; color:var(--dash-muted) !important; font-weight:600 !important; font-size:13px !important; transition:all 0.2s !important; }
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover { background:#f1f5f9 !important; color:var(--dash-navy) !important; }
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover { background:var(--dash-navy) !important; border-color:var(--dash-navy) !important; color:#fff !important; }
+    .dataTables_wrapper .dataTables_info { color:var(--dash-muted) !important; font-size:13px !important; padding:12px 20px !important; }
+
+    /* Filter select */
+    .dash-filter-select { height:38px; border-radius:50px; border:1px solid var(--dash-border); font-size:13px; font-weight:500; color:var(--dash-text); background:#f8fafc; padding:0 16px; outline:none; transition:all 0.25s; cursor:pointer; min-width:140px; }
+    .dash-filter-select:focus { border-color:var(--dash-navy); box-shadow:0 0 0 3px rgba(4,23,65,0.08); background:#fff; }
+
+    /* Badge states */
+    .badge-state { display:inline-flex; align-items:center; font-size:11px; font-weight:600; padding:4px 12px; border-radius:50px; }
+    .badge-state--green { background:rgba(16,185,129,0.12); color:#059669; }
+    .badge-state--red { background:rgba(239,68,68,0.10); color:#dc2626; }
+    .badge-state--amber { background:rgba(245,158,11,0.12); color:#d97706; }
+    .badge-state--default { background:#f1f5f9; color:#64748b; }
+
+    /* Action button */
+    .act-action-btn { display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:8px; background:rgba(4,23,65,0.07); color:var(--dash-navy); text-decoration:none; transition:all 0.2s ease; font-size:13px; border:none; cursor:pointer; }
+    .act-action-btn:hover { background:var(--dash-navy); color:#fff; transform:translateY(-1px); }
+
+    /* Empty state */
+    .empty-state { padding:60px 20px; text-align:center; }
+    .empty-state i { font-size:3rem; color:var(--dash-border); margin-bottom:16px; }
+    .empty-state h5 { color:var(--dash-text); font-weight:700; margin-bottom:8px; }
+    .empty-state p { color:var(--dash-muted); font-size:13px; }
+</style>
+@endpush
+
 @section('content')
 @php
     $totalTransfers = \App\Models\BankTransfer::count();
@@ -22,42 +95,30 @@
 
 <div class="row my-2">
     <div class="col-xl-3 col-sm-6 my-2">
-        <div class="kpi-card kpi-card--blue">
+        <div class="kpi-card kpi-card--blue" style="animation-delay:0s">
             <div class="kpi-icon-wrap"><i class="fas fa-exchange-alt"></i></div>
-            <div class="kpi-info"><span class="kpi-label">{{ __('Total Transfers') }}</span><h3 class="kpi-value">{{ $totalTransfers }}</h3></div>
+            <div class="kpi-info"><span class="kpi-label">{{ __('Total Transfers') }}</span><h3 class="kpi-value">{{ number_format($totalTransfers) }}</h3></div>
         </div>
     </div>
     <div class="col-xl-3 col-sm-6 my-2">
-        <div class="kpi-card kpi-card--amber">
+        <div class="kpi-card kpi-card--amber" style="animation-delay:0.1s">
             <div class="kpi-icon-wrap"><i class="fas fa-clock"></i></div>
-            <div class="kpi-info"><span class="kpi-label">{{ __('Pending Review') }}</span><h3 class="kpi-value">{{ $pendingTransfers }}</h3></div>
+            <div class="kpi-info"><span class="kpi-label">{{ __('Pending Review') }}</span><h3 class="kpi-value">{{ number_format($pendingTransfers) }}</h3></div>
         </div>
     </div>
     <div class="col-xl-3 col-sm-6 my-2">
-        <div class="kpi-card kpi-card--green">
+        <div class="kpi-card kpi-card--green" style="animation-delay:0.2s">
             <div class="kpi-icon-wrap"><i class="fas fa-check-circle"></i></div>
-            <div class="kpi-info"><span class="kpi-label">{{ __('Approved') }}</span><h3 class="kpi-value">{{ $approvedTransfers }}</h3></div>
+            <div class="kpi-info"><span class="kpi-label">{{ __('Approved') }}</span><h3 class="kpi-value">{{ number_format($approvedTransfers) }}</h3></div>
         </div>
     </div>
     <div class="col-xl-3 col-sm-6 my-2">
-        <div class="kpi-card kpi-card--red">
+        <div class="kpi-card kpi-card--red" style="animation-delay:0.3s">
             <div class="kpi-icon-wrap"><i class="fas fa-times-circle"></i></div>
-            <div class="kpi-info"><span class="kpi-label">{{ __('Rejected') }}</span><h3 class="kpi-value">{{ $rejectedTransfers }}</h3></div>
+            <div class="kpi-info"><span class="kpi-label">{{ __('Rejected') }}</span><h3 class="kpi-value">{{ number_format($rejectedTransfers) }}</h3></div>
         </div>
     </div>
 </div>
-
-@push('styles')
-<style>
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-    }
-    .dash-filter-select { height:38px; border-radius:10px; border:1px solid var(--dash-border); font-size:13px; color:var(--dash-text); background:#f8fafc; padding:0 12px; outline:none; } .dash-filter-select:focus { border-color:var(--dash-navy); }
-    .cursor-pointer { cursor:pointer !important; }
-    .bg-primary-subtle { background-color:rgba(4,23,65,0.08) !important; color:#041741 !important; } .bg-success-subtle { background-color:rgba(34,197,94,0.12) !important; color:#22c55e !important; } .bg-danger-subtle { background-color:rgba(239,68,68,0.12) !important; color:#ef4444 !important; } .bg-warning-subtle { background-color:rgba(245,158,11,0.12) !important; color:#f59e0b !important; }
-    .dropdown-menu { border:1px solid rgba(4,23,65,0.08) !important; border-radius:12px !important; box-shadow:0 10px 30px rgba(4,23,65,0.1) !important; padding:6px 0 !important; } .dropdown-item { color:#475569 !important; font-weight:500 !important; font-size:13.5px !important; } .dropdown-item:hover { background-color:rgba(4,23,65,0.04) !important; color:#041741 !important; }
-</style>
-@endpush
 
 <div class="row">
     <div class="col-12">
@@ -78,13 +139,12 @@
                         <option value="pending">{{ __('Pending') }}</option>
                         <option value="approved">{{ __('Approved') }}</option>
                         <option value="rejected">{{ __('Rejected') }}</option>
-                        </select>
-                    </div>
+                    </select>
                 </div>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0 pt-2">
                 <div class="table-responsive">
-                    <table id="bank-transfers-table" class="display custom-table" style="min-width: 845px">
+                    <table id="bank-transfers-table" class="display subs-datatable" style="min-width: 845px">
                         <thead>
                             <tr>
                                 <th>{{ __('ID') }}</th>
@@ -128,22 +188,16 @@
                 "url": "{{ parse_url(asset('vendor/datatables/i18n/' . app()->getLocale() . '.json'), PHP_URL_PATH) }}",
                 "emptyTable": `<div class="empty-state">
                                 <i class="fas fa-folder-open"></i>
-                                <h5>لا توجد بيانات</h5>
-                                <p>لم يتم العثور على أية سجلات لعرضها هنا.</p>
+                                <h5>{{ __('No data available') }}</h5>
+                                <p>{{ __('No records found to display here.') }}</p>
                                </div>`,
                 "zeroRecords": `<div class="empty-state">
                                 <i class="fas fa-search"></i>
-                                <h5>لا توجد نتائج</h5>
-                                <p>لم يتم العثور على أية سجلات مطابقة للبحث.</p>
+                                <h5>{{ __('No results found') }}</h5>
+                                <p>{{ __('No records match your search criteria.') }}</p>
                                </div>`
             },
             order: [[0, 'desc']]
-        });
-
-        // Initialize select2
-        $('#filter-status').select2({
-            minimumResultsForSearch: -1,
-            width: '100%'
         });
 
         // Instant filter search logic helper
