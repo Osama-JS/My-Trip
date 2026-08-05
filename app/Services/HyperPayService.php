@@ -169,7 +169,13 @@ class HyperPayService
         $params['billing.street1'] = $userData['street'] ?? 'Saudi Arabia';
         $params['billing.city'] = $userData['city'] ?? 'Riyadh';
         $params['billing.state'] = $userData['state'] ?? 'Riyadh';
-        $params['billing.country'] = $userData['country'] ?? 'SA';
+
+        $country = $userData['country'] ?? 'SA';
+        if (strlen($country) !== 2 || !preg_match('/^[a-zA-Z]{2}$/', $country)) {
+            $country = 'SA';
+        }
+        $params['billing.country'] = strtoupper($country);
+
         $params['billing.postcode'] = $userData['postcode'] ?? '12345';
 
         return $params;
