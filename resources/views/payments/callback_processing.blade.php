@@ -50,9 +50,8 @@
         <p id="error-msg" class="error-msg" style="display:none;"></p>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        $(document).ready(function () {
+        document.addEventListener('DOMContentLoaded', function () {
 
             // Data from the callback URL (passed by blade)
             const paymentType = "{{ $payment_type }}";
@@ -63,52 +62,58 @@
             const source      = "{{ $source }}";
 
             // Build payload for /payments/verify (public web route, needs CSRF)
-            const payload = {
-                _token:       $('meta[name="csrf-token"]').attr('content'),
-                payment_type: paymentType,
-                payment_id:   paymentId   || undefined,
-                checkout_id:  checkoutId  || undefined,
-                booking_id:   bookingId   || undefined,
-                type:         bookingType || 'trip',
-            };
+            const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            
+            const payload = new URLSearchParams();
+            payload.append('_token', token);
+            payload.append('payment_type', paymentType);
+            if (paymentId) payload.append('payment_id', paymentId);
+            if (checkoutId) payload.append('checkout_id', checkoutId);
+            if (bookingId) payload.append('booking_id', bookingId);
+            payload.append('type', bookingType || 'trip');
 
-            $.ajax({
-                url:    "{{ route('payments.web.verify') }}",
+            fetch("{{ route('payments.web.verify') }}", {
                 method: "POST",
-                data:   payload,
-
-                dataType: "json",
-                success: function (response) {
-                    if (!response.error) {
-                        // Build success redirect URL with all context
-                        const params = new URLSearchParams({
-                            booking_id:     response.booking_id || bookingId,
-                            type:           response.type       || bookingType,
-                            source:         source,
-                            payment_type:   paymentType,
-                        });
-                        window.location.href = "{{ route('payments.web.success') }}?" + params.toString();
-                    } else {
-                        showError(response.message || 'فشلت عملية التحقق من الدفع');
-                    }
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/x-www-form-urlencoded"
                 },
-
-                error: function (xhr) {
-                    let msg = 'حدث خطأ أثناء التحقق من الدفع';
-                    if (xhr && xhr.responseJSON) {
-                        if (xhr.responseJSON.message) {
-                            msg = xhr.responseJSON.message;
-                        } else if (xhr.responseJSON.errors) {
-                            msg = xhr.responseJSON.errors;
-                        }
-                    }
+                body: payload.toString()
+            })
+            .then(response => {
+                // If it's an HTML error (e.g. 500 without json), handle it
+                if (!response.headers.get("content-type")?.includes("application/json")) {
+                    throw new Error("Invalid response from server");
+                }
+                return response.json().then(data => ({ status: response.status, ok: response.ok, data }));
+            })
+            .then(({ status, ok, data }) => {
+                if (ok && !data.error) {
+                    // Build success redirect URL with all context
+                    const params = new URLSearchParams({
+                        booking_id:     data.booking_id || bookingId,
+                        type:           data.type       || bookingType,
+                        source:         source,
+                        payment_type:   paymentType,
+                    });
+                    window.location.href = "{{ route('payments.web.success') }}?" + params.toString();
+                } else {
+                    let msg = 'فشلت عملية التحقق من الدفع';
+                    if (data && data.message) msg = data.message;
+                    else if (data && data.errors) msg = data.errors;
+                    
                     showError(typeof msg === 'string' ? msg : JSON.stringify(msg));
                 }
+            })
+            .catch(error => {
+                showError('حدث خطأ أثناء الاتصال بالخادم');
             });
 
             function showError(message) {
-                $('#spinner').hide();
-                $('#error-msg').text(message).show();
+                document.getElementById('spinner').style.display = 'none';
+                const errEl = document.getElementById('error-msg');
+                errEl.innerText = message;
+                errEl.style.display = 'block';
 
                 // Auto-redirect to failure page after 3 seconds
                 setTimeout(function () {
