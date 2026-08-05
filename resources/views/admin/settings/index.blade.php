@@ -444,6 +444,39 @@
                                 </div>
                             </div>
 
+                            <div class="form-section-title mt-4">{{ __('Development Mode Banner') }}</div>
+                            <div class="row align-items-start">
+                                <div class="col-md-4 mb-4 form-group">
+                                    <label class="d-block mb-3">{{ __('Development Mode Status') }}</label>
+                                    <div class="maintenance-options">
+                                        <div class="maintenance-option">
+                                            <input type="radio" name="dev_mode_banner_status" id="dev_mode_active" value="1" {{ \App\Models\Setting::get('dev_mode_banner_status') == '1' ? 'checked' : '' }}>
+                                            <label for="dev_mode_active">
+                                                <i class="fa fa-eye text-success"></i>
+                                                <span>{{ __('Visible') }}</span>
+                                            </label>
+                                        </div>
+                                        <div class="maintenance-option">
+                                            <input type="radio" name="dev_mode_banner_status" id="dev_mode_hidden" value="0" {{ \App\Models\Setting::get('dev_mode_banner_status', '0') == '0' ? 'checked' : '' }}>
+                                            <label for="dev_mode_hidden">
+                                                <i class="fa fa-eye-slash text-danger"></i>
+                                                <span>{{ __('Hidden') }}</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-4 form-group">
+                                    <label>{{ __('Banner Text (Arabic)') }}</label>
+                                    <input type="text" class="form-control" name="dev_mode_banner_text_ar" value="{{ \App\Models\Setting::get('dev_mode_banner_text_ar', 'الموقع قيد التطوير والتجربة') }}">
+                                    <small class="text-muted d-block mt-1">{{ __('Text to show in the development banner in Arabic.') }}</small>
+                                </div>
+                                <div class="col-md-4 mb-4 form-group">
+                                    <label>{{ __('Banner Text (English)') }}</label>
+                                    <input type="text" class="form-control" name="dev_mode_banner_text_en" value="{{ \App\Models\Setting::get('dev_mode_banner_text_en', 'Website is under development') }}">
+                                    <small class="text-muted d-block mt-1">{{ __('Text to show in the development banner in English.') }}</small>
+                                </div>
+                            </div>
+
                             <div class="form-section-title mt-4">{{ __('Login & Register Page Status') }}</div>
                             <div class="row align-items-start">
                                 <div class="col-md-8 mb-4 form-group">

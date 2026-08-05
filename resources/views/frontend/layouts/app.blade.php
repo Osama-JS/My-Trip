@@ -256,6 +256,18 @@
         </div>
     </footer>
 
+    @if(\App\Models\Setting::get('dev_mode_banner_status') == '1')
+        <div style="position: fixed; top: 0; left: 0; width: 100%; background: linear-gradient(90deg, #ff9800, #f57c00); color: #fff; text-align: center; padding: 10px; font-weight: 700; z-index: 99999; box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-size: 14px; letter-spacing: 0.5px;">
+            <i class="fas fa-tools" style="margin-inline-end: 8px;"></i>
+            {{ \App\Models\Setting::get('dev_mode_banner_text_' . $locale, 'الموقع قيد التطوير والتجربة') }}
+        </div>
+        <style>
+            /* Push body and fixed header down to accommodate top banner */
+            body { padding-top: 40px !important; }
+            .fe-header { top: 41px !important; }
+        </style>
+    @endif
+
     {{-- ═══ SCRIPTS ═══ --}}
     <script src="{{ asset('js/jquery.min.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
