@@ -130,7 +130,14 @@ class HyperPayService
             ]);
 
         if ($response->successful()) {
-            return $response->json();
+            $data = $response->json();
+            Log::info("HyperPay Payment Status Result", [
+                'checkout_id' => $checkoutId,
+                'result_code' => $data['result']['code'] ?? 'N/A',
+                'description' => $data['result']['description'] ?? 'N/A',
+                'full_response' => $data
+            ]);
+            return $data;
         }
 
         Log::error("HyperPay Get Status Failed: " . $response->body());
