@@ -729,7 +729,21 @@ class TraveloproService
             $response = $this->httpClient(60)->post($url, $payload);
 
             if ($response->successful()) {
-                return $response->json();
+                $result = $response->json();
+                $detailsResult = $result['TripDetailsResponse']['TripDetailsResult'] ?? [];
+                
+                $isSuccess = $detailsResult['Success'] ?? 'false';
+                if ($isSuccess === 'true' || $isSuccess === true) {
+                    return $result;
+                }
+
+                $errorMessage = $detailsResult['Errors']['ErrorMessage'] ?? $result['Errors']['ErrorMessage'] ?? 'Failed to retrieve details from supplier.';
+                
+                return [
+                    'status' => 'error',
+                    'message' => 'خطأ من المزود: ' . $errorMessage,
+                    'details' => $result
+                ];
             }
 
             Log::error('Travelopro Trip Details Error', [
