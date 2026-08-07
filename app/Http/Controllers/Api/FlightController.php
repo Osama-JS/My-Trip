@@ -773,6 +773,8 @@ class FlightController extends Controller
             return $this->apiResponse(true, $result['message'], $result['details'] ?? $result['error'], null, 500);
         }
 
+        $result['local_booking_status'] = $booking->status;
+
         return $this->apiResponse(false, __('Trip details retrieved successfully.'), $result, null, 200);
     }
 
