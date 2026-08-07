@@ -517,8 +517,8 @@ class TraveloproService
                 'customerEmail' => $data['customerEmail'],
                 'customerPhone' => $data['customerPhone'],
                 'bookingNote'   => $data['bookingNote'] ?? '',
-                // ✅ FIX: Pass array directly — no extra [ ] wrapping
-                'paxDetails'    => $this->formatPaxDetails($data['passengers']),
+                // FIX: Travelopro documentation requires paxDetails to be an array of objects
+                'paxDetails'    => [$this->formatPaxDetails($data['passengers'])],
             ],
         ];
 
