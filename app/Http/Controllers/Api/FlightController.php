@@ -492,7 +492,10 @@ class FlightController extends Controller
             }
 
             $uniqueId = $bookingData['BookFlightResult']['UniqueID'] ?? $bookingData['BookFlightResult']['uniqueID'] ?? $bookingData['CreateBookingResult']['UniqueID'] ?? null;
-            $totalAmount = $bookingData['BookFlightResult']['TotalAmount'] ?? $bookingData['CreateBookingResult']['TotalAmount'] ?? 0;
+            $totalAmount = $request->input('total_amount') 
+                            ?? $bookingData['BookFlightResult']['TotalAmount'] 
+                            ?? $bookingData['CreateBookingResult']['TotalAmount'] 
+                            ?? 0;
 
             Log::info('Extracted Booking Identity', ['uniqueId' => $uniqueId, 'totalAmount' => $totalAmount]);
 
