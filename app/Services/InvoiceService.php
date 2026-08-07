@@ -27,6 +27,7 @@ class InvoiceService
                 'margin_right' => 10,
                 'margin_top' => 10,
                 'margin_bottom' => 10,
+                'tempDir' => storage_path('app/temp')
             ]);
 
             // Set direction dynamically
@@ -75,7 +76,8 @@ class InvoiceService
                 'margin_right' => 10,
                 'margin_top' => 10,
                 'margin_bottom' => 10,
-                'default_font' => 'cairo'
+                'default_font' => 'cairo',
+                'tempDir' => storage_path('app/temp')
             ]);
 
             $dir = app()->getLocale() == 'ar' ? 'rtl' : 'ltr';
