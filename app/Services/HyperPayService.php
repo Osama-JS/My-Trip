@@ -169,13 +169,13 @@ class HyperPayService
         if (!empty($userData['email'])) {
             $params['customer.email'] = $userData['email'];
         }
-        $params['customer.givenName'] = $userData['first_name'] ?? 'User';
-        $params['customer.surname'] = $userData['last_name'] ?? 'Guest';
+        $params['customer.givenName'] = $this->transliterateArabic($userData['first_name'] ?? 'User', 'User');
+        $params['customer.surname'] = $this->transliterateArabic($userData['last_name'] ?? 'Guest', 'Guest');
 
         // Billing address (MANDATORY for 3DS2)
-        $params['billing.street1'] = $userData['street'] ?? 'Saudi Arabia';
-        $params['billing.city'] = $userData['city'] ?? 'Riyadh';
-        $params['billing.state'] = $userData['state'] ?? 'Riyadh';
+        $params['billing.street1'] = $this->transliterateArabic($userData['street'] ?? 'Saudi Arabia', 'Saudi Arabia');
+        $params['billing.city'] = $this->transliterateArabic($userData['city'] ?? 'Riyadh', 'Riyadh');
+        $params['billing.state'] = $this->transliterateArabic($userData['state'] ?? 'Riyadh', 'Riyadh');
 
         $country = $userData['country'] ?? 'SA';
         if (strlen($country) !== 2 || !preg_match('/^[a-zA-Z]{2}$/', $country)) {
@@ -186,6 +186,30 @@ class HyperPayService
         $params['billing.postcode'] = $userData['postcode'] ?? '12345';
 
         return $params;
+    }
+
+    /**
+     * Transliterate Arabic characters to English for HyperPay protocol
+     */
+    protected function transliterateArabic($string, $default = 'Customer')
+    {
+        if (empty($string)) return $default;
+
+        $arabicMap = [
+            'أ'=>'a', 'إ'=>'e', 'آ'=>'a', 'ا'=>'a', 'ب'=>'b', 'ت'=>'t', 'ث'=>'th', 'ج'=>'j', 'ح'=>'h', 'خ'=>'kh',
+            'د'=>'d', 'ذ'=>'th', 'ر'=>'r', 'ز'=>'z', 'س'=>'s', 'ش'=>'sh', 'ص'=>'s', 'ض'=>'d', 'ط'=>'t', 'ظ'=>'th',
+            'ع'=>'a', 'غ'=>'gh', 'ف'=>'f', 'ق'=>'q', 'ك'=>'k', 'ل'=>'l', 'م'=>'m', 'ن'=>'n', 'ه'=>'h', 'و'=>'w',
+            'ي'=>'y', 'ى'=>'a', 'ة'=>'h', 'ئ'=>'e', 'ء'=>'a', 'ؤ'=>'o', 'ٲ'=>'a'
+        ];
+
+        // Replace Arabic letters
+        $transliterated = strtr($string, $arabicMap);
+
+        // Remove any remaining non-latin alphanumeric characters (keep spaces)
+        $cleaned = preg_replace('/[^a-zA-Z0-9\s-]/', '', $transliterated);
+        $cleaned = trim($cleaned);
+
+        return empty($cleaned) ? $default : $cleaned;
     }
 
     /**
