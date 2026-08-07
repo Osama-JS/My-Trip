@@ -586,32 +586,7 @@ class TripController extends Controller
                 'booking_id' => $booking->id,
                 'amount' => $totalPrice,
                 'currency' => 'SAR',
-                'methods' => [
-                    [
-                        'id' => 'visa_master',
-                        'name' => 'Visa / Master',
-                        'logo' => asset('assets/images/payments/visa_master.png'),
-                        'url' => route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'visa_master', 'type' => 'trip'])
-                    ],
-                    [
-                        'id' => 'mada',
-                        'name' => 'Mada',
-                        'logo' => asset('assets/images/payments/mada.png'),
-                        'url' => route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'mada', 'type' => 'trip'])
-                    ],
-                    [
-                        'id' => 'tamara',
-                        'name' => 'Tamara',
-                        'logo' => asset('assets/images/payments/tamara.png'),
-                        'url' => route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'tamara', 'type' => 'trip'])
-                    ],
-                    [
-                        'id' => 'tabby',
-                        'name' => 'Tabby',
-                        'logo' => asset('assets/images/payments/tabby.png'),
-                        'url' => route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'tabby', 'type' => 'trip'])
-                    ]
-                ]
+                'methods' => \App\Helpers\PaymentHelper::getAvailableMethods($booking->id, 'trip')
             ];
 
             return $this->apiResponse(false, __('Booking created successfully'), [
@@ -783,32 +758,7 @@ class TripController extends Controller
                 'booking_id' => $booking->id,
                 'amount' => $booking->total_price,
                 'currency' => 'SAR',
-                'methods' => [
-                    [
-                        'id' => 'visa_master',
-                        'name' => 'Visa / Master',
-                        'logo' => asset('assets/images/payments/visa_master.png'),
-                        'url' => route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'visa_master', 'type' => 'trip'])
-                    ],
-                    [
-                        'id' => 'mada',
-                        'name' => 'Mada',
-                        'logo' => asset('assets/images/payments/mada.png'),
-                        'url' => route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'mada', 'type' => 'trip'])
-                    ],
-                    [
-                        'id' => 'tamara',
-                        'name' => 'Tamara',
-                        'logo' => asset('assets/images/payments/tamara.png'),
-                        'url' => route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'tamara', 'type' => 'trip'])
-                    ],
-                    [
-                        'id' => 'tabby',
-                        'name' => 'Tabby',
-                        'logo' => asset('assets/images/payments/tabby.png'),
-                        'url' => route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'tabby', 'type' => 'trip'])
-                    ]
-                ]
+                'methods' => \App\Helpers\PaymentHelper::getAvailableMethods($booking->id, 'trip')
             ];
         }
 

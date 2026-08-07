@@ -906,7 +906,7 @@ body.dark-mode .callout-danger {
                         @endif
 
                         @if($booking->status === 'pending' && !$isExpired)
-                            <a href="{{ route('payments.web.checkout', ['booking_id' => $booking->id, 'type' => 'hotel', 'method' => 'visa_master']) }}" class="action-btn action-btn-primary">
+                            <a href="{{ route('hotels.payment.select', $booking->id) }}" class="action-btn action-btn-primary">
                                 <i class="fas fa-credit-card"></i> {{ __('Complete Payment') }}
                             </a>
                         @endif

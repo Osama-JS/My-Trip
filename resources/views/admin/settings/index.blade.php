@@ -382,6 +382,11 @@
                             <i class="fas fa-robot"></i> {{ __('AI Settings') }}
                         </button>
                     </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="payments-settings-tab" data-bs-toggle="tab" data-bs-target="#payments-settings" type="button" role="tab">
+                            <i class="fas fa-credit-card"></i> {{ __('Payment Gateways') }}
+                        </button>
+                    </li>
                 </ul>
 
                 <div class="card-body p-4">
@@ -1027,8 +1032,42 @@
                                 document.getElementById('flight_margin_type').addEventListener('change', () => syncMarginUI('flight'));
                                 document.getElementById('hotel_margin_type').addEventListener('change', () => syncMarginUI('hotel'));
                             </script>
+                            </script>
                             @endpush
 
+                    </div>
+
+                    <!-- Payment Gateways Tab -->
+                    <div class="tab-pane fade" id="payments-settings" role="tabpanel">
+                        <div class="form-section-title">{{ __('Payment Gateways Status') }}</div>
+                        <div class="row">
+                            @php
+                                $methods = [
+                                    'mada' => 'Mada',
+                                    'visa_master' => 'Visa / MasterCard',
+                                    'apple_pay' => 'Apple Pay',
+                                    'tabby' => 'Tabby',
+                                    'tamara' => 'Tamara',
+                                    'tap' => 'Tap Payment',
+                                    'bank_transfer' => 'Bank Transfer',
+                                ];
+                            @endphp
+
+                            @foreach($methods as $key => $name)
+                                <div class="col-md-4 mb-4">
+                                    <div class="pricing-block d-flex align-items-center justify-content-between h-100">
+                                        <div>
+                                            <h6 class="mb-1">{{ __($name) }}</h6>
+                                            <small class="text-muted">{{ __('Enable or disable') }}</small>
+                                        </div>
+                                        <div class="form-check form-switch mb-0" style="padding-left: 2.5em;">
+                                            <input type="hidden" name="payment_{{ $key }}_enabled" value="0">
+                                            <input class="form-check-input" type="checkbox" role="switch" id="payment_{{ $key }}_enabled" name="payment_{{ $key }}_enabled" value="1" {{ \App\Models\Setting::get("payment_{$key}_enabled", '1') == '1' ? 'checked' : '' }} style="width: 3em; height: 1.5em; cursor: pointer;">
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
                 </div>
 

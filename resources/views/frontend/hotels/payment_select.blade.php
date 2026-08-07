@@ -33,6 +33,7 @@
                     <div class="pay-methods">
 
                         {{-- Mada --}}
+                        @if(\App\Models\Setting::get('payment_mada_enabled', '1') == '1')
                         <a href="{{ route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'mada', 'type' => 'hotel']) }}" class="pay-method" style="border-right: 5px solid #0055aa;">
                             <div class="pay-method__left">
                                 <div class="pay-method__img-wrap" style="background:#fff;">
@@ -45,8 +46,10 @@
                             </div>
                             <span class="pay-method__arrow"><i class="fas fa-chevron-right"></i></span>
                         </a>
+                        @endif
 
                         {{-- Card --}}
+                        @if(\App\Models\Setting::get('payment_visa_master_enabled', '1') == '1')
                         <a href="{{ route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'visa_master', 'type' => 'hotel']) }}" class="pay-method">
                             <div class="pay-method__left">
                                 <div class="pay-method__img-wrap card-wrap">
@@ -62,8 +65,10 @@
                             </div>
                             <span class="pay-method__arrow"><i class="fas fa-chevron-right"></i></span>
                         </a>
+                        @endif
 
                         {{-- Tap --}}
+                        @if(\App\Models\Setting::get('payment_tap_enabled', '1') == '1')
                         <a href="{{ route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'tap', 'type' => 'hotel']) }}" class="pay-method">
                             <div class="pay-method__left">
                                 <div class="pay-method__img-wrap" style="background:#f5f8ff;">
@@ -76,6 +81,7 @@
                             </div>
                             <span class="pay-method__arrow"><i class="fas fa-chevron-right"></i></span>
                         </a>
+                        @endif
 
                         {{-- Apple Pay --}}
                         <!-- <a href="{{ route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'apple_pay', 'type' => 'hotel']) }}" class="pay-method pay-method--dark">
@@ -92,18 +98,24 @@
                         </a> -->
 
                         {{-- Installments Label --}}
+                        @if(\App\Models\Setting::get('payment_tamara_enabled', '1') == '1' || \App\Models\Setting::get('payment_tabby_enabled', '1') == '1')
                         <div class="pay-divider"><span>{{ __('Pay in installments') }}</span></div>
 
                         <div class="pay-mini-grid">
+                            @if(\App\Models\Setting::get('payment_tamara_enabled', '1') == '1')
                             <a href="{{ route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'tamara', 'type' => 'hotel']) }}" class="pay-mini">
                                 <img src="https://cdn.tamara.co/assets/svg/tamara-logo-badge-en.svg" alt="Tamara">
                                 <span>{{ __('Split × 3 or 4') }}</span>
                             </a>
+                            @endif
+                            @if(\App\Models\Setting::get('payment_tabby_enabled', '1') == '1')
                             <a href="{{ route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'tabby', 'type' => 'hotel']) }}" class="pay-mini">
                                 <img src="https://www.pfgrowth.com/wp-content/uploads/2023/03/tabby-logo-1.png" alt="Tabby" style="background:#39ffbd; padding:3px 6px; border-radius:5px;">
                                 <span>{{ __('Pay later, no interest') }}</span>
                             </a>
+                            @endif
                         </div>
+                        @endif
 
                     </div>
 

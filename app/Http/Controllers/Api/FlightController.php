@@ -567,32 +567,7 @@ class FlightController extends Controller
                     'booking_id' => $booking->id,
                     'amount' => $totalAmount,
                     'currency' => 'SAR',
-                    'methods' => [
-                        [
-                            'id' => 'visa_master',
-                            'name' => 'Visa / Master',
-                            'logo' => asset('assets/images/payments/visa_master.png'),
-                            'url' => route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'visa_master', 'type' => 'flight'])
-                        ],
-                        [
-                            'id' => 'mada',
-                            'name' => 'Mada',
-                            'logo' => asset('assets/images/payments/mada.png'),
-                            'url' => route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'mada', 'type' => 'flight'])
-                        ],
-                        [
-                            'id' => 'tamara',
-                            'name' => 'Tamara',
-                            'logo' => asset('assets/images/payments/tamara.png'),
-                            'url' => route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'tamara', 'type' => 'flight'])
-                        ],
-                        [
-                            'id' => 'tabby',
-                            'name' => 'Tabby',
-                            'logo' => asset('assets/images/payments/tabby.png'),
-                            'url' => route('payments.web.checkout', ['booking_id' => $booking->id, 'method' => 'tabby', 'type' => 'flight'])
-                        ]
-                    ]
+                    'methods' => \App\Helpers\PaymentHelper::getAvailableMethods($booking->id, 'flight')
                 ];
 
                 $result['payment_info'] = $payment_info;

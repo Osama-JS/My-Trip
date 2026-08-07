@@ -377,44 +377,7 @@ class HotelController extends Controller
 
             $result['payment_info'] = [
                 'default_url' => route('payments.web.checkout', ['booking_id' => $hotelBooking->id, 'method' => 'visa_master', 'type' => 'hotel']),
-                'methods' => [
-                    [
-                        'id' => 'visa_master',
-                        'name' => 'Visa / Mastercard',
-                        'url' => route('payments.web.checkout', ['booking_id' => $hotelBooking->id, 'method' => 'visa_master', 'type' => 'hotel']),
-                        'logo' => 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/800px-Mastercard-logo.svg.png'
-                    ],
-                    [
-                        'id' => 'mada',
-                        'name' => 'Mada',
-                        'url' => route('payments.web.checkout', ['booking_id' => $hotelBooking->id, 'method' => 'mada', 'type' => 'hotel']),
-                        'logo' => 'https://upload.wikimedia.org/wikipedia/commons/f/fb/Mada_Logo.svg'
-                    ],
-                    [
-                        'id' => 'apple_pay',
-                        'name' => 'Apple Pay',
-                        'url' => route('payments.web.checkout', ['booking_id' => $hotelBooking->id, 'method' => 'apple_pay', 'type' => 'hotel']),
-                        'logo' => 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Apple_Pay_logo.svg/1024px-Apple_Pay_logo.svg.png'
-                    ],
-                    [
-                        'id' => 'tamara',
-                        'name' => 'Tamara',
-                        'url' => route('payments.web.checkout', ['booking_id' => $hotelBooking->id, 'method' => 'tamara', 'type' => 'hotel']),
-                        'logo' => 'https://cdn.tamara.co/assets/svg/tamara-logo-badge-en.svg'
-                    ],
-                    [
-                        'id' => 'tabby',
-                        'name' => 'Tabby',
-                        'url' => route('payments.web.checkout', ['booking_id' => $hotelBooking->id, 'method' => 'tabby', 'type' => 'hotel']),
-                        'logo' => 'https://www.pfgrowth.com/wp-content/uploads/2023/03/tabby-logo-1.png'
-                    ],
-                    [
-                        'id' => 'bank_transfer',
-                        'name' => 'Bank Transfer',
-                        'url' => route('payments.web.checkout', ['booking_id' => $hotelBooking->id, 'method' => 'bank_transfer', 'type' => 'hotel']),
-                        'logo' => 'https://cdn-icons-png.flaticon.com/512/2830/2830284.png'
-                    ],
-                ]
+                'methods' => \App\Helpers\PaymentHelper::getAvailableMethods($hotelBooking->id, 'hotel')
             ];
             $result['booking_id'] = $hotelBooking->id;
 

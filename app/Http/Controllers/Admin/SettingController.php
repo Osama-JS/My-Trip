@@ -41,6 +41,13 @@ class SettingController extends Controller
                 'hotel_margin_type'  => 'nullable|in:percentage,fixed',
                 'otp_method'         => 'nullable|in:whatsapp,email',
                 'ai_passport_prompt' => 'nullable|string',
+                'payment_mada_enabled'        => 'nullable|in:0,1',
+                'payment_visa_master_enabled' => 'nullable|in:0,1',
+                'payment_apple_pay_enabled'   => 'nullable|in:0,1',
+                'payment_tabby_enabled'       => 'nullable|in:0,1',
+                'payment_tamara_enabled'      => 'nullable|in:0,1',
+                'payment_tap_enabled'         => 'nullable|in:0,1',
+                'payment_bank_transfer_enabled' => 'nullable|in:0,1',
             ]);
 
             $data = $request->except(['_token', 'site_logo', 'site_favicon', 'about_story_image']);

@@ -79,55 +79,7 @@ class PaymentController extends Controller
     )]
     public function methods(Request $request)
     {
-        $methods = [
-            [
-                'key' => 'mada',
-                'name' => __('Mada'),
-                'type' => 'card',
-                'icon' => asset('assets/img/payments/mada.png')
-            ],
-            [
-                'key' => 'visa_master',
-                'name' => __('Visa / MasterCard'),
-                'type' => 'card',
-                'icon' => asset('assets/img/payments/visa.png')
-            ],
-            [
-                'key' => 'apple_pay',
-                'name' => __('Apple Pay'),
-                'type' => 'digital_wallet',
-                'icon' => asset('assets/img/payments/apple-pay.png')
-            ],
-            [
-                'key' => 'tabby',
-                'name' => __('Tabby (Installments)'),
-                'type' => 'redirect',
-                'icon' => asset('assets/img/payments/tabby.png')
-            ],
-            [
-                'key' => 'tamara',
-                'name' => __('Tamara'),
-                'type' => 'redirect',
-                'icon' => asset('assets/img/payments/tamara.png')
-            ],
-            [
-                'key' => 'tap',
-                'name' => __('Tap Payment'),
-                'type' => 'redirect',
-                'icon' => asset('assets/img/payments/tap.png')
-            ]
-        ];
-
-        // Add Bank Transfer EXCLUSIVELY for Trips
-        if ($request->type === 'trip') {
-            $methods[] = [
-                'key' => 'bank_transfer',
-                'name' => __('Bank Transfer'),
-                'type' => 'manual',
-                'icon' => asset('assets/img/payments/bank-transfer.png')
-            ];
-        }
-
+        $methods = \App\Helpers\PaymentHelper::getAvailableMethods(null, $request->type === 'trip' ? 'trip' : 'flight');
         return $this->apiResponse(false, __('Payment methods retrieved successfully.'), $methods);
     }
 
