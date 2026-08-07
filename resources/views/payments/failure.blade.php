@@ -88,7 +88,7 @@
         @if(request('source') === 'api')
             <p style="font-size: 0.9rem; margin-top: 10px; color: var(--danger)">يرجى العودة إلى التطبيق للمحاولة مجدداً.</p>
         @else
-            <a href="javascript:history.back()" class="btn-retry">المحاولة مرة أخرى</a>
+
             <a href="#" class="support-link">هل تواجه مشكلة؟ اتصل بالدعم الفني</a>
         @endif
     </div>
