@@ -655,6 +655,63 @@ class TraveloproService
     }
 
     /**
+     * Cancel a booking.
+     *
+     * @param array $data Must contain 'uniqueId'
+     * @return array
+     */
+    public function cancelBooking(array $data): array
+    {
+        Log::info('Travelopro Cancel Booking Request', ['UniqueID' => $data['uniqueId'] ?? '']);
+
+        $payload = array_merge($this->authPayload(), [
+            'UniqueID' => $data['uniqueId'] ?? '',
+        ]);
+
+        $url = $this->endpoint('cancel');
+
+        try {
+            $response = $this->httpClient(60)->post($url, $payload);
+
+            if ($response->successful()) {
+                $result = $response->json();
+                $cancelResult = $result['CancelBookingResponse']['CancelBookingResult'] ?? [];
+                
+                $isSuccess = $cancelResult['Success'] ?? 'false';
+                // Success can be boolean false or string 'false'
+                if ($isSuccess === 'true' || $isSuccess === true) {
+                    return $result;
+                }
+                
+                // If it reached here, Travelopro refused cancellation (e.g. already ticketed)
+                $errorMessage = $cancelResult['Errors']['ErrorMessage'] ?? 'Cancellation refused by supplier.';
+                
+                Log::warning('Travelopro Cancel Booking Refused', [
+                    'uniqueId' => $data['uniqueId'] ?? '',
+                    'error' => $errorMessage
+                ]);
+
+                return [
+                    'status' => 'error', 
+                    'message' => 'تعذر الإلغاء: ' . $errorMessage,
+                    'details' => $result
+                ];
+            }
+
+            Log::error('Travelopro Cancel Booking Error', [
+                'status' => $response->status(),
+                'body'   => $response->body(),
+            ]);
+
+            return ['status' => 'error', 'message' => 'Failed to cancel booking with supplier'];
+
+        } catch (\Exception $e) {
+            Log::error('Travelopro Cancel Booking Exception', ['message' => $e->getMessage()]);
+            return ['status' => 'error', 'message' => 'Service unavailable'];
+        }
+    }
+
+    /**
      * Get trip details.
      *
      * @param string $uniqueId
