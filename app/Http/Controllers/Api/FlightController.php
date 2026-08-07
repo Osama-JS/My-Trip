@@ -458,6 +458,29 @@ class FlightController extends Controller
             return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
         }
 
+        // Check if a booking already exists for this session to prevent duplicate requests
+        $existingBooking = \App\Models\Booking::where('user_id', Auth::id())
+            ->where('supplier_session_id', $request->flight_session_id)
+            ->first();
+
+        if ($existingBooking) {
+            Log::info('Duplicate Booking Request Prevented', ['booking_id' => $existingBooking->id]);
+            
+            $payment_info = [
+                'booking_id' => $existingBooking->id,
+                'amount' => $existingBooking->total_amount,
+                'currency' => $existingBooking->currency,
+                'methods' => \App\Helpers\PaymentHelper::getAvailableMethods($existingBooking->id, 'flight')
+            ];
+
+            return $this->apiResponse(false, __('Booking already exists. Redirecting...'), [
+                'payment_info' => $payment_info,
+                'payment_url' => $payment_info['methods'][0]['url'] ?? '',
+                'payment_api_url' => url('/api/payment/initiate'),
+                'booking_id' => $existingBooking->id,
+            ], null, 200);
+        }
+
         Log::info('Initiating Travelopro Booking Request', ['user_id' => Auth::id()]);
         $result = $this->traveloproService->createBooking($request->all());
 
