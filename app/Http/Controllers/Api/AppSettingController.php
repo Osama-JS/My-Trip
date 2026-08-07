@@ -54,6 +54,9 @@ class AppSettingController extends Controller
             'ios_url' => Setting::get('ios_url', ''),
             'site_name' => app()->getLocale() == 'ar' ? Setting::get('site_name_ar') : Setting::get('site_name_en'),
             'otp_method' => Setting::get('otp_method', 'whatsapp'),
+            'allow_manual_passport_edit' => (bool) Setting::get('allow_manual_passport_edit', '1'),
+            'dev_mode_banner_status' => (bool) Setting::get('dev_mode_banner_status', '0'),
+            'dev_mode_banner_text' => app()->getLocale() == 'ar' ? Setting::get('dev_mode_banner_text_ar', 'الموقع قيد التطوير والتجربة') : Setting::get('dev_mode_banner_text_en', 'The site is under development and testing'),
         ];
 
         return $this->apiResponse(false, __('App settings retrieved successfully.'), $settings);
