@@ -821,7 +821,7 @@ class FlightController extends Controller
         }
         
         $result['airport_names'] = $airportNames;
-        $result['invoice_url'] = route('bookings.invoice', ['id' => $booking->id, 'type' => 'flight']);
+        $result['invoice_url'] = route('customer.bookings.invoice', ['id' => $booking->id, 'type' => 'flight']);
 
         return $this->apiResponse(false, __('Trip details retrieved successfully.'), $result, null, 200);
     }

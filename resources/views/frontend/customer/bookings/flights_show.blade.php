@@ -786,11 +786,11 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
             @php
                 $originCode = $booking->flightBooking->origin ?? 'N/A';
                 $destCode = $booking->flightBooking->destination ?? 'N/A';
-                $originAirport = \App\Models\Airport::where('code', $originCode)->first();
-                $destAirport = \App\Models\Airport::where('code', $destCode)->first();
+                $originAirport = $originCode !== 'N/A' ? \App\Models\Airport::where('airport_code', $originCode)->first() : null;
+                $destAirport = $destCode !== 'N/A' ? \App\Models\Airport::where('airport_code', $destCode)->first() : null;
                 
-                $originName = $originAirport ? ($originAirport->city . ' - ' . $originAirport->name) : $originCode;
-                $destName = $destAirport ? ($destAirport->city . ' - ' . $destAirport->name) : $destCode;
+                $originName = $originAirport ? ($originAirport->city_name . ' - ' . $originAirport->airport_name) : $originCode;
+                $destName = $destAirport ? ($destAirport->city_name . ' - ' . $destAirport->airport_name) : $destCode;
             @endphp
             <div class="pass-airport-row">
                 <div class="pass-airport-code">
