@@ -878,20 +878,20 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
                             </div>
                             <div class="passenger-docs">
                                 @if($pax->e_ticket_no && $booking->status === 'confirmed')
-                                    <div class="ticket-tag">
-                                        <label>{{ __('Ticket No') }}</label>
-                                        <strong>{{ $pax->e_ticket_no }}</strong>
+                                    <div class="ticket-tag" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); padding: 8px 14px; border-radius: 10px; flex: 1; min-width: 140px;">
+                                        <label style="color: #10b981; font-size: 0.65rem;"><i class="fas fa-ticket-alt me-1"></i>{{ __('E-Ticket No') }}</label>
+                                        <strong style="color: #047857; font-size: 1.05rem; letter-spacing: 0.5px;">{{ $pax->e_ticket_no }}</strong>
                                     </div>
                                 @endif
                                 @if($pax->passport_no)
-                                    <div class="passport-tag">
-                                        <label>{{ __('Passport') }}</label>
-                                        <strong>{{ $pax->passport_no }}</strong>
+                                    <div class="passport-tag" style="background: rgba(59, 130, 246, 0.08); border-color: rgba(59, 130, 246, 0.2); padding: 8px 14px; border-radius: 10px; flex: 1; min-width: 140px;">
+                                        <label style="color: #3b82f6; font-size: 0.65rem;"><i class="fas fa-passport me-1"></i>{{ __('Passport') }}</label>
+                                        <strong style="color: #1d4ed8; font-size: 1.05rem; letter-spacing: 0.5px;">{{ $pax->passport_no }}</strong>
                                     </div>
                                 @endif
                                 @if($pax->nationality)
-                                    <div class="passport-tag">
-                                        <label>{{ __('Nationality') }}</label>
+                                    <div class="passport-tag" style="padding: 8px 14px; border-radius: 10px; min-width: 100px;">
+                                        <label><i class="fas fa-globe-americas me-1"></i>{{ __('Nationality') }}</label>
                                         <strong>{{ $pax->nationality }}</strong>
                                     </div>
                                 @endif

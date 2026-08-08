@@ -182,7 +182,7 @@ class BookingController extends Controller
                     if (isset($tripDetails['TripDetailsResponse']['TripDetailsResult']['TravelItinerary']['ItineraryInfo']['CustomerInfos'])) {
                         $customerInfos = $tripDetails['TripDetailsResponse']['TripDetailsResult']['TravelItinerary']['ItineraryInfo']['CustomerInfos'];
                         
-                        foreach ($booking->passengers as $passenger) {
+                        foreach ($booking->passengers as $index => $passenger) {
                             $matched = collect($customerInfos)->first(function($info) use ($passenger) {
                                 $apiFirstName = strtolower(trim($info['CustomerInfo']['Customer']['PersonName']['FirstName'] ?? ''));
                                 $apiLastName = strtolower(trim($info['CustomerInfo']['Customer']['PersonName']['LastName'] ?? ''));
@@ -191,8 +191,12 @@ class BookingController extends Controller
                                 return $apiFirstName === $dbFirstName && $apiLastName === $dbLastName;
                             });
 
+                            if (!$matched && isset($customerInfos[$index])) {
+                                $matched = $customerInfos[$index];
+                            }
+
                             if ($matched) {
-                                $passenger->e_ticket_no = $matched['eTicketNumber'] ?? null;
+                                $passenger->e_ticket_no = $matched['CustomerInfo']['eTicketNumber'] ?? $matched['eTicketNumber'] ?? null;
                             }
                         }
                     }
