@@ -173,14 +173,15 @@ class BookingController extends Controller
                 ->where('user_id', Auth::id())
                 ->findOrFail($id);
 
+            $apiTripDetails = null;
             // Fetch e_ticket details from API if the booking has a reference
             if ($booking->booking_reference) {
                 try {
                     $traveloproService = app(\App\Services\TraveloproService::class);
-                    $tripDetails = $traveloproService->getTripDetails($booking->booking_reference, $booking->id);
+                    $apiTripDetails = $traveloproService->getTripDetails($booking->booking_reference, $booking->id);
 
-                    if (isset($tripDetails['TripDetailsResponse']['TripDetailsResult']['TravelItinerary']['ItineraryInfo']['CustomerInfos'])) {
-                        $customerInfos = $tripDetails['TripDetailsResponse']['TripDetailsResult']['TravelItinerary']['ItineraryInfo']['CustomerInfos'];
+                    if (isset($apiTripDetails['TripDetailsResponse']['TripDetailsResult']['TravelItinerary']['ItineraryInfo']['CustomerInfos'])) {
+                        $customerInfos = $apiTripDetails['TripDetailsResponse']['TripDetailsResult']['TravelItinerary']['ItineraryInfo']['CustomerInfos'];
                         
                         foreach ($booking->passengers as $index => $passenger) {
                             $matched = collect($customerInfos)->first(function($info) use ($passenger) {
@@ -205,7 +206,7 @@ class BookingController extends Controller
                 }
             }
 
-            return view('frontend.customer.bookings.flights_show', compact('booking'));
+            return view('frontend.customer.bookings.flights_show', compact('booking', 'apiTripDetails'));
         }
 
         if ($type === 'hotel') {

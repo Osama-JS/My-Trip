@@ -787,7 +787,23 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
                 $originCode = $booking->flightBooking->origin ?? 'N/A';
                 $destCode = $booking->flightBooking->destination ?? 'N/A';
                 
-                // Fallback to itinerary data if N/A
+                // 1. Fallback to live API data if available
+                $apiResItems = $apiTripDetails['TripDetailsResponse']['TripDetailsResult']['TravelItinerary']['ItineraryInfo']['ReservationItems'] ?? [];
+                if (isset($apiResItems['ReservationItem'])) {
+                    $apiResItems = [$apiResItems];
+                } elseif (isset($apiResItems[0]) && !isset($apiResItems[0]['ReservationItem'])) {
+                    $apiResItems = array_map(function($i) { return ['ReservationItem' => $i]; }, $apiResItems);
+                }
+                
+                if (!empty($apiResItems)) {
+                    $firstItem = $apiResItems[0]['ReservationItem'] ?? $apiResItems[0];
+                    $lastItem = end($apiResItems)['ReservationItem'] ?? end($apiResItems);
+                    
+                    if ($originCode === 'N/A') $originCode = $firstItem['DepartureAirport']['LocationCode'] ?? $originCode;
+                    if ($destCode === 'N/A') $destCode = $lastItem['ArrivalAirport']['LocationCode'] ?? $destCode;
+                }
+
+                // 2. Fallback to local itinerary data if still N/A
                 $itinData = $booking->flightBooking->itinerary_data ?? [];
                 if (($originCode === 'N/A' || $destCode === 'N/A') && is_array($itinData)) {
                     $options = $itinData['FareItineraries']['FareItinerary']['OriginDestinationOptions'] ?? [];
@@ -873,7 +889,17 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
                     
                     @php
                         $exactDepartureTime = null;
-                        if (is_array($itinData)) {
+                        
+                        // 1. Extract from Live API data first
+                        if (!empty($apiResItems)) {
+                            $firstItem = $apiResItems[0]['ReservationItem'] ?? $apiResItems[0];
+                            if (isset($firstItem['DepartureDateTime'])) {
+                                $exactDepartureTime = \Carbon\Carbon::parse($firstItem['DepartureDateTime']);
+                            }
+                        }
+                        
+                        // 2. Fallback to DB itinerary data
+                        if (!$exactDepartureTime && is_array($itinData)) {
                             $options = $itinData['FareItineraries']['FareItinerary']['OriginDestinationOptions'] ?? [];
                             $opts = $options['OriginDestinationOption'] ?? [];
                             if (isset($opts['FlightSegment'])) $opts = [$opts];
