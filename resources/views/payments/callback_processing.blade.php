@@ -89,24 +89,36 @@
             })
             .then(({ status, ok, data }) => {
                 if (ok && !data.error) {
-                    // Build success redirect URL with all context
-                    const params = new URLSearchParams({
-                        booking_id:     data.booking_id || bookingId,
-                        type:           data.type       || bookingType,
-                        source:         source,
-                        payment_type:   paymentType,
-                    });
-                    window.location.href = "{{ route('payments.web.success') }}?" + params.toString();
+                    if (window.FlutterBridge) {
+                        window.FlutterBridge.postMessage(JSON.stringify({ success: true, message: 'عملية الدفع تمت بنجاح' }));
+                    } else {
+                        // Build success redirect URL with all context
+                        const params = new URLSearchParams({
+                            booking_id:     data.booking_id || bookingId,
+                            type:           data.type       || bookingType,
+                            source:         source,
+                            payment_type:   paymentType,
+                        });
+                        window.location.href = "{{ route('payments.web.success') }}?" + params.toString();
+                    }
                 } else {
                     let msg = 'فشلت عملية التحقق من الدفع';
                     if (data && data.message) msg = data.message;
                     else if (data && data.errors) msg = data.errors;
                     
-                    showError(typeof msg === 'string' ? msg : JSON.stringify(msg));
+                    if (window.FlutterBridge) {
+                        window.FlutterBridge.postMessage(JSON.stringify({ success: false, message: typeof msg === 'string' ? msg : JSON.stringify(msg) }));
+                    } else {
+                        showError(typeof msg === 'string' ? msg : JSON.stringify(msg));
+                    }
                 }
             })
             .catch(error => {
-                showError('حدث خطأ أثناء الاتصال بالخادم');
+                if (window.FlutterBridge) {
+                    window.FlutterBridge.postMessage(JSON.stringify({ success: false, message: 'حدث خطأ أثناء الاتصال بالخادم' }));
+                } else {
+                    showError('حدث خطأ أثناء الاتصال بالخادم');
+                }
             });
 
             function showError(message) {
