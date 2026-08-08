@@ -396,11 +396,23 @@ class BookingController extends Controller
     /**
      * Download invoice PDF.
      */
-    public function downloadInvoice($id)
+    public function downloadInvoice($id, Request $request)
     {
-        $booking = TripBooking::where('user_id', Auth::id())
-            ->where('status', 'confirmed')
-            ->findOrFail($id);
+        $type = $request->get('type', 'trip');
+
+        if ($type === 'flight') {
+            $booking = Booking::where('user_id', Auth::id())
+                ->where(function($q) {
+                    $q->where('status', 'confirmed')
+                      ->orWhere('status', 'ticketed')
+                      ->orWhere('status', 'completed');
+                })
+                ->findOrFail($id);
+        } else {
+            $booking = TripBooking::where('user_id', Auth::id())
+                ->where('status', 'confirmed')
+                ->findOrFail($id);
+        }
 
         // Use existing invoice or generate new one
         $payment = $booking->payments()->latest()->first();

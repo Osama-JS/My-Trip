@@ -65,6 +65,22 @@ class InvoiceService
             if ($booking instanceof \App\Models\Booking) {
                 $view = 'invoices.flight_invoice';
                 $fileNamePrefix = 'flight_invoice_';
+                
+                try {
+                    $traveloproService = app(\App\Services\TraveloproService::class);
+                    $tripDetails = $traveloproService->getTripDetails($booking->booking_reference, $booking->id);
+                    if (isset($tripDetails['TripDetailsResponse']['TripDetailsResult']['TravelItinerary']['ItineraryInfo']['CustomerInfos'])) {
+                        $customerInfos = $tripDetails['TripDetailsResponse']['TripDetailsResult']['TravelItinerary']['ItineraryInfo']['CustomerInfos'];
+                        $eTickets = [];
+                        foreach ($customerInfos as $info) {
+                            $name = trim(strtoupper($info['CustomerInfo']['PassengerFirstName'] ?? '') . ' ' . strtoupper($info['CustomerInfo']['PassengerLastName'] ?? ''));
+                            if (!empty($info['CustomerInfo']['eTicketNumber'])) {
+                                $eTickets[$name] = $info['CustomerInfo']['eTicketNumber'];
+                            }
+                        }
+                        view()->share('eTickets', $eTickets);
+                    }
+                } catch (\Exception $e) {}
             }
 
             $booking->load(['user', 'passengers', 'package', 'season']);

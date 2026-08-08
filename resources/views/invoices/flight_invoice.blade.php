@@ -152,9 +152,18 @@
                     </thead>
                     <tbody>
                         @foreach($booking->passengers as $pax)
+                        @php
+                            $paxName = trim(strtoupper($pax->first_name ?? '') . ' ' . strtoupper($pax->last_name ?? ''));
+                            $ticket = isset($eTickets) && isset($eTickets[$paxName]) ? $eTickets[$paxName] : null;
+                        @endphp
                         <tr>
                             <td>{{ $loop->iteration }}</td>
-                            <td style="font-weight: bold;">{{ $pax->title }} {{ $pax->first_name }} {{ $pax->last_name }}</td>
+                            <td style="font-weight: bold;">
+                                {{ $pax->title }} {{ $pax->first_name }} {{ $pax->last_name }}
+                                @if($ticket)
+                                    <br><span style="color: #10b981; font-size: 13px; margin-top: 4px; display: inline-block;">✈️ eTicket: {{ $ticket }}</span>
+                                @endif
+                            </td>
                             <td>{{ ucfirst($pax->passenger_type) }}</td>
                         </tr>
                         @endforeach
