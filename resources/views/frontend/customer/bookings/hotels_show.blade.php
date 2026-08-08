@@ -827,16 +827,52 @@ body.dark-mode .callout-danger {
                             <div class="room-group">
                                 <div class="room-group-label"><i class="fas fa-door-open"></i> {{ __('Room') }} {{ $room['room_no'] ?? $loop->iteration }}</div>
                                 <div class="guest-chips">
-                                    @foreach($room['pax'] ?? [] as $pax)
-                                        <div class="guest-chip">
-                                            <i class="fas {{ ($pax['type'] ?? 'AD') === 'CH' ? 'fa-child' : 'fa-user' }}"></i>
-                                            <span>{{ trim(($pax['Title'] ?? $pax['title'] ?? '') . ' ' . ($pax['FirstName'] ?? $pax['firstName'] ?? '') . ' ' . ($pax['LastName'] ?? $pax['lastName'] ?? '')) }}</span>
-                                            <small>({{ ($pax['type'] ?? 'AD') === 'CH' ? __('Child') : __('Adult') }})</small>
-                                        </div>
-                                    @endforeach
+                                    {{-- Web Format --}}
+                                    @if(isset($room['pax']) && is_array($room['pax']))
+                                        @foreach($room['pax'] as $pax)
+                                            <div class="guest-chip">
+                                                <i class="fas {{ ($pax['type'] ?? 'AD') === 'CH' ? 'fa-child' : 'fa-user' }}"></i>
+                                                <span>{{ trim(($pax['Title'] ?? $pax['title'] ?? '') . ' ' . ($pax['FirstName'] ?? $pax['firstName'] ?? '') . ' ' . ($pax['LastName'] ?? $pax['lastName'] ?? '')) }}</span>
+                                                <small>({{ ($pax['type'] ?? 'AD') === 'CH' ? __('Child') : __('Adult') }})</small>
+                                            </div>
+                                        @endforeach
+                                    @endif
+                                    
+                                    {{-- Flutter App Format (Travelopro native) --}}
+                                    @if(isset($room['adult']) && isset($room['adult']['firstName']) && is_array($room['adult']['firstName']))
+                                        @foreach($room['adult']['firstName'] as $index => $fName)
+                                            <div class="guest-chip">
+                                                <i class="fas fa-user"></i>
+                                                <span>{{ trim(($room['adult']['title'][$index] ?? '') . ' ' . $fName . ' ' . ($room['adult']['lastName'][$index] ?? '')) }}</span>
+                                                <small>({{ __('Adult') }})</small>
+                                            </div>
+                                        @endforeach
+                                    @endif
+
+                                    @if(isset($room['child']) && isset($room['child']['firstName']) && is_array($room['child']['firstName']))
+                                        @foreach($room['child']['firstName'] as $index => $fName)
+                                            <div class="guest-chip">
+                                                <i class="fas fa-child"></i>
+                                                <span>{{ trim(($room['child']['title'][$index] ?? '') . ' ' . $fName . ' ' . ($room['child']['lastName'][$index] ?? '')) }}</span>
+                                                <small>({{ __('Child') }})</small>
+                                            </div>
+                                        @endforeach
+                                    @endif
                                 </div>
                             </div>
                         @endforeach
+                    @elseif($booking->passengers && $booking->passengers->isNotEmpty())
+                        <div class="room-group">
+                            <div class="guest-chips">
+                                @foreach($booking->passengers as $pax)
+                                    <div class="guest-chip">
+                                        <i class="fas {{ $pax->passenger_type === 'child' ? 'fa-child' : 'fa-user' }}"></i>
+                                        <span>{{ trim($pax->name) }}</span>
+                                        <small>({{ __($pax->passenger_type) }})</small>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
                     @else
                         <div class="info-row"><span>{{ __('Name') }}</span><strong>{{ $booking->user->name ?? 'Guest' }}</strong></div>
                         <div class="info-row"><span>{{ __('Email') }}</span><strong>{{ $booking->user->email ?? 'N/A' }}</strong></div>
