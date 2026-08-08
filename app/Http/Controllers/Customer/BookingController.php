@@ -173,6 +173,34 @@ class BookingController extends Controller
                 ->where('user_id', Auth::id())
                 ->findOrFail($id);
 
+            // Fetch e_ticket details from API if the booking has a reference
+            if ($booking->booking_reference) {
+                try {
+                    $traveloproService = app(\App\Services\TraveloproService::class);
+                    $tripDetails = $traveloproService->getTripDetails($booking->booking_reference, $booking->id);
+
+                    if (isset($tripDetails['TripDetailsResponse']['TripDetailsResult']['TravelItinerary']['ItineraryInfo']['CustomerInfos'])) {
+                        $customerInfos = $tripDetails['TripDetailsResponse']['TripDetailsResult']['TravelItinerary']['ItineraryInfo']['CustomerInfos'];
+                        
+                        foreach ($booking->passengers as $passenger) {
+                            $matched = collect($customerInfos)->first(function($info) use ($passenger) {
+                                $apiFirstName = strtolower(trim($info['CustomerInfo']['Customer']['PersonName']['FirstName'] ?? ''));
+                                $apiLastName = strtolower(trim($info['CustomerInfo']['Customer']['PersonName']['LastName'] ?? ''));
+                                $dbFirstName = strtolower(trim($passenger->first_name));
+                                $dbLastName = strtolower(trim($passenger->last_name));
+                                return $apiFirstName === $dbFirstName && $apiLastName === $dbLastName;
+                            });
+
+                            if ($matched) {
+                                $passenger->e_ticket_no = $matched['eTicketNumber'] ?? null;
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::error("Failed to fetch e-ticket details for booking {$booking->id}: " . $e->getMessage());
+                }
+            }
+
             return view('frontend.customer.bookings.flights_show', compact('booking'));
         }
 

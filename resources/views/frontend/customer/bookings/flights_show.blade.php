@@ -877,7 +877,7 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
                                 </div>
                             </div>
                             <div class="passenger-docs">
-                                @if($pax->e_ticket_no)
+                                @if($pax->e_ticket_no && $booking->status === 'confirmed')
                                     <div class="ticket-tag">
                                         <label>{{ __('Ticket No') }}</label>
                                         <strong>{{ $pax->e_ticket_no }}</strong>
@@ -1021,8 +1021,8 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
                                 </a>
                             @endif
                         @elseif($booking->status === 'confirmed')
-                            <a href="{{ route('customer.bookings.invoice', $booking->id) }}" class="action-btn action-btn-success">
-                                <i class="fas fa-file-invoice-dollar"></i> {{ __('Download Invoice') }}
+                            <a href="{{ route('customer.bookings.invoice', ['id' => $booking->id, 'type' => 'flight']) }}" class="action-btn action-btn-success">
+                                <i class="fas fa-file-invoice-dollar"></i> {{ __('Download Voucher') }}
                             </a>
                         @endif
                         <a href="https://wa.me/{{ \App\Models\Setting::get('whatsapp_number', '') }}" class="action-btn action-btn-outline" target="_blank">
