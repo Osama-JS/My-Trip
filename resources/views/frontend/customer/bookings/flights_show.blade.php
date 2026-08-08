@@ -783,17 +783,26 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
             <span class="pass-pnr">{{ __('Airline PNR') }}: {{ $booking->pnr_code ?: 'N/A' }}</span>
         </div>
         <div class="pass-body">
+            @php
+                $originCode = $booking->flightBooking->origin ?? 'N/A';
+                $destCode = $booking->flightBooking->destination ?? 'N/A';
+                $originAirport = \App\Models\Airport::where('code', $originCode)->first();
+                $destAirport = \App\Models\Airport::where('code', $destCode)->first();
+                
+                $originName = $originAirport ? ($originAirport->city . ' - ' . $originAirport->name) : $originCode;
+                $destName = $destAirport ? ($destAirport->city . ' - ' . $destAirport->name) : $destCode;
+            @endphp
             <div class="pass-airport-row">
                 <div class="pass-airport-code">
-                    <h3>{{ strtoupper(substr($booking->origin, 0, 3)) }}</h3>
-                    <span>{{ $booking->origin }}</span>
+                    <h3>{{ strtoupper(substr($originCode, 0, 3)) }}</h3>
+                    <span style="font-size: 0.8rem; line-height: 1.2;">{{ $originName }}</span>
                 </div>
                 <div class="pass-path-line">
                     <i class="fas fa-plane"></i>
                 </div>
                 <div class="pass-airport-code dest-code">
-                    <h3>{{ strtoupper(substr($booking->destination, 0, 3)) }}</h3>
-                    <span>{{ $booking->destination }}</span>
+                    <h3>{{ strtoupper(substr($destCode, 0, 3)) }}</h3>
+                    <span style="font-size: 0.8rem; line-height: 1.2;">{{ $destName }}</span>
                 </div>
             </div>
 
@@ -809,7 +818,7 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
                     </div>
                     <div>
                         <span class="pass-label">{{ __('DEPARTURE DATE') }}</span>
-                        <span class="pass-val">{{ $booking->departure_date }}</span>
+                        <span class="pass-val">{{ $booking->flightBooking->departure_date ? $booking->flightBooking->departure_date->format('d M Y') : 'N/A' }}</span>
                     </div>
                     <div>
                         <span class="pass-label">{{ __('CLASS') }}</span>
@@ -835,16 +844,45 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
                 <div class="detail-card-body">
                     <div class="info-row">
                         <span class="info-label">{{ __('Origin') }}</span>
-                        <span class="info-value">{{ $booking->origin }}</span>
+                        <span class="info-value">{{ $originName }} ({{ $originCode }})</span>
                     </div>
                     <div class="info-row">
                         <span class="info-label">{{ __('Destination') }}</span>
-                        <span class="info-value">{{ $booking->destination }}</span>
+                        <span class="info-value">{{ $destName }} ({{ $destCode }})</span>
                     </div>
+                    
+                    @php
+                        $exactDepartureTime = null;
+                        $itinData = $booking->flightBooking->itinerary_data ?? [];
+                        if (isset($itinData['FareItineraries']['FareItinerary']['OriginDestinationOptions'])) {
+                            $options = $itinData['FareItineraries']['FareItinerary']['OriginDestinationOptions'];
+                            if (isset($options['OriginDestinationOption']['FlightSegment'])) {
+                                $options = [$options['OriginDestinationOption']];
+                            } else {
+                                $options = $options['OriginDestinationOption'] ?? [];
+                            }
+                            
+                            foreach($options as $opt) {
+                                $segs = $opt['FlightSegment'] ?? $opt;
+                                if (isset($segs['FlightNumber'])) { $exactDepartureTime = \Carbon\Carbon::parse($segs['DepartureDateTime']); break; }
+                                else { foreach($segs as $s) { $exactDepartureTime = \Carbon\Carbon::parse($s['FlightSegment']['DepartureDateTime'] ?? $s['DepartureDateTime']); break 2; } }
+                            }
+                        }
+                    @endphp
+
                     <div class="info-row">
-                        <span class="info-label">{{ __('Departure Date') }}</span>
-                        <span class="info-value">{{ $booking->departure_date }}</span>
+                        <span class="info-label">{{ __('Departure Date & Time') }}</span>
+                        <span class="info-value">
+                            {{ $exactDepartureTime ? $exactDepartureTime->format('d M Y, H:i') : ($booking->flightBooking->departure_date ? $booking->flightBooking->departure_date->format('d M Y') : 'N/A') }}
+                        </span>
                     </div>
+                    @if($exactDepartureTime && $exactDepartureTime->isFuture())
+                        <div class="info-row mt-2 p-3 bg-light rounded" style="border-left: 4px solid var(--primary-blue);">
+                            <span class="info-label text-primary"><i class="fas fa-clock me-1"></i> {{ __('Time to Departure') }}</span>
+                            <span class="info-value fw-bold text-dark">{{ $exactDepartureTime->diffForHumans(['parts' => 2]) }}</span>
+                        </div>
+                    @endif
+
                     @if($booking->flightBooking->flight_class)
                     <div class="info-row">
                         <span class="info-label">{{ __('Cabin Class') }}</span>
@@ -883,10 +921,22 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
                                         <strong style="color: #047857; font-size: 1.05rem; letter-spacing: 0.5px;">{{ $pax->e_ticket_no }}</strong>
                                     </div>
                                 @endif
-                                @if($pax->passport_no)
+                                @if($pax->passport_number)
                                     <div class="passport-tag" style="background: rgba(59, 130, 246, 0.08); border-color: rgba(59, 130, 246, 0.2); padding: 8px 14px; border-radius: 10px; flex: 1; min-width: 140px;">
                                         <label style="color: #3b82f6; font-size: 0.65rem;"><i class="fas fa-passport me-1"></i>{{ __('Passport') }}</label>
-                                        <strong style="color: #1d4ed8; font-size: 1.05rem; letter-spacing: 0.5px;">{{ $pax->passport_no }}</strong>
+                                        <strong style="color: #1d4ed8; font-size: 1.05rem; letter-spacing: 0.5px;">{{ $pax->passport_number }}</strong>
+                                    </div>
+                                @endif
+                                @if($pax->passport_expiry)
+                                    <div class="passport-tag" style="padding: 8px 14px; border-radius: 10px; min-width: 100px;">
+                                        <label><i class="fas fa-calendar-times me-1"></i>{{ __('Expiry') }}</label>
+                                        <strong>{{ $pax->passport_expiry->format('d M Y') }}</strong>
+                                    </div>
+                                @endif
+                                @if($pax->dob)
+                                    <div class="passport-tag" style="padding: 8px 14px; border-radius: 10px; min-width: 100px;">
+                                        <label><i class="fas fa-birthday-cake me-1"></i>{{ __('DOB') }}</label>
+                                        <strong>{{ $pax->dob->format('d M Y') }}</strong>
                                     </div>
                                 @endif
                                 @if($pax->nationality)

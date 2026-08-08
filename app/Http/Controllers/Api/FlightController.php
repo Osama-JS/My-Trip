@@ -797,6 +797,23 @@ class FlightController extends Controller
         }
         $result['local_booking_status'] = $booking->status;
         $result['local_booking_id'] = $booking->id;
+        
+        $booking->load(['passengers', 'flightBooking']);
+        $result['local_passengers'] = $booking->passengers;
+        
+        $originCode = $booking->flightBooking->origin ?? null;
+        $destCode = $booking->flightBooking->destination ?? null;
+        $airportNames = [];
+        if ($originCode) {
+            $apt = \App\Models\Airport::where('code', $originCode)->first();
+            if ($apt) $airportNames[$originCode] = $apt->city . ' - ' . $apt->name;
+        }
+        if ($destCode) {
+            $apt = \App\Models\Airport::where('code', $destCode)->first();
+            if ($apt) $airportNames[$destCode] = $apt->city . ' - ' . $apt->name;
+        }
+        $result['airport_names'] = $airportNames;
+        $result['invoice_url'] = route('bookings.invoice', ['id' => $booking->id, 'type' => 'flight']);
 
         return $this->apiResponse(false, __('Trip details retrieved successfully.'), $result, null, 200);
     }
