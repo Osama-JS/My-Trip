@@ -83,7 +83,11 @@ class InvoiceService
                 } catch (\Exception $e) {}
             }
 
-            $booking->load(['user', 'passengers', 'package', 'season']);
+            if ($booking instanceof \App\Models\Booking) {
+                $booking->load(['user', 'passengers', 'flightBooking']);
+            } else {
+                $booking->load(['user', 'passengers', 'package', 'season']);
+            }
 
             $mpdf = new \Mpdf\Mpdf([
                 'mode' => 'utf-8',
