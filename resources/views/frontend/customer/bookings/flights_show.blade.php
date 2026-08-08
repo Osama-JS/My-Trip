@@ -786,6 +786,26 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
             @php
                 $originCode = $booking->flightBooking->origin ?? 'N/A';
                 $destCode = $booking->flightBooking->destination ?? 'N/A';
+                
+                // Fallback to itinerary data if N/A
+                $itinData = $booking->flightBooking->itinerary_data ?? [];
+                if (($originCode === 'N/A' || $destCode === 'N/A') && is_array($itinData)) {
+                    $options = $itinData['FareItineraries']['FareItinerary']['OriginDestinationOptions'] ?? [];
+                    $opts = $options['OriginDestinationOption'] ?? [];
+                    if (isset($opts['FlightSegment'])) $opts = [$opts];
+                    
+                    if (!empty($opts)) {
+                        $firstSeg = $opts[0]['FlightSegment'] ?? $opts[0][0]['FlightSegment'] ?? $opts[0];
+                        $lastSeg = end($opts)['FlightSegment'] ?? end($opts);
+                        if (is_array($lastSeg) && isset($lastSeg[0])) {
+                            $lastSeg = end($lastSeg)['FlightSegment'] ?? end($lastSeg);
+                        }
+                        
+                        if ($originCode === 'N/A') $originCode = $firstSeg['DepartureAirport']['LocationCode'] ?? $originCode;
+                        if ($destCode === 'N/A') $destCode = $lastSeg['ArrivalAirport']['LocationCode'] ?? $destCode;
+                    }
+                }
+
                 $originAirport = $originCode !== 'N/A' ? \App\Models\Airport::where('airport_code', $originCode)->first() : null;
                 $destAirport = $destCode !== 'N/A' ? \App\Models\Airport::where('airport_code', $destCode)->first() : null;
                 
@@ -853,33 +873,39 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
                     
                     @php
                         $exactDepartureTime = null;
-                        $itinData = $booking->flightBooking->itinerary_data ?? [];
-                        if (isset($itinData['FareItineraries']['FareItinerary']['OriginDestinationOptions'])) {
-                            $options = $itinData['FareItineraries']['FareItinerary']['OriginDestinationOptions'];
-                            if (isset($options['OriginDestinationOption']['FlightSegment'])) {
-                                $options = [$options['OriginDestinationOption']];
-                            } else {
-                                $options = $options['OriginDestinationOption'] ?? [];
-                            }
+                        if (is_array($itinData)) {
+                            $options = $itinData['FareItineraries']['FareItinerary']['OriginDestinationOptions'] ?? [];
+                            $opts = $options['OriginDestinationOption'] ?? [];
+                            if (isset($opts['FlightSegment'])) $opts = [$opts];
                             
-                            foreach($options as $opt) {
+                            foreach($opts as $opt) {
                                 $segs = $opt['FlightSegment'] ?? $opt;
-                                if (isset($segs['FlightNumber'])) { $exactDepartureTime = \Carbon\Carbon::parse($segs['DepartureDateTime']); break; }
-                                else { foreach($segs as $s) { $exactDepartureTime = \Carbon\Carbon::parse($s['FlightSegment']['DepartureDateTime'] ?? $s['DepartureDateTime']); break 2; } }
+                                if (isset($segs['DepartureDateTime'])) {
+                                    $exactDepartureTime = \Carbon\Carbon::parse($segs['DepartureDateTime']);
+                                    break;
+                                } elseif (is_array($segs)) {
+                                    foreach($segs as $s) {
+                                        $dt = $s['FlightSegment']['DepartureDateTime'] ?? $s['DepartureDateTime'] ?? null;
+                                        if ($dt) {
+                                            $exactDepartureTime = \Carbon\Carbon::parse($dt);
+                                            break 2;
+                                        }
+                                    }
+                                }
                             }
                         }
                     @endphp
 
-                    <div class="info-row">
-                        <span class="info-label">{{ __('Departure Date & Time') }}</span>
-                        <span class="info-value">
-                            {{ $exactDepartureTime ? $exactDepartureTime->format('d M Y, H:i') : ($booking->flightBooking->departure_date ? $booking->flightBooking->departure_date->format('d M Y') : 'N/A') }}
+                    <div class="info-row" style="background: rgba(37, 99, 235, 0.05); padding: 12px; border-radius: 8px; border: 1px solid rgba(37,99,235,0.2);">
+                        <span class="info-label" style="color: var(--primary-blue); font-weight: 800;"><i class="fas fa-calendar-alt me-1"></i> {{ __('Departure') }}</span>
+                        <span class="info-value text-dark" style="font-size: 1.1rem; font-weight: 900;">
+                            {{ $exactDepartureTime ? $exactDepartureTime->format('d M Y, h:i A') : ($booking->flightBooking->departure_date ? $booking->flightBooking->departure_date->format('d M Y') : 'N/A') }}
                         </span>
                     </div>
                     @if($exactDepartureTime && $exactDepartureTime->isFuture())
-                        <div class="info-row mt-2 p-3 bg-light rounded" style="border-left: 4px solid var(--primary-blue);">
-                            <span class="info-label text-primary"><i class="fas fa-clock me-1"></i> {{ __('Time to Departure') }}</span>
-                            <span class="info-value fw-bold text-dark">{{ $exactDepartureTime->diffForHumans(['parts' => 2]) }}</span>
+                        <div class="info-row mt-3 p-3 rounded" style="background: rgba(16, 185, 129, 0.1); border-left: 4px solid var(--fd-success);">
+                            <span class="info-label text-success" style="font-weight: 800;"><i class="fas fa-stopwatch me-1"></i> {{ __('Time to Departure') }}</span>
+                            <span class="info-value fw-bold text-success" style="font-size: 1.2rem;">{{ $exactDepartureTime->diffForHumans(['parts' => 2, 'short' => false]) }}</span>
                         </div>
                     @endif
 

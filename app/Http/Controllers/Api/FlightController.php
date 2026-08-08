@@ -812,6 +812,26 @@ class FlightController extends Controller
         if ($destCode && $destCode !== 'N/A') {
             $codesToFetch[] = $destCode;
         }
+
+        // Extract from Travelopro result as fallback
+        $resItems = $result['TripDetailsResponse']['TripDetailsResult']['TravelItinerary']['ItineraryInfo']['ReservationItems'] ?? [];
+        // Handle single item or array of items
+        if (isset($resItems['ReservationItem'])) {
+            $resItems = [$resItems];
+        } elseif (isset($resItems[0]) && !isset($resItems[0]['ReservationItem'])) {
+            $resItems = array_map(function($i) { return ['ReservationItem' => $i]; }, $resItems);
+        }
+        foreach ($resItems as $item) {
+            $rItem = $item['ReservationItem'] ?? $item;
+            if (isset($rItem['DepartureAirport']['LocationCode'])) {
+                $codesToFetch[] = $rItem['DepartureAirport']['LocationCode'];
+            }
+            if (isset($rItem['ArrivalAirport']['LocationCode'])) {
+                $codesToFetch[] = $rItem['ArrivalAirport']['LocationCode'];
+            }
+        }
+        
+        $codesToFetch = array_unique($codesToFetch);
         
         if (!empty($codesToFetch)) {
             $apts = \App\Models\Airport::whereIn('airport_code', $codesToFetch)->get();
@@ -820,7 +840,7 @@ class FlightController extends Controller
             }
         }
         
-        $result['airport_names'] = $airportNames;
+        $result['airport_names'] = empty($airportNames) ? new \stdClass() : $airportNames;
         $result['invoice_url'] = route('customer.bookings.invoice', ['id' => $booking->id, 'type' => 'flight']);
 
         return $this->apiResponse(false, __('Trip details retrieved successfully.'), $result, null, 200);
