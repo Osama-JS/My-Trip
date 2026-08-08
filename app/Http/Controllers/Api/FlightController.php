@@ -804,14 +804,22 @@ class FlightController extends Controller
         $originCode = $booking->flightBooking->origin ?? null;
         $destCode = $booking->flightBooking->destination ?? null;
         $airportNames = [];
-        if ($originCode) {
-            $apt = \App\Models\Airport::where('code', $originCode)->first();
-            if ($apt) $airportNames[$originCode] = $apt->city . ' - ' . $apt->name;
+        $codesToFetch = [];
+        
+        if ($originCode && $originCode !== 'N/A') {
+            $codesToFetch[] = $originCode;
         }
-        if ($destCode) {
-            $apt = \App\Models\Airport::where('code', $destCode)->first();
-            if ($apt) $airportNames[$destCode] = $apt->city . ' - ' . $apt->name;
+        if ($destCode && $destCode !== 'N/A') {
+            $codesToFetch[] = $destCode;
         }
+        
+        if (!empty($codesToFetch)) {
+            $apts = \App\Models\Airport::whereIn('airport_code', $codesToFetch)->get();
+            foreach ($apts as $apt) {
+                $airportNames[$apt->airport_code] = $apt->city_name . ' - ' . $apt->airport_name;
+            }
+        }
+        
         $result['airport_names'] = $airportNames;
         $result['invoice_url'] = route('bookings.invoice', ['id' => $booking->id, 'type' => 'flight']);
 
