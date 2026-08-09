@@ -437,39 +437,98 @@ class BookingController extends Controller
         return view('admin.bookings.hotels.list', compact('stats'));
     }
 
-    public function hotelRequests()
+    public function hotelAnalytics(Request $request)
     {
+        $query = HotelBooking::with('user');
+
+        // Apply Filters
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('hotel')) {
+            $query->where('hotel_name', 'like', '%' . $request->hotel . '%');
+        }
+
+        $allFiltered = $query->get();
+
+        // Calculate KPIs
+        $totalBookings = $allFiltered->count();
+        $totalRevenue = $allFiltered->filter(function($hb) {
+            return in_array($hb->status, ['confirmed', 'paid']);
+        })->sum('total_price');
+        
+        $pendingBookings = $allFiltered->filter(function($hb) {
+            return $hb->status === 'pending';
+        })->count();
+        
+        $confirmedBookings = $allFiltered->filter(function($hb) {
+            return in_array($hb->status, ['confirmed', 'paid']);
+        })->count();
+        
+        $cancelledBookings = $allFiltered->filter(function($hb) {
+            return $hb->status === 'cancelled';
+        })->count();
+
+        // Line Chart: Bookings over time
+        $groupByFormat = $request->filled('date_from') && $request->filled('date_to') ? 'Y-m-d' : 'Y-m';
+        $trendData = $allFiltered->groupBy(function($hb) use ($groupByFormat) {
+            return optional($hb->created_at)->format($groupByFormat) ?? date($groupByFormat);
+        })->map->count();
+
+        $chartLabels = $trendData->keys()->toArray();
+        $chartDataValues = $trendData->values()->toArray();
+
+        // Doughnut 1: Top Hotels
+        $hotelsData = $allFiltered->map(function($hb) {
+            return $hb->hotel_name ?: __('Unknown');
+        })->countBy()->sortDesc()->take(5);
+
+        // Doughnut 2: Status Distribution
+        $statusData = $allFiltered->map(function($hb) {
+            return __(ucfirst($hb->status ?: 'pending'));
+        })->countBy();
+
+        // Bar Chart: Top Cities
+        $citiesData = $allFiltered->map(function($hb) {
+            return $hb->city_name ?: __('Unknown');
+        })->countBy()->sortDesc()->take(5);
+
         $stats = [
-            'total'     => HotelBooking::where('status', 'pending')->count(),
-            'pending'   => HotelBooking::where('status', 'pending')->count(),
-            'confirmed' => HotelBooking::where('status', 'confirmed')->count(),
-            'cancelled' => HotelBooking::where('status', 'cancelled')->count(),
+            'total' => $totalBookings,
+            'revenue' => $totalRevenue,
+            'pending' => $pendingBookings,
+            'confirmed' => $confirmedBookings,
+            'cancelled' => $cancelledBookings,
+            'chartLabels' => $chartLabels,
+            'chartData' => $chartDataValues,
+            'hotelsLabels' => $hotelsData->keys()->toArray(),
+            'hotelsData' => $hotelsData->values()->toArray(),
+            'statusLabels' => $statusData->keys()->toArray(),
+            'statusData' => $statusData->values()->toArray(),
+            'citiesLabels' => $citiesData->keys()->toArray(),
+            'citiesData' => $citiesData->values()->toArray(),
         ];
-        return view('admin.bookings.hotels.requests', compact('stats'));
-    }
 
-    public function getHotelRequestsData()
-    {
-        $bookings = HotelBooking::with('user')
-            ->where('status', 'pending')
-            ->latest()->get();
-
-        $data = $bookings->map(function($hb) {
+        // Top 10 Customers with confirmed/paid hotel bookings
+        $topCustomers = $allFiltered->filter(function($hb) {
+            return in_array($hb->status, ['confirmed', 'paid']);
+        })->groupBy('user_id')->map(function($group) {
+            $first = $group->first();
             return [
-                'id'      => $hb->reference_num ?? $hb->id,
-                'user'    => optional($hb->user)->full_name ?? __('Guest'),
-                'hotel'   => $hb->hotel_name . '<br><small>' . ($hb->city_name ?? '') . '</small>',
-                'dates'   => optional($hb->check_in)->format('Y-m-d') . ' / ' . optional($hb->check_out)->format('Y-m-d'),
-                'amount'  => number_format($hb->total_price, 2) . ' ' . $hb->currency,
-                'status'  => $hb->status ?? 'pending',
-                'actions' => view('admin.bookings.partials.actions', [
-                    'id' => $hb->id,
-                    'show_route' => 'admin.bookings.hotels.show',
-                    'invoice_route' => 'admin.bookings.hotels.invoice'
-                ])->render()
+                'name' => optional($first->user)->full_name ?? $first->contact_email ?? __('Guest'),
+                'bookings_count' => $group->count(),
+                'total_spent' => $group->sum('total_price'),
+                'currency' => $first->currency ?? 'SAR'
             ];
-        });
-        return response()->json(['data' => $data]);
+        })->sortByDesc('total_spent')->take(10);
+
+        return view('admin.bookings.hotels.analytics', compact('stats', 'topCustomers'));
     }
 
 

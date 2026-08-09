@@ -198,8 +198,7 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
             Route::get('/data', [BookingController::class, 'getHotelData'])->name('data');
             Route::get('/profits', [BookingController::class, 'hotelProfits'])->name('profits');
             Route::get('/profits/data', [BookingController::class, 'getHotelProfitsData'])->name('profits.data');
-            Route::get('/requests', [BookingController::class, 'hotelRequests'])->name('requests');
-            Route::get('/requests/data', [BookingController::class, 'getHotelRequestsData'])->name('requests.data');
+            Route::get('/analytics', [BookingController::class, 'hotelAnalytics'])->name('analytics');
             Route::get('/{id}/show', [BookingController::class, 'showHotel'])->name('show');
             Route::get('/{id}/invoice', [BookingController::class, 'invoice'])->name('invoice');
 

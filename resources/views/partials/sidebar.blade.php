@@ -51,7 +51,7 @@
                 <ul aria-expanded="false">
                     <li><a href="{{ route('admin.bookings.hotels.index') }}"><i class="fa fa-list"></i>{{ __('Hotel Bookings') }}</a></li>
                     <li><a href="{{ route('admin.bookings.hotels.profits') }}"><i class="fa fa-dollar-sign text-success"></i>{{ __('Hotel Profits') }}</a></li>
-                    <li><a href="{{ route('admin.bookings.hotels.requests') }}"><i class="fa fa-concierge-bell"></i>{{ __('Requests') }}</a></li>
+                    <li><a href="{{ route('admin.bookings.hotels.analytics') }}"><i class="fa fa-chart-pie"></i>{{ __('Analytics') }}</a></li>
                 </ul>
             </li>
 
