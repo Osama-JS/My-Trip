@@ -65,7 +65,17 @@
                                         @if($booking->flightBooking)
                                         <tr>
                                             <td>{{ $booking->flightBooking->origin }} <i class="fas fa-arrow-right mx-2"></i> {{ $booking->flightBooking->destination }}</td>
-                                            <td>{{ $booking->airline_name ?? $booking->flightBooking->airline_name ?? 'N/A' }}</td>
+                                            @php
+                                            $airlineName = $booking->airline_name ?? $booking->flightBooking->airline_name ?? null;
+                                            if (!$airlineName && !empty($booking->flightBooking->itinerary_data)) {
+                                                $itin = is_string($booking->flightBooking->itinerary_data) ? json_decode($booking->flightBooking->itinerary_data, true) : $booking->flightBooking->itinerary_data;
+                                                $airlineName = $itin['Itineraries']['Itinerary'][0]['ValidatingAirlineCode'] ?? null;
+                                                if (!$airlineName && isset($itin[0]['airportOriginCode'])) {
+                                                    $airlineName = $itin[0]['airportOriginCode'] . ' - ' . ($itin[0]['airportDestinationCode'] ?? '');
+                                                }
+                                            }
+                                        @endphp
+                                        <td>{{ $airlineName ?? 'N/A' }}</td>
                                             <td>{{ $booking->flightBooking->departure_date ? \Carbon\Carbon::parse($booking->flightBooking->departure_date)->format('d M Y H:i') : '' }}</td>
                                             <td>{{ $booking->flightBooking->flight_class }}</td>
                                         </tr>
@@ -104,12 +114,15 @@
                                             <td><span class="badge badge-light border">{{ ucfirst($pax->passenger_type ?? $pax->type ?? 'N/A') }}</span></td>
                                             <td>{{ $pax->dob ? \Carbon\Carbon::parse($pax->dob)->format('d M Y') : 'N/A' }}</td>
                                             <td>{{ $pax->passport_number ?? $pax->passport_no ?? 'N/A' }} <span class="text-muted small">{{ $pax->nationality ? '('.$pax->nationality.')' : '' }}</span></td>
-                                            @if($booking->ticket_status === 'ticketed')
-                                            <td><strong class="text-success">{{ $pax->e_ticket_no ?? $pax->ticket_number ?? (!empty($booking->ticket_numbers) && is_array($booking->ticket_numbers) && isset($booking->ticket_numbers[$index]) ? $booking->ticket_numbers[$index] : 'N/A') }}</strong></td>
+                                            @php
+                                                $ticketNumber = $pax->e_ticket_no ?? $pax->ticket_number ?? (is_array($booking->ticket_numbers) && isset($booking->ticket_numbers[$index]) ? $booking->ticket_numbers[$index] : null);
+                                            @endphp
+                                            @if(in_array($booking->ticket_status, ['ticketed', 'booked', 'confirmed']) || $ticketNumber)
+                                                <td class="text-success">{{ $ticketNumber ?? 'N/A' }}</td>
                                             @endif
                                         </tr>
                                         @empty
-                                        <tr><td colspan="{{ $booking->ticket_status === 'ticketed' ? '6' : '5' }}" class="text-center">{{ __('No passengers recorded') }}</td></tr>
+                                        <tr><td colspan="{{ in_array($booking->ticket_status, ['ticketed', 'booked', 'confirmed']) ? '6' : '5' }}" class="text-center">{{ __('No passengers recorded') }}</td></tr>
                                         @endforelse
                                     </tbody>
                                 </table>

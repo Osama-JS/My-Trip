@@ -670,7 +670,33 @@ class TraveloproService
             $this->logApiTransaction('orderTicket', $url, 'POST', $payload, $response->json(), $response->status(), $executionTime, $bookingId);
 
             if ($response->successful()) {
-                return $response->json();
+                $result = $response->json();
+                
+                // If this is for a specific booking, update ticket numbers
+                if ($bookingId) {
+                    $booking = \App\Models\Booking::find($bookingId);
+                    if ($booking) {
+                        $tickets = [];
+                        array_walk_recursive($result, function($value, $key) use (&$tickets) {
+                            if (in_array(strtolower($key), ['eticketnumber', 'ticketnumber', 'e_ticket', 'ticket_no', 'ticketno']) && !empty($value)) {
+                                $tickets[] = $value;
+                            }
+                        });
+                        
+                        if (!empty($tickets)) {
+                            $booking->update(['ticket_numbers' => array_values(array_unique($tickets))]);
+                            
+                            // Try to assign tickets to passengers
+                            foreach ($booking->passengers as $index => $pax) {
+                                if (isset($tickets[$index])) {
+                                    $pax->update(['e_ticket_no' => $tickets[$index]]);
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                return $result;
             }
 
             Log::error('Travelopro Order Ticket Error', [
@@ -784,6 +810,29 @@ class TraveloproService
                 
                 $isSuccess = $detailsResult['Success'] ?? 'false';
                 if ($isSuccess === 'true' || $isSuccess === true) {
+                    // Extract tickets if booking is provided
+                    if ($bookingId) {
+                        $booking = \App\Models\Booking::find($bookingId);
+                        if ($booking) {
+                            $tickets = [];
+                            array_walk_recursive($result, function($value, $key) use (&$tickets) {
+                                if (in_array(strtolower($key), ['eticketnumber', 'ticketnumber', 'e_ticket', 'ticket_no', 'ticketno']) && !empty($value)) {
+                                    $tickets[] = $value;
+                                }
+                            });
+                            
+                            if (!empty($tickets)) {
+                                $booking->update(['ticket_numbers' => array_values(array_unique($tickets))]);
+                                
+                                foreach ($booking->passengers as $index => $pax) {
+                                    if (isset($tickets[$index])) {
+                                        $pax->update(['e_ticket_no' => $tickets[$index]]);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
                     return $result;
                 }
 

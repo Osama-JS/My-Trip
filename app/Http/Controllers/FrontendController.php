@@ -714,7 +714,8 @@ class FrontendController extends Controller
                 'currency' => 'SAR',
                 'contact_email' => $request->get('customerEmail'),
                 'contact_phone' => $request->get('customerPhone'),
-                'airline_name' => $request->get('airline'),
+                'airline_code' => $request->get('airline') ?? ($result['AirBookingResponse']['AirBookingResult']['Itineraries']['Itinerary'][0]['ValidatingAirlineCode'] ?? null),
+                'airline_name' => $request->get('airline') ?? ($result['AirBookingResponse']['AirBookingResult']['Itineraries']['Itinerary'][0]['ValidatingAirlineCode'] ?? null),
                 'pnr_created_at' => now(),
                 'ticketing_time_limit' => isset($result['AirBookingResponse']['AirBookingResult']['TicketingTimeLimit']) 
                     ? \Carbon\Carbon::parse($result['AirBookingResponse']['AirBookingResult']['TicketingTimeLimit']) 

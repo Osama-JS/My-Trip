@@ -47,11 +47,26 @@ class BookingController extends Controller
     public function getFlightData()
     {
         $bookings = FlightBooking::with(['user', 'booking'])->latest()->get();
-        $data = $bookings->map(function ($fb) {
+        $airportCodes = $bookings->pluck('origin')->merge($bookings->pluck('destination'))->filter(function($code) {
+            return !empty($code) && $code !== 'N/A';
+        })->unique();
+        $airports = \App\Models\Airport::whereIn('airport_code', $airportCodes)->get()->keyBy('airport_code');
+        
+        $data = $bookings->map(function ($fb) use ($airports) {
+            $originName = $fb->origin ?? 'N/A';
+            if (isset($airports[$fb->origin])) {
+                $originName = app()->getLocale() == 'ar' ? $airports[$fb->origin]->airport_name_ar : $airports[$fb->origin]->airport_name;
+            }
+            $destName = $fb->destination ?? 'N/A';
+            if (isset($airports[$fb->destination])) {
+                $destName = app()->getLocale() == 'ar' ? $airports[$fb->destination]->airport_name_ar : $airports[$fb->destination]->airport_name;
+            }
+            
             return [
                 'id' => $fb->id,
+                'reference' => '<strong>' . ($fb->booking->booking_reference ?? 'N/A') . '</strong>',
                 'user' => $fb->user->full_name ?? __('Guest'),
-                'route' => $fb->origin . ' -> ' . $fb->destination,
+                'route' => $originName . ' <i class="fas fa-arrow-right mx-1 text-muted"></i> ' . $destName,
                 'dates' => $fb->departure_date->format('Y-m-d') . ($fb->return_date ? ' / ' . $fb->return_date->format('Y-m-d') : ''),
                 'amount' => number_format($fb->total_amount, 2) . ' ' . $fb->currency,
                 'status' => $fb->booking->status ?? 'pending',

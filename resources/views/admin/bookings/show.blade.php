@@ -107,10 +107,13 @@
                                                 <h6 class="text-muted">{{ __('Phone') }}</h6>
                                                 <p class="mb-0" dir="ltr">{{ $pax->phone ?? 'N/A' }}</p>
                                             </div>
-                                            @if($booking->ticket_status == 'ticketed' && !empty($booking->ticket_numbers) && isset($booking->ticket_numbers[$index]))
+                                            @php
+                                                $ticketNumber = $pax->e_ticket_no ?? $pax->ticket_number ?? (is_array($booking->ticket_numbers) && isset($booking->ticket_numbers[$index]) ? $booking->ticket_numbers[$index] : null);
+                                            @endphp
+                                            @if(in_array($booking->ticket_status, ['ticketed', 'booked', 'confirmed']) || $ticketNumber)
                                             <div class="col-sm-6 mb-3">
                                                 <h6 class="text-muted">{{ __('Ticket No') }}</h6>
-                                                <p class="mb-0 font-w600 text-success">{{ $booking->ticket_numbers[$index] }}</p>
+                                                <p class="mb-0 font-w600 text-success">{{ $ticketNumber ?? 'N/A' }}</p>
                                             </div>
                                             @endif
                                         </div>

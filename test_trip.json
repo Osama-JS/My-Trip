@@ -1,0 +1,5 @@
+{
+    "status": "error",
+    "message": "Service unavailable",
+    "error": "cURL error 60: SSL certificate problem: unable to get local issuer certificate (see https:\/\/curl.haxx.se\/libcurl\/c\/libcurl-errors.html) for https:\/\/travelnext.works\/api\/aeroVE5\/trip_details"
+}
