@@ -11,7 +11,7 @@
 </div>
 
 <div class="fe-container" style="margin-top: -40px; margin-bottom: 80px;">
-    <form action="{{ route('flights.book.process') }}" method="POST" id="flightBookingForm">
+    <form action="{{ route('flights.book.process') }}" method="POST" id="flightBookingForm" enctype="multipart/form-data">
         @csrf
         <input type="hidden" name="flight_session_id" value="{{ $details['session_id'] ?? '' }}">
         <input type="hidden" name="fare_source_code" value="{{ $details['fare_source_code'] ?? '' }}">
