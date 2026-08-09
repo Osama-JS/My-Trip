@@ -60,67 +60,80 @@
 
 <!-- KPIs -->
 <div class="row">
-    <div class="col-xl-3 col-sm-6">
+    <div class="col-xl-2 col-lg-4 col-sm-6">
         <div class="card">
             <div class="card-body d-flex align-items-center justify-content-between">
                 <div>
-                    <h4 class="fs-18 mb-1">{{ __('Total Bookings') }}</h4>
-                    <span class="fs-32 font-w700 text-primary">{{ number_format($stats['total']) }}</span>
+                    <h4 class="fs-16 mb-1">{{ __('Total Bookings') }}</h4>
+                    <span class="fs-24 font-w700 text-primary">{{ number_format($stats['total']) }}</span>
                 </div>
                 <div class="d-inline-block position-relative">
-                    <i class="fas fa-plane fs-1 text-primary opacity-50"></i>
+                    <i class="fas fa-plane fs-2 text-primary opacity-50"></i>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-xl-3 col-sm-6">
+    <div class="col-xl-2 col-lg-4 col-sm-6">
         <div class="card">
             <div class="card-body d-flex align-items-center justify-content-between">
                 <div>
-                    <h4 class="fs-18 mb-1">{{ __('Total Revenue') }}</h4>
-                    <span class="fs-32 font-w700 text-success">{{ number_format($stats['revenue'], 2) }} <small class="fs-14 text-muted">{{ __('SAR') }}</small></span>
+                    <h4 class="fs-16 mb-1">{{ __('Total Revenue') }}</h4>
+                    <span class="fs-24 font-w700 text-success">{{ number_format($stats['revenue'], 2) }}</span>
                 </div>
                 <div class="d-inline-block position-relative">
-                    <i class="fas fa-wallet fs-1 text-success opacity-50"></i>
+                    <i class="fas fa-wallet fs-2 text-success opacity-50"></i>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-xl-2 col-sm-6">
+    <div class="col-xl-2 col-lg-4 col-sm-6">
         <div class="card">
             <div class="card-body d-flex align-items-center justify-content-between">
                 <div>
-                    <h4 class="fs-18 mb-1">{{ __('Total Pax') }}</h4>
-                    <span class="fs-32 font-w700 text-info">{{ number_format($stats['passengers']) }}</span>
+                    <h4 class="fs-16 mb-1">{{ __('Total Passengers') }}</h4>
+                    <span class="fs-24 font-w700 text-info">{{ number_format($stats['passengers']) }}</span>
                 </div>
                 <div class="d-inline-block position-relative">
-                    <i class="fas fa-users fs-1 text-info opacity-50"></i>
+                    <i class="fas fa-users fs-2 text-info opacity-50"></i>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-xl-2 col-sm-6">
+    <div class="col-xl-2 col-lg-4 col-sm-6">
         <div class="card">
             <div class="card-body d-flex align-items-center justify-content-between">
                 <div>
-                    <h4 class="fs-18 mb-1">{{ __('Pending') }}</h4>
-                    <span class="fs-32 font-w700 text-warning">{{ number_format($stats['pending']) }}</span>
+                    <h4 class="fs-16 mb-1">{{ __('Confirmed') }}</h4>
+                    <span class="fs-24 font-w700 text-success">{{ number_format($stats['confirmed']) }}</span>
                 </div>
                 <div class="d-inline-block position-relative">
-                    <i class="fas fa-clock fs-1 text-warning opacity-50"></i>
+                    <i class="fas fa-check-circle fs-2 text-success opacity-50"></i>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-xl-2 col-sm-6">
+    <div class="col-xl-2 col-lg-4 col-sm-6">
         <div class="card">
             <div class="card-body d-flex align-items-center justify-content-between">
                 <div>
-                    <h4 class="fs-18 mb-1">{{ __('Cancelled') }}</h4>
-                    <span class="fs-32 font-w700 text-danger">{{ number_format($stats['cancelled']) }}</span>
+                    <h4 class="fs-16 mb-1">{{ __('Pending') }}</h4>
+                    <span class="fs-24 font-w700 text-warning">{{ number_format($stats['pending']) }}</span>
                 </div>
                 <div class="d-inline-block position-relative">
-                    <i class="fas fa-times-circle fs-1 text-danger opacity-50"></i>
+                    <i class="fas fa-clock fs-2 text-warning opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-lg-4 col-sm-6">
+        <div class="card">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <h4 class="fs-16 mb-1">{{ __('Cancelled') }}</h4>
+                    <span class="fs-24 font-w700 text-danger">{{ number_format($stats['cancelled']) }}</span>
+                </div>
+                <div class="d-inline-block position-relative">
+                    <i class="fas fa-times-circle fs-2 text-danger opacity-50"></i>
                 </div>
             </div>
         </div>
@@ -355,13 +368,24 @@
 
         // Status Distribution Chart
         const statusCtx = document.getElementById('statusChart').getContext('2d');
+        const statusLabels = {!! json_encode($stats['statusLabels']) !!};
+        
+        // Define exact colors for statuses based on label content
+        const statusColors = statusLabels.map(label => {
+            const l = label.toLowerCase();
+            if (l.includes('confirm') || l.includes('paid') || l.includes('مؤكد') || l.includes('مدفوع')) return '#198754'; // Green
+            if (l.includes('pend') || l.includes('انتظار') || l.includes('معلق')) return '#ffc107'; // Yellow
+            if (l.includes('cancel') || l.includes('ألغي') || l.includes('ملغى')) return '#dc3545'; // Red
+            return '#0d6efd'; // Blue fallback
+        });
+
         new Chart(statusCtx, {
             type: 'pie',
             data: {
-                labels: {!! json_encode($stats['statusLabels']) !!},
+                labels: statusLabels,
                 datasets: [{
                     data: {!! json_encode($stats['statusData']) !!},
-                    backgroundColor: ['#198754', '#ffc107', '#dc3545', '#0dcaf0', '#0d6efd']
+                    backgroundColor: statusColors
                 }]
             },
             options: commonOptions

@@ -177,6 +177,9 @@ class BookingController extends Controller
         $pendingBookings = $allFiltered->filter(function($fb) {
             return optional($fb->booking)->status === 'pending';
         })->count();
+        $confirmedBookings = $allFiltered->filter(function($fb) {
+            return in_array(optional($fb->booking)->status, ['confirmed', 'paid']);
+        })->count();
         $cancelledBookings = $allFiltered->filter(function($fb) {
             return optional($fb->booking)->status === 'cancelled';
         })->count();
@@ -214,6 +217,7 @@ class BookingController extends Controller
             'total' => $totalBookings,
             'revenue' => $totalRevenue,
             'pending' => $pendingBookings,
+            'confirmed' => $confirmedBookings,
             'cancelled' => $cancelledBookings,
             'passengers' => $totalPassengers,
             'chartLabels' => $chartLabels,
