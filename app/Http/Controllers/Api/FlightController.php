@@ -538,6 +538,7 @@ class FlightController extends Controller
             }
 
             if ($uniqueId) {
+                $itinerary = $bookingResult['Itineraries']['Itinerary'][0] ?? null;
                 $booking = Booking::create([
                     'user_id' => Auth::id(),
                     'booking_reference' => $uniqueId,
@@ -554,8 +555,8 @@ class FlightController extends Controller
                     'ticketing_time_limit' => isset($bookingResult['TicketingTimeLimit']) 
                         ? \Carbon\Carbon::parse($bookingResult['TicketingTimeLimit']) 
                         : now()->addMinutes(3),
-                    'airline_code' => $request->airline_code,
-                    'airline_name' => $request->airline_name,
+                    'airline_code' => $request->airline_code ?? ($itinerary['ValidatingAirlineCode'] ?? null),
+                    'airline_name' => $request->airline_name ?? ($itinerary['ValidatingAirlineCode'] ?? null),
                 ]);
 
                 Log::info('Local Booking Record Created', ['booking_id' => $booking->id]);
@@ -563,11 +564,27 @@ class FlightController extends Controller
                 // ── Save FlightBooking details (route, class, pax counts) ──────
                 try {
                     $originDest = $request->OriginDestinationInfo[0] ?? [];
+                    
+                    // Fallback to extract route from result if OriginDestinationInfo is missing or incomplete
+                    $extractedOrigin = null;
+                    $extractedDest = null;
+                    if ($itinerary && isset($itinerary['OriginDestinationOptions']['OriginDestinationOption'])) {
+                        $options = $itinerary['OriginDestinationOptions']['OriginDestinationOption'];
+                        if (!isset($options[0])) $options = [$options]; // Normalize
+                        $firstSegs = $options[0]['FlightSegment'] ?? [];
+                        if (!isset($firstSegs[0])) $firstSegs = [$firstSegs];
+                        $extractedOrigin = $firstSegs[0]['DepartureAirportLocationCode'] ?? null;
+                        
+                        $lastSegs = end($options)['FlightSegment'] ?? [];
+                        if (!isset($lastSegs[0])) $lastSegs = [$lastSegs];
+                        $extractedDest = end($lastSegs)['ArrivalAirportLocationCode'] ?? null;
+                    }
+                    
                     \App\Models\FlightBooking::create([
                         'user_id'        => Auth::id(),
                         'booking_id'     => $booking->id,
-                        'origin'         => $originDest['airportOriginCode'] ?? 'N/A',
-                        'destination'    => $originDest['airportDestinationCode'] ?? 'N/A',
+                        'origin'         => $originDest['airportOriginCode'] ?? ($extractedOrigin ?? 'N/A'),
+                        'destination'    => $originDest['airportDestinationCode'] ?? ($extractedDest ?? 'N/A'),
                         'departure_date' => $originDest['departureDate'] ?? now()->toDateString(),
                         'return_date'    => $originDest['returnDate'] ?? null,
                         'adults'         => (int)($request->adults ?? 1),
@@ -575,7 +592,7 @@ class FlightController extends Controller
                         'infants'        => (int)($request->infants ?? 0),
                         'flight_class'   => $request->class ?? 'Economy',
                         'flight_number' => $request->flight_number,
-                        'itinerary_data' => $request->OriginDestinationInfo,
+                        'itinerary_data' => $bookingResult, // Save full result for fallback display logic
                         'total_amount'   => $totalAmount,
                         'currency'       => 'SAR',
                     ]);

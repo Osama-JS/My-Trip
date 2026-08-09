@@ -1118,7 +1118,7 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
                                     <i class="fas fa-search"></i> {{ __('Search Flights') }}
                                 </a>
                             @else
-                                <a href="{{ route('flights.payment-select', $booking->id) }}" class="action-btn action-btn-primary" id="payButton">
+                                <a href="{{ route('flights.payment.select', $booking->id) }}" class="action-btn action-btn-primary" id="payButton">
                                     <i class="fas fa-credit-card"></i> {{ __('Pay Now') }}
                                 </a>
                             @endif
