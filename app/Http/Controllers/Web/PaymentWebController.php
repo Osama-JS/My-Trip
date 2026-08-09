@@ -101,7 +101,7 @@ class PaymentWebController extends Controller
             if (in_array($method, ['mada', 'visa_master', 'apple_pay'])) {
                 // Simulation mode ONLY when PAYMENT_SIMULATION=true is explicitly set
                 // APP_ENV=local does NOT trigger simulation, so real keys work locally too
-                if (env('PAYMENT_SIMULATION', false)) {
+                if (config('services.payment.simulation', false)) {
                     $fakeId = 'SIM-' . strtoupper(uniqid());
                     $data['checkout_id']  = null;           // No real widget
                     $data['sim_mode']     = true;
@@ -173,7 +173,7 @@ class PaymentWebController extends Controller
 
             // Simulation mode ONLY when PAYMENT_SIMULATION=true is explicitly set in .env
             // This allows Tamara/Tabby to work with real API keys even in local environment
-            if (env('PAYMENT_SIMULATION', false)) {
+            if (config('services.payment.simulation', false)) {
                 $fakeRef = 'SIM-' . strtoupper($method) . '-' . strtoupper(uniqid());
                 Log::info("Payment {$method} Simulation Mode — Ref: {$fakeRef}");
                 

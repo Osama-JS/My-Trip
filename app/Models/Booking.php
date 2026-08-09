@@ -3,6 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Booking extends Model
 {
@@ -28,18 +32,17 @@ class Booking extends Model
         'ticket_numbers'  => 'array',
     ];
 
-    public function user()
-
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function passengers()
+    public function passengers(): HasMany
     {
         return $this->hasMany(BookingPassenger::class);
     }
 
-    public function flightApiLogs()
+    public function flightApiLogs(): HasMany
     {
         return $this->hasMany(FlightApiLog::class);
     }
@@ -47,7 +50,7 @@ class Booking extends Model
     /**
      * Get the flight booking associated with the booking.
      */
-    public function flightBooking()
+    public function flightBooking(): HasOne
     {
         return $this->hasOne(FlightBooking::class);
     }
@@ -55,7 +58,7 @@ class Booking extends Model
     /**
      * Get all of the booking's payments.
      */
-    public function payments()
+    public function payments(): MorphMany
     {
         return $this->morphMany(Payment::class, 'payable');
     }

@@ -99,9 +99,9 @@
                     <span class="nav-text">{{ __('Financial Management') }}</span>
                 </a>
                 <ul aria-expanded="false">
-                    <li><a href="{{ route('admin.payments.index') }}">{{ __('Payment Records') }}</a></li>
+                    <li><a href="{{ route('admin.payments.index') }}"><i class="fa fa-money-bill-wave me-2" style="font-size: 14px;"></i>{{ __('Payment Records') }}</a></li>
                     <li><a href="{{ route('admin.bank-accounts.index') }}"><i class="fa fa-university me-2" style="font-size: 14px;"></i>{{ __('Bank Accounts') }}</a></li>
-                    <li><a href="{{ route('admin.bank-transfers.index') }}">{{ __('Bank Transfer Review') }}</a></li>
+                    <li><a href="{{ route('admin.bank-transfers.index') }}"><i class="fa fa-exchange-alt me-2" style="font-size: 14px;"></i>{{ __('Bank Transfer Review') }}</a></li>
                     <li><a href="{{ route('admin.wallets.index') }}"><i class="fa fa-wallet me-2" style="font-size: 14px;"></i>{{ __('Wallets Management') }}</a></li>
                     <li><a href="{{ route('admin.support.index') }}"><i class="flaticon-381-help me-2" style="font-size: 14px;"></i>{{ __('Support Tickets') }}</a></li>
                 </ul>

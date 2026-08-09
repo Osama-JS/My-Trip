@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Country extends Model
 {
@@ -51,7 +52,7 @@ class Country extends Model
     /**
      * Get the cities for this country.
      */
-    public function cities()
+    public function cities(): HasMany
     {
         return $this->hasMany(City::class);
     }
@@ -114,7 +115,7 @@ class Country extends Model
     /**
      * Get the tourist trips going to this country.
      */
-    public function toTrips()
+    public function toTrips(): HasMany
     {
         return $this->hasMany(Trip::class, 'to_country_id');
     }

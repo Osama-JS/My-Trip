@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Trip;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Trip extends Model
 {
@@ -54,30 +57,30 @@ class Trip extends Model
         'price' => 'decimal:2',
     ];
 
-    public function company() {
+    public function company(): BelongsTo {
         return $this->belongsTo(Company::class);
     }
 
-    public function fromCountry() {
+    public function fromCountry(): BelongsTo {
         return $this->belongsTo(Country::class, 'from_country_id');
     }
 
-    public function toCountry() {
+    public function toCountry(): BelongsTo {
         return $this->belongsTo(Country::class, 'to_country_id');
     }
 
-    public function toCity() {
+    public function toCity(): BelongsTo {
         return $this->belongsTo(City::class, 'to_city_id');
     }
 
-    public function fromCity() {
+    public function fromCity(): BelongsTo {
         return $this->belongsTo(City::class, 'from_city_id');
     }
 
      /**
      * Get the user (agent/admin) who created the trip.
      */
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
@@ -92,12 +95,12 @@ class Trip extends Model
     /**
      * Get the trip images.
      */
-    public function images()
+    public function images(): HasMany
     {
         return $this->hasMany(TripImage::class);
     }
 
-    public function banner()
+    public function banner(): HasMany
     {
         return $this->hasMany(Banner::class, 'trip_id');
     }
@@ -105,39 +108,39 @@ class Trip extends Model
     /**
      * Get the trip rates/reviews.
      */
-    public function rates()
+    public function rates(): HasMany
     {
         return $this->hasMany(TripRate::class);
     }
 
-    public function itineraries()
+    public function itineraries(): HasMany
     {
         return $this->hasMany(TripItinerary::class)->orderBy('day_number');
     }
 
-    public function categories()
+    public function categories(): BelongsToMany
     {
         return $this->belongsToMany(TripCategory::class, 'trip_category_trip');
     }
 
-     public function bookings()
+     public function bookings(): HasMany
     {
         return $this->hasMany(TripBooking::class, 'trip_id');
     }
 
     // ─── New Package System ────────────────────────────────────────
 
-    public function seasons()
+    public function seasons(): HasMany
     {
         return $this->hasMany(TripSeason::class)->orderBy('start_date');
     }
 
-    public function packages()
+    public function packages(): HasMany
     {
         return $this->hasMany(TripPackage::class)->orderBy('sort_order');
     }
 
-    public function addons()
+    public function addons(): HasMany
     {
         return $this->hasMany(TripAddon::class);
     }
@@ -146,7 +149,7 @@ class Trip extends Model
     /**
      * Get the trip page visits.
      */
-    public function pageVisits()
+    public function pageVisits(): HasMany
     {
         return $this->hasMany(TripPageVisit::class);
     }

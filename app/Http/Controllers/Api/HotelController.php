@@ -282,6 +282,7 @@ class HotelController extends Controller
 
         // Skip early supplier booking to avoid liability for failed payments.
         // The actual booking with Travelopro will happen in the post-payment finalization.
+        $result = [];
         try {
             $hotelBooking = HotelBooking::create([
                 'user_id' => Auth::id(),

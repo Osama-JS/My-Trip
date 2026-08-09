@@ -167,7 +167,7 @@ class TripBookingController extends Controller
             'new_state' => $newState,
         ]);
 
-
+        return redirect()->back()->with('success', __('Booking state updated successfully.'));
     }
 
     /**
@@ -204,7 +204,7 @@ class TripBookingController extends Controller
             $oldState = $booking->booking_state;
             $booking->update([
                 'ticket_file_path' => $path,
-                'booking_state' => \App\Models\TripBooking::STATE_TICKETS_SENT
+                'booking_state' => \App\Models\TripBooking::STATE_TICKETS_UPLOADED
             ]);
              \App\Models\BookingHistory::create([
                 'trip_booking_id' => $booking->id,
@@ -212,7 +212,7 @@ class TripBookingController extends Controller
                 'action' => 'ticket_uploaded',
                 'description' => __('Trip ticket uploaded by admin'),
                 'previous_state' => $oldState,
-                'new_state' => \App\Models\TripBooking::STATE_TICKETS_SENT,
+                'new_state' => \App\Models\TripBooking::STATE_TICKETS_UPLOADED,
             ]);
 
             // SEND NOTIFICATION

@@ -3,6 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class SupportTicket extends Model
 {
@@ -15,22 +18,22 @@ class SupportTicket extends Model
         'priority',
     ];
 
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function assignedAdmin()
+    public function assignedAdmin(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to');
     }
 
-    public function messages()
+    public function messages(): HasMany
     {
         return $this->hasMany(TicketMessage::class, 'ticket_id');
     }
 
-    public function rating()
+    public function rating(): HasOne
     {
         return $this->hasOne(TicketRating::class, 'ticket_id');
     }
