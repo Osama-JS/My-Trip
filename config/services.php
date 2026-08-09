@@ -71,10 +71,19 @@ return [
         'phone_number_id' => env('AUTOMIZE_PHONE_NUMBER_ID'),
         'token' => env('AUTOMIZE_ACCESS_TOKEN'),
         'template_id' => env('AUTOMIZE_TEMPLATE_ID'),
+        'webhook_verify_token' => env('AUTOMIZE_WEBHOOK_VERIFY_TOKEN'),
     ],
 
     'whatsapp' => [
         'simulation' => env('WHATSAPP_SIMULATION', false),
+    ],
+
+    'payment' => [
+        'simulation' => env('PAYMENT_SIMULATION', false),
+    ],
+
+    'hyperpay' => [
+        'currency' => env('HYPERPAY_CURRENCY', 'SAR'),
     ],
 
 ];

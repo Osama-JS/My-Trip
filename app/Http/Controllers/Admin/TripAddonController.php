@@ -27,7 +27,7 @@ class TripAddonController extends Controller
                 'name_ar'        => $data['title_ar'],
                 'name_en'        => $data['title_en'],
                 'extra_cost'     => $data['price'],
-                'currency'       => env('HYPERPAY_CURRENCY', 'SAR'),
+                'currency'       => config('services.hyperpay.currency', 'SAR'),
                 'is_replacement' => $data['type'] === 'replacement',
                 'pricing_type'   => $data['pricing_type'],
             ]);

@@ -19,7 +19,7 @@ class WebhookController extends Controller
         $challenge = $request->query('hub_challenge');
         $verifyToken = $request->query('hub_verify_token');
 
-        $ourVerifyToken = env('AUTOMIZE_WEBHOOK_VERIFY_TOKEN');
+        $ourVerifyToken = config('services.automize.webhook_verify_token');
 
         if ($mode === 'subscribe' && $verifyToken === $ourVerifyToken) {
             Log::info('Automize Webhook Verified successfully.');

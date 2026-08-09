@@ -9,6 +9,8 @@ use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class User extends Authenticatable
 {
@@ -149,7 +151,7 @@ class User extends Authenticatable
     /**
      * Get user trip bookings
      */
-    public function tripBookings()
+    public function tripBookings(): HasMany
     {
         return $this->hasMany(TripBooking::class);
     }
@@ -157,7 +159,7 @@ class User extends Authenticatable
     /**
      * Get user flight bookings
      */
-    public function flightBookings()
+    public function flightBookings(): HasMany
     {
         return $this->hasMany(Booking::class);
     }
@@ -165,7 +167,7 @@ class User extends Authenticatable
     /**
      * Get user hotel bookings
      */
-    public function hotelBookings()
+    public function hotelBookings(): HasMany
     {
         return $this->hasMany(HotelBooking::class);
     }
@@ -173,7 +175,7 @@ class User extends Authenticatable
     /**
      * Get user bookings (Legacy/Trip)
      */
-    public function bookings()
+    public function bookings(): HasMany
     {
         return $this->tripBookings();
     }
@@ -181,7 +183,7 @@ class User extends Authenticatable
     /**
      * Get user notifications
      */
-    public function notifications()
+    public function notifications(): HasMany
     {
         return $this->hasMany(Notification::class)->latest();
     }
@@ -189,12 +191,12 @@ class User extends Authenticatable
     /**
      * Get unread notifications
      */
-    public function unreadNotifications()
+    public function unreadNotifications(): HasMany
     {
         return $this->hasMany(Notification::class)->where('is_read', false)->latest();
     }
 
-    public function trips()
+    public function trips(): HasMany
     {
         return $this->hasMany(Trip::class);
     }
@@ -216,7 +218,7 @@ class User extends Authenticatable
     /**
      * Get user company
      */
-    public function company()
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
@@ -224,12 +226,12 @@ class User extends Authenticatable
     /**
      * Get user favorites.
      */
-    public function favorites()
+    public function favorites(): HasMany
     {
         return $this->hasMany(Favorite::class);
     }
 
-    public function country()
+    public function country(): BelongsTo
     {
         return $this->belongsTo(Country::class);
     }
@@ -237,7 +239,7 @@ class User extends Authenticatable
     /**
      * Get user bank transfers.
      */
-    public function bankTransfers()
+    public function bankTransfers(): HasMany
     {
         return $this->hasMany(BankTransfer::class);
     }
@@ -245,7 +247,7 @@ class User extends Authenticatable
     /**
      * Get user support tickets (as client)
      */
-    public function supportTickets()
+    public function supportTickets(): HasMany
     {
         return $this->hasMany(SupportTicket::class, 'user_id');
     }
@@ -253,7 +255,7 @@ class User extends Authenticatable
     /**
      * Get assigned support tickets (as admin)
      */
-    public function assignedTickets()
+    public function assignedTickets(): HasMany
     {
         return $this->hasMany(SupportTicket::class, 'assigned_to');
     }

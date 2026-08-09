@@ -4,6 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class TripBooking extends Model
 {
@@ -54,27 +58,27 @@ class TripBooking extends Model
         'addons' => 'array',
     ];
 
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function trip()
+    public function trip(): BelongsTo
     {
         return $this->belongsTo(Trip::class);
     }
 
-    public function package()
+    public function package(): BelongsTo
     {
         return $this->belongsTo(TripPackage::class, 'package_id');
     }
 
-    public function season()
+    public function season(): BelongsTo
     {
         return $this->belongsTo(TripSeason::class, 'season_id');
     }
 
-    public function passengers()
+    public function passengers(): HasMany
     {
         return $this->hasMany(BookingPassenger::class);
     }
@@ -82,28 +86,28 @@ class TripBooking extends Model
     /**
      * Get all of the booking's payments.
      */
-    public function payments()
+    public function payments(): MorphMany
     {
         return $this->morphMany(Payment::class, 'payable');
     }
 
-    public function oldPayments()
+    public function oldPayments(): HasMany
     {
         return $this->hasMany(Payment::class, 'trip_booking_id');
     }
 
-    public function bankTransfers()
+    public function bankTransfers(): HasMany
     {
         return $this->hasMany(BankTransfer::class, 'trip_booking_id');
     }
 
-    public function payment()
+    public function payment(): MorphOne
     {
         return $this->morphOne(Payment::class, 'payable')->latest();
     }
 
 
-    public function histories()
+    public function histories(): HasMany
     {
         return $this->hasMany(BookingHistory::class, 'trip_booking_id');
     }

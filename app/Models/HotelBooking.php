@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class HotelBooking extends Model
 {
@@ -43,17 +46,17 @@ class HotelBooking extends Model
         'total_price' => 'decimal:2',
     ];
 
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function payments()
+    public function payments(): MorphMany
     {
         return $this->morphMany(Payment::class, 'payable');
     }
 
-    public function passengers()
+    public function passengers(): HasMany
     {
         return $this->hasMany(BookingPassenger::class, 'hotel_booking_id');
     }

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Company extends Model
 {
@@ -46,17 +47,17 @@ class Company extends Model
     /**
      * Get company agents
      */
-    public function agents()
+    public function agents(): HasMany
     {
         return $this->hasMany(User::class)->where('user_type', User::TYPE_AGENT);
     }
 
-    public function company_codes()
+    public function company_codes(): HasMany
     {
         return $this->hasMany(CompanyCodes::class);
     }
 
-    public function trips()
+    public function trips(): HasMany
     {
         return $this->hasMany(Trip::class);
     }
