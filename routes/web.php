@@ -162,6 +162,7 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     Route::get('users/data', [UserController::class, 'getData'])->name('users.data');
     Route::post('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
     Route::post('users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.reset-password');
+    Route::post('users/{user}/verify', [UserController::class, 'verify'])->name('users.verify');
     Route::resource('users', UserController::class);
 
     // Subscribers
@@ -180,8 +181,7 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
         Route::group(['prefix' => 'flights', 'as' => 'flights.'], function() {
             Route::get('/', [BookingController::class, 'flightBookings'])->name('index');
             Route::get('/data', [BookingController::class, 'getFlightData'])->name('data');
-            Route::get('/requests', [BookingController::class, 'flightRequests'])->name('requests');
-            Route::get('/requests/data', [BookingController::class, 'getFlightRequestsData'])->name('requests.data');
+            Route::get('/analytics', [BookingController::class, 'flightAnalytics'])->name('analytics');
             Route::get('/ongoing', [BookingController::class, 'ongoingFlights'])->name('ongoing');
             Route::post('/search', [BookingController::class, 'searchFlights'])->name('search');
             Route::post('/validate', [BookingController::class, 'validateFare'])->name('validate');

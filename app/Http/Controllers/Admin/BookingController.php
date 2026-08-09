@@ -141,48 +141,111 @@ class BookingController extends Controller
         }
     }
 
-    public function flightRequests()
+    public function flightAnalytics(Request $request)
     {
-        $stats = [
-            'total' => FlightBooking::whereHas('booking', function ($q) {
-                $q->where('status', 'pending'); })->count(),
-            'pending' => FlightBooking::whereHas('booking', function ($q) {
-                $q->where('status', 'pending'); })->count(),
-            'confirmed' => FlightBooking::whereHas('booking', function ($q) {
-                $q->where('status', 'confirmed'); })->count(),
-            'cancelled' => FlightBooking::whereHas('booking', function ($q) {
-                $q->where('status', 'cancelled'); })->count(),
-        ];
-        return view('admin.bookings.flights.requests', compact('stats'));
-    }
+        $query = FlightBooking::with('booking')->has('booking');
 
-    public function getFlightRequestsData()
-    {
-        $bookings = FlightBooking::with(['user', 'booking'])
-            ->whereHas('booking', function ($q) {
-                $q->where('status', 'pending');
-            })
-            ->latest()->get();
+        // Apply Filters
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+        if ($request->filled('status')) {
+            $status = $request->status;
+            $query->whereHas('booking', function ($q) use ($status) {
+                $q->where('status', $status);
+            });
+        }
+        if ($request->filled('airline')) {
+            $airline = $request->airline;
+            $query->where(function($q) use ($airline) {
+                $q->whereHas('booking', function($b) use ($airline) {
+                    $b->where('airline_name', 'like', "%{$airline}%");
+                })->orWhere('itinerary_data', 'like', "%{$airline}%");
+            });
+        }
 
-        $data = $bookings->map(function ($fb) {
-            return [
-                'id' => $fb->booking_reference ?? $fb->id,
-                'passenger' => optional($fb->user)->full_name ?? __('Guest'),
-                'flight' => $fb->flight_class ?? 'N/A',
-                'route' => ($fb->origin ?? '') . ' â†’ ' . ($fb->destination ?? ''),
-                'price' => number_format($fb->total_amount, 2) . ' ' . $fb->currency,
-                'status' => optional($fb->booking)->status ?? 'pending',
-                'actions' => view('admin.bookings.partials.actions', [
-                    'id' => $fb->id,
-                    'show_route' => 'admin.bookings.flights.show',
-                    'invoice_route' => 'admin.bookings.invoice'
-                ])->render()
-            ];
+        $allFiltered = $query->get();
+
+        // KPIs
+        $totalBookings = $allFiltered->count();
+        $totalRevenue = $allFiltered->filter(function($fb) {
+            return in_array(optional($fb->booking)->status, ['confirmed', 'paid']);
+        })->sum('total_amount');
+        $pendingBookings = $allFiltered->filter(function($fb) {
+            return optional($fb->booking)->status === 'pending';
+        })->count();
+        $cancelledBookings = $allFiltered->filter(function($fb) {
+            return optional($fb->booking)->status === 'cancelled';
+        })->count();
+        $totalPassengers = $allFiltered->sum(function($fb) {
+            return ($fb->adults ?? 0) + ($fb->childs ?? 0) + ($fb->infants ?? 0);
         });
-        return response()->json(['data' => $data]);
-    }
 
+        // Line Chart: Bookings over time (grouped by month or day based on range)
+        // For simplicity, let's group by Month-Year if no date filter, or Day if filtered.
+        $groupByFormat = $request->filled('date_from') && $request->filled('date_to') ? 'Y-m-d' : 'Y-m';
+        $trendData = $allFiltered->groupBy(function($fb) use ($groupByFormat) {
+            return $fb->created_at->format($groupByFormat);
+        })->map->count();
 
+        $chartLabels = $trendData->keys()->toArray();
+        $chartDataValues = $trendData->values()->toArray();
+
+        // Doughnut 1: Top Airlines (using Booking->airline_name if available)
+        $airlinesData = $allFiltered->map(function($fb) {
+            return optional($fb->booking)->airline_name ?: __('Unknown');
+        })->countBy()->sortDesc()->take(5);
+
+        // Doughnut 2: Status Distribution
+        $statusData = $allFiltered->map(function($fb) {
+            $status = optional($fb->booking)->status ?: 'pending';
+            return __(ucfirst($status));
+        })->countBy();
+
+        // Bar Chart: Top Destinations
+        $destinationsData = $allFiltered->map(function($fb) {
+            return $fb->destination ?: __('Unknown');
+        })->countBy()->sortDesc()->take(5);
+
+        $stats = [
+            'total' => $totalBookings,
+            'revenue' => $totalRevenue,
+            'pending' => $pendingBookings,
+            'cancelled' => $cancelledBookings,
+            'passengers' => $totalPassengers,
+            'chartLabels' => $chartLabels,
+            'chartData' => $chartDataValues,
+            'airlinesLabels' => $airlinesData->keys()->toArray(),
+            'airlinesData' => $airlinesData->values()->toArray(),
+            'statusLabels' => $statusData->keys()->toArray(),
+            'statusData' => $statusData->values()->toArray(),
+            'destinationsLabels' => $destinationsData->keys()->toArray(),
+            'destinationsData' => $destinationsData->values()->toArray(),
+        ];
+
+        // Top 10 Customers with confirmed/paid bookings
+        $topCustomers = $allFiltered->filter(function($fb) {
+            $status = optional($fb->booking)->status;
+            return $status === 'confirmed' || $status === 'paid';
+        })->groupBy(function($fb) {
+            return optional($fb->user)->id ?: ($fb->email ?: 'guest_' . $fb->id);
+        })->map(function($userBookings) {
+            $first = $userBookings->first();
+            $name = optional($first->user)->full_name ?: trim(($first->first_name ?? '') . ' ' . ($first->last_name ?? ''));
+            return (object) [
+                'name' => $name ?: __('Guest'),
+                'email' => optional($first->user)->email ?: ($first->email ?: __('N/A')),
+                'bookings_count' => $userBookings->count(),
+                'total_spent' => $userBookings->sum('total_amount'),
+                'currency' => $first->currency
+            ];
+        })->sortByDesc('bookings_count')->take(10);
+
+        return view('admin.bookings.flights.analytics', compact('stats', 'topCustomers'));
+    }    
 
     public function ongoingFlights()
     {

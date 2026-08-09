@@ -19,7 +19,9 @@
 @php
     $totalSubscribers = \App\Models\User::where('user_type', \App\Models\User::TYPE_CUSTOMER)->count();
     $activeSubscribers = \App\Models\User::where('user_type', \App\Models\User::TYPE_CUSTOMER)->where('status', 'active')->count();
-    $verifiedSubscribers = \App\Models\User::where('user_type', \App\Models\User::TYPE_CUSTOMER)->whereNotNull('email_verified_at')->count();
+    $verifiedSubscribers = \App\Models\User::where('user_type', \App\Models\User::TYPE_CUSTOMER)->where(function($q) {
+        $q->whereNotNull('email_verified_at')->orWhereNotNull('phone_verified_at');
+    })->count();
     $newThisMonth = \App\Models\User::where('user_type', \App\Models\User::TYPE_CUSTOMER)->whereMonth('created_at', now()->month)->count();
 @endphp
 
@@ -764,6 +766,36 @@ function togglePasswordVisibility(fieldId, button) {
     } else {
         input.type = 'password'; icon.classList.replace('fa-eye-slash', 'fa-eye');
     }
+}
+
+function verifySubscriber(id) {
+    Swal.fire({
+        title: '{{ __("Are you sure?") }}',
+        text: '{{ __("Are you sure you want to manually verify this account?") }}',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#10b981',
+        cancelButtonColor: '#041741',
+        confirmButtonText: '{{ __("Yes, Verify it!") }}'
+    }).then((result) => {
+        if (result.value) {
+            const url = "{{ parse_url(route('admin.users.verify', ':id'), PHP_URL_PATH) }}".replace(':id', id);
+            $.ajax({
+                url: url,
+                type: "POST",
+                data: { _token: "{{ csrf_token() }}" },
+                success: function(response) {
+                    if (response.success) {
+                        subscribersTable.ajax.reload(null, false);
+                        toastr.success(response.message);
+                    }
+                },
+                error: function(xhr) {
+                    toastr.error('{{ __("Something went wrong") }}');
+                }
+            });
+        }
+    });
 }
 
 function viewSubscriber(id) {

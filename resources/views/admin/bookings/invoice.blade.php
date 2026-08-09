@@ -52,8 +52,8 @@
                         <div class="col-lg-12">
                             <h5 class="mb-3">{{ __('Flight Details') }}</h5>
                             <div class="table-responsive">
-                                <table class="table table-bordered table-striped">
-                                    <thead class="bg-primary text-white">
+                                <table class="table table-bordered">
+                                    <thead class="bg-light">
                                         <tr>
                                             <th>{{ __('Route') }}</th>
                                             <th>{{ __('Airline') }}</th>
@@ -65,7 +65,7 @@
                                         @if($booking->flightBooking)
                                         <tr>
                                             <td>{{ $booking->flightBooking->origin }} <i class="fas fa-arrow-right mx-2"></i> {{ $booking->flightBooking->destination }}</td>
-                                            <td>{{ $booking->flightBooking->airline ?? 'N/A' }}</td>
+                                            <td>{{ $booking->airline_name ?? $booking->flightBooking->airline_name ?? 'N/A' }}</td>
                                             <td>{{ $booking->flightBooking->departure_date ? \Carbon\Carbon::parse($booking->flightBooking->departure_date)->format('d M Y H:i') : '' }}</td>
                                             <td>{{ $booking->flightBooking->flight_class }}</td>
                                         </tr>
@@ -90,20 +90,26 @@
                                             <th>{{ __('Passenger Name') }}</th>
                                             <th>{{ __('Type') }}</th>
                                             <th>{{ __('DOB') }}</th>
-                                            <th>{{ __('Passport Info') }}</th>
+                                            <th>{{ __('Document Info') }}</th>
+                                            @if($booking->ticket_status === 'ticketed')
+                                            <th>{{ __('Ticket No') }}</th>
+                                            @endif
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @forelse($booking->passengers as $pax)
+                                        @forelse($booking->passengers as $index => $pax)
                                         <tr>
                                             <td>{{ $loop->iteration }}</td>
                                             <td>{{ $pax->title }} {{ $pax->first_name }} {{ $pax->last_name }}</td>
-                                            <td><span class="badge badge-light border">{{ ucfirst($pax->passenger_type) }}</span></td>
-                                            <td>{{ $pax->dob ? $pax->dob->format('d M Y') : 'N/A' }}</td>
-                                            <td>{{ $pax->passport_number ?? 'N/A' }} ({{ $pax->nationality }})</td>
+                                            <td><span class="badge badge-light border">{{ ucfirst($pax->passenger_type ?? $pax->type ?? 'N/A') }}</span></td>
+                                            <td>{{ $pax->dob ? \Carbon\Carbon::parse($pax->dob)->format('d M Y') : 'N/A' }}</td>
+                                            <td>{{ $pax->passport_number ?? $pax->passport_no ?? 'N/A' }} <span class="text-muted small">{{ $pax->nationality ? '('.$pax->nationality.')' : '' }}</span></td>
+                                            @if($booking->ticket_status === 'ticketed')
+                                            <td><strong class="text-success">{{ !empty($booking->ticket_numbers) && isset($booking->ticket_numbers[$index]) ? $booking->ticket_numbers[$index] : 'N/A' }}</strong></td>
+                                            @endif
                                         </tr>
                                         @empty
-                                        <tr><td colspan="5" class="text-center">{{ __('No passengers recorded') }}</td></tr>
+                                        <tr><td colspan="{{ $booking->ticket_status === 'ticketed' ? '6' : '5' }}" class="text-center">{{ __('No passengers recorded') }}</td></tr>
                                         @endforelse
                                     </tbody>
                                 </table>

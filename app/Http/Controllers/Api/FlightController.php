@@ -448,7 +448,7 @@ class FlightController extends Controller
             'passengers.*.passport_expiry_date' => 'nullable|date_format:Y-m-d',
             // ✅ P1: Collect passport issue date — sent when IsPassportFullDetailsMandatory=true
             'passengers.*.passport_issue_date' => 'nullable|date_format:Y-m-d',
-            'passengers.*.passport_image' => 'nullable|string',
+            'passengers.*.passport_image' => 'nullable',
             'airline_code' => 'nullable|string',
             'airline_name' => 'nullable|string',
             'flight_number' => 'nullable|string',
@@ -568,7 +568,22 @@ class FlightController extends Controller
                 }
                 // ─────────────────────────────────────────────────────────────
 
-                foreach ($request->passengers as $pax) {
+                foreach ($request->passengers as $index => $pax) {
+                    $imagePath = null;
+                    $uploadedImage = $request->file("passengers.{$index}.passport_image") ?? ($pax['passport_image'] ?? null);
+
+                    if ($uploadedImage instanceof \Illuminate\Http\UploadedFile) {
+                        $imagePath = $uploadedImage->store('passports', 'public');
+                    } elseif (is_string($uploadedImage) && preg_match('/^data:image\/(\w+);base64,/', $uploadedImage)) {
+                        $imageParts = explode(';base64,', $uploadedImage);
+                        $imageBase64 = base64_decode($imageParts[1]);
+                        $fileName = uniqid() . '.png';
+                        $imagePath = 'passports/' . $fileName;
+                        \Illuminate\Support\Facades\Storage::disk('public')->put($imagePath, $imageBase64);
+                    } elseif (is_string($uploadedImage) && !empty($uploadedImage)) {
+                        $imagePath = $uploadedImage;
+                    }
+
                     $passenger = $booking->passengers()->create([
                         'name'           => ($pax['title'] ?? '') . ' ' . ($pax['first_name'] ?? '') . ' ' . ($pax['last_name'] ?? ''),
                         'title'          => $pax['title'],
@@ -580,7 +595,7 @@ class FlightController extends Controller
                         'passport_number' => $pax['passport_no'] ?? null,
                         'passport_expiry' => $pax['passport_expiry_date'] ?? null,
                         'passport_issue_country' => $pax['passport_issue_country'] ?? null,
-                        'passport_image' => $pax['passport_image'] ?? null,
+                        'passport_image' => $imagePath,
                     ]);
                     Log::info('Passenger Saved', ['passenger_id' => $passenger->id]);
                 }
@@ -597,6 +612,10 @@ class FlightController extends Controller
                 $result['payment_url'] = $payment_info['methods'][0]['url']; // Legacy support
                 $result['payment_api_url'] = url('/api/payment/initiate');
                 $result['booking_id']      = $booking->id;
+
+                if (isset($result['_api_log_id'])) {
+                    \App\Models\FlightApiLog::where('id', $result['_api_log_id'])->update(['booking_id' => $booking->id]);
+                }
 
                 Log::info('Booking Persistence Successfully Completed', ['booking_id' => $booking->id]);
             } else {
@@ -921,7 +940,8 @@ class FlightController extends Controller
         if ($validator->fails())
             return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
 
-        $result = $this->traveloproService->cancelBooking($request->all());
+        $booking = Booking::where('booking_reference', $request->uniqueId)->first();
+        $result = $this->traveloproService->cancelBooking($request->all(), $booking ? $booking->id : null);
 
         if (isset($result['status']) && $result['status'] === 'error') {
             return $this->apiResponse(true, $result['message'], $result['details'] ?? null, null, 500);

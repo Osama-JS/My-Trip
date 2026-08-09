@@ -17,7 +17,10 @@
 @php
     $totalUsers = \App\Models\User::count();
     $activeUsers = \App\Models\User::where('status', 'active')->count();
-    $verifiedUsers = \App\Models\User::whereNotNull('email_verified_at')->count();
+    $verifiedUsers = \App\Models\User::where(function($query) {
+        $query->whereNotNull('email_verified_at')
+              ->orWhereNotNull('phone_verified_at');
+    })->count();
     $newThisMonth = \App\Models\User::whereMonth('created_at', now()->month)->count();
 @endphp
 
@@ -859,6 +862,36 @@ function togglePasswordVisibility(fieldId, button) {
 function resetForm() {
     $('#addUserForm')[0].reset();
     $('#add_status').prop('checked', true);
+}
+
+function verifyUser(id) {
+    Swal.fire({
+        title: '{{ __("Are you sure?") }}',
+        text: '{{ __("Are you sure you want to manually verify this account?") }}',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#10b981',
+        cancelButtonColor: '#041741',
+        confirmButtonText: '{{ __("Yes, Verify it!") }}'
+    }).then((result) => {
+        if (result.value) {
+            const url = "{{ parse_url(route('admin.users.verify', ':id'), PHP_URL_PATH) }}".replace(':id', id);
+            $.ajax({
+                url: url,
+                type: "POST",
+                data: { _token: "{{ csrf_token() }}" },
+                success: function(response) {
+                    if (response.success) {
+                        usersTable.ajax.reload(null, false);
+                        toastr.success(response.message);
+                    }
+                },
+                error: function(xhr) {
+                    toastr.error('{{ __("Something went wrong") }}');
+                }
+            });
+        }
+    });
 }
 
 function resetUserPassword(id) {

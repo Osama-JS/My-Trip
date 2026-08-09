@@ -694,11 +694,17 @@ class FrontendController extends Controller
                 'currency' => 'SAR',
                 'contact_email' => $request->get('customerEmail'),
                 'contact_phone' => $request->get('customerPhone'),
+                'airline_name' => $request->get('airline'),
                 'pnr_created_at' => now(),
                 'ticketing_time_limit' => isset($result['AirBookingResponse']['AirBookingResult']['TicketingTimeLimit']) 
                     ? \Carbon\Carbon::parse($result['AirBookingResponse']['AirBookingResult']['TicketingTimeLimit']) 
                     : now()->addMinutes(3),
             ]);
+
+            // Link API Log
+            if (isset($result['_api_log_id'])) {
+                \App\Models\FlightApiLog::where('id', $result['_api_log_id'])->update(['booking_id' => $booking->id]);
+            }
 
             // 3. Save Flight Specific Details
             \App\Models\FlightBooking::create([
@@ -708,6 +714,8 @@ class FrontendController extends Controller
                 'destination' => $request->get('to'),
                 'departure_date' => $request->get('departDate'),
                 'return_date' => $request->get('returnDate'),
+                'flight_number' => $request->get('flight_number'),
+                'flight_class' => $request->get('class', 'Economy'),
                 'adults' => (int)$request->get('adults', 1),
                 'childs' => (int)$request->get('childs', 0),
                 'infants' => (int)$request->get('infants', 0),

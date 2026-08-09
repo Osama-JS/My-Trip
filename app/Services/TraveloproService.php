@@ -13,6 +13,31 @@ class TraveloproService
     protected $baseUrl;   // e.g. https://travelnext.works/api/aeroVE5
 
     /**
+     * Helper to log API transaction
+     */
+    protected function logApiTransaction($action, $endpoint, $method, $requestPayload, $responsePayload, $statusCode, $executionTime, $bookingId = null)
+    {
+        try {
+            return \App\Models\FlightApiLog::create([
+                'user_id' => auth()->id(),
+                'booking_id' => $bookingId,
+                'action' => $action,
+                'endpoint' => $endpoint,
+                'method' => $method,
+                'request_payload' => $requestPayload,
+                'response_payload' => $responsePayload,
+                'status_code' => $statusCode,
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+                'execution_time' => $executionTime,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to save FlightApiLog', ['error' => $e->getMessage()]);
+            return null;
+        }
+    }
+
+    /**
      * Explicit endpoint map — avoids fragile str_replace URL building.
      */
     protected const ENDPOINTS = [
@@ -108,8 +133,10 @@ class TraveloproService
 
         $startTime = microtime(true);
         try {
-            $response = $this->httpClient(60)->post($this->endpoint('search'), $payload);
+            $response = $this->httpClient(60)->post($url = $this->endpoint('search'), $payload);
             $executionTime = microtime(true) - $startTime;
+
+            $this->logApiTransaction('search', $url, 'POST', $payload, $response->json(), $response->status(), $executionTime);
 
             if ($response->successful()) {
                 $results = $response->json();
@@ -524,11 +551,19 @@ class TraveloproService
 
         $url = $this->endpoint('booking');
 
+        $startTime = microtime(true);
         try {
             $response = $this->httpClient(90)->post($url, $payload);
+            $executionTime = microtime(true) - $startTime;
+
+            $log = $this->logApiTransaction('createBooking', $url, 'POST', $payload, $response->json(), $response->status(), $executionTime);
 
             if ($response->successful()) {
-                return $response->json();
+                $result = $response->json();
+                if ($log) {
+                    $result['_api_log_id'] = $log->id;
+                }
+                return $result;
             }
 
             Log::error('Travelopro Booking Error', [
@@ -614,9 +649,10 @@ class TraveloproService
      * Order ticket for booking.
      *
      * @param string $uniqueId
+     * @param int|null $bookingId
      * @return array
      */
-    public function orderTicket(string $uniqueId)
+    public function orderTicket(string $uniqueId, $bookingId = null)
     {
         Log::info('Travelopro Order Ticket Request', ['UniqueID' => $uniqueId]);
 
@@ -626,8 +662,12 @@ class TraveloproService
 
         $url = $this->endpoint('ticket_order');
 
+        $startTime = microtime(true);
         try {
             $response = $this->httpClient(60)->post($url, $payload);
+            $executionTime = microtime(true) - $startTime;
+
+            $this->logApiTransaction('orderTicket', $url, 'POST', $payload, $response->json(), $response->status(), $executionTime, $bookingId);
 
             if ($response->successful()) {
                 return $response->json();
@@ -658,9 +698,10 @@ class TraveloproService
      * Cancel a booking.
      *
      * @param array $data Must contain 'uniqueId'
+     * @param int|null $bookingId
      * @return array
      */
-    public function cancelBooking(array $data): array
+    public function cancelBooking(array $data, $bookingId = null): array
     {
         Log::info('Travelopro Cancel Booking Request', ['UniqueID' => $data['uniqueId'] ?? '']);
 
@@ -670,8 +711,12 @@ class TraveloproService
 
         $url = $this->endpoint('cancel');
 
+        $startTime = microtime(true);
         try {
             $response = $this->httpClient(60)->post($url, $payload);
+            $executionTime = microtime(true) - $startTime;
+
+            $this->logApiTransaction('cancelBooking', $url, 'POST', $payload, $response->json(), $response->status(), $executionTime, $bookingId);
 
             if ($response->successful()) {
                 $result = $response->json();
@@ -715,9 +760,10 @@ class TraveloproService
      * Get trip details.
      *
      * @param string $uniqueId
+     * @param int|null $bookingId
      * @return array
      */
-    public function getTripDetails(string $uniqueId)
+    public function getTripDetails(string $uniqueId, $bookingId = null)
     {
         $payload = array_merge($this->authPayload(), [
             'UniqueID' => $uniqueId,
@@ -725,8 +771,12 @@ class TraveloproService
 
         $url = $this->endpoint('trip_details');
 
+        $startTime = microtime(true);
         try {
             $response = $this->httpClient(60)->post($url, $payload);
+            $executionTime = microtime(true) - $startTime;
+
+            $this->logApiTransaction('getTripDetails', $url, 'POST', $payload, $response->json(), $response->status(), $executionTime, $bookingId);
 
             if ($response->successful()) {
                 $result = $response->json();

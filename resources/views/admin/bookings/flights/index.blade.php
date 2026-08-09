@@ -83,10 +83,6 @@
                             <option value="cancelled">{{ __('Cancelled') }}</option>
                         </select>
                     </div>
-                    {{-- Requests link --}}
-                    <a href="{{ route('admin.bookings.flights.requests') }}" class="dash-view-all-btn">
-                        <i class="fas fa-list me-1"></i> {{ __('Requests') }}
-                    </a>
                 </div>
             </div>
             <div class="card-body p-0 pt-2">

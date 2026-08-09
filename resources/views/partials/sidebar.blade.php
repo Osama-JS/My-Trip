@@ -37,7 +37,7 @@
                 </a>
                 <ul aria-expanded="false">
                     <li><a href="{{ route('admin.bookings.flights.index') }}"><i class="fa fa-list"></i>{{ __('Flight Bookings') }}</a></li>
-                    <li><a href="{{ route('admin.bookings.flights.requests') }}"><i class="fa fa-paper-plane"></i>{{ __('Requests') }}</a></li>
+                    <li><a href="{{ route('admin.bookings.flights.analytics') }}"><i class="fa fa-chart-pie"></i>{{ __('Flight Analytics') }}</a></li>
                 </ul>
             </li>
 

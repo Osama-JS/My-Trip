@@ -119,29 +119,29 @@
             </div>
             <div class="act-tabs-wrap">
                 {{-- Tab Nav --}}
-                <ul class="act-tab-nav" id="activityTabs">
-                    <li>
-                        <a class="act-tab-link active" data-bs-toggle="tab" href="#tripsTab">
+                <ul class="nav nav-tabs act-tab-nav border-0" id="activityTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link act-tab-link active" data-bs-toggle="tab" href="#tripsTab" role="tab">
                             <i class="fas fa-map-marked-alt"></i> {{ __('Trip Packages') }}
                         </a>
                     </li>
-                    <li>
-                        <a class="act-tab-link" data-bs-toggle="tab" href="#flightsTab">
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link act-tab-link" data-bs-toggle="tab" href="#flightsTab" role="tab">
                             <i class="fas fa-plane-departure"></i> {{ __('Flights') }}
                         </a>
                     </li>
-                    <li>
-                        <a class="act-tab-link" data-bs-toggle="tab" href="#hotelsTab">
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link act-tab-link" data-bs-toggle="tab" href="#hotelsTab" role="tab">
                             <i class="fas fa-hotel"></i> {{ __('Hotels') }}
                         </a>
                     </li>
-                    <li>
-                        <a class="act-tab-link" data-bs-toggle="tab" href="#searchesTab">
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link act-tab-link" data-bs-toggle="tab" href="#searchesTab" role="tab">
                             <i class="fas fa-history"></i> {{ __('Search Log') }}
                         </a>
                     </li>
-                    <li>
-                        <a class="act-tab-link" data-bs-toggle="tab" href="#favoritesTab">
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link act-tab-link" data-bs-toggle="tab" href="#favoritesTab" role="tab">
                             <i class="fas fa-heart"></i> {{ __('Wishlist') }}
                         </a>
                     </li>

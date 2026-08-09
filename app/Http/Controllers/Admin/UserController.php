@@ -40,7 +40,7 @@ class UserController extends Controller
                     <label class="form-check-label fw-medium text-dark small cursor-pointer" for="status_switch_' . $user->id . '">' . ($user->status === 'active' ? __('Active') : __('Inactive')) . '</label>
                 </div>';
 
-                $verifiedBadge = $user->email_verified_at
+                $verifiedBadge = ($user->email_verified_at || $user->phone_verified_at)
                     ? '<div class="d-flex align-items-center"><i class="fa fa-circle text-primary me-2" style="font-size: 8px;"></i> <span class="fw-medium text-dark">'.__('Verified').'</span></div>'
                     : '<div class="d-flex align-items-center"><i class="fa fa-circle text-warning me-2" style="font-size: 8px;"></i> <span class="fw-medium text-dark">'.__('Unverified').'</span></div>';
 
@@ -65,6 +65,7 @@ class UserController extends Controller
                                 <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="toggleUserStatus(' . $user->id . ')"><i class="fas fa-ban text-warning me-3 w-15px"></i> '.__('Toggle Status').'</a>
                                 <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="resetUserPassword(' . $user->id . ')"><i class="fa fa-key text-dark me-3 w-15px"></i> '.__('Reset Password').'</a>
                                 <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="' . route('admin.users.activity', $user->id) . '"><i class="fa fa-chart-line text-secondary me-3 w-15px"></i> '.__('Activity').'</a>
+                                <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="verifyUser(' . $user->id . ')"><i class="fas fa-check-circle text-success me-3 w-15px"></i> '.__('Verify Account').'</a>
                                 <div class="dropdown-divider my-1"></div>
                                 <a class="dropdown-item text-danger py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="deleteUser(' . $user->id . ')"><i class="fa fa-trash text-danger me-3 w-15px"></i> '.__('Delete').'</a>
                             </div>
@@ -252,7 +253,7 @@ class UserController extends Controller
                     <label class="form-check-label fw-medium text-dark small cursor-pointer" for="status_switch_' . $user->id . '">' . ($user->status === 'active' ? __('Active') : __('Inactive')) . '</label>
                 </div>';
 
-                $verifiedBadge = $user->email_verified_at
+                $verifiedBadge = ($user->email_verified_at || $user->phone_verified_at)
                     ? '<div class="d-flex align-items-center"><i class="fa fa-circle text-primary me-2" style="font-size: 8px;"></i> <span class="fw-medium text-dark">'.__('Verified').'</span></div>'
                     : '<div class="d-flex align-items-center"><i class="fa fa-circle text-warning me-2" style="font-size: 8px;"></i> <span class="fw-medium text-dark">'.__('Unverified').'</span></div>';
 
@@ -277,6 +278,7 @@ class UserController extends Controller
                                 <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="toggleSubscriberStatus(' . $user->id . ')"><i class="fas fa-ban text-warning me-3 w-15px"></i> '.__('Toggle Status').'</a>
                                 <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="resetSubscriberPassword(' . $user->id . ')"><i class="fa fa-key text-dark me-3 w-15px"></i> '.__('Reset Password').'</a>
                                 <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="' . route('admin.users.activity', $user->id) . '"><i class="fa fa-chart-line text-secondary me-3 w-15px"></i> '.__('Activity').'</a>
+                                <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="verifySubscriber(' . $user->id . ')"><i class="fas fa-check-circle text-success me-3 w-15px"></i> '.__('Verify Account').'</a>
                                 <div class="dropdown-divider my-1"></div>
                                 <a class="dropdown-item text-danger py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="deleteSubscriber(' . $user->id . ')"><i class="fa fa-trash text-danger me-3 w-15px"></i> '.__('Delete').'</a>
                             </div>
@@ -302,6 +304,22 @@ class UserController extends Controller
         return response()->json([
             'success' => true,
             'message' => __('Password reset successfully')
+        ]);
+    }
+
+    /**
+     * Manually verify a user's account
+     */
+    public function verify(User $user)
+    {
+        $user->update([
+            'email_verified_at' => now(),
+            'phone_verified_at' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => __('Account manually verified successfully')
         ]);
     }
 }

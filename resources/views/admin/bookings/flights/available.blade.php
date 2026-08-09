@@ -211,7 +211,7 @@
                         <button class="btn btn-primary w-100 btn-lg" onclick="location.reload()">{{ __('Back to Search') }}</button>
                     </div>
                     <div class="col-12">
-                        <a href="{{ route('admin.bookings.flights.requests') }}" class="btn btn-outline-secondary w-100">{{ __('View My Bookings') }}</a>
+                        <a href="{{ route('admin.bookings.flights.analytics') }}" class="btn btn-outline-secondary w-100">{{ __('View Analytics') }}</a>
                     </div>
                 </div>
             </div>
