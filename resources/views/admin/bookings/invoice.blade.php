@@ -105,7 +105,7 @@
                                             <td>{{ $pax->dob ? \Carbon\Carbon::parse($pax->dob)->format('d M Y') : 'N/A' }}</td>
                                             <td>{{ $pax->passport_number ?? $pax->passport_no ?? 'N/A' }} <span class="text-muted small">{{ $pax->nationality ? '('.$pax->nationality.')' : '' }}</span></td>
                                             @if($booking->ticket_status === 'ticketed')
-                                            <td><strong class="text-success">{{ !empty($booking->ticket_numbers) && isset($booking->ticket_numbers[$index]) ? $booking->ticket_numbers[$index] : 'N/A' }}</strong></td>
+                                            <td><strong class="text-success">{{ $pax->e_ticket_no ?? $pax->ticket_number ?? (!empty($booking->ticket_numbers) && is_array($booking->ticket_numbers) && isset($booking->ticket_numbers[$index]) ? $booking->ticket_numbers[$index] : 'N/A') }}</strong></td>
                                             @endif
                                         </tr>
                                         @empty

@@ -14,6 +14,18 @@
 @section('content')
 <!-- Flatpickr CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    .flatpickr-current-month .flatpickr-monthDropdown-months {
+        display: inline-block !important;
+        width: auto !important;
+        height: auto !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+        appearance: auto !important;
+        -webkit-appearance: menulist !important;
+    }
+</style>
 
 <!-- Filters -->
 <div class="row mb-4">
@@ -373,9 +385,9 @@
         // Define exact colors for statuses based on label content
         const statusColors = statusLabels.map(label => {
             const l = label.toLowerCase();
-            if (l.includes('confirm') || l.includes('paid') || l.includes('مؤكد') || l.includes('مدفوع')) return '#198754'; // Green
-            if (l.includes('pend') || l.includes('انتظار') || l.includes('معلق')) return '#ffc107'; // Yellow
-            if (l.includes('cancel') || l.includes('ألغي') || l.includes('ملغى')) return '#dc3545'; // Red
+            if (l.includes('confirm') || l.includes('paid') || l.includes('مؤكد') || l.includes('مدفوع') || l.includes('دفع')) return '#198754'; // Green
+            if (l.includes('pend') || l.includes('انتظار') || l.includes('معلق') || l.includes('قيد')) return '#ffc107'; // Yellow
+            if (l.includes('cancel') || l.includes('لغ') || l.includes('رفض')) return '#dc3545'; // Red
             return '#0d6efd'; // Blue fallback
         });
 

@@ -248,7 +248,57 @@ class BookingController extends Controller
             ];
         })->sortByDesc('bookings_count')->take(10);
 
-        return view('admin.bookings.flights.analytics', compact('stats', 'topCustomers'));
+        $recentBookings = $allFiltered->sortByDesc('created_at')->take(10);
+        return view('admin.bookings.flights.analytics', compact('stats', 'recentBookings', 'topCustomers'));
+    }    
+
+    public function flightProfits(Request $request)
+    {
+        $query = Booking::whereNotNull('platform_profit')->where('platform_profit', '>', 0)
+            ->whereHas('flightBooking')
+            ->whereIn('status', ['confirmed', 'paid']);
+            
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $totalProfit = $query->sum('platform_profit');
+        
+        return view('admin.bookings.flights.profits', compact('totalProfit'));
+    }
+
+    public function getFlightProfitsData(Request $request)
+    {
+        $query = Booking::whereNotNull('platform_profit')->where('platform_profit', '>', 0)
+            ->whereHas('flightBooking')
+            ->whereIn('status', ['confirmed', 'paid'])
+            ->with(['user', 'flightBooking']);
+            
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $bookings = $query->latest()->get();
+        $data = $bookings->map(function ($booking) {
+            return [
+                'id' => $booking->id,
+                'reference' => '<strong>' . $booking->booking_reference . '</strong>',
+                'customer' => optional($booking->user)->full_name ?? $booking->contact_email,
+                'date' => $booking->created_at->format('Y-m-d H:i'),
+                'base_price' => number_format($booking->provider_price, 2) . ' ' . $booking->currency,
+                'total_amount' => number_format($booking->total_amount, 2) . ' ' . $booking->currency,
+                'profit' => '<span class="text-success fw-bold">+' . number_format($booking->platform_profit, 2) . ' ' . $booking->currency . '</span>',
+                'actions' => '<a href="' . route('admin.bookings.flights.show', $booking->flightBooking->id ?? 0) . '" class="btn btn-primary shadow btn-xs sharp" title="' . __('View') . '"><i class="fas fa-eye"></i></a>'
+            ];
+        });
+
+        return response()->json(['data' => $data]);
     }    
 
     public function ongoingFlights()
@@ -279,12 +329,60 @@ class BookingController extends Controller
     public function hotelBookings()
     {
         $stats = [
-            'total'     => HotelBooking::count(),
-            'pending'   => HotelBooking::where('status', 'pending')->count(),
-            'confirmed' => HotelBooking::where('status', 'confirmed')->count(),
+            'total' => HotelBooking::count(),
+            'pending' => HotelBooking::where('status', 'pending')->count(),
+            'confirmed' => HotelBooking::whereIn('status', ['confirmed', 'paid'])->count(),
             'cancelled' => HotelBooking::where('status', 'cancelled')->count(),
         ];
         return view('admin.bookings.hotels.index', compact('stats'));
+    }
+
+    public function hotelProfits(Request $request)
+    {
+        $query = HotelBooking::whereNotNull('platform_profit')->where('platform_profit', '>', 0)
+            ->whereIn('status', ['confirmed', 'paid']);
+            
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $totalProfit = $query->sum('platform_profit');
+        
+        return view('admin.bookings.hotels.profits', compact('totalProfit'));
+    }
+
+    public function getHotelProfitsData(Request $request)
+    {
+        $query = HotelBooking::whereNotNull('platform_profit')->where('platform_profit', '>', 0)
+            ->whereIn('status', ['confirmed', 'paid'])
+            ->with('user');
+            
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $bookings = $query->latest()->get();
+        $data = $bookings->map(function ($booking) {
+            return [
+                'id' => $booking->id,
+                'reference' => '<strong>' . $booking->reference_num . '</strong>',
+                'hotel' => $booking->hotel_name,
+                'customer' => optional($booking->user)->full_name ?? $booking->contact_email,
+                'date' => $booking->created_at->format('Y-m-d H:i'),
+                'base_price' => number_format($booking->provider_price, 2) . ' ' . $booking->currency,
+                'total_amount' => number_format($booking->total_price, 2) . ' ' . $booking->currency,
+                'profit' => '<span class="text-success fw-bold">+' . number_format($booking->platform_profit, 2) . ' ' . $booking->currency . '</span>',
+                'actions' => '<a href="' . route('admin.bookings.hotels.show', $booking->id) . '" class="btn btn-primary shadow btn-xs sharp" title="' . __('View') . '"><i class="fas fa-eye"></i></a>'
+            ];
+        });
+
+        return response()->json(['data' => $data]);
     }
 
     public function getHotelData()

@@ -522,6 +522,21 @@ class FlightController extends Controller
 
             Log::info('Extracted Booking Identity', ['uniqueId' => $uniqueId, 'totalAmount' => $totalAmount]);
 
+            // Calculate Profit Margin
+            $margin = floatval(\App\Models\Setting::get('flight_margin', 0));
+            $marginType = \App\Models\Setting::get('flight_margin_type', 'percentage');
+            $profit = 0;
+            $providerPrice = $totalAmount;
+            if ($margin > 0) {
+                if ($marginType === 'fixed') {
+                    $profit = $margin;
+                    $providerPrice = $totalAmount - $profit;
+                } else {
+                    $providerPrice = $totalAmount / (1 + ($margin / 100));
+                    $profit = $totalAmount - $providerPrice;
+                }
+            }
+
             if ($uniqueId) {
                 $booking = Booking::create([
                     'user_id' => Auth::id(),
@@ -530,6 +545,8 @@ class FlightController extends Controller
                     'status' => 'pending',
                     'ticket_status' => 'booked',
                     'total_amount' => $totalAmount,
+                    'provider_price' => $providerPrice,
+                    'platform_profit' => $profit,
                     'currency' => 'SAR',
                     'contact_email' => $request->customerEmail,
                     'contact_phone' => $request->customerPhone,

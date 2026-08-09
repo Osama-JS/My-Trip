@@ -182,6 +182,8 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
             Route::get('/', [BookingController::class, 'flightBookings'])->name('index');
             Route::get('/data', [BookingController::class, 'getFlightData'])->name('data');
             Route::get('/analytics', [BookingController::class, 'flightAnalytics'])->name('analytics');
+            Route::get('/profits', [BookingController::class, 'flightProfits'])->name('profits');
+            Route::get('/profits/data', [BookingController::class, 'getFlightProfitsData'])->name('profits.data');
             Route::get('/ongoing', [BookingController::class, 'ongoingFlights'])->name('ongoing');
             Route::post('/search', [BookingController::class, 'searchFlights'])->name('search');
             Route::post('/validate', [BookingController::class, 'validateFare'])->name('validate');
@@ -194,6 +196,8 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
         Route::group(['prefix' => 'hotels', 'as' => 'hotels.'], function() {
             Route::get('/', [BookingController::class, 'hotelBookings'])->name('index');
             Route::get('/data', [BookingController::class, 'getHotelData'])->name('data');
+            Route::get('/profits', [BookingController::class, 'hotelProfits'])->name('profits');
+            Route::get('/profits/data', [BookingController::class, 'getHotelProfitsData'])->name('profits.data');
             Route::get('/requests', [BookingController::class, 'hotelRequests'])->name('requests');
             Route::get('/requests/data', [BookingController::class, 'getHotelRequestsData'])->name('requests.data');
             Route::get('/{id}/show', [BookingController::class, 'showHotel'])->name('show');

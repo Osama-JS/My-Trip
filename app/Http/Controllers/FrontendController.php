@@ -683,6 +683,24 @@ class FrontendController extends Controller
             return back()->with('error', $result['message'])->withInput();
         }
 
+        // Calculate Profit Margin
+        $margin = floatval(\App\Models\Setting::get('flight_margin', 0));
+        $marginType = \App\Models\Setting::get('flight_margin_type', 'percentage');
+        $totalAmount = floatval($request->get('total_amount'));
+        
+        $profit = 0;
+        $providerPrice = $totalAmount;
+        if ($margin > 0) {
+            if ($marginType === 'fixed') {
+                $profit = $margin;
+                $providerPrice = $totalAmount - $profit;
+            } else {
+                // total = base * (1 + margin/100) => base = total / (1 + margin/100)
+                $providerPrice = $totalAmount / (1 + ($margin / 100));
+                $profit = $totalAmount - $providerPrice;
+            }
+        }
+
         // 2. Persist in local DB (Booking model)
         try {
             $booking = \App\Models\Booking::create([
@@ -690,7 +708,9 @@ class FrontendController extends Controller
                 'booking_reference' => 'FLIGHT-' . strtoupper(uniqid()),
                 'supplier_session_id' => $result['AirBookingResponse']['AirBookingResult']['SessionId'] ?? ($request->get('flight_session_id') ?? 'N/A'),
                 'status' => 'pending',
-                'total_amount' => $request->get('total_amount'),
+                'total_amount' => $totalAmount,
+                'provider_price' => $providerPrice,
+                'platform_profit' => $profit,
                 'currency' => 'SAR',
                 'contact_email' => $request->get('customerEmail'),
                 'contact_phone' => $request->get('customerPhone'),

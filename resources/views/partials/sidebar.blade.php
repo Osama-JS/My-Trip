@@ -38,6 +38,7 @@
                 <ul aria-expanded="false">
                     <li><a href="{{ route('admin.bookings.flights.index') }}"><i class="fa fa-list"></i>{{ __('Flight Bookings') }}</a></li>
                     <li><a href="{{ route('admin.bookings.flights.analytics') }}"><i class="fa fa-chart-pie"></i>{{ __('Flight Analytics') }}</a></li>
+                    <li><a href="{{ route('admin.bookings.flights.profits') }}"><i class="fa fa-dollar-sign text-success"></i>{{ __('Flight Profits') }}</a></li>
                 </ul>
             </li>
 
@@ -49,6 +50,7 @@
                 </a>
                 <ul aria-expanded="false">
                     <li><a href="{{ route('admin.bookings.hotels.index') }}"><i class="fa fa-list"></i>{{ __('Hotel Bookings') }}</a></li>
+                    <li><a href="{{ route('admin.bookings.hotels.profits') }}"><i class="fa fa-dollar-sign text-success"></i>{{ __('Hotel Profits') }}</a></li>
                     <li><a href="{{ route('admin.bookings.hotels.requests') }}"><i class="fa fa-concierge-bell"></i>{{ __('Requests') }}</a></li>
                 </ul>
             </li>

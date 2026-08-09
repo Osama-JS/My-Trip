@@ -25,6 +25,8 @@ class Booking extends Model
         'contact_email',
         'contact_phone',
         'pnr_created_at',
+        'provider_price',
+        'platform_profit',
     ];
 
     protected $casts = [

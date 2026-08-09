@@ -280,6 +280,23 @@ class HotelController extends Controller
 
         $referenceNum = 'HTL-' . strtoupper(uniqid());
 
+        // Calculate Profit Margin
+        $margin = floatval(\App\Models\Setting::get('hotel_margin', 0));
+        $marginType = \App\Models\Setting::get('hotel_margin_type', 'percentage');
+        $totalPrice = floatval($request->total_price ?? 0);
+        
+        $profit = 0;
+        $providerPrice = $totalPrice;
+        if ($margin > 0) {
+            if ($marginType === 'fixed') {
+                $profit = $margin;
+                $providerPrice = $totalPrice - $profit;
+            } else {
+                $providerPrice = $totalPrice / (1 + ($margin / 100));
+                $profit = $totalPrice - $providerPrice;
+            }
+        }
+
         // Skip early supplier booking to avoid liability for failed payments.
         // The actual booking with Travelopro will happen in the post-payment finalization.
         $result = [];
@@ -295,7 +312,9 @@ class HotelController extends Controller
                 'rooms' => (int) $request->rooms,
                 'adults' => (int) $request->adults,
                 'childs' => (int) $request->childs,
-                'total_price' => $request->total_price ?? 0,
+                'total_price' => $totalPrice,
+                'provider_price' => $providerPrice,
+                'platform_profit' => $profit,
                 'currency' => $request->currency ?? 'SAR',
                 'status' => 'pending',
                 'reference_num' => $referenceNum,
