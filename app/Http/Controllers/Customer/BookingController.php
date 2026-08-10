@@ -478,12 +478,7 @@ class BookingController extends Controller
             })
             ->findOrFail($id);
 
-        if ($booking->invoice_path && Storage::disk('public')->exists($booking->invoice_path)) {
-            $filePath = Storage::disk('public')->path($booking->invoice_path);
-            return response()->download($filePath, 'voucher-' . $booking->id . '.pdf');
-        }
-
-        // Generate on demand if missing
+        // Always regenerate to reflect latest design
         $voucherPath = $this->invoiceService->generateHotelVoucher($booking);
 
         if (!$voucherPath) {

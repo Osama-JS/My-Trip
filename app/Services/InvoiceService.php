@@ -18,7 +18,13 @@ class InvoiceService
     public function generateHotelVoucher(\App\Models\HotelBooking $booking)
     {
         try {
-            $booking->load(['user']);
+            $booking->load(['user', 'passengers']);
+
+            $defaultConfig = (new \Mpdf\Config\ConfigVariables())->getDefaults();
+            $fontDirs = $defaultConfig['fontDir'];
+
+            $defaultFontConfig = (new \Mpdf\Config\FontVariables())->getDefaults();
+            $fontData = $defaultFontConfig['fontdata'];
 
             $mpdf = new Mpdf([
                 'mode' => 'utf-8',
@@ -27,12 +33,26 @@ class InvoiceService
                 'margin_right' => 10,
                 'margin_top' => 10,
                 'margin_bottom' => 10,
+                'fontDir' => array_merge($fontDirs, [
+                    public_path('fonts'),
+                ]),
+                'fontdata' => $fontData + [
+                    'tajawal' => [
+                        'R' => 'tajawal.ttf',
+                        'B' => 'tajawal.ttf',
+                        'useOTL' => 0xFF,
+                        'useKashida' => 75,
+                    ]
+                ],
+                'default_font' => 'tajawal',
                 'tempDir' => storage_path('app/temp')
             ]);
 
             // Set direction dynamically
             $dir = app()->getLocale() == 'ar' ? 'rtl' : 'ltr';
             $mpdf->SetDirectionality($dir);
+            $mpdf->showWatermarkText = true;
+            $mpdf->watermark_font = 'tajawal';
 
             $html = view('invoices.hotel_voucher', compact('booking'))->render();
             $mpdf->WriteHTML($html);
@@ -89,6 +109,12 @@ class InvoiceService
                 $booking->load(['user', 'passengers', 'package', 'season']);
             }
 
+            $defaultConfig = (new \Mpdf\Config\ConfigVariables())->getDefaults();
+            $fontDirs = $defaultConfig['fontDir'];
+
+            $defaultFontConfig = (new \Mpdf\Config\FontVariables())->getDefaults();
+            $fontData = $defaultFontConfig['fontdata'];
+
             $mpdf = new \Mpdf\Mpdf([
                 'mode' => 'utf-8',
                 'format' => 'A4',
@@ -96,12 +122,25 @@ class InvoiceService
                 'margin_right' => 10,
                 'margin_top' => 10,
                 'margin_bottom' => 10,
-                'default_font' => 'cairo',
+                'fontDir' => array_merge($fontDirs, [
+                    public_path('fonts'),
+                ]),
+                'fontdata' => $fontData + [
+                    'tajawal' => [
+                        'R' => 'tajawal.ttf',
+                        'B' => 'tajawal.ttf',
+                        'useOTL' => 0xFF,
+                        'useKashida' => 75,
+                    ]
+                ],
+                'default_font' => 'tajawal',
                 'tempDir' => storage_path('app/temp')
             ]);
 
             $dir = app()->getLocale() == 'ar' ? 'rtl' : 'ltr';
             $mpdf->SetDirectionality($dir);
+            $mpdf->showWatermarkText = true;
+            $mpdf->watermark_font = 'tajawal';
 
             $html = view($view, compact('booking'))->render();
             $mpdf->WriteHTML($html);
