@@ -703,9 +703,10 @@ class FrontendController extends Controller
 
         // 2. Persist in local DB (Booking model)
         try {
+            $uniqueId = $result['AirBookingResponse']['AirBookingResult']['UniqueID'] ?? ('FLIGHT-' . strtoupper(uniqid()));
             $booking = \App\Models\Booking::create([
                 'user_id' => auth()->id(),
-                'booking_reference' => 'FLIGHT-' . strtoupper(uniqid()),
+                'booking_reference' => $uniqueId,
                 'supplier_session_id' => $result['AirBookingResponse']['AirBookingResult']['SessionId'] ?? ($request->get('flight_session_id') ?? 'N/A'),
                 'status' => 'pending',
                 'total_amount' => $totalAmount,
