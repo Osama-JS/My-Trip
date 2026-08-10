@@ -93,6 +93,7 @@
                                 <th>{{ __('ID') }}</th>
                                 <th>{{ __('Reference') }}</th>
                                 <th>{{ __('User') }}</th>
+                                <th>{{ __('Airline') }}</th>
                                 <th>{{ __('Route') }}</th>
                                 <th>{{ __('Dates') }}</th>
                                 <th>{{ __('Amount') }}</th>
@@ -263,6 +264,7 @@ $(document).ready(function() {
             { data: 'id' },
             { data: 'reference' },
             { data: 'user' },
+            { data: 'airline' },
             { data: 'route' },
             { data: 'dates' },
             { data: 'amount' },
@@ -294,7 +296,7 @@ $(document).ready(function() {
     function applyFilters() {
         const statusVal = $('#filter-status').val();
         const searchVal = $('#custom-search').val();
-        flightsTable.column(6).search(statusVal ? (statusVal === 'confirmed' ? '{{ __("Confirmed") }}' : statusVal === 'pending' ? '{{ __("Pending") }}' : '{{ __("Cancelled") }}') : '');
+        flightsTable.column(7).search(statusVal ? (statusVal === 'confirmed' ? '{{ __("Confirmed") }}' : statusVal === 'pending' ? '{{ __("Pending") }}' : '{{ __("Cancelled") }}') : '');
         flightsTable.search(searchVal);
         flightsTable.draw();
     }
