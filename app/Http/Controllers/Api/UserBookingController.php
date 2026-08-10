@@ -449,8 +449,6 @@ class UserBookingController extends Controller
                 'created_at' => $booking->created_at->format('d M Y, H:i'),
                 'payment_verified' => in_array($booking->status, ['paid', 'confirmed']),
                 'finalized' => $booking->status === 'confirmed',
-            ],
-            'voucher_url' => $booking->status === 'confirmed' ? route('customer.bookings.hotels.voucher', $booking->id) : null,
         ];
 
         return $this->apiResponse(false, __('Hotel booking details retrieved successfully.'), $data);
@@ -487,6 +485,41 @@ class UserBookingController extends Controller
             return $this->apiResponse(true, __('Failed to generate voucher.'), null, null, 500);
         }
 
-        return response()->download(storage_path('app/public/' . $filePath));
+        $fileUrl = asset('storage/' . $filePath);
+        return $this->apiResponse(false, __('Voucher retrieved successfully'), ['voucher_url' => $fileUrl]);
+    }
+
+    #[OA\Get(
+        path: "/api/user/bookings/{id}/invoice",
+        summary: "تحميل فاتورة حجز الطيران",
+        operationId: "downloadFlightInvoice",
+        description: "يقوم بتوليد وإرجاع رابط لفاتورة الحجز.",
+        tags: ["User Bookings"],
+        security: [["bearerAuth" => []]],
+        parameters: [
+            new OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "integer"))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: "Returns URL")
+        ]
+    )]
+    public function downloadFlightInvoice(Request $request, $id, \App\Services\InvoiceService $invoiceService)
+    {
+        $booking = Booking::where('user_id', $request->user()->id)
+            ->where('id', $id)
+            ->firstOrFail();
+
+        if (!in_array($booking->status, ['confirmed', 'ticketed', 'completed'])) {
+            return $this->apiResponse(true, __('Invoice is only available for confirmed bookings.'), null, null, 403);
+        }
+
+        $filePath = $invoiceService->generateInvoice($booking);
+
+        if (!$filePath || !\Illuminate\Support\Facades\Storage::disk('public')->exists($filePath)) {
+            return $this->apiResponse(true, __('Failed to generate invoice.'), null, null, 500);
+        }
+
+        $fileUrl = asset('storage/' . $filePath);
+        return $this->apiResponse(false, __('Invoice retrieved successfully'), ['invoice_url' => $fileUrl]);
     }
 }

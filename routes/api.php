@@ -127,6 +127,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user/trip-bookings', [App\Http\Controllers\Api\UserBookingController::class, 'tripBookings']);
     Route::get('/user/trip-bookings/{id}', [App\Http\Controllers\Api\UserBookingController::class, 'tripBookingDetails']);
 
+    Route::get('/user/bookings/{id}/invoice', [App\Http\Controllers\Api\UserBookingController::class, 'downloadFlightInvoice']);
+
     // Wallet Routes
     Route::get('/user/wallet', [App\Http\Controllers\Api\WalletController::class, 'getWallet']);
     Route::get('/user/wallet/transactions', [App\Http\Controllers\Api\WalletController::class, 'getTransactions']);
