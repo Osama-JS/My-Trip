@@ -449,6 +449,7 @@ class UserBookingController extends Controller
                 'created_at' => $booking->created_at->format('d M Y, H:i'),
                 'payment_verified' => in_array($booking->status, ['paid', 'confirmed']),
                 'finalized' => $booking->status === 'confirmed',
+            ],
         ];
 
         return $this->apiResponse(false, __('Hotel booking details retrieved successfully.'), $data);
