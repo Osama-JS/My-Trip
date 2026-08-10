@@ -66,6 +66,7 @@ class BookingController extends Controller
                 'id' => $fb->id,
                 'reference' => '<strong>' . ($fb->booking->booking_reference ?? 'N/A') . '</strong>',
                 'user' => $fb->user->full_name ?? __('Guest'),
+                'airline' => '<span class="badge bg-light text-dark border">' . ($fb->airline_name ?? 'N/A') . '</span>',
                 'route' => $originName . ' <i class="fas fa-arrow-right mx-1 text-muted"></i> ' . $destName,
                 'dates' => $fb->departure_date->format('Y-m-d') . ($fb->return_date ? ' / ' . $fb->return_date->format('Y-m-d') : ''),
                 'amount' => number_format($fb->total_amount, 2) . ' ' . $fb->currency,
