@@ -703,11 +703,15 @@ class FrontendController extends Controller
 
         // 2. Persist in local DB (Booking model)
         try {
-            $uniqueId = $result['AirBookingResponse']['AirBookingResult']['UniqueID'] ?? ('FLIGHT-' . strtoupper(uniqid()));
+            $bookingResult = $result['BookFlightResponse']['BookFlightResult'] ?? 
+                             $result['CreateBookingResponse']['CreateBookingResult'] ?? 
+                             $result['AirBookingResponse']['AirBookingResult'] ?? [];
+
+            $uniqueId = $bookingResult['UniqueID'] ?? $bookingResult['uniqueID'] ?? ('FLIGHT-' . strtoupper(uniqid()));
             $booking = \App\Models\Booking::create([
                 'user_id' => auth()->id(),
                 'booking_reference' => $uniqueId,
-                'supplier_session_id' => $result['AirBookingResponse']['AirBookingResult']['SessionId'] ?? ($request->get('flight_session_id') ?? 'N/A'),
+                'supplier_session_id' => $bookingResult['SessionId'] ?? ($request->get('flight_session_id') ?? 'N/A'),
                 'status' => 'pending',
                 'total_amount' => $totalAmount,
                 'provider_price' => $providerPrice,
@@ -715,11 +719,11 @@ class FrontendController extends Controller
                 'currency' => 'SAR',
                 'contact_email' => $request->get('customerEmail'),
                 'contact_phone' => $request->get('customerPhone'),
-                'airline_code' => $request->get('airline') ?? ($result['AirBookingResponse']['AirBookingResult']['Itineraries']['Itinerary'][0]['ValidatingAirlineCode'] ?? null),
-                'airline_name' => $request->get('airline') ?? ($result['AirBookingResponse']['AirBookingResult']['Itineraries']['Itinerary'][0]['ValidatingAirlineCode'] ?? null),
+                'airline_code' => $request->get('airline') ?? ($bookingResult['Itineraries']['Itinerary'][0]['ValidatingAirlineCode'] ?? null),
+                'airline_name' => $request->get('airline') ?? ($bookingResult['Itineraries']['Itinerary'][0]['ValidatingAirlineCode'] ?? null),
                 'pnr_created_at' => now(),
-                'ticketing_time_limit' => isset($result['AirBookingResponse']['AirBookingResult']['TicketingTimeLimit']) 
-                    ? \Carbon\Carbon::parse($result['AirBookingResponse']['AirBookingResult']['TicketingTimeLimit']) 
+                'ticketing_time_limit' => isset($bookingResult['TicketingTimeLimit']) 
+                    ? \Carbon\Carbon::parse($bookingResult['TicketingTimeLimit']) 
                     : now()->addMinutes(3),
             ]);
 

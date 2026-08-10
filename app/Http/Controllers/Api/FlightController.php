@@ -592,6 +592,8 @@ class FlightController extends Controller
                         'infants'        => (int)($request->infants ?? 0),
                         'flight_class'   => $request->class ?? 'Economy',
                         'flight_number' => $request->flight_number,
+                        'airline_code'   => $request->airline_code ?? ($itinerary['ValidatingAirlineCode'] ?? null),
+                        'airline_name'   => $request->airline_name ?? ($itinerary['ValidatingAirlineCode'] ?? null),
                         'itinerary_data' => $bookingResult, // Save full result for fallback display logic
                         'total_amount'   => $totalAmount,
                         'currency'       => 'SAR',
