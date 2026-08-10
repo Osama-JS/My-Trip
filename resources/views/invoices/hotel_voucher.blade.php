@@ -112,15 +112,12 @@
 
         /* ── Ref Box ── */
         .ref-box {
-            background: #041741;
-            color: #ffffff;
             text-align: center;
             padding: 18px 14px;
-            border-radius: 10px;
         }
         .ref-label {
             font-size: 9px;
-            color: #f2cb57;
+            color: #9ca3af;
             text-transform: uppercase;
             letter-spacing: 2px;
             margin-bottom: 4px;
@@ -128,17 +125,14 @@
         .ref-value {
             font-size: 22px;
             font-weight: 900;
-            color: #ffffff;
+            color: #041741;
             letter-spacing: 2px;
             font-family: 'Courier New', monospace, 'tajawal';
         }
         .ref-status {
             display: inline-block;
-            background: #f2cb57;
-            color: #041741;
-            padding: 3px 14px;
-            border-radius: 20px;
-            font-size: 9px;
+            color: #16a34a;
+            font-size: 11px;
             font-weight: 900;
             text-transform: uppercase;
             letter-spacing: 2px;
@@ -202,11 +196,8 @@
         }
         .nights-badge {
             display: inline-block;
-            background: #f2cb57;
-            color: #041741;
-            padding: 4px 16px;
-            border-radius: 20px;
-            font-size: 11px;
+            color: #f2cb57;
+            font-size: 16px;
             font-weight: 900;
             letter-spacing: 1px;
         }
@@ -353,12 +344,20 @@
                     <tr>
                         <td width="55%" valign="middle">
                             <div class="hotel-name">
-                                🏨 {{ $booking->hotel_name }}
+                                <svg width="22" height="22" viewBox="0 0 24 24" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 6px;">
+                                    <path fill="#f2cb57" d="M19 2H5c-1.1 0-2 .9-2 2v18h18V4c0-1.1-.9-2-2-2zm-8 14H7v-2h4v2zm0-4H7v-2h4v2zm0-4H7V6h4v2zm6 8h-4v-2h4v2zm0-4h-4v-2h4v2zm0-4h-4V6h4v2z"/>
+                                </svg>
+                                {{ $booking->hotel_name }}
                                 <span style="font-family: 'DejaVuSans', 'freesans', sans-serif; color: #f2cb57; font-size: 15px; letter-spacing: 2px; margin-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}: 8px;">
                                     &#9733;&#9733;&#9733;&#9733;&#9733;
                                 </span>
                             </div>
-                            <div class="hotel-location">📍 {{ $booking->city_name }}, {{ $booking->country_name }}</div>
+                            <div class="hotel-location">
+                                <svg width="14" height="14" viewBox="0 0 24 24" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 4px;">
+                                    <path fill="#f2cb57" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                                </svg>
+                                {{ $booking->city_name }}, {{ $booking->country_name }}
+                            </div>
                         </td>
                         <td width="20%" align="center" valign="middle">
                             <div style="border: 1px solid #f2cb57; border-radius: 8px; padding: 6px; display: inline-block; background: rgba(242, 203, 87, 0.05); text-align: center;">
