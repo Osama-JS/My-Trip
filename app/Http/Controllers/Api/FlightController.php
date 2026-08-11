@@ -394,6 +394,14 @@ class FlightController extends Controller
             return $this->apiResponse(true, $result['message'], $result['details'] ?? $result['error'], null, 500);
         }
 
+        if (isset($result['Errors'])) {
+            return $this->apiResponse(true, $result['Errors']['ErrorMessage'] ?? __('Error fetching extra services.'), $result['Errors'], null, 400);
+        }
+
+        if (isset($result['ExtraServicesResponse']['Errors'])) {
+            return $this->apiResponse(true, $result['ExtraServicesResponse']['Errors']['ErrorMessage'] ?? __('Error fetching extra services.'), $result['ExtraServicesResponse']['Errors'], null, 400);
+        }
+
         $formattedServices = [];
         $extraServicesData = $result['ExtraServicesData'] ?? $result['ExtraServicesResponse']['ExtraServicesResult']['ExtraServicesData'] ?? $result['ExtraServicesResponse']['ExtraServicesData'] ?? $result['ExtraServicesResponse'] ?? [];
 
