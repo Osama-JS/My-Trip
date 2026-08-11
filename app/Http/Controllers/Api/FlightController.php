@@ -324,14 +324,150 @@ class FlightController extends Controller
             return $this->apiResponse(true, $result['message'], $result['details'] ?? $result['error'], null, 500);
         }
 
-        // Check if IsValid is true in response
         $isValid = $result['AirRevalidateResponse']['AirRevalidateResult']['IsValid'] ?? false;
+        
+        $apiResult = $result['AirRevalidateResponse']['AirRevalidateResult'] ?? [];
+        $isPassport = $apiResult['FareItineraries']['FareItinerary']['IsPassportMandatory'] ?? null;
+        if ($isPassport === null && isset($apiResult['FareItineraries']['FareItinerary'][0]['IsPassportMandatory'])) {
+            $isPassport = $apiResult['FareItineraries']['FareItinerary'][0]['IsPassportMandatory'];
+        }
+        
+        // Manual fallback check for international flights
+        if ($isPassport === null && isset($request->origin) && isset($request->destination)) {
+            $originAirport = \App\Models\Airport::where('code', $request->origin)->first();
+            $destAirport = \App\Models\Airport::where('code', $request->destination)->first();
+            
+            if ($originAirport && $destAirport) {
+                if ($originAirport->country_code !== $destAirport->country_code) {
+                    $isPassport = true;
+                } else {
+                    $isPassport = false;
+                }
+            }
+        }
+        
+        // Inject into the response root for easy access by Flutter
+        if (!isset($result['is_passport_mandatory'])) {
+            $result['is_passport_mandatory'] = $isPassport ?? false;
+            // Also inject into result data
+            $result['AirRevalidateResponse']['AirRevalidateResult']['IsPassportMandatory'] = $isPassport ?? false;
+        }
 
         if ($isValid === true || $isValid === 'true' || $isValid === 'True') {
             return $this->apiResponse(false, __('Fare is valid.'), $result, null, 200);
         }
 
         return $this->apiResponse(true, __('Fare is no longer valid or available.'), $result, null, 422);
+    }
+
+    #[OA\Post(
+        path: "/api/flights/extra-services",
+        summary: "الخدمات الإضافية (Extra Services: Baggage, Meals, Seats)",
+        operationId: "getExtraServices",
+        description: "Fetch extra services (DynamicBaggage, DynamicMeal, DynamicSeat) for a specific flight session.",
+        tags: ["Flights"],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ["session_id", "fare_source_code"],
+                properties: [
+                    new OA\Property(property: "session_id", type: "string"),
+                    new OA\Property(property: "fare_source_code", type: "string")
+                ]
+            )
+        )
+    )]
+    public function getExtraServices(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'session_id' => 'required|string',
+            'fare_source_code' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
+        }
+
+        $result = $this->traveloproService->getExtraServices($request->all());
+
+        if (isset($result['status']) && $result['status'] === 'error') {
+            return $this->apiResponse(true, $result['message'], $result['details'] ?? $result['error'], null, 500);
+        }
+
+        $formattedServices = [];
+        $extraServicesData = $result['ExtraServicesData'] ?? $result['ExtraServicesResponse']['ExtraServicesResult']['ExtraServicesData'] ?? $result['ExtraServicesResponse']['ExtraServicesData'] ?? $result['ExtraServicesResponse'] ?? [];
+
+        // Parse Baggage
+        $baggages = $extraServicesData['DynamicBaggage'] ?? [];
+        foreach ($baggages as $baggageGroup) {
+            $flightType = str_contains($baggageGroup['Behavior'] ?? '', 'INBOUND') ? 'inbound' : 'outbound';
+            $services = $baggageGroup['Services'] ?? [];
+            if (isset($services[0]) && is_array($services[0]) && !isset($services[0]['ServiceId'])) {
+                $services = $services[0];
+            }
+            foreach ($services as $svc) {
+                $formattedServices[] = [
+                    'type' => 'baggage',
+                    'flight_type' => $flightType,
+                    'code' => $svc['ServiceId'] ?? '',
+                    'price' => $svc['ServiceCost']['Amount'] ?? 0,
+                    'currency' => $svc['ServiceCost']['CurrencyCode'] ?? 'SAR',
+                    'description' => $svc['Description'] ?? '',
+                ];
+            }
+        }
+
+        // Parse Meals
+        $meals = $extraServicesData['DynamicMeal'] ?? [];
+        foreach ($meals as $mealGroup) {
+            $flightType = str_contains($mealGroup['Behavior'] ?? '', 'INBOUND') ? 'inbound' : 'outbound';
+            $services = $mealGroup['Services'] ?? [];
+            if (isset($services[0]) && is_array($services[0]) && !isset($services[0]['ServiceId'])) {
+                $services = $services[0];
+            }
+            foreach ($services as $svc) {
+                $formattedServices[] = [
+                    'type' => 'meal',
+                    'flight_type' => $flightType,
+                    'code' => $svc['ServiceId'] ?? '',
+                    'price' => $svc['ServiceCost']['Amount'] ?? 0,
+                    'currency' => $svc['ServiceCost']['CurrencyCode'] ?? 'SAR',
+                    'description' => $svc['Description'] ?? '',
+                ];
+            }
+        }
+
+        // Parse Seats
+        $seats = $extraServicesData['DynamicSeat'] ?? [];
+        foreach ($seats as $seatGroup) {
+            // Wait, seats structure has DeckSeats -> RowSeats -> Seats
+            $decks = $seatGroup['DeckSeats'] ?? [];
+            foreach ($decks as $deck) {
+                $rows = $deck['RowSeats'] ?? [];
+                foreach ($rows as $row) {
+                    $rowSeats = $row['Seats'] ?? [];
+                    foreach ($rowSeats as $seat) {
+                        // Only add available seats (Code 1 = Open usually, let's include if it has price)
+                        $avail = $seat['AvailablityType']['Code'] ?? '';
+                        if ($avail == '1') { // 1 = Open
+                            $formattedServices[] = [
+                                'type' => 'seat',
+                                'flight_type' => 'outbound', // Simplification, need to check segment
+                                'code' => $seat['ServiceId'] ?? '',
+                                'price' => $seat['Fare']['Amount'] ?? 0,
+                                'currency' => $seat['Fare']['CurrencyCode'] ?? 'SAR',
+                                'description' => 'Seat ' . ($seat['SeatCode'] ?? ''),
+                                'row' => $seat['RowNo'] ?? '',
+                                'seat' => $seat['SeatNo'] ?? '',
+                                'type_text' => $seat['SeatType']['Text'] ?? '',
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+
+        return $this->apiResponse(false, __('Extra services retrieved successfully.'), $formattedServices, null, 200);
     }
 
     #[OA\Post(
@@ -449,6 +585,11 @@ class FlightController extends Controller
             // ✅ P1: Collect passport issue date — sent when IsPassportFullDetailsMandatory=true
             'passengers.*.passport_issue_date' => 'nullable|date_format:Y-m-d',
             'passengers.*.passport_image' => 'nullable',
+            // Ancillaries
+            'passengers.*.extra_services_outbound' => 'nullable|array',
+            'passengers.*.extra_services_inbound' => 'nullable|array',
+            'passengers.*.seat_outbound' => 'nullable|array',
+            'passengers.*.seat_inbound' => 'nullable|array',
             'airline_code' => 'nullable|string',
             'airline_name' => 'nullable|string',
             'flight_number' => 'nullable|string',
@@ -999,48 +1140,6 @@ class FlightController extends Controller
         return $this->apiResponse(false, __('Booking cancelled successfully.'), $result, null, 200);
     }
 
-    #[OA\Post(
-        path: "/api/flights/extra-services",
-        summary: "الخدمات الإضافية (Get extra services)",
-        operationId: "getExtraServices",
-        description: "استعراض الخدمات الإضافية المتاحة (كالأمتعة والوجبات) للحجز. (Retrieve available extra services like baggage and meals).",
-        tags: ["Flights"],
-        requestBody: new OA\RequestBody(
-            required: true,
-            content: new OA\JsonContent(
-                required: ["session_id", "fare_source_code"],
-                properties: [
-                    new OA\Property(property: "session_id", type: "string", example: "7906efba-09db..."),
-                    new OA\Property(property: "fare_source_code", type: "string", example: "MTY2ODE2Njg2Ml8yNjA5Mzk")
-                ]
-            )
-        ),
-        responses: [
-            new OA\Response(
-                response: 200,
-                description: "تم استرجاع الخدمات الإضافية بنجاح",
-                content: new OA\JsonContent(properties: [new OA\Property(property: "error", type: "boolean", example: false)])
-            )
-        ]
-    )]
-    public function getExtraServices(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'session_id' => 'required|string',
-            'fare_source_code' => 'required|string',
-        ]);
-
-        if ($validator->fails())
-            return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
-
-        $result = $this->traveloproService->getExtraServices($request->all());
-
-        if (isset($result['status']) && $result['status'] === 'error') {
-            return $this->apiResponse(true, $result['message'], $result['details'] ?? null, null, 500);
-        }
-
-        return $this->apiResponse(false, __('Extra services retrieved successfully.'), $result, null, 200);
-    }
 
     #[OA\Post(
         path: "/api/flights/fare-rules",

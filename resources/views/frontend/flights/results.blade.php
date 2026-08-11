@@ -243,7 +243,7 @@
                                         <span class="amount">{{ number_format($price, 2) }}</span>
                                         <span class="currency">{{ $currency }}</span>
                                     </div>
-                                    <a href="{{ route('flights.booking.form', array_merge($searchParams, ['fare_source_code' => $fareInfo['FareSourceCode'], 'session_id' => $results['AirSearchResponse']['AirSearchResult']['SessionId'], 'total_amount' => $price])) }}" class="btn btn-primary btn-sm">
+                                    <a href="{{ route('flights.booking.form', array_merge($searchParams, ['fare_source_code' => $fareInfo['FareSourceCode'], 'session_id' => $results['AirSearchResponse']['session_id'] ?? ($results['AirSearchResponse']['AirSearchResult']['SessionId'] ?? ''), 'total_amount' => $price])) }}" class="btn btn-primary btn-sm">
                                         {{ __('Select') }}
                                     </a>
                                 </div>
@@ -315,12 +315,25 @@ document.addEventListener('DOMContentLoaded', function() {
         airlines[code] = (airlines[code] || 0) + 1;
     });
 
+    const airlineNames = {
+        "XY": "Flynas (طيران ناس)", "SV": "Saudia (الخطوط السعودية)", "F3": "Flyadeal (طيران أديل)",
+        "EK": "Emirates (الإمارات)", "EY": "Etihad (الاتحاد)", "QR": "Qatar Airways (القطرية)",
+        "FZ": "Flydubai (فلاي دبي)", "G9": "Air Arabia (العربية)", "MS": "EgyptAir (مصر للطيران)",
+        "J9": "Jazeera (الجزيرة)", "RJ": "Royal Jordanian (الملكية الأردنية)", "ME": "MEA",
+        "TK": "Turkish Airlines (التركية)", "PC": "Pegasus (بيغاسوس)", "WY": "Oman Air (العماني)",
+        "GF": "Gulf Air (الخليج)", "KU": "Kuwait Airways (الكويتية)", "W6": "Wizz Air",
+        "BA": "British Airways", "LH": "Lufthansa", "AF": "Air France", "KL": "KLM",
+        "AA": "American Airlines", "DL": "Delta", "UA": "United", "6E": "IndiGo",
+        "AI": "Air India", "PK": "PIA", "BG": "Biman", "UL": "SriLankan", "SQ": "Singapore Airlines"
+    };
+
     Object.keys(airlines).forEach(code => {
         const div = document.createElement('label');
         div.className = 'checkbox-label';
+        const name = airlineNames[code] || code;
         div.innerHTML = `
             <input type="checkbox" class="filter-airline" value="${code}" checked>
-            <span>${code} (${airlines[code]})</span>
+            <span>${name} (${airlines[code]})</span>
         `;
         airlinesList.appendChild(div);
     });
