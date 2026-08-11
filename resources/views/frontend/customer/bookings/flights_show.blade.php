@@ -998,6 +998,36 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
                                     </div>
                                 @endif
                             </div>
+
+                            @php
+                                $extraServices = $booking->flightBooking->extra_services ?? [];
+                                $paxExtras = $extraServices[$loop->index]['extra_services_details'] ?? [];
+                            @endphp
+
+                            @if(!empty($paxExtras))
+                                <div class="passenger-extra-services" style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed rgba(0,0,0,0.1);">
+                                    <h6 style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px; font-weight: 700;">
+                                        <i class="fas fa-plus-circle me-1" style="color: var(--primary-blue)"></i> {{ __('Extra Services') }}
+                                    </h6>
+                                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                        @foreach($paxExtras as $extra)
+                                            <div class="extra-service-badge" style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                                                @php
+                                                    $icon = 'fa-box';
+                                                    if (stripos($extra['type'] ?? '', 'baggage') !== false) $icon = 'fa-suitcase-rolling';
+                                                    if (stripos($extra['type'] ?? '', 'meal') !== false) $icon = 'fa-utensils';
+                                                    if (stripos($extra['type'] ?? '', 'seat') !== false) $icon = 'fa-chair';
+                                                @endphp
+                                                <i class="fas {{ $icon }}" style="color: var(--primary-blue);"></i>
+                                                <span style="color: #475569;">{{ $extra['desc'] ?? $extra['code'] ?? 'Extra Service' }}</span>
+                                                @if(isset($extra['price']) && $extra['price'] > 0)
+                                                    <span style="color: #10b981; margin-left: auto;">+{{ $extra['price'] }} {{ $extra['currency'] ?? 'SAR' }}</span>
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
                         </div>
                     @empty
                         <div class="p-4 text-center text-muted">

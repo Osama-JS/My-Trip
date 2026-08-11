@@ -183,5 +183,8 @@
             </div>
         </div>
         @endif
+        
+        <!-- INJECT EXTRA SERVICES HERE -->
+        <div id="passenger-extras-{{ $index }}"></div>
     </div>
 </div>

@@ -135,6 +135,35 @@
                                         @endif
                                     </div>
                                 </div>
+
+                                @php
+                                    $extraServices = $flightBooking->extra_services ?? [];
+                                    $paxExtras = $extraServices[$index]['extra_services_details'] ?? [];
+                                @endphp
+
+                                @if(!empty($paxExtras))
+                                <div class="mt-4 pt-3 border-top dashed">
+                                    <h6 class="text-primary mb-3"><i class="fas fa-plus-circle me-1"></i> {{ __('Extra Services') }}</h6>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @foreach($paxExtras as $extra)
+                                            <div class="badge badge-outline-primary d-flex align-items-center gap-2 p-2" style="font-size: 0.85rem;">
+                                                @php
+                                                    $icon = 'fa-box';
+                                                    if (stripos($extra['type'] ?? '', 'baggage') !== false) $icon = 'fa-suitcase-rolling';
+                                                    if (stripos($extra['type'] ?? '', 'meal') !== false) $icon = 'fa-utensils';
+                                                    if (stripos($extra['type'] ?? '', 'seat') !== false) $icon = 'fa-chair';
+                                                @endphp
+                                                <i class="fas {{ $icon }}"></i>
+                                                <span>{{ $extra['desc'] ?? $extra['code'] ?? 'Service' }}</span>
+                                                @if(isset($extra['price']) && $extra['price'] > 0)
+                                                    <strong class="text-success ms-2">+{{ $extra['price'] }} {{ $extra['currency'] ?? 'SAR' }}</strong>
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                                @endif
+
                             </div>
                         </div>
                     </div>

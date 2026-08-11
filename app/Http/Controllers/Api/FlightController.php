@@ -746,6 +746,7 @@ class FlightController extends Controller
                         'itinerary_data' => $bookingResult, // Save full result for fallback display logic
                         'total_amount'   => $totalAmount,
                         'currency'       => 'SAR',
+                        'extra_services' => $request->passengers ?? [],
                     ]);
                     Log::info('FlightBooking details saved.', ['booking_id' => $booking->id]);
                 } catch (\Exception $e) {
@@ -1004,6 +1005,7 @@ class FlightController extends Controller
         
         $booking->load(['passengers', 'flightBooking']);
         $result['local_passengers'] = $booking->passengers;
+        $result['local_extra_services'] = $booking->flightBooking->extra_services ?? [];
         
         $originCode = $booking->flightBooking->origin ?? null;
         $destCode = $booking->flightBooking->destination ?? null;
