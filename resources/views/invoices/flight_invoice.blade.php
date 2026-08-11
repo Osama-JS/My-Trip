@@ -107,12 +107,9 @@
         }
         .pnr-status {
             display: inline-block;
-            background: #041741;
-            color: #f2cb57;
-            padding: 4px 16px;
-            border-radius: 20px;
-            font-size: 10px;
-            font-weight: 800;
+            color: #16a34a;
+            font-size: 11px;
+            font-weight: 900;
             text-transform: uppercase;
             letter-spacing: 2px;
             margin-top: 8px;
@@ -179,11 +176,8 @@
         }
         .flight-badge {
             display: inline-block;
-            background: #f2cb57;
-            color: #041741;
-            padding: 3px 14px;
-            border-radius: 20px;
-            font-size: 10px;
+            color: #f2cb57;
+            font-size: 14px;
             font-weight: 900;
             letter-spacing: 1px;
             margin-top: 4px;
@@ -430,7 +424,13 @@
                         <div class="airport-time" dir="ltr">{{ $depDate }}</div>
                     </td>
                     <td width="30%" align="center" valign="middle">
-                        <div style="font-size: 11px; color: rgba(255,255,255,0.35); margin-bottom: 4px;">──────  ✈  ──────</div>
+                        <div style="font-size: 11px; color: rgba(255,255,255,0.35); margin-bottom: 4px;">
+                            ──────
+                            <svg width="14" height="14" viewBox="0 0 24 24" style="vertical-align: middle; margin: 0 4px;">
+                                <path fill="rgba(255,255,255,0.35)" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+                            </svg>
+                            ──────
+                        </div>
                         <div class="flight-badge">{{ $flightNo }}</div>
                     </td>
                     <td width="35%" align="center" valign="middle">
@@ -441,7 +441,11 @@
                 </tr>
             </table>
             <div class="baggage-strip">
-                🧳 {{ __('Baggage Allowance') }}: <strong>{{ is_array($baggageInfo) ? implode(', ', $baggageInfo) : $baggageInfo }}</strong>
+                <svg width="12" height="12" viewBox="0 0 24 24" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 4px;">
+                    <path fill="rgba(255,255,255,0.6)" d="M17 6h-2V4c0-1.1-.9-2-2-2h-2c-1.1 0-2 .9-2 2v2H7c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zM10 4h4v2h-4V4zm7 15H7V8h10v11z"/>
+                    <path fill="rgba(255,255,255,0.6)" d="M9 10h2v7H9zm4 0h2v7h-2z"/>
+                </svg>
+                {{ __('Baggage Allowance') }}: <strong>{{ is_array($baggageInfo) ? implode(', ', $baggageInfo) : $baggageInfo }}</strong>
             </div>
         </div>
 
@@ -449,8 +453,8 @@
         <table style="margin-bottom: 26px;">
             <tr>
                 <td width="48%" valign="top">
-                    <div style="background: #fafbfc; border: 1px solid #f0f1f5; border-radius: 8px; padding: 18px; min-height: 140px;">
-                        <div class="section-title" style="margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px dashed #e2e8f0; font-size: 13px; color: #041741;">
+                    <div style="padding: 18px; min-height: 140px;">
+                        <div class="section-title" style="margin-bottom: 14px; font-size: 13px; color: #041741; border: none;">
                             <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f464.png" width="14" height="14" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 6px;">
                             {{ __('Passenger Details') }}
                         </div>
@@ -478,8 +482,8 @@
                 </td>
                 <td width="4%"></td>
                 <td width="48%" valign="top">
-                    <div style="background: #fffcf2; border: 1px solid #f9eed3; border-radius: 8px; padding: 18px; min-height: 140px;">
-                        <div class="section-title" style="margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px dashed #f2cb57; font-size: 13px; color: #041741;">
+                    <div style="padding: 18px; min-height: 140px;">
+                        <div class="section-title" style="margin-bottom: 14px; font-size: 13px; color: #041741; border: none;">
                             <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f4b3.png" width="14" height="14" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 6px;">
                             {{ __('Payment Summary') }}
                         </div>
