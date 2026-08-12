@@ -447,30 +447,30 @@
         </div>
 
         <!-- ─── FLIGHT ROUTE CARD ─── -->
-        @if(!empty($legs))
-            @foreach($legs as $legIndex => $segments)
-                @php
-                    $firstSeg = $segments[0];
-                    $lastSeg = end($segments);
-                    $depCode = $firstSeg['DepartureAirportLocationCode'] ?? ($firstSeg['DepartureAirport']['LocationCode'] ?? '');
-                    $arrCode = $lastSeg['ArrivalAirportLocationCode'] ?? ($lastSeg['ArrivalAirport']['LocationCode'] ?? '');
-                    
-                    $depAir = \App\Models\Airport::where('airport_code', $depCode)->first();
-                    $arrAir = \App\Models\Airport::where('airport_code', $arrCode)->first();
-                    $depCity = $depAir ? (app()->getLocale() == 'ar' ? $depAir->city_ar : $depAir->city) : $depCode;
-                    $arrCity = $arrAir ? (app()->getLocale() == 'ar' ? $arrAir->city_ar : $arrAir->city) : $arrCode;
+        <div class="route-card">
+            @if(count($legs) > 0)
+                @foreach($legs as $legIndex => $segments)
+                    @php
+                        $firstSeg = $segments[0];
+                        $lastSeg = end($segments);
+                        $depCode = $firstSeg['DepartureAirportLocationCode'] ?? ($firstSeg['DepartureAirport']['LocationCode'] ?? '');
+                        $arrCode = $lastSeg['ArrivalAirportLocationCode'] ?? ($lastSeg['ArrivalAirport']['LocationCode'] ?? '');
+                        
+                        $depAir = \App\Models\Airport::where('airport_code', $depCode)->first();
+                        $arrAir = \App\Models\Airport::where('airport_code', $arrCode)->first();
+                        $depCity = $depAir ? (app()->getLocale() == 'ar' ? $depAir->city_ar : $depAir->city) : $depCode;
+                        $arrCity = $arrAir ? (app()->getLocale() == 'ar' ? $arrAir->city_ar : $arrAir->city) : $arrCode;
 
-                    $depDate = isset($firstSeg['DepartureDateTime']) ? \Carbon\Carbon::parse($firstSeg['DepartureDateTime'])->translatedFormat('d M Y, H:i') : 'N/A';
-                    $arrDate = isset($lastSeg['ArrivalDateTime']) ? \Carbon\Carbon::parse($lastSeg['ArrivalDateTime'])->translatedFormat('d M Y, H:i') : 'N/A';
-                    $flightNo = ($firstSeg['MarketingAirlineCode'] ?? '') . ' ' . ($firstSeg['FlightNumber'] ?? '');
-                @endphp
-                <div class="route-card">
+                        $depDate = isset($firstSeg['DepartureDateTime']) ? \Carbon\Carbon::parse($firstSeg['DepartureDateTime'])->translatedFormat('d M Y, H:i') : 'N/A';
+                        $arrDate = isset($lastSeg['ArrivalDateTime']) ? \Carbon\Carbon::parse($lastSeg['ArrivalDateTime'])->translatedFormat('d M Y, H:i') : 'N/A';
+                        $flightNo = ($firstSeg['MarketingAirlineCode'] ?? '') . ' ' . ($firstSeg['FlightNumber'] ?? '');
+                    @endphp
                     @if(count($legs) > 1)
                         <div style="font-size: 11px; color: #f2cb57; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; border-bottom: 1px dashed rgba(255,255,255,0.2); padding-bottom: 6px;">
                             {{ $legIndex == 0 ? __('Outbound Flight') : __('Return Flight') }}
                         </div>
                     @endif
-                    <table width="100%">
+                    <table width="100%" style="margin-bottom: 20px;">
                         <tr>
                             <td width="35%" align="center" valign="middle">
                                 <div class="airport-code">{{ $depCode }}</div>
@@ -503,9 +503,35 @@
                         </svg>
                         {{ __('Baggage Allowance') }}: <strong>{{ is_array($baggageInfo) ? implode(', ', $baggageInfo) : $baggageInfo }}</strong>
                     </div>
-                </div>
-            @endforeach
-        @endif
+                @endforeach
+            @else
+                <!-- FALLBACK FOR OLD BOOKINGS WITHOUT ITINERARY_DATA -->
+                <table width="100%">
+                    <tr>
+                        <td width="35%" align="center" valign="middle">
+                            <div class="airport-code">{{ $fb->origin ?? 'N/A' }}</div>
+                            <div class="airport-label">{{ __('Departure') }}</div>
+                            <div class="airport-time" dir="ltr">{{ $fb->departure_date ?? 'N/A' }}</div>
+                        </td>
+                        <td width="30%" align="center" valign="middle">
+                            <div style="font-size: 11px; color: rgba(255,255,255,0.35); margin-bottom: 4px;">
+                                ──────
+                                <svg width="14" height="14" viewBox="0 0 24 24" style="vertical-align: middle; margin: 0 4px;">
+                                    <path fill="rgba(255,255,255,0.35)" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+                                </svg>
+                                ──────
+                            </div>
+                            <div class="flight-badge">{{ $fb->airline_name ?? 'N/A' }}</div>
+                        </td>
+                        <td width="35%" align="center" valign="middle">
+                            <div class="airport-code">{{ $fb->destination ?? 'N/A' }}</div>
+                            <div class="airport-label">{{ __('Arrival') }}</div>
+                            <div class="airport-time" dir="ltr">{{ $fb->return_date ?? 'N/A' }}</div>
+                        </td>
+                    </tr>
+                </table>
+            @endif
+        </div>
 
         <!-- ─── DETAILS GRID ─── -->
         <table style="margin-bottom: 26px;">
