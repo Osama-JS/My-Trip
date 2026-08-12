@@ -733,8 +733,8 @@
                             <strong style="color: #041741;">{{ __('Extra Services') }}:</strong>
                             @foreach($paxExtras as $extra)
                                 <span style="background: #f3f4f6; padding: 2px 6px; border-radius: 4px; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 4px; display: inline-block; margin-bottom: 4px; border: 1px solid #e5e7eb;">
-                                    {{ $extra['desc'] ?? $extra['code'] ?? 'Extra Service' }}
-                                    @if(isset($extra['price']) && $extra['price'] > 0)
+                                    {{ $extra['description'] ?? $extra['desc'] ?? $extra['code'] ?? 'Extra Service' }}
+                                    @if(isset($extra['price']) && (float)$extra['price'] > 0)
                                         <span style="color: #10b981; font-weight: 700;">(+{{ $extra['price'] }} {{ $extra['currency'] ?? 'SAR' }})</span>
                                     @endif
                                 </span>
@@ -753,6 +753,21 @@
             <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f4b8.png" width="14" height="14" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 4px;">
             {{ __('Fare Breakdown') }}
         </div>
+        @php
+            $totalExtraPrice = 0;
+            $extraServicesData = $booking->flightBooking->extra_services ?? [];
+            if (is_string($extraServicesData)) $extraServicesData = json_decode($extraServicesData, true);
+            foreach ($booking->passengers as $paxIndex => $pax) {
+                $paxExtras = $extraServicesData[$paxIndex]['extra_services_details'] ?? [];
+                foreach ($paxExtras as $extra) {
+                    if (isset($extra['price'])) {
+                        $totalExtraPrice += (float)$extra['price'];
+                    }
+                }
+            }
+            $baseFare = max(0, $booking->total_amount - $totalExtraPrice);
+        @endphp
+
         <table class="p-table">
             <thead>
                 <tr>
@@ -772,9 +787,20 @@
                         </div>
                     </td>
                     <td style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }}; font-weight: 800; color: #1a1f36; font-size: 14px; vertical-align: middle;">
-                        {{ number_format($booking->total_amount, 2) }} {{ $booking->currency }}
+                        {{ number_format($baseFare, 2) }} {{ $booking->currency }}
                     </td>
                 </tr>
+                @if($totalExtraPrice > 0)
+                <tr>
+                    <td>
+                        <div style="font-weight: 700; color: #1a1f36;">{{ __('Extra Services') }}</div>
+                        <div style="font-size:10px; color:#9ca3af; margin-top:2px;">{{ __('Baggage, Meals, Seats') }}</div>
+                    </td>
+                    <td style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }}; font-weight: 800; color: #1a1f36; font-size: 14px; vertical-align: middle;">
+                        {{ number_format($totalExtraPrice, 2) }} {{ $booking->currency }}
+                    </td>
+                </tr>
+                @endif
                 <tr>
                     <td style="background: #041741; color: #ffffff; font-size: 13px; font-weight: 700; padding: 14px 18px; text-transform: uppercase; letter-spacing: 1px;">
                         {{ __('Total Paid') }}

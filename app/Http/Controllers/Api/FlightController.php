@@ -717,36 +717,49 @@ class FlightController extends Controller
                     // Build structured segments from request data for invoice rendering
                     // The request contains departure_date/return_date as full ISO datetimes with time
                     $requestSegments = [];
-                    $originReq = $request->origin ?? ($originDest['airportOriginCode'] ?? 'N/A');
-                    $destReq   = $request->destination ?? ($originDest['airportDestinationCode'] ?? 'N/A');
-                    $depDt     = $request->departure_date ?? now()->toIso8601String();
-                    $retDt     = $request->return_date ?? null;
-                    $flightNo  = $request->flight_number ?? 'N/A';
-                    $airCode   = $request->airline_code ?? ($itinerary['ValidatingAirlineCode'] ?? 'N/A');
+                    // Try to fetch segments from validateFare log
+                    $validateLog = \App\Models\FlightApiLog::where('action', 'validateFare')
+                        ->where(function($q) use ($request) {
+                            $q->whereJsonContains('request_payload->session_id', $request->session_id)
+                              ->orWhere('request_payload', 'like', '%"session_id":"' . $request->session_id . '"%')
+                              ->orWhere('request_payload', 'like', "%\"session_id\":\"" . $request->session_id . "\"%");
+                        })
+                        ->latest()->first();
+                    if ($validateLog) {
+                        $valRes = is_string($validateLog->response_payload) ? json_decode($validateLog->response_payload, true) : $validateLog->response_payload;
+                        $apiResult = $valRes['AirRevalidateResponse']['AirRevalidateResult'] ?? [];
+                        $fareItineraries = $apiResult['FareItineraries']['FareItinerary'] ?? [];
+                        if (isset($fareItineraries['OriginDestinationOptions'])) {
+                            $fareItineraries = [$fareItineraries];
+                        }
+                        $fi = $fareItineraries[0] ?? [];
+                        $odo = $fi['OriginDestinationOptions'] ?? [];
+                        foreach ($odo as $wrapper) {
+                            $odOpts = $wrapper['OriginDestinationOption'] ?? [];
+                            if (!isset($odOpts[0])) $odOpts = [$odOpts];
+                            $legSegs = [];
+                            foreach ($odOpts as $opt) {
+                                $seg = $opt['FlightSegment'] ?? null;
+                                if ($seg) $legSegs[] = $seg;
+                            }
+                            if (!empty($legSegs)) $requestSegments[] = ['legs' => $legSegs];
+                        }
+                    }
 
-                    // Outbound leg
-                    $requestSegments[] = [
-                        'legs' => [
-                            [
-                                'DepartureAirportLocationCode' => $originReq,
-                                'ArrivalAirportLocationCode'   => $destReq,
-                                'DepartureDateTime'            => $depDt,
-                                'ArrivalDateTime'              => null, // unknown at booking time
-                                'FlightNumber'                 => $flightNo,
-                                'MarketingAirlineCode'         => $airCode,
-                                'MarketingAirlineName'         => $request->airline_name ?? $airCode,
-                            ]
-                        ]
-                    ];
+                    if (empty($requestSegments)) {
+                        $originReq = $request->origin ?? ($originDest['airportOriginCode'] ?? 'N/A');
+                        $destReq   = $request->destination ?? ($originDest['airportDestinationCode'] ?? 'N/A');
+                        $depDt     = $request->departure_date ?? now()->toIso8601String();
+                        $retDt     = $request->return_date ?? null;
+                        $flightNo  = $request->flight_number ?? 'N/A';
+                        $airCode   = $request->airline_code ?? ($itinerary['ValidatingAirlineCode'] ?? 'N/A');
 
-                    // Return leg (if round-trip)
-                    if ($retDt) {
                         $requestSegments[] = [
                             'legs' => [
                                 [
-                                    'DepartureAirportLocationCode' => $destReq,
-                                    'ArrivalAirportLocationCode'   => $originReq,
-                                    'DepartureDateTime'            => $retDt,
+                                    'DepartureAirportLocationCode' => $originReq,
+                                    'ArrivalAirportLocationCode'   => $destReq,
+                                    'DepartureDateTime'            => $depDt,
                                     'ArrivalDateTime'              => null,
                                     'FlightNumber'                 => $flightNo,
                                     'MarketingAirlineCode'         => $airCode,
@@ -754,6 +767,22 @@ class FlightController extends Controller
                                 ]
                             ]
                         ];
+
+                        if ($retDt) {
+                            $requestSegments[] = [
+                                'legs' => [
+                                    [
+                                        'DepartureAirportLocationCode' => $destReq,
+                                        'ArrivalAirportLocationCode'   => $originReq,
+                                        'DepartureDateTime'            => $retDt,
+                                        'ArrivalDateTime'              => null,
+                                        'FlightNumber'                 => $flightNo,
+                                        'MarketingAirlineCode'         => $airCode,
+                                        'MarketingAirlineName'         => $request->airline_name ?? $airCode,
+                                    ]
+                                ]
+                            ];
+                        }
                     }
 
                     \App\Models\FlightBooking::create([
