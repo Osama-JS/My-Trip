@@ -714,36 +714,63 @@ class FlightController extends Controller
                 try {
                     $originDest = $request->OriginDestinationInfo[0] ?? [];
                     
-                    // Fallback to extract route from result if OriginDestinationInfo is missing or incomplete
-                    $extractedOrigin = null;
-                    $extractedDest = null;
-                    if ($itinerary && isset($itinerary['OriginDestinationOptions']['OriginDestinationOption'])) {
-                        $options = $itinerary['OriginDestinationOptions']['OriginDestinationOption'];
-                        if (!isset($options[0])) $options = [$options]; // Normalize
-                        $firstSegs = $options[0]['FlightSegment'] ?? [];
-                        if (!isset($firstSegs[0])) $firstSegs = [$firstSegs];
-                        $extractedOrigin = $firstSegs[0]['DepartureAirportLocationCode'] ?? null;
-                        
-                        $lastSegs = end($options)['FlightSegment'] ?? [];
-                        if (!isset($lastSegs[0])) $lastSegs = [$lastSegs];
-                        $extractedDest = end($lastSegs)['ArrivalAirportLocationCode'] ?? null;
+                    // Build structured segments from request data for invoice rendering
+                    // The request contains departure_date/return_date as full ISO datetimes with time
+                    $requestSegments = [];
+                    $originReq = $request->origin ?? ($originDest['airportOriginCode'] ?? 'N/A');
+                    $destReq   = $request->destination ?? ($originDest['airportDestinationCode'] ?? 'N/A');
+                    $depDt     = $request->departure_date ?? now()->toIso8601String();
+                    $retDt     = $request->return_date ?? null;
+                    $flightNo  = $request->flight_number ?? 'N/A';
+                    $airCode   = $request->airline_code ?? ($itinerary['ValidatingAirlineCode'] ?? 'N/A');
+
+                    // Outbound leg
+                    $requestSegments[] = [
+                        'legs' => [
+                            [
+                                'DepartureAirportLocationCode' => $originReq,
+                                'ArrivalAirportLocationCode'   => $destReq,
+                                'DepartureDateTime'            => $depDt,
+                                'ArrivalDateTime'              => null, // unknown at booking time
+                                'FlightNumber'                 => $flightNo,
+                                'MarketingAirlineCode'         => $airCode,
+                                'MarketingAirlineName'         => $request->airline_name ?? $airCode,
+                            ]
+                        ]
+                    ];
+
+                    // Return leg (if round-trip)
+                    if ($retDt) {
+                        $requestSegments[] = [
+                            'legs' => [
+                                [
+                                    'DepartureAirportLocationCode' => $destReq,
+                                    'ArrivalAirportLocationCode'   => $originReq,
+                                    'DepartureDateTime'            => $retDt,
+                                    'ArrivalDateTime'              => null,
+                                    'FlightNumber'                 => $flightNo,
+                                    'MarketingAirlineCode'         => $airCode,
+                                    'MarketingAirlineName'         => $request->airline_name ?? $airCode,
+                                ]
+                            ]
+                        ];
                     }
-                    
+
                     \App\Models\FlightBooking::create([
                         'user_id'        => Auth::id(),
                         'booking_id'     => $booking->id,
-                        'origin'         => $request->origin ?? ($originDest['airportOriginCode'] ?? ($extractedOrigin ?? 'N/A')),
-                        'destination'    => $request->destination ?? ($originDest['airportDestinationCode'] ?? ($extractedDest ?? 'N/A')),
-                        'departure_date' => $request->departure_date ?? ($originDest['departureDate'] ?? now()->toDateString()),
-                        'return_date'    => $request->return_date ?? ($originDest['returnDate'] ?? null),
+                        'origin'         => $originReq,
+                        'destination'    => $destReq,
+                        'departure_date' => $depDt,
+                        'return_date'    => $retDt,
                         'adults'         => (int)($request->adults ?? 1),
                         'childs'         => (int)($request->childs ?? 0),
                         'infants'        => (int)($request->infants ?? 0),
                         'flight_class'   => $request->class ?? 'Economy',
-                        'flight_number' => $request->flight_number,
-                        'airline_code'   => $request->airline_code ?? ($itinerary['ValidatingAirlineCode'] ?? null),
-                        'airline_name'   => $request->airline_name ?? ($itinerary['ValidatingAirlineCode'] ?? null),
-                        'itinerary_data' => $bookingResult, // Save full result for fallback display logic
+                        'flight_number'  => $flightNo,
+                        'airline_code'   => $airCode,
+                        'airline_name'   => $request->airline_name ?? $airCode,
+                        'itinerary_data' => ['segments' => $requestSegments],
                         'total_amount'   => $totalAmount,
                         'currency'       => 'SAR',
                         'extra_services' => $request->passengers ?? [],

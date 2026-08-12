@@ -368,41 +368,126 @@
             $qrDataEncoded = urlencode($qrData);
 
             $legs = [];
-            $itinData = $fb->itinerary_data ?? [];
-            if (is_string($itinData)) {
-                $itinData = json_decode($itinData, true);
-            }
-            if (isset($itinData['FareItineraries']['FareItinerary']['OriginDestinationOptions'])) {
-                $options = $itinData['FareItineraries']['FareItinerary']['OriginDestinationOptions'];
-                if (isset($options['OriginDestinationOption']['FlightSegment'])) {
-                    $options = [$options['OriginDestinationOption']];
-                } else {
-                    $options = $options['OriginDestinationOption'] ?? [];
+            $baggageInfo = null;
+
+            // ── Primary: read from itinerary_data['segments'] (saved at booking time) ──
+            $itinData = $fb->itinerary_data ?? null;
+            if (is_string($itinData)) $itinData = json_decode($itinData, true);
+
+            if (!empty($itinData['segments'])) {
+                // New format: itinerary_data = ['segments' => [['legs' => [...]], ...]]
+                foreach ($itinData['segments'] as $legData) {
+                    $legSegs = $legData['legs'] ?? [];
+                    if (!empty($legSegs)) {
+                        $legs[] = $legSegs;
+                    }
                 }
-                
-                foreach($options as $legIndex => $opt) {
+            } elseif (!empty($itinData['FareItineraries']['FareItinerary']['OriginDestinationOptions'])) {
+                // Legacy format from FareItineraries
+                $options = $itinData['FareItineraries']['FareItinerary']['OriginDestinationOptions'];
+                $options = isset($options['OriginDestinationOption']['FlightSegment'])
+                    ? [$options['OriginDestinationOption']]
+                    : ($options['OriginDestinationOption'] ?? []);
+                // Handle numeric outer wrapper e.g. [0 => ['OriginDestinationOption' => [...]]]
+                if (isset($options[0]['OriginDestinationOption'])) {
+                    $flat = [];
+                    foreach ($options as $wrapper) {
+                        $odOpts = $wrapper['OriginDestinationOption'] ?? [];
+                        if (!isset($odOpts[0])) $odOpts = [$odOpts];
+                        foreach ($odOpts as $opt) {
+                            $flat[] = $opt;
+                        }
+                    }
+                    $options = $flat;
+                }
+                foreach ($options as $opt) {
                     $segs = $opt['FlightSegment'] ?? $opt;
                     $legSegments = [];
-                    if (isset($segs['FlightNumber'])) { 
-                        $legSegments[] = $segs; 
-                    } else { 
-                        foreach($segs as $s) { 
-                            $legSegments[] = $s['FlightSegment'] ?? $s; 
-                        } 
+                    if (isset($segs['FlightNumber'])) {
+                        $legSegments[] = $segs;
+                    } else {
+                        foreach ($segs as $s) {
+                            $legSegments[] = $s['FlightSegment'] ?? $s;
+                        }
                     }
-                    if (!empty($legSegments)) {
-                        $legs[] = $legSegments;
-                    }
+                    if (!empty($legSegments)) $legs[] = $legSegments;
                 }
-
-                if (isset($itinData['FareItineraries']['FareItinerary']['AirItineraryPricingInfo']['PTC_FareBreakdowns']['PTC_FareBreakdown']['PassengerFare']['Baggage'])) {
-                    $baggageInfo = current((array)$itinData['FareItineraries']['FareItinerary']['AirItineraryPricingInfo']['PTC_FareBreakdowns']['PTC_FareBreakdown']['PassengerFare']['Baggage']);
-                } elseif (isset($itinData['FareItineraries']['FareItinerary']['AirItineraryPricingInfo']['PTC_FareBreakdowns']['PTC_FareBreakdown'][0]['PassengerFare']['Baggage'])) {
-                    $baggageInfo = current((array)$itinData['FareItineraries']['FareItinerary']['AirItineraryPricingInfo']['PTC_FareBreakdowns']['PTC_FareBreakdown'][0]['PassengerFare']['Baggage']);
+            } elseif (!empty($itinData) && isset($itinData[0]['OriginDestinationOption'])) {
+                // Search response format: array of [{OriginDestinationOption:[{FlightSegment:{...}}]}]
+                foreach ($itinData as $wrapper) {
+                    $odOpts = $wrapper['OriginDestinationOption'] ?? [];
+                    if (!isset($odOpts[0])) $odOpts = [$odOpts];
+                    $legSegments = [];
+                    foreach ($odOpts as $opt) {
+                        $seg = $opt['FlightSegment'] ?? null;
+                        if ($seg) $legSegments[] = $seg;
+                    }
+                    if (!empty($legSegments)) $legs[] = $legSegments;
                 }
             }
 
-            if (!$baggageInfo) $baggageInfo = "1x 23KG (Checked) + 1x 7KG (Cabin)";
+            // ── Fallback: build from FlightBooking basic fields ──────────────
+            if (empty($legs)) {
+                $depDt = null;
+                try {
+                    $rawDep = $fb->getOriginal('departure_date') ?? $fb->departure_date;
+                    if ($rawDep) $depDt = \Carbon\Carbon::parse($rawDep)->toIso8601String();
+                } catch (\Exception $e) {}
+
+                $outSeg = [
+                    'DepartureAirportLocationCode' => $fb->origin ?? 'N/A',
+                    'ArrivalAirportLocationCode'   => $fb->destination ?? 'N/A',
+                    'DepartureDateTime'            => $depDt,
+                    'ArrivalDateTime'              => null,
+                    'FlightNumber'                 => $fb->flight_number ?? 'N/A',
+                    'MarketingAirlineCode'         => $fb->airline_code ?? 'N/A',
+                    'MarketingAirlineName'         => $fb->airline_name ?? 'N/A',
+                ];
+                $legs[] = [$outSeg];
+
+                if ($fb->return_date) {
+                    $retDt = null;
+                    try { $retDt = \Carbon\Carbon::parse($fb->getOriginal('return_date'))->toIso8601String(); } catch (\Exception $e) {}
+                    $legs[] = [[
+                        'DepartureAirportLocationCode' => $fb->destination ?? 'N/A',
+                        'ArrivalAirportLocationCode'   => $fb->origin ?? 'N/A',
+                        'DepartureDateTime'            => $retDt,
+                        'ArrivalDateTime'              => null,
+                        'FlightNumber'                 => $fb->flight_number ?? 'N/A',
+                        'MarketingAirlineCode'         => $fb->airline_code ?? 'N/A',
+                        'MarketingAirlineName'         => $fb->airline_name ?? 'N/A',
+                    ]];
+                }
+            }
+
+            // ── Try to enrich from TripDetailsResponse if available ──────────
+            if (!empty($tripDetails['TripDetailsResponse']['TripDetailsResult']['TravelItinerary']['ItineraryInfo']['ReservationItems']['ReservationItem'])) {
+                $resItems = $tripDetails['TripDetailsResponse']['TripDetailsResult']['TravelItinerary']['ItineraryInfo']['ReservationItems']['ReservationItem'];
+                if (isset($resItems['FlightNumber'])) $resItems = [$resItems];
+                // Override legs with real API data which has correct times
+                $originCode = $fb->origin ?? null;
+                $destCode   = $fb->destination ?? null;
+                if ($fb->return_date && $originCode && $destCode) {
+                    $outbound = []; $return = []; $inReturn = false;
+                    foreach ($resItems as $seg) {
+                        if (!$inReturn) {
+                            $outbound[] = $seg;
+                            $arrCode = $seg['ArrivalAirport']['LocationCode'] ?? ($seg['ArrivalAirportLocationCode'] ?? '');
+                            if (strtoupper($arrCode) === strtoupper($destCode)) $inReturn = true;
+                        } else {
+                            $return[] = $seg;
+                        }
+                    }
+                    $legs = [];
+                    if (!empty($outbound)) $legs[] = $outbound;
+                    if (!empty($return))   $legs[] = $return;
+                } else {
+                    $legs = [$resItems];
+                }
+                $baggageInfo = ($resItems[0] ?? $resItems)['Baggage'] ?? null;
+            }
+
+            if (!$baggageInfo) $baggageInfo = '1x 23KG (Checked) + 1x 7KG (Cabin)';
         @endphp
 
         <!-- ─── PNR BLOCK ─── -->
