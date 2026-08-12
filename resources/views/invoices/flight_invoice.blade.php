@@ -351,6 +351,8 @@
         <!-- DATA EXTRACTION -->
         @php
             $fb = $booking->flightBooking;
+            $origin = $fb->origin ?? 'N/A';
+            $destination = $fb->destination ?? 'N/A';
             $airlineCode = $booking->airline_code;
             $baggageInfo = null;
 
