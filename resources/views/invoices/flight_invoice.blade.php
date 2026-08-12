@@ -369,6 +369,9 @@
 
             $legs = [];
             $itinData = $fb->itinerary_data ?? [];
+            if (is_string($itinData)) {
+                $itinData = json_decode($itinData, true);
+            }
             if (isset($itinData['FareItineraries']['FareItinerary']['OriginDestinationOptions'])) {
                 $options = $itinData['FareItineraries']['FareItinerary']['OriginDestinationOptions'];
                 if (isset($options['OriginDestinationOption']['FlightSegment'])) {
