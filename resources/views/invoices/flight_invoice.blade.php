@@ -5,7 +5,11 @@
     <title>{{ __('Flight Invoice') }} - {{ $booking->booking_reference }}</title>
     <style>
         @page {
-            margin: 0px;
+            margin-top: 35mm;
+            margin-bottom: 25mm;
+            margin-left: 10mm;
+            margin-right: 10mm;
+            header: page-header;
             footer: page-footer;
         }
 
@@ -16,7 +20,7 @@
             color: #2d3748;
             line-height: 1.7;
             font-size: 12px;
-            background: #edf0f4;
+            background: #ffffff;
             margin: 0;
             padding: 0;
         }
@@ -24,7 +28,6 @@
         /* ── Main Paper ── */
         .paper {
             background: #ffffff;
-            margin: 30px 35px;
             padding: 0;
             border-radius: 2px;
         }
@@ -310,35 +313,37 @@
 
 <div class="paper">
 
-    <!-- ═══ TOP BANNER ═══ -->
-    <div class="top-banner">
-        <table class="top-banner-inner">
-            <tr>
-                <td width="30%" valign="middle" style="text-align: {{ app()->getLocale() == 'ar' ? 'right' : 'left' }};">
-                    <div class="brand-name">{{ __('Fly Vio') }}</div>
-                    <div class="brand-tag">{{ __('Premium Travel Services') }}</div>
-                </td>
-                <td width="40%" valign="middle" style="text-align: center;">
-                    @php
-                        $siteLogoPath = \App\Models\Setting::get('site_logo', 'images/logo-full.png');
-                        if (filter_var($siteLogoPath, FILTER_VALIDATE_URL)) {
-                            $logoImgSrc = $siteLogoPath;
-                        } else {
-                            $logoImgSrc = public_path($siteLogoPath);
-                        }
-                    @endphp
-                    @if(filter_var($siteLogoPath, FILTER_VALIDATE_URL) || file_exists(public_path($siteLogoPath)))
-                        <img src="{{ $logoImgSrc }}" alt="Logo" style="max-height: 55px; max-width: 140px;">
-                    @endif
-                </td>
-                <td width="30%" valign="middle" style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }};">
-                    <div class="doc-type">{{ __('E-Ticket Receipt') }}</div>
-                    <div class="doc-date">{{ __('Issued on') }}: {{ $booking->created_at->translatedFormat('d M Y, H:i') }}</div>
-                </td>
-            </tr>
-        </table>
-    </div>
-    <div class="gold-strip"></div>
+    <!-- ═══ PAGE HEADER ═══ -->
+    <htmlpageheader name="page-header">
+        <div class="top-banner">
+            <table class="top-banner-inner">
+                <tr>
+                    <td width="30%" valign="middle" style="text-align: {{ app()->getLocale() == 'ar' ? 'right' : 'left' }};">
+                        <div class="brand-name">{{ __('Fly Vio') }}</div>
+                        <div class="brand-tag">{{ __('Premium Travel Services') }}</div>
+                    </td>
+                    <td width="40%" valign="middle" style="text-align: center;">
+                        @php
+                            $siteLogoPath = \App\Models\Setting::get('site_logo', 'images/logo-full.png');
+                            if (filter_var($siteLogoPath, FILTER_VALIDATE_URL)) {
+                                $logoImgSrc = $siteLogoPath;
+                            } else {
+                                $logoImgSrc = public_path($siteLogoPath);
+                            }
+                        @endphp
+                        @if(filter_var($siteLogoPath, FILTER_VALIDATE_URL) || file_exists(public_path($siteLogoPath)))
+                            <img src="{{ $logoImgSrc }}" alt="Logo" style="max-height: 55px; max-width: 140px;">
+                        @endif
+                    </td>
+                    <td width="30%" valign="middle" style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }};">
+                        <div class="doc-type">{{ __('E-Ticket Receipt') }}</div>
+                        <div class="doc-date">{{ __('Issued on') }}: {{ $booking->created_at->translatedFormat('d M Y, H:i') }}</div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="gold-strip"></div>
+    </htmlpageheader>
 
     <!-- ═══ CONTENT ═══ -->
     <div class="content">
@@ -346,30 +351,8 @@
         <!-- DATA EXTRACTION -->
         @php
             $fb = $booking->flightBooking;
-            $origin = $fb->origin ?? 'N/A';
-            $destination = $fb->destination ?? 'N/A';
-            $flightNo = $fb->flight_number ?? 'N/A';
-            $depDate = $fb->departure_date ? \Carbon\Carbon::parse($fb->departure_date)->translatedFormat('d M Y, H:i') : 'N/A';
             $airlineCode = $booking->airline_code;
             $baggageInfo = null;
-
-            if (isset($fb->itinerary_data['FareItineraries']['FareItinerary']['OriginDestinationOptions'])) {
-                $options = $fb->itinerary_data['FareItineraries']['FareItinerary']['OriginDestinationOptions'];
-                $firstSeg = $options['OriginDestinationOption']['FlightSegment'] ?? $options[0]['OriginDestinationOption']['FlightSegment'] ?? null;
-                if ($firstSeg) {
-                    if (isset($firstSeg[0])) $firstSeg = $firstSeg[0];
-                    $origin = $firstSeg['DepartureAirportLocationCode'] ?? $origin;
-                    $destination = $firstSeg['ArrivalAirportLocationCode'] ?? $destination;
-                    $flightNo = ($firstSeg['MarketingAirlineCode'] ?? '') . ' ' . ($firstSeg['FlightNumber'] ?? '');
-                    $depDate = isset($firstSeg['DepartureDateTime']) ? \Carbon\Carbon::parse($firstSeg['DepartureDateTime'])->translatedFormat('d M Y, H:i') : $depDate;
-                    if (!$airlineCode) $airlineCode = $firstSeg['MarketingAirlineCode'] ?? $firstSeg['OperatedByAirlineCode'] ?? '';
-                }
-                if (isset($fb->itinerary_data['FareItineraries']['FareItinerary']['AirItineraryPricingInfo']['PTC_FareBreakdowns']['PTC_FareBreakdown']['PassengerFare']['Baggage'])) {
-                    $baggageInfo = current((array)$fb->itinerary_data['FareItineraries']['FareItinerary']['AirItineraryPricingInfo']['PTC_FareBreakdowns']['PTC_FareBreakdown']['PassengerFare']['Baggage']);
-                }
-            }
-
-            if (!$baggageInfo) $baggageInfo = "1x 23KG (Checked) + 1x 7KG (Cabin)";
 
             if (!$airlineCode && $booking->airline_name) {
                 $dummyCodes = ['Saudia' => 'SV', 'Flynas' => 'XY', 'Emirates' => 'EK', 'Qatar Airways' => 'QR'];
@@ -379,8 +362,42 @@
 
             $primaryPax = $booking->passengers->first();
             $paxFullName = $primaryPax ? trim(strtoupper($primaryPax->first_name . ' ' . $primaryPax->last_name)) : 'N/A';
-            $qrData = "PNR: {$booking->booking_reference}\nPAX: {$paxFullName}\nFLIGHT: {$flightNo}\nROUTE: {$origin}-{$destination}";
+            $qrData = "PNR: {$booking->booking_reference}\nPAX: {$paxFullName}\nFLIGHT: {$booking->airline_name}";
             $qrDataEncoded = urlencode($qrData);
+
+            $legs = [];
+            $itinData = $fb->itinerary_data ?? [];
+            if (isset($itinData['FareItineraries']['FareItinerary']['OriginDestinationOptions'])) {
+                $options = $itinData['FareItineraries']['FareItinerary']['OriginDestinationOptions'];
+                if (isset($options['OriginDestinationOption']['FlightSegment'])) {
+                    $options = [$options['OriginDestinationOption']];
+                } else {
+                    $options = $options['OriginDestinationOption'] ?? [];
+                }
+                
+                foreach($options as $legIndex => $opt) {
+                    $segs = $opt['FlightSegment'] ?? $opt;
+                    $legSegments = [];
+                    if (isset($segs['FlightNumber'])) { 
+                        $legSegments[] = $segs; 
+                    } else { 
+                        foreach($segs as $s) { 
+                            $legSegments[] = $s['FlightSegment'] ?? $s; 
+                        } 
+                    }
+                    if (!empty($legSegments)) {
+                        $legs[] = $legSegments;
+                    }
+                }
+
+                if (isset($itinData['FareItineraries']['FareItinerary']['AirItineraryPricingInfo']['PTC_FareBreakdowns']['PTC_FareBreakdown']['PassengerFare']['Baggage'])) {
+                    $baggageInfo = current((array)$itinData['FareItineraries']['FareItinerary']['AirItineraryPricingInfo']['PTC_FareBreakdowns']['PTC_FareBreakdown']['PassengerFare']['Baggage']);
+                } elseif (isset($itinData['FareItineraries']['FareItinerary']['AirItineraryPricingInfo']['PTC_FareBreakdowns']['PTC_FareBreakdown'][0]['PassengerFare']['Baggage'])) {
+                    $baggageInfo = current((array)$itinData['FareItineraries']['FareItinerary']['AirItineraryPricingInfo']['PTC_FareBreakdowns']['PTC_FareBreakdown'][0]['PassengerFare']['Baggage']);
+                }
+            }
+
+            if (!$baggageInfo) $baggageInfo = "1x 23KG (Checked) + 1x 7KG (Cabin)";
         @endphp
 
         <!-- ─── PNR BLOCK ─── -->
@@ -425,39 +442,57 @@
         </div>
 
         <!-- ─── FLIGHT ROUTE CARD ─── -->
-        <div class="route-card">
-            <table width="100%">
-                <tr>
-                    <td width="35%" align="center" valign="middle">
-                        <div class="airport-code">{{ $origin }}</div>
-                        <div class="airport-label">{{ __('Departure') }}</div>
-                        <div class="airport-time" dir="ltr">{{ $depDate }}</div>
-                    </td>
-                    <td width="30%" align="center" valign="middle">
-                        <div style="font-size: 11px; color: rgba(255,255,255,0.35); margin-bottom: 4px;">
-                            ──────
-                            <svg width="14" height="14" viewBox="0 0 24 24" style="vertical-align: middle; margin: 0 4px;">
-                                <path fill="rgba(255,255,255,0.35)" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
-                            </svg>
-                            ──────
+        @if(!empty($legs))
+            @foreach($legs as $legIndex => $segments)
+                @php
+                    $firstSeg = $segments[0];
+                    $lastSeg = end($segments);
+                    $depCode = $firstSeg['DepartureAirportLocationCode'] ?? ($firstSeg['DepartureAirport']['LocationCode'] ?? '');
+                    $arrCode = $lastSeg['ArrivalAirportLocationCode'] ?? ($lastSeg['ArrivalAirport']['LocationCode'] ?? '');
+                    $depDate = isset($firstSeg['DepartureDateTime']) ? \Carbon\Carbon::parse($firstSeg['DepartureDateTime'])->translatedFormat('d M Y, H:i') : 'N/A';
+                    $arrDate = isset($lastSeg['ArrivalDateTime']) ? \Carbon\Carbon::parse($lastSeg['ArrivalDateTime'])->translatedFormat('d M Y, H:i') : 'N/A';
+                    $flightNo = ($firstSeg['MarketingAirlineCode'] ?? '') . ' ' . ($firstSeg['FlightNumber'] ?? '');
+                @endphp
+                <div class="route-card">
+                    @if(count($legs) > 1)
+                        <div style="font-size: 11px; color: #f2cb57; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; border-bottom: 1px dashed rgba(255,255,255,0.2); padding-bottom: 6px;">
+                            {{ $legIndex == 0 ? __('Outbound Flight') : __('Return Flight') }}
                         </div>
-                        <div class="flight-badge">{{ $flightNo }}</div>
-                    </td>
-                    <td width="35%" align="center" valign="middle">
-                        <div class="airport-code">{{ $destination }}</div>
-                        <div class="airport-label">{{ __('Arrival') }}</div>
-                        <div class="airport-time">{{ __('As Scheduled') }}</div>
-                    </td>
-                </tr>
-            </table>
-            <div class="baggage-strip">
-                <svg width="12" height="12" viewBox="0 0 24 24" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 4px;">
-                    <path fill="rgba(255,255,255,0.6)" d="M17 6h-2V4c0-1.1-.9-2-2-2h-2c-1.1 0-2 .9-2 2v2H7c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zM10 4h4v2h-4V4zm7 15H7V8h10v11z"/>
-                    <path fill="rgba(255,255,255,0.6)" d="M9 10h2v7H9zm4 0h2v7h-2z"/>
-                </svg>
-                {{ __('Baggage Allowance') }}: <strong>{{ is_array($baggageInfo) ? implode(', ', $baggageInfo) : $baggageInfo }}</strong>
-            </div>
-        </div>
+                    @endif
+                    <table width="100%">
+                        <tr>
+                            <td width="35%" align="center" valign="middle">
+                                <div class="airport-code">{{ $depCode }}</div>
+                                <div class="airport-label">{{ __('Departure') }}</div>
+                                <div class="airport-time" dir="ltr">{{ $depDate }}</div>
+                            </td>
+                            <td width="30%" align="center" valign="middle">
+                                <div style="font-size: 11px; color: rgba(255,255,255,0.35); margin-bottom: 4px;">
+                                    ──────
+                                    <svg width="14" height="14" viewBox="0 0 24 24" style="vertical-align: middle; margin: 0 4px;">
+                                        <path fill="rgba(255,255,255,0.35)" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+                                    </svg>
+                                    ──────
+                                </div>
+                                <div class="flight-badge">{{ $flightNo }} {{ count($segments) > 1 ? '(' . (count($segments)-1) . ' ' . __('Stops') . ')' : '' }}</div>
+                            </td>
+                            <td width="35%" align="center" valign="middle">
+                                <div class="airport-code">{{ $arrCode }}</div>
+                                <div class="airport-label">{{ __('Arrival') }}</div>
+                                <div class="airport-time" dir="ltr">{{ $arrDate }}</div>
+                            </td>
+                        </tr>
+                    </table>
+                    <div class="baggage-strip">
+                        <svg width="12" height="12" viewBox="0 0 24 24" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 4px;">
+                            <path fill="rgba(255,255,255,0.6)" d="M17 6h-2V4c0-1.1-.9-2-2-2h-2c-1.1 0-2 .9-2 2v2H7c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zM10 4h4v2h-4V4zm7 15H7V8h10v11z"/>
+                            <path fill="rgba(255,255,255,0.6)" d="M9 10h2v7H9zm4 0h2v7h-2z"/>
+                        </svg>
+                        {{ __('Baggage Allowance') }}: <strong>{{ is_array($baggageInfo) ? implode(', ', $baggageInfo) : $baggageInfo }}</strong>
+                    </div>
+                </div>
+            @endforeach
+        @endif
 
         <!-- ─── DETAILS GRID ─── -->
         <table style="margin-bottom: 26px;">
@@ -545,10 +580,14 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($booking->passengers as $pax)
+                @foreach($booking->passengers as $paxIndex => $pax)
                 @php
                     $paxName = trim(strtoupper($pax->first_name ?? '') . ' ' . strtoupper($pax->last_name ?? ''));
                     $ticket = isset($eTickets) && isset($eTickets[$paxName]) ? $eTickets[$paxName] : null;
+
+                    $extraServices = $booking->flightBooking->extra_services ?? [];
+                    if (is_string($extraServices)) $extraServices = json_decode($extraServices, true);
+                    $paxExtras = $extraServices[$paxIndex]['extra_services_details'] ?? [];
                 @endphp
                 <tr>
                     <td style="color:#9ca3af; font-weight:700;">{{ str_pad($loop->iteration, 2, '0', STR_PAD_LEFT) }}</td>
@@ -562,6 +601,24 @@
                         @endif
                     </td>
                 </tr>
+                @if(!empty($paxExtras))
+                <tr>
+                    <td style="border-top: none;"></td>
+                    <td colspan="3" style="border-top: none; padding-top: 2px; padding-bottom: 8px;">
+                        <div style="font-size: 10px; color: #4b5563;">
+                            <strong style="color: #041741;">{{ __('Extra Services') }}:</strong>
+                            @foreach($paxExtras as $extra)
+                                <span style="background: #f3f4f6; padding: 2px 6px; border-radius: 4px; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 4px; display: inline-block; margin-bottom: 4px; border: 1px solid #e5e7eb;">
+                                    {{ $extra['desc'] ?? $extra['code'] ?? 'Extra Service' }}
+                                    @if(isset($extra['price']) && $extra['price'] > 0)
+                                        <span style="color: #10b981; font-weight: 700;">(+{{ $extra['price'] }} {{ $extra['currency'] ?? 'SAR' }})</span>
+                                    @endif
+                                </span>
+                            @endforeach
+                        </div>
+                    </td>
+                </tr>
+                @endif
                 @endforeach
             </tbody>
         </table>
