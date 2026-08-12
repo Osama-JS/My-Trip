@@ -742,9 +742,10 @@ $(document).ready(function() {
     };
 
     function updateMainTotal() {
-        let baseTotal = parseFloat($('input[name="total_amount"]').val()) || 0;
+        let baseTotal = parseFloat($('#grandTotalAmount').data('base')) || 0;
         let finalTotal = baseTotal + extraServicesTotal;
         $('.total-value .amount').text(finalTotal.toFixed(2));
+        $('input[name="total_amount"]').val(finalTotal.toFixed(2));
     }
 
     // ═══ VISUAL SEAT MAP LOGIC ═══
