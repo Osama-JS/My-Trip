@@ -1041,7 +1041,7 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
             {{-- Journey Timeline Segments --}}
             @php
                 $itinData = $booking->flightBooking->itinerary_data ?? [];
-                $segments = [];
+                $legs = [];
                 if (isset($itinData['FareItineraries']['FareItinerary']['OriginDestinationOptions'])) {
                     $options = $itinData['FareItineraries']['FareItinerary']['OriginDestinationOptions'];
                     if (isset($options['OriginDestinationOption']['FlightSegment'])) {
@@ -1050,63 +1050,86 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
                         $options = $options['OriginDestinationOption'] ?? [];
                     }
                     
-                    foreach($options as $opt) {
+                    foreach($options as $legIndex => $opt) {
                         $segs = $opt['FlightSegment'] ?? $opt;
-                        if (isset($segs['FlightNumber'])) { $segments[] = $segs; }
-                        else { foreach($segs as $s) { $segments[] = $s['FlightSegment'] ?? $s; } }
+                        $legSegments = [];
+                        if (isset($segs['FlightNumber'])) { 
+                            $legSegments[] = $segs; 
+                        } else { 
+                            foreach($segs as $s) { 
+                                $legSegments[] = $s['FlightSegment'] ?? $s; 
+                            } 
+                        }
+                        if (!empty($legSegments)) {
+                            $legs[] = $legSegments;
+                        }
                     }
                 }
             @endphp
 
-            @if(!empty($segments))
-                <div class="detail-card">
-                    <div class="detail-card-header">
-                        <h5><i class="fas fa-route"></i> {{ __('Detailed Journey') }}</h5>
-                    </div>
-                    <div class="segment-timeline">
-                        @foreach($segments as $idx => $seg)
-                            @php
-                                $depTime = \Carbon\Carbon::parse($seg['DepartureDateTime']);
-                                $arrTime = \Carbon\Carbon::parse($seg['ArrivalDateTime']);
-                                $airlineCode = $seg['MarketingAirlineCode'] ?? $seg['OperatedByAirlineCode'] ?? '';
-                            @endphp
-                            <div class="segment-step">
-                                <div class="seg-dot"><i class="fas fa-circle" style="font-size: 0.4rem;"></i></div>
-                                <div class="seg-airline">
-                                    <img src="https://travelnext.works/api/airlines/{{ $airlineCode }}.gif" 
-                                         onerror="this.src='https://via.placeholder.com/30?text={{ $airlineCode }}'"
-                                         alt="{{ $airlineCode }}">
-                                    <span>{{ $airlineCode }} {{ $seg['FlightNumber'] ?? '' }}</span>
+            @if(!empty($legs))
+                @foreach($legs as $legIndex => $segments)
+                    <div class="detail-card mb-4">
+                        <div class="detail-card-header">
+                            <h5><i class="fas fa-route"></i> {{ __('Detailed Journey') }} - {{ $legIndex == 0 ? __('Outbound Flight') : __('Return Flight') }}</h5>
+                        </div>
+                        <div class="segment-timeline">
+                            @foreach($segments as $idx => $seg)
+                                @php
+                                    $depTime = isset($seg['DepartureDateTime']) ? \Carbon\Carbon::parse($seg['DepartureDateTime']) : now();
+                                    $arrTime = isset($seg['ArrivalDateTime']) ? \Carbon\Carbon::parse($seg['ArrivalDateTime']) : now();
+                                    $airlineCode = $seg['MarketingAirlineCode'] ?? $seg['OperatedByAirlineCode'] ?? '';
+                                    
+                                    $depCode = $seg['DepartureAirportLocationCode'] ?? ($seg['DepartureAirport']['LocationCode'] ?? '');
+                                    $arrCode = $seg['ArrivalAirportLocationCode'] ?? ($seg['ArrivalAirport']['LocationCode'] ?? '');
+                                    
+                                    $depAir = \App\Models\Airport::where('airport_code', $depCode)->first();
+                                    $arrAir = \App\Models\Airport::where('airport_code', $arrCode)->first();
+                                @endphp
+                                <div class="segment-step">
+                                    <div class="seg-dot"><i class="fas fa-circle" style="font-size: 0.4rem;"></i></div>
+                                    <div class="seg-airline">
+                                        <img src="https://travelnext.works/api/airlines/{{ $airlineCode }}.gif" 
+                                             onerror="this.src='https://via.placeholder.com/30?text={{ $airlineCode }}'"
+                                             alt="{{ $airlineCode }}">
+                                        <span>{{ $airlineCode }} {{ $seg['FlightNumber'] ?? '' }}</span>
+                                    </div>
+                                    <div class="seg-main">
+                                        <div class="seg-point">
+                                            <div class="time">{{ $depTime->format('H:i') }}</div>
+                                            <div class="airport">
+                                                <strong>{{ $depCode }}</strong>
+                                                <div style="font-size:0.75rem; color:#64748b; line-height:1.2;">{{ $depAir ? $depAir->city_name : '' }}</div>
+                                            </div>
+                                            <div class="date">{{ $depTime->format('d M, Y') }}</div>
+                                        </div>
+                                        <div class="seg-path">
+                                            <div class="seg-path-line"></div>
+                                            <i class="fas fa-plane"></i>
+                                            <div class="path-dur">{{ $depTime->diff($arrTime)->format('%hh %im') }}</div>
+                                        </div>
+                                        <div class="seg-point text-end">
+                                            <div class="time">{{ $arrTime->format('H:i') }}</div>
+                                            <div class="airport">
+                                                <strong>{{ $arrCode }}</strong>
+                                                <div style="font-size:0.75rem; color:#64748b; line-height:1.2;">{{ $arrAir ? $arrAir->city_name : '' }}</div>
+                                            </div>
+                                            <div class="date">{{ $arrTime->format('d M, Y') }}</div>
+                                        </div>
+                                    </div>
+                                    @if(isset($seg['ResBookDesigCode']))
+                                        <div class="seg-footer">
+                                            <span><i class="fas fa-couch"></i> {{ __('Class') }}: {{ $seg['ResBookDesigCode'] }}</span>
+                                            @if(isset($seg['AdjustmentTime']))
+                                                <span class="ms-3"><i class="fas fa-clock"></i> {{ __('Technical Stop') }}</span>
+                                            @endif
+                                        </div>
+                                    @endif
                                 </div>
-                                <div class="seg-main">
-                                    <div class="seg-point">
-                                        <div class="time">{{ $depTime->format('H:i') }}</div>
-                                        <div class="airport"><strong>{{ $seg['DepartureAirportLocationCode'] }}</strong></div>
-                                        <div class="date">{{ $depTime->format('d M, Y') }}</div>
-                                    </div>
-                                    <div class="seg-path">
-                                        <div class="seg-path-line"></div>
-                                        <i class="fas fa-plane"></i>
-                                        <div class="path-dur">{{ $depTime->diff($arrTime)->format('%hh %im') }}</div>
-                                    </div>
-                                    <div class="seg-point text-end">
-                                        <div class="time">{{ $arrTime->format('H:i') }}</div>
-                                        <div class="airport"><strong>{{ $seg['ArrivalAirportLocationCode'] }}</strong></div>
-                                        <div class="date">{{ $arrTime->format('d M, Y') }}</div>
-                                    </div>
-                                </div>
-                                @if(isset($seg['ResBookDesigCode']))
-                                    <div class="seg-footer">
-                                        <span><i class="fas fa-couch"></i> {{ __('Class') }}: {{ $seg['ResBookDesigCode'] }}</span>
-                                        @if(isset($seg['AdjustmentTime']))
-                                            <span class="ms-3"><i class="fas fa-clock"></i> {{ __('Technical Stop') }}</span>
-                                        @endif
-                                    </div>
-                                @endif
-                            </div>
-                        @endforeach
+                            @endforeach
+                        </div>
                     </div>
-                </div>
+                @endforeach
             @endif
 
         </div>
