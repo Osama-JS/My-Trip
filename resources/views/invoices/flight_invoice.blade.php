@@ -451,6 +451,12 @@
                     $lastSeg = end($segments);
                     $depCode = $firstSeg['DepartureAirportLocationCode'] ?? ($firstSeg['DepartureAirport']['LocationCode'] ?? '');
                     $arrCode = $lastSeg['ArrivalAirportLocationCode'] ?? ($lastSeg['ArrivalAirport']['LocationCode'] ?? '');
+                    
+                    $depAir = \App\Models\Airport::where('airport_code', $depCode)->first();
+                    $arrAir = \App\Models\Airport::where('airport_code', $arrCode)->first();
+                    $depCity = $depAir ? (app()->getLocale() == 'ar' ? $depAir->city_ar : $depAir->city) : $depCode;
+                    $arrCity = $arrAir ? (app()->getLocale() == 'ar' ? $arrAir->city_ar : $arrAir->city) : $arrCode;
+
                     $depDate = isset($firstSeg['DepartureDateTime']) ? \Carbon\Carbon::parse($firstSeg['DepartureDateTime'])->translatedFormat('d M Y, H:i') : 'N/A';
                     $arrDate = isset($lastSeg['ArrivalDateTime']) ? \Carbon\Carbon::parse($lastSeg['ArrivalDateTime'])->translatedFormat('d M Y, H:i') : 'N/A';
                     $flightNo = ($firstSeg['MarketingAirlineCode'] ?? '') . ' ' . ($firstSeg['FlightNumber'] ?? '');
@@ -465,6 +471,7 @@
                         <tr>
                             <td width="35%" align="center" valign="middle">
                                 <div class="airport-code">{{ $depCode }}</div>
+                                <div style="font-size: 13px; font-weight: 700; margin-bottom: 4px;">{{ $depCity }}</div>
                                 <div class="airport-label">{{ __('Departure') }}</div>
                                 <div class="airport-time" dir="ltr">{{ $depDate }}</div>
                             </td>
@@ -480,6 +487,7 @@
                             </td>
                             <td width="35%" align="center" valign="middle">
                                 <div class="airport-code">{{ $arrCode }}</div>
+                                <div style="font-size: 13px; font-weight: 700; margin-bottom: 4px;">{{ $arrCity }}</div>
                                 <div class="airport-label">{{ __('Arrival') }}</div>
                                 <div class="airport-time" dir="ltr">{{ $arrDate }}</div>
                             </td>
