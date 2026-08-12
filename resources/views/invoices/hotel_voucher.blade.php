@@ -89,6 +89,7 @@
             padding: 0;
             margin-bottom: 28px;
             overflow: hidden;
+            page-break-inside: avoid;
         }
         .hotel-card-top {
             background: #f9f8f3;
@@ -149,6 +150,7 @@
             padding-bottom: 8px;
             margin-bottom: 14px;
             border-bottom: 2px solid #f2cb57;
+            page-break-after: avoid;
         }
 
         /* ── Info Grid ── */
@@ -166,6 +168,7 @@
         }
         .info-row {
             margin-bottom: 12px;
+            page-break-inside: avoid;
         }
 
         /* ── Stay Card ── */
@@ -175,6 +178,7 @@
             padding: 24px 20px 18px 20px;
             margin-bottom: 28px;
             color: #ffffff;
+            page-break-inside: avoid;
         }
         .date-big {
             font-size: 28px;
@@ -222,6 +226,10 @@
         .p-table {
             width: 100%;
             margin-bottom: 24px;
+            border-collapse: collapse;
+        }
+        .p-table tr {
+            page-break-inside: avoid;
         }
         .p-table th {
             background: #041741;

@@ -85,6 +85,7 @@
             padding: 0;
             margin-bottom: 28px;
             overflow: hidden;
+            page-break-inside: avoid;
         }
         .pnr-block-top {
             background: #f9f8f3;
@@ -129,6 +130,7 @@
             padding-bottom: 8px;
             margin-bottom: 14px;
             border-bottom: 2px solid #f2cb57;
+            page-break-after: avoid;
         }
 
         /* ── Info Grid ── */
@@ -146,6 +148,7 @@
         }
         .info-row {
             margin-bottom: 12px;
+            page-break-inside: avoid;
         }
 
         /* ── Flight Route Card ── */
@@ -155,6 +158,7 @@
             padding: 16px 20px 12px 20px;
             margin-bottom: 24px;
             color: #ffffff;
+            page-break-inside: avoid;
         }
         .airport-code {
             font-size: 26px;
@@ -198,6 +202,10 @@
         .p-table {
             width: 100%;
             margin-bottom: 24px;
+            border-collapse: collapse;
+        }
+        .p-table tr {
+            page-break-inside: avoid;
         }
         .p-table th {
             background: #041741;
@@ -235,6 +243,7 @@
         .total-row {
             margin-top: 6px;
             margin-bottom: 8px;
+            page-break-inside: avoid;
         }
         .total-box {
             background: #041741;
@@ -242,6 +251,7 @@
             border-radius: 8px;
             width: 280px;
             float: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }};
+            page-break-inside: avoid;
         }
         .total-label {
             font-size: 9px;
