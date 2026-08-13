@@ -663,10 +663,71 @@ class FrontendController extends Controller
             return redirect()->route('profile.complete.form');
         }
 
+        // Validate the fare before proceeding
+        $revalidate = $this->traveloproService->validateFare([
+            'session_id' => $request->get('session_id'),
+            'fare_source_code' => $request->get('fare_source_code'),
+        ]);
+
+        if (isset($revalidate['status']) && $revalidate['status'] === 'error') {
+            return redirect()->route('flights')->with('error', __('Fare is no longer available.'));
+        }
+
+        $result = $revalidate['AirRevalidateResponse']['AirRevalidateResult'] ?? [];
+        $isValid = $result['IsValid'] ?? false;
+
+        if ($isValid !== true && $isValid !== 'true' && $isValid !== 'True') {
+            return redirect()->route('flights')->with('error', __('Fare is no longer valid or available.'));
+        }
+
+        $details = $request->all();
+        
+        // Correct path for IsPassportMandatory
+        $isPassport = $result['FareItineraries']['FareItinerary']['IsPassportMandatory'] ?? null;
+        if ($isPassport === null && isset($result['FareItineraries']['FareItinerary'][0]['IsPassportMandatory'])) {
+            $isPassport = $result['FareItineraries']['FareItinerary'][0]['IsPassportMandatory'];
+        }
+        
+        // If Travelopro returns null, manually check if it's an international flight
+        if ($isPassport === null && isset($details['from']) && isset($details['to'])) {
+            $originAirport = \App\Models\Airport::where('code', $details['from'])->first();
+            $destAirport = \App\Models\Airport::where('code', $details['to'])->first();
+            
+            if ($originAirport && $destAirport) {
+                // If countries differ, it's international, so passport is mandatory
+                if ($originAirport->country_code !== $destAirport->country_code) {
+                    $isPassport = true;
+                } else {
+                    $isPassport = false;
+                }
+            }
+        }
+        
+        $details['IsPassportMandatory'] = $isPassport ?? 'false';
+        
+        $details['visual_seat_map'] = \App\Models\Setting::get('visual_seat_map', '1');
+
+        // Check if price changed
+        if (isset($result['FareItineraries']['FareItinerary']['AirItineraryFareInfo']['ItinTotalFares']['TotalFare']['Amount'])) {
+            $details['total_amount'] = $result['FareItineraries']['FareItinerary']['AirItineraryFareInfo']['ItinTotalFares']['TotalFare']['Amount'];
+        }
+
+        // IMPORTANT: Validate Fare returns a new FareSourceCode that MUST be used for ExtraServices and Booking!
+        if (isset($result['FareItineraries']['FareItinerary']['AirItineraryFareInfo']['FareSourceCode'])) {
+            $details['fare_source_code'] = $result['FareItineraries']['FareItinerary']['AirItineraryFareInfo']['FareSourceCode'];
+        }
+
+        // Also check if there is a new SessionId
+        if (isset($revalidate['SessionId'])) {
+            $details['session_id'] = $revalidate['SessionId'];
+        } elseif (isset($revalidate['AirRevalidateResponse']['SessionId'])) {
+            $details['session_id'] = $revalidate['AirRevalidateResponse']['SessionId'];
+        }
+
         $countries = \App\Models\Country::all();
-        // Expecting flight details in session/request to show summary
+        
         return view('frontend.flights.booking', [
-            'details' => $request->all(),
+            'details' => $details,
             'countries' => $countries
         ]);
     }
@@ -732,7 +793,6 @@ class FrontendController extends Controller
                 \App\Models\FlightApiLog::where('id', $result['_api_log_id'])->update(['booking_id' => $booking->id]);
             }
 
-            // 3. Save Flight Specific Details
             \App\Models\FlightBooking::create([
                 'user_id' => auth()->id(),
                 'booking_id' => $booking->id,
@@ -745,10 +805,10 @@ class FrontendController extends Controller
                 'adults' => (int)$request->get('adults', 1),
                 'childs' => (int)$request->get('childs', 0),
                 'infants' => (int)$request->get('infants', 0),
-                'flight_class' => $request->get('class', 'Economy'),
                 'itinerary_data' => $result['AirBookingResponse']['AirBookingResult'] ?? null,
                 'total_amount' => $request->get('total_amount'),
                 'currency' => 'SAR',
+                'extra_services' => $request->get('passengers', [])
             ]);
 
             // 4. Save Passengers for detailed view and ticketing

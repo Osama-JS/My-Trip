@@ -74,32 +74,33 @@
 
                     {{-- Adults --}}
                     @for($i = 0; $i < $adultCount; $i++)
-                        @include('frontend.flights.partials.pax-fields', ['type' => 'adult', 'index' => $paxIndex++, 'num' => $i + 1, 'countries' => $countries])
+                        @include('frontend.flights.partials.pax-fields', ['type' => 'adult', 'index' => $paxIndex++, 'num' => $i + 1, 'countries' => $countries, 'isPassportMandatory' => $details['IsPassportMandatory'] ?? 'false'])
                     @endfor
 
                     {{-- Children --}}
                     @for($i = 0; $i < $childCount; $i++)
-                        @include('frontend.flights.partials.pax-fields', ['type' => 'child', 'index' => $paxIndex++, 'num' => $i + 1, 'countries' => $countries])
+                        @include('frontend.flights.partials.pax-fields', ['type' => 'child', 'index' => $paxIndex++, 'num' => $i + 1, 'countries' => $countries, 'isPassportMandatory' => $details['IsPassportMandatory'] ?? 'false'])
                     @endfor
 
                     {{-- Infants --}}
                     @for($i = 0; $i < $infantCount; $i++)
-                        @include('frontend.flights.partials.pax-fields', ['type' => 'infant', 'index' => $paxIndex++, 'num' => $i + 1, 'countries' => $countries])
+                        @include('frontend.flights.partials.pax-fields', ['type' => 'infant', 'index' => $paxIndex++, 'num' => $i + 1, 'countries' => $countries, 'isPassportMandatory' => $details['IsPassportMandatory'] ?? 'false'])
                     @endfor
                 </div>
 
-                {{-- ═══ EXTRA SERVICES SECTION (Baggage / Meals / Seats) ═══ --}}
-                <div class="fe-booking-card" id="extraServicesCard" style="display:none;">
-                    <div class="fe-card-header">
-                        <i class="fas fa-concierge-bell"></i>
-                        <h3>{{ __('Extra Services') }}</h3>
-                        <span style="margin-inline-start:auto;font-size:0.75rem;color:var(--gray-400);font-weight:600;">{{ __('Optional') }}</span>
+                {{-- ═══ EXTRA SERVICES JS LOADER ═══ --}}
+                <div id="esGlobalState" style="margin-bottom: 25px; text-align:center; padding:20px; background:white; border-radius:15px; border:1px solid var(--gray-200);">
+                    <div id="esLoader" style="color:var(--gray-400);">
+                        <i class="fas fa-spinner fa-spin fa-2x" style="margin-bottom:12px;"></i>
+                        <p style="font-weight:600; margin:0;">{{ __('Loading extra services for passengers...') }}</p>
                     </div>
-                    <div class="fe-card-body" id="extraServicesBody">
-                        <div style="text-align:center;padding:30px;color:var(--gray-400);">
-                            <i class="fas fa-spinner fa-spin fa-2x" style="margin-bottom:12px;"></i>
-                            <p style="font-weight:600;">{{ __('Loading available services...') }}</p>
-                        </div>
+                    <div id="esEmptyState" style="display:none; color:var(--gray-400);">
+                        <i class="fas fa-info-circle fa-2x" style="margin-bottom:12px;"></i>
+                        <p style="font-weight:600; margin:0;">{{ __('No extra services available for this flight.') }}</p>
+                    </div>
+                    <div id="esTotal" class="es-total-badge" style="display:none; margin-top:10px; background:var(--primary-50); color:var(--primary); padding:10px 20px; border-radius:12px; display:inline-block; font-weight:bold;">
+                        <i class="fas fa-tag"></i>
+                        {{ __('Extra Services Total') }}: <strong id="esTotalValue">0 SAR</strong>
                     </div>
                 </div>
 
@@ -197,7 +198,7 @@
                             <div class="total-label">{{ __('Total Amount') }}</div>
                             <div class="total-value">
                                 <span class="currency">SAR</span>
-                                <span class="amount">{{ number_format(floatval($details['total_amount'] ?? 0), 2) }}</span>
+                                <span class="amount" id="grandTotalAmount" data-base="{{ floatval($details['total_amount'] ?? 0) }}">{{ number_format(floatval($details['total_amount'] ?? 0), 2) }}</span>
                             </div>
                             <p class="total-note">{{ __('Includes all taxes and surcharges') }}</p>
                         </div>
@@ -211,6 +212,48 @@
             </aside>
         </div>
     </form>
+</div>
+
+<!-- Visual Seat Map Modal -->
+<div class="fe-modal-overlay d-none" id="seatMapModal" style="z-index: 1060;">
+    <div class="fe-modal-dialog" style="max-width: 900px; height: 90vh;">
+        <div class="fe-modal-content" style="height: 100%; display: flex; flex-direction: column;">
+            <div class="fe-modal-header">
+                <h5 style="margin: 0; font-weight: 800; color: #0f172a;"><i class="fas fa-plane text-primary me-2"></i> {{ __('Select Your Seats') }}</h5>
+                <button type="button" class="fe-btn-close" onclick="closeVisualSeatMap()"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div class="fe-modal-body bg-light" style="flex: 1; overflow-y: auto; padding: 0;">
+                <div class="seat-map-layout">
+                    <!-- Left: Passengers List -->
+                    <div class="seat-pax-sidebar">
+                        <h6 class="mb-3 font-weight-bold">{{ __('Passengers') }}</h6>
+                        <div id="seatPaxList"></div>
+                        <div class="seat-legend mt-4">
+                            <div class="legend-item"><div class="seat-box available"></div> {{ __('Available') }}</div>
+                            <div class="legend-item"><div class="seat-box selected"></div> {{ __('Selected') }}</div>
+                            <div class="legend-item"><div class="seat-box unavailable"></div> {{ __('Unavailable') }}</div>
+                        </div>
+                        <div class="mt-auto pt-4 border-top text-center">
+                            <h5 class="text-primary mb-3">{{ __('Total') }}: <span id="seatMapTotal">0</span> SAR</h5>
+                            <button type="button" class="fe-btn fe-btn-primary w-100" onclick="confirmSeatSelection()">{{ __('Confirm Seats') }}</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Right: Aircraft Layout -->
+                    <div class="aircraft-container">
+                        <div class="aircraft-fuselage">
+                            <div class="aircraft-cockpit"></div>
+                            <div class="aircraft-body" id="aircraftSeatsContainer">
+                                <!-- Dynamic Seats Will Go Here -->
+                            </div>
+                            <div class="aircraft-tail"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Master Passport Upload & Crop Modal (Custom) -->
@@ -276,10 +319,18 @@
     .d-none { display: none !important; }
     .bg-light { background-color: #f8fafc !important; }
 
-    .fe-booking-grid { display: grid; grid-template-columns: 1fr 380px; gap: 30px; align-items: start; }
+    .fe-booking-grid { display: grid; grid-template-columns: 1fr 380px; gap: 30px; }
     @media (max-width: 1024px) {
         .fe-booking-grid { grid-template-columns: 1fr; }
         .fe-booking-sidebar { order: -1; }
+    }
+
+    .fe-booking-sidebar {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 100px;
+        align-self: start;
+        z-index: 10;
     }
 
     .fe-booking-card { background: white; border-radius: 20px; box-shadow: 0 4px 25px rgba(0,0,0,0.05); border: 1px solid var(--gray-100); margin-bottom: 25px; overflow: hidden; }
@@ -368,19 +419,26 @@
         font-size: 0.82rem; font-weight: 800; color: var(--gray-600);
         margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
     }
-    .es-options { display: flex; flex-wrap: wrap; gap: 10px; }
+    .es-options { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
     .es-option {
-        display: flex; align-items: center; gap: 8px;
-        background: var(--gray-50); border: 1.5px solid var(--gray-200);
-        border-radius: 12px; padding: 10px 14px; cursor: pointer;
-        transition: all 0.2s; font-size: 0.85rem; font-weight: 600;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 8px;
+        background: #ffffff; border: 2px solid var(--gray-200);
+        border-radius: 12px; padding: 15px; cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative; overflow: hidden;
     }
-    .es-option input[type="radio"] { accent-color: var(--primary); }
+    .es-option input[type="radio"] { position: absolute; opacity: 0; cursor: pointer; }
+    .es-option:hover { border-color: #cbd5e1; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transform: translateY(-2px); }
     .es-option:has(input:checked) {
-        border-color: var(--primary); background: var(--primary-50);
-        color: var(--primary);
+        border-color: var(--primary); background: rgba(15,76,129,0.03);
+        box-shadow: 0 0 0 1px var(--primary);
     }
-    .es-option-price { color: var(--primary); font-weight: 800; font-size: 0.8rem; }
+    .es-option:has(input:checked)::after {
+        content: '\f058'; font-family: 'Font Awesome 5 Free'; font-weight: 900;
+        color: var(--primary); position: absolute; top: 10px; right: 10px; font-size: 1.1rem;
+    }
+    .es-option span:not(.es-option-price) { font-size: 0.85rem; font-weight: 700; color: var(--dark); line-height: 1.3; }
+    .es-option-price { color: var(--primary); font-weight: 900; font-size: 0.95rem; margin-top: auto; }
     .es-total-badge {
         display: inline-flex; align-items: center; gap: 6px;
         background: var(--primary); color: white;
@@ -441,24 +499,33 @@
 
 <script>
 $(document).ready(function() {
-    // ═══ EXTRA SERVICES LOADER ═══
-    const sessionId    = $('input[name="flight_session_id"]').val();
-    const fareCode     = $('input[name="fare_source_code"]').val();
-    const totalPax     = {{ $totalPax }};
+    const isVisualSeatMapEnabled = "{{ $details['visual_seat_map'] ?? '1' }}" === "1";
+    const totalPax = {{ $totalPax }};
     let extraServicesTotal = 0;
 
-    if (sessionId && fareCode) {
+    function fetchExtraServices() {
         $('#extraServicesCard').show();
         $.ajax({
             url: '{{ route("api.flights.extra-services") }}',
             method: 'POST',
-            data: { session_id: sessionId, fare_source_code: fareCode, _token: '{{ csrf_token() }}' },
+            data: { 
+                session_id: '{{ $details["session_id"] ?? "" }}', 
+                fare_source_code: '{{ $details["fare_source_code"] ?? "" }}', 
+                _token: '{{ csrf_token() }}' 
+            },
             success: function(res) {
-                if (!res.error && res.data && res.data.data && res.data.data.length > 0) {
-                    renderExtraServices(res.data.data);
-                } else {
-                    $('#extraServicesBody').html('<div class="es-no-services"><i class="fas fa-info-circle" style="margin-inline-end:8px;"></i>{{ __("No extra services available for this flight.") }}</div>');
+                $('#esLoader').hide();
+                $('#esContent').show();
+
+                if (!res.data || res.data.length === 0) {
+                    $('#esContent').hide();
+                    $('#esEmptyState').show();
+                    $('.fe-es-tabs').hide();
+                    return;
                 }
+                
+                window.rawServicesResponse = res.data; // Store globally for visual seat map
+                renderExtraServices(res.data);
             },
             error: function() {
                 $('#extraServicesCard').hide();
@@ -467,81 +534,175 @@ $(document).ready(function() {
     }
 
     function renderExtraServices(services) {
-        // Group by type then by flight_type
+        const flightTypes = new Set(services.map(s => s.flight_type));
+        if (flightTypes.size === 0) flightTypes.add('outbound');
+
         const grouped = {};
+        flightTypes.forEach(ft => {
+            grouped['baggage_' + ft] = { label: 'baggage', flight: ft, items: [] };
+            grouped['meal_' + ft] = { label: 'meal', flight: ft, items: [] };
+            grouped['seat_' + ft] = { label: 'seat', flight: ft, items: [] };
+        });
+
         services.forEach(svc => {
             const key = svc.type + '_' + svc.flight_type;
-            if (!grouped[key]) grouped[key] = { label: svc.type, flight: svc.flight_type, items: [] };
-            grouped[key].items.push(svc);
-        });
-
-        const typeIcons = {
-            baggage: 'fa-suitcase-rolling',
-            meal:    'fa-utensils',
-            seat:    'fa-chair',
-            unknown: 'fa-concierge-bell',
-        };
-        const typeLabels = {
-            baggage: '{{ __("Extra Baggage") }}',
-            meal:    '{{ __("Meal Preference") }}',
-            seat:    '{{ __("Seat Selection") }}',
-            unknown: '{{ __("Additional Service") }}',
-        };
-        const flightLabels = {
-            outbound: '{{ __("Outbound") }}',
-            inbound:  '{{ __("Return") }}',
-        };
-
-        let html = '';
-        Object.entries(grouped).forEach(([key, group]) => {
-            const icon  = typeIcons[group.label] || typeIcons.unknown;
-            const label = (typeLabels[group.label] || group.label) + (group.flight === 'inbound' ? ' — ' + flightLabels.inbound : '');
-
-            html += `<div class="es-group">
-                <div class="es-group-title"><i class="fas ${icon}"></i> ${label}</div>`;
-
-            for (let paxIdx = 0; paxIdx < totalPax; paxIdx++) {
-                const fieldName = group.flight === 'inbound'
-                    ? `passengers[${paxIdx}][extra_services_inbound][]`
-                    : `passengers[${paxIdx}][extra_services_outbound][]`;
-
-                html += `<div class="es-passenger-row">
-                    <div class="es-pax-label"><i class="fas fa-user-circle"></i> {{ __("Passenger") }} #${paxIdx + 1}</div>
-                    <div class="es-options">
-                        <label class="es-option">
-                            <input type="radio" name="extra_${key}_pax${paxIdx}" value="" data-price="0" checked onchange="updateExtraTotal()">
-                            <span>{{ __("None") }}</span>
-                        </label>`;
-
-                group.items.forEach(svc => {
-                    html += `<label class="es-option">
-                        <input type="radio"
-                               name="extra_${key}_pax${paxIdx}"
-                               value="${svc.code}"
-                               data-field="${fieldName}"
-                               data-price="${svc.price}"
-                               onchange="updateExtraTotal()">
-                        <span>${svc.description}</span>
-                        <span class="es-option-price">+${svc.price} ${svc.currency}</span>
-                    </label>`;
-                });
-
-                html += `</div></div>`; // .es-options + .es-passenger-row
+            if (grouped[key]) {
+                grouped[key].items.push(svc);
             }
-
-            html += `</div>`; // .es-group
         });
 
-        html += `<div id="esTotal" class="es-total-badge" style="display:none;">
-            <i class="fas fa-tag"></i>
-            {{ __("Extra Services Total") }}: <strong id="esTotalValue">0 SAR</strong>
-        </div>`;
+        const typeIcons = { baggage: 'fa-suitcase-rolling', meal: 'fa-utensils', seat: 'fa-chair', unknown: 'fa-concierge-bell' };
+        const typeLabels = { baggage: '{{ __("Baggage") }}', meal: '{{ __("Meals") }}', seat: '{{ __("Seats") }}', unknown: '{{ __("Services") }}' };
+        const flightLabels = { outbound: '{{ __("Outbound") }}', inbound: '{{ __("Return") }}' };
 
-        $('#extraServicesBody').html(html);
+        // For each passenger, generate their own extra services card
+        for (let paxIdx = 0; paxIdx < totalPax; paxIdx++) {
+            let paxHtml = `<div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; margin-top: 20px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.02);">
+                <div style="padding: 15px 20px; background: var(--gray-50); border-bottom: 1px solid #e2e8f0;">
+                    <h6 style="color: var(--primary); font-weight: 800; margin: 0;">
+                        <i class="fas fa-plus-circle me-2"></i>{{ __("Customize Trip") }}
+                    </h6>
+                </div>
+                
+                <div class="fe-es-tabs" style="border-bottom: 1px solid #e2e8f0; display: flex;">
+                    <button type="button" class="fe-es-tab active" onclick="window.switchPaxTab(${paxIdx}, 'baggage')"><i class="fas fa-suitcase-rolling"></i> {{ __("Baggage") }}</button>
+                    <button type="button" class="fe-es-tab" onclick="window.switchPaxTab(${paxIdx}, 'meal')"><i class="fas fa-utensils"></i> {{ __("Meals") }}</button>
+                    <button type="button" class="fe-es-tab" onclick="window.switchPaxTab(${paxIdx}, 'seat')"><i class="fas fa-chair"></i> {{ __("Seats") }}</button>
+                </div>
+                
+                <div class="fe-es-tab-content-container" style="padding: 20px; background: #f8fafc;">
+            `;
+
+            ['baggage', 'meal', 'seat'].forEach(category => {
+                const isActive = category === 'baggage' ? 'active' : '';
+                paxHtml += `<div id="pax-${paxIdx}-${category}" class="fe-es-tab-content ${isActive}">`;
+
+                if (category === 'seat' && isVisualSeatMapEnabled) {
+                    // Only show the button if there are actually seats in the response
+                    let hasSeats = Object.values(grouped).some(g => g.label === 'seat' && g.items && g.items.length > 0);
+                    
+                    if (hasSeats) {
+                        paxHtml += `
+                            <div class="visual-seat-map-container" style="background:white; border:2px dashed var(--primary); border-radius:12px; padding:30px; text-align:center;">
+                                <i class="fas fa-plane-departure fa-3x text-primary mb-3"></i>
+                                <h4>{{ __('Interactive Seat Selection') }}</h4>
+                                <p class="text-muted">{{ __('Select your preferred seats visually on the aircraft map for all passengers.') }}</p>
+                                <button type="button" class="fe-btn fe-btn-primary mt-3" onclick="openVisualSeatMap()">
+                                    <i class="fas fa-chair"></i> {{ __('Open Seat Map') }}
+                                </button>
+                                <input type="hidden" id="visual_seat_selections_${paxIdx}" name="visual_seat_selections" value="" class="global-seat-selections-input">
+                            </div>
+                        `;
+                    } else {
+                        paxHtml += `
+                            <div style="background: white; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 15px; text-align: center; color: #64748b; font-size: 0.9rem;">
+                                <i class="fas fa-info-circle mb-2" style="font-size:1.2rem; color:#94a3b8;"></i><br>
+                                {{ __("No options available for") }} ${typeLabels[category]}
+                            </div>
+                        `;
+                    }
+                } else {
+                    flightTypes.forEach(ft => {
+                        const key = category + '_' + ft;
+                        const group = grouped[key];
+                        const label = (ft === 'inbound' ? '{{ __("Return") }}' : '{{ __("Outbound") }}') + ' ' + typeLabels[category];
+                        const icon = typeIcons[category];
+                        const fieldName = ft === 'inbound' ? `passengers[${paxIdx}][extra_services_inbound][]` : `passengers[${paxIdx}][extra_services_outbound][]`;
+                        
+                        paxHtml += `
+                        <div class="mb-4">
+                            <div style="font-weight: 700; color: #475569; font-size: 0.9rem; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+                                <i class="fas ${icon}"></i> ${label}
+                            </div>`;
+                            
+                        if (!group || group.items.length === 0) {
+                            paxHtml += `
+                            <div style="background: white; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 15px; text-align: center; color: #64748b; font-size: 0.9rem;">
+                                <i class="fas fa-info-circle mb-2" style="font-size:1.2rem; color:#94a3b8;"></i><br>
+                                {{ __("No options available for") }} ${typeLabels[category]}
+                            </div>`;
+                        } else {
+                            paxHtml += `
+                            <div class="es-options-grid" style="display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
+                                <label class="es-card-option" style="cursor:pointer;">
+                                    <input type="radio" name="extra_${key}_pax${paxIdx}" value="" data-price="0" checked onchange="updateExtraTotal()" style="display:none;">
+                                    <div class="es-card-content" style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; text-align: center; background: white; transition: all 0.2s; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                                        <i class="fas fa-times-circle" style="color:#94a3b8; font-size:1.2rem; margin-bottom:8px;"></i>
+                                        <span style="font-weight:600; color:#334155; font-size:0.85rem;">{{ __("No Extra") }} ${typeLabels[category]}</span>
+                                    </div>
+                                </label>`;
+                                
+                            group.items.forEach(svc => {
+                                paxHtml += `
+                                    <label class="es-card-option" style="cursor:pointer;">
+                                        <input type="radio"
+                                               name="extra_${key}_pax${paxIdx}"
+                                               value="${svc.code}"
+                                               data-field="${fieldName}"
+                                               data-price="${svc.price}"
+                                               onchange="updateExtraTotal()" style="display:none;">
+                                        <div class="es-card-content" style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; text-align: center; background: white; transition: all 0.2s; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                                            <i class="fas ${icon}" style="color:var(--primary); font-size:1.2rem; margin-bottom:8px;"></i>
+                                            <span style="font-weight:600; color:#334155; font-size:0.85rem; line-height:1.2; margin-bottom:4px;">${svc.description}</span>
+                                            <span style="color:#10b981; font-weight:800; font-size:0.9rem;">+${svc.price} ${svc.currency}</span>
+                                        </div>
+                                    </label>`;
+                            });
+                            
+                            paxHtml += `</div>`;
+                        }
+                        
+                        paxHtml += `</div>`;
+                    });
+                }
+                
+                paxHtml += `</div>`; // Close fe-es-tab-content
+            });
+
+            paxHtml += `</div></div>`; // Close fe-es-tab-content-container and card
+            
+            $(`#passenger-extras-${paxIdx}`).html(paxHtml);
+        }
+
+        // Define global switchPaxTab if it doesn't exist yet
+        if (!window.switchPaxTab) {
+            window.switchPaxTab = function(paxIdx, tabName) {
+                const container = $('#passenger-extras-' + paxIdx);
+                const tabs = ['baggage', 'meal', 'seat'];
+                const tabIndex = tabs.indexOf(tabName);
+                
+                container.find('.fe-es-tab').removeClass('active');
+                container.find('.fe-es-tab-content').removeClass('active');
+                
+                container.find('.fe-es-tab').eq(tabIndex).addClass('active');
+                container.find('#pax-' + paxIdx + '-' + tabName).addClass('active');
+            };
+        }
+
+        // Add styles for the new radio cards
+        if ($('#esCardStyles').length === 0) {
+            $('head').append(`
+                <style id="esCardStyles">
+                    .es-card-option input[type="radio"]:checked + .es-card-content {
+                        border-color: var(--primary) !important;
+                        background: rgba(15,76,129,0.05) !important;
+                        box-shadow: 0 4px 12px rgba(15,76,129,0.1) !important;
+                    }
+                    .es-card-option:hover .es-card-content {
+                        border-color: var(--primary);
+                        transform: translateY(-2px);
+                    }
+                </style>
+            `);
+        }
     }
 
     window.updateExtraTotal = function() {
         let total = 0;
+        
+        // Clear all previous hidden fields for extra services to prevent duplicates
+        $('input[name*="extra_services_"]').remove();
+        $('.visual-seat-input').remove();
         $('input[name^="extra_"]:checked').each(function() {
             const price = parseFloat($(this).data('price')) || 0;
             total += price;
@@ -549,16 +710,188 @@ $(document).ready(function() {
             // Sync to actual form field
             const fieldName = $(this).data('field');
             if (fieldName && $(this).val()) {
-                $(`input[name="${fieldName}"]`).remove();
                 $('<input>').attr({ type: 'hidden', name: fieldName, value: $(this).val() }).appendTo('#flightBookingForm');
             }
         });
+
+        // Add Visual Seat Map selections if available
+        let seatSelections = $('.global-seat-selections-input').first().val();
+        if (seatSelections) {
+            try {
+                let parsedSeats = JSON.parse(seatSelections);
+                Object.entries(parsedSeats).forEach(([paxId, seat]) => {
+                    total += parseFloat(seat.price) || 0;
+                    
+                    // Add as hidden field to pass to backend (assuming outbound for now, backend could split it)
+                    let fieldName = `passengers[${paxId}][extra_services_outbound][]`;
+                    $('<input>').attr({ type: 'hidden', name: fieldName, value: seat.code, class: 'visual-seat-input' }).appendTo('#flightBookingForm');
+                });
+            } catch(e) {}
+        }
+
         extraServicesTotal = total;
         if (total > 0) {
-            $('#esTotal').show();
-            $('#esTotalValue').text(new Intl.NumberFormat().format(total) + ' SAR');
+            $('#esTotal').fadeIn();
+            $('#esTotalValue').text(total.toFixed(2) + ' SAR');
         } else {
-            $('#esTotal').hide();
+            $('#esTotal').fadeOut();
+        }
+
+        // Also update main total
+        updateMainTotal();
+    };
+
+    function updateMainTotal() {
+        let baseTotal = parseFloat($('#grandTotalAmount').data('base')) || 0;
+        let finalTotal = baseTotal + extraServicesTotal;
+        $('.total-value .amount').text(finalTotal.toFixed(2));
+        $('input[name="total_amount"]').val(finalTotal.toFixed(2));
+    }
+
+    // ═══ VISUAL SEAT MAP LOGIC ═══
+    let rawSeatServices = [];
+    let currentSeatPaxIndex = 0;
+    let selectedSeatsByPax = {}; // { paxIndex: { code, description, price } }
+    let selectedSeatsGlobal = new Set(); // To mark seats taken by our own group
+
+    window.openVisualSeatMap = function() {
+        // Extract raw seat services
+        rawSeatServices = window.rawServicesResponse.filter(s => s.type === 'seat');
+        if (rawSeatServices.length === 0) {
+            Swal.fire({
+                icon: 'info',
+                title: '{{ __("No Seats Available") }}',
+                text: '{{ __("The airline has not provided interactive seat map data for this flight. You may be assigned a seat at check-in.") }}',
+                confirmButtonText: '{{ __("OK") }}',
+                confirmButtonColor: '#0f4c81'
+            });
+            return;
+        }
+
+        buildSeatPaxList();
+        buildAircraftLayout();
+        $('#seatMapModal').removeClass('d-none');
+    };
+
+    window.closeVisualSeatMap = function() {
+        $('#seatMapModal').addClass('d-none');
+    };
+
+    function buildSeatPaxList() {
+        let html = '';
+        for (let i = 0; i < totalPax; i++) {
+            let activeCls = i === currentSeatPaxIndex ? 'active' : '';
+            let selectedTxt = selectedSeatsByPax[i] ? selectedSeatsByPax[i].description : '{{ __("Not Selected") }}';
+            let priceTxt = selectedSeatsByPax[i] ? `+${selectedSeatsByPax[i].price} SAR` : '';
+            
+            html += `<div class="seat-pax-item ${activeCls}" onclick="selectPaxForSeat(${i})">
+                <div class="pax-name"><i class="fas fa-user"></i> {{ __("Passenger") }} ${i+1}</div>
+                <div class="pax-seat-status text-muted small" id="pax-seat-status-${i}">
+                    <span>${selectedTxt}</span>
+                    <strong class="text-success ms-1">${priceTxt}</strong>
+                </div>
+            </div>`;
+        }
+        $('#seatPaxList').html(html);
+        updateSeatMapTotal();
+    }
+
+    window.selectPaxForSeat = function(idx) {
+        currentSeatPaxIndex = idx;
+        $('.seat-pax-item').removeClass('active');
+        $($('.seat-pax-item')[idx]).addClass('active');
+    };
+
+    function buildAircraftLayout() {
+        // Simple visualization: group seats into rows based on the number of services
+        // A real map would parse X,Y coordinates or seat numbers (e.g. 12A, 12B, 12C)
+        let html = '<div class="aircraft-grid">';
+        
+        // Group by an arbitrary row length just for visual if seat map is a list
+        let rowLength = 6; // 3-3 config
+        
+        let rowHtml = '<div class="aircraft-row">';
+        let aislePos = Math.floor(rowLength / 2);
+        
+        rawSeatServices.forEach((svc, index) => {
+            let posInRow = index % rowLength;
+            if (posInRow === 0 && index > 0) {
+                rowHtml += '</div><div class="aircraft-row">'; // New row
+            }
+            if (posInRow === aislePos) {
+                rowHtml += '<div class="aisle"></div>'; // Aisle
+            }
+            
+            // Check if this seat code is already selected by another passenger in our group
+            let isSelectedByMe = selectedSeatsByPax[currentSeatPaxIndex] && selectedSeatsByPax[currentSeatPaxIndex].code === svc.code;
+            let isTakenByOther = false;
+            Object.keys(selectedSeatsByPax).forEach(paxId => {
+                if (paxId != currentSeatPaxIndex && selectedSeatsByPax[paxId] && selectedSeatsByPax[paxId].code === svc.code) {
+                    isTakenByOther = true;
+                }
+            });
+
+            let seatClass = 'available';
+            if (isSelectedByMe) seatClass = 'selected';
+            else if (isTakenByOther) seatClass = 'unavailable';
+
+            let seatLabel = svc.description.split(' ').pop(); // Try to get seat number like '12A'
+            if (seatLabel.length > 4) seatLabel = '';
+
+            rowHtml += `<div class="seat-box ${seatClass}" 
+                             onclick="toggleSeatSelection('${svc.code}', '${svc.description}', ${svc.price})"
+                             title="${svc.description} - ${svc.price} ${svc.currency}">
+                            ${seatLabel}
+                        </div>`;
+        });
+        
+        rowHtml += '</div>';
+        html += rowHtml + '</div>';
+        
+        $('#aircraftSeatsContainer').html(html);
+    }
+
+    window.toggleSeatSelection = function(code, desc, price) {
+        // Is it already taken by someone else?
+        let takenByOther = false;
+        Object.keys(selectedSeatsByPax).forEach(paxId => {
+            if (paxId != currentSeatPaxIndex && selectedSeatsByPax[paxId] && selectedSeatsByPax[paxId].code === code) {
+                takenByOther = true;
+            }
+        });
+        if (takenByOther) return;
+
+        // Toggle selection for current pax
+        if (selectedSeatsByPax[currentSeatPaxIndex] && selectedSeatsByPax[currentSeatPaxIndex].code === code) {
+            delete selectedSeatsByPax[currentSeatPaxIndex]; // Deselect
+        } else {
+            selectedSeatsByPax[currentSeatPaxIndex] = { code, description: desc, price }; // Select
+            
+            // Auto advance to next passenger if available
+            if (currentSeatPaxIndex < totalPax - 1) {
+                selectPaxForSeat(currentSeatPaxIndex + 1);
+            }
+        }
+        
+        buildSeatPaxList();
+        buildAircraftLayout();
+    };
+
+    function updateSeatMapTotal() {
+        let total = 0;
+        Object.values(selectedSeatsByPax).forEach(seat => {
+            total += parseFloat(seat.price) || 0;
+        });
+        $('#seatMapTotal').text(new Intl.NumberFormat().format(total));
+    }
+
+    window.confirmSeatSelection = function() {
+        $('.global-seat-selections-input').val(JSON.stringify(selectedSeatsByPax));
+        updateExtraTotal();
+        closeVisualSeatMap();
+        
+        if (typeof toastr !== 'undefined') {
+            toastr.success('{{ __("Seats confirmed successfully") }}');
         }
     };
 
@@ -663,7 +996,7 @@ $(document).ready(function() {
 
         const btn = $(this);
         const originalText = btn.html();
-        btn.html('<i class="fas fa-spinner fa-spin"></i> Processing...').prop('disabled', true);
+        btn.html('<i class="fas fa-spinner fa-spin"></i> {{ __("Processing...") }}').prop('disabled', true);
 
         if(!cropper) return;
         cropper.getCroppedCanvas({ maxWidth: 2000, maxHeight: 2000 }).toBlob(function(blob) {
@@ -933,12 +1266,16 @@ $(document).ready(function() {
                     '#hidden_first_name_' + i,
                     '#hidden_last_name_' + i,
                     '#hidden_dob_' + i,
-                    '#hidden_nationality_' + i,
-                    '#hidden_passport_number_' + i,
-                    '#hidden_passport_expiry_' + i,
-                    '#hidden_passport_issue_country_' + i
+                    '#hidden_nationality_' + i
                 ];
                 
+                let isPassportMandatory = "{{ $details['IsPassportMandatory'] ?? 'false' }}" === "true" || "{{ $details['IsPassportMandatory'] ?? 'false' }}" === "1";
+                if (isPassportMandatory) {
+                    requiredFields.push('#hidden_passport_number_' + i);
+                    requiredFields.push('#hidden_passport_expiry_' + i);
+                    requiredFields.push('#hidden_passport_issue_country_' + i);
+                }
+
                 for (let j = 0; j < requiredFields.length; j++) {
                     let field = $(requiredFields[j]);
                     if (field.length > 0 && !field.val().trim()) {
@@ -972,6 +1309,9 @@ $(document).ready(function() {
             }
         }
     });
+
+    // Fetch Extra Services on page load
+    fetchExtraServices();
 });
 </script>
 <style>
@@ -984,6 +1324,157 @@ $(document).ready(function() {
 }
 .shake {
   animation: shake 0.4s;
+}
+
+/* Tabs CSS */
+.fe-es-tabs {
+    display: flex;
+    border-bottom: 2px solid var(--gray-200);
+    background: var(--gray-50);
+}
+.fe-es-tab {
+    flex: 1;
+    padding: 15px 20px;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    font-weight: 700;
+    color: var(--gray-500);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 1rem;
+}
+.fe-es-tab:hover {
+    color: var(--primary);
+    background: rgba(15,76,129,0.05);
+}
+.fe-es-tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    background: white;
+}
+.fe-es-tab-content {
+    display: none;
+}
+.fe-es-tab-content.active {
+    display: block;
+    animation: fadeInTab 0.3s ease;
+}
+@keyframes fadeInTab {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Visual Seat Map CSS */
+.seat-map-layout {
+    display: flex;
+    height: 100%;
+    min-height: 500px;
+}
+.seat-pax-sidebar {
+    width: 250px;
+    background: white;
+    border-right: 1px solid var(--gray-200);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+.seat-pax-item {
+    padding: 12px;
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #f8f9fa;
+}
+.seat-pax-item.active {
+    border-color: var(--primary);
+    background: rgba(15,76,129,0.05);
+    box-shadow: 0 0 0 2px rgba(15,76,129,0.1);
+}
+.pax-name { font-weight: 700; color: var(--dark); font-size: 0.9rem; }
+.seat-legend .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+    color: var(--gray-600);
+}
+.aircraft-container {
+    flex: 1;
+    background: #e2e8f0;
+    padding: 30px;
+    display: flex;
+    justify-content: center;
+    overflow-y: auto;
+}
+.aircraft-fuselage {
+    background: white;
+    border-radius: 60px 60px 20px 20px;
+    padding: 40px 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    position: relative;
+    border: 2px solid #cbd5e1;
+}
+.aircraft-cockpit {
+    height: 40px;
+    border-bottom: 2px dashed #cbd5e1;
+    margin-bottom: 30px;
+}
+.aircraft-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.aircraft-row {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+.aisle {
+    width: 30px; /* Space for aisle */
+}
+.seat-box {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+    border: 1px solid;
+}
+.seat-box.available {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #475569;
+}
+.seat-box.available:hover {
+    background: #e2e8f0;
+    transform: scale(1.1);
+}
+.seat-box.selected {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    box-shadow: 0 2px 5px rgba(15,76,129,0.3);
+}
+.seat-box.unavailable {
+    background: #cbd5e1;
+    border-color: #94a3b8;
+    color: #f1f5f9;
+    cursor: not-allowed;
+    text-decoration: line-through;
 }
 </style>
 @endpush

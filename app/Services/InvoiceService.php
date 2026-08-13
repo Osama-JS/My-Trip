@@ -85,6 +85,7 @@ class InvoiceService
             if ($booking instanceof \App\Models\Booking) {
                 $view = 'invoices.flight_invoice';
                 $fileNamePrefix = 'flight_invoice_';
+                $tripDetails = null;
                 
                 try {
                     $traveloproService = app(\App\Services\TraveloproService::class);
@@ -100,7 +101,97 @@ class InvoiceService
                         }
                         view()->share('eTickets', $eTickets);
                     }
-                } catch (\Exception $e) {}
+                } catch (\Exception $e) {
+                    $tripDetails = null;
+                }
+
+                // If itinerary_data is missing on old bookings, try to recover from API logs
+                $booking->load(['flightBooking']);
+                $fb = $booking->flightBooking;
+                if ($fb && empty($fb->itinerary_data)) {
+                    try {
+                        // Find the createBooking request log for this booking
+                        $bookingLog = \App\Models\FlightApiLog::where('action', 'createBooking')
+                            ->where('booking_id', $booking->id)
+                            ->first();
+
+                        if ($bookingLog) {
+                            $req = $bookingLog->request_payload;
+                            if (is_string($req)) $req = json_decode($req, true);
+                            $info = $req['flightBookingInfo'][0] ?? $req['flightBookingInfo'] ?? [];
+                            $fareSourceCode = $info['fare_source_code'] ?? null;
+
+                            // Find the closest search log before this booking
+                            $searchLog = \App\Models\FlightApiLog::where('action', 'search')
+                                ->where('created_at', '<=', $bookingLog->created_at)
+                                ->latest()
+                                ->first();
+
+                            if ($searchLog) {
+                                $sr = $searchLog->response_payload;
+                                if (is_string($sr)) $sr = json_decode($sr, true);
+                                $fareItineraries = $sr['AirSearchResponse']['AirSearchResult']['FareItineraries'] ?? [];
+
+                                $matchedFare = null;
+                                // Try exact FareSourceCode match first
+                                foreach ($fareItineraries as $item) {
+                                    $fi = $item['FareItinerary'] ?? $item;
+                                    $fsc = $fi['AirItineraryFareInfo']['FareSourceCode'] ?? null;
+                                    if ($fareSourceCode && $fsc === $fareSourceCode) {
+                                        $matchedFare = $fi;
+                                        break;
+                                    }
+                                }
+
+                                // Fallback: match by origin/destination
+                                if (!$matchedFare) {
+                                    $originReq = $fb->origin ?? null;
+                                    $destReq   = $fb->destination ?? null;
+                                    foreach ($fareItineraries as $item) {
+                                        $fi = $item['FareItinerary'] ?? $item;
+                                        $odo = $fi['OriginDestinationOptions'] ?? [];
+                                        foreach ($odo as $wrapper) {
+                                            $odOpts = $wrapper['OriginDestinationOption'] ?? [];
+                                            if (!isset($odOpts[0])) $odOpts = [$odOpts];
+                                            $seg = $odOpts[0]['FlightSegment'] ?? null;
+                                            if ($seg) {
+                                                $sDepCode = $seg['DepartureAirportLocationCode'] ?? '';
+                                                $sArrCode = $seg['ArrivalAirportLocationCode'] ?? '';
+                                                if ($originReq && $destReq &&
+                                                    strtoupper($sDepCode) === strtoupper($originReq) &&
+                                                    strtoupper($sArrCode) === strtoupper($destReq)) {
+                                                    $matchedFare = $fi;
+                                                    break 2;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if ($matchedFare) {
+                                    // Extract and save segments
+                                    $odo = $matchedFare['OriginDestinationOptions'] ?? [];
+                                    $segments = [];
+                                    foreach ($odo as $wrapper) {
+                                        $odOpts = $wrapper['OriginDestinationOption'] ?? [];
+                                        if (!isset($odOpts[0])) $odOpts = [$odOpts];
+                                        $legSegs = [];
+                                        foreach ($odOpts as $opt) {
+                                            $seg = $opt['FlightSegment'] ?? null;
+                                            if ($seg) $legSegs[] = $seg;
+                                        }
+                                        if (!empty($legSegs)) $segments[] = ['legs' => $legSegs];
+                                    }
+                                    if (!empty($segments)) {
+                                        $fb->update(['itinerary_data' => ['segments' => $segments]]);
+                                    }
+                                }
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::warning('Could not recover itinerary_data: ' . $e->getMessage());
+                    }
+                }
             }
 
             if ($booking instanceof \App\Models\Booking) {
@@ -142,7 +233,7 @@ class InvoiceService
             $mpdf->showWatermarkText = true;
             $mpdf->watermark_font = 'tajawal';
 
-            $html = view($view, compact('booking'))->render();
+            $html = view($view, compact('booking', 'tripDetails'))->render();
             $mpdf->WriteHTML($html);
 
             $fileName = $fileNamePrefix . $booking->id . '_' . time() . '.pdf';

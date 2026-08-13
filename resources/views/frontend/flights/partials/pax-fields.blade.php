@@ -8,15 +8,26 @@
     <div class="fe-card-body">
         <input type="hidden" name="passengers[{{ $index }}][type]" value="{{ $type }}">
         
-        <!-- Passport Upload for AI -->
+        @php
+            $isPassport = ($isPassportMandatory === 'true' || $isPassportMandatory === true);
+            $docTypeLabel = $isPassport ? __('Passport') : __('Passport / National ID');
+        @endphp
+
+        <!-- Document Upload for AI -->
         <div class="fe-form-row">
             <div class="fe-form-group" style="width: 100%;">
-                <label class="fe-label mb-2">{{ __('Upload Passport Image') }} <span class="text-danger" style="color:red;">*</span></label>
+                <label class="fe-label mb-2">
+                    {{ __('Upload') }} {{ $docTypeLabel }} {{ __('Image') }} 
+                    <span class="text-danger" style="color:red;">*</span>
+                    @if(!$isPassport)
+                        <span style="font-weight:500;color:var(--gray-400);font-size:0.78rem;margin-inline-start:4px;">{{ __('(Passport is not mandatory for this flight, you can use National ID)') }}</span>
+                    @endif
+                </label>
                 
                 <div class="passport-dropzone" id="passport_dropzone_{{ $index }}" onclick="openPassportModal({{ $index }})">
                     <div class="dropzone-content">
                         <i class="fas fa-cloud-upload-alt fa-3x mb-3 text-primary"></i>
-                        <h5>{{ __('Click or Drag & Drop Passport Image') }}</h5>
+                        <h5>{{ __('Click or Drag & Drop') }} {{ $docTypeLabel }}</h5>
                         <p class="text-muted mb-0">{{ __('Supports JPG, PNG for AI auto-fill') }}</p>
                         
                         <div class="success-indicator d-none mt-2" id="success_indicator_{{ $index }}">
@@ -60,11 +71,11 @@
         <div class="fe-form-row three-cols mt-2">
             <div class="fe-form-group">
                 <label class="fe-label">{{ __('First Name') }}</label>
-                <input type="text" name="passengers[{{ $index }}][first_name]" class="fe-input" required placeholder="{{ __('First name as in passport') }}">
+                <input type="text" name="passengers[{{ $index }}][first_name]" class="fe-input" required placeholder="{{ __('First name') }}">
             </div>
             <div class="fe-form-group">
                 <label class="fe-label">{{ __('Last Name') }}</label>
-                <input type="text" name="passengers[{{ $index }}][last_name]" class="fe-input" required placeholder="{{ __('Last name as in passport') }}">
+                <input type="text" name="passengers[{{ $index }}][last_name]" class="fe-input" required placeholder="{{ __('Last name') }}">
             </div>
             <div class="fe-form-group">
                 <label class="fe-label">{{ __('Date of Birth') }}</label>
@@ -74,7 +85,7 @@
 
         <div class="fe-form-row three-cols">
             <div class="fe-form-group">
-                <label class="fe-label">{{ __('Passport Number') }}</label>
+                <label class="fe-label">{{ $isPassport ? __('Passport Number') : __('Passport / ID Number') }}</label>
                 <input type="text" name="passengers[{{ $index }}][passport_no]" class="fe-input" required placeholder="A1234567">
             </div>
             <div class="fe-form-group">
@@ -89,8 +100,8 @@
                 </select>
             </div>
             <div class="fe-form-group">
-                <label class="fe-label">{{ __('Passport Issue Country') }}</label>
-                <select name="passengers[{{ $index }}][passport_issue_country]" class="fe-input fe-select2" required>
+                <label class="fe-label">{{ $isPassport ? __('Passport Issue Country') : __('Document Issue Country') }}</label>
+                <select name="passengers[{{ $index }}][passport_issue_country]" class="fe-input fe-select2" {{ $isPassport ? 'required' : '' }}>
                     <option value=""></option>
                     @foreach($countries as $country)
                         <option value="{{ $country->iso }}" {{ $country->iso == 'SA' ? 'selected' : '' }}>
@@ -103,10 +114,10 @@
 
         <div class="fe-form-row two-cols">
             <div class="fe-form-group">
-                <label class="fe-label">{{ __('Passport Expiry Date') }}</label>
-                <input type="text" name="passengers[{{ $index }}][passport_expiry_date]" class="fe-input expiry-picker" required readonly placeholder="YYYY-MM-DD">
+                <label class="fe-label">{{ $isPassport ? __('Passport Expiry Date') : __('Document Expiry Date') }}</label>
+                <input type="text" name="passengers[{{ $index }}][passport_expiry_date]" class="fe-input expiry-picker" {{ $isPassport ? 'required' : '' }} readonly placeholder="YYYY-MM-DD">
             </div>
-            <div class="fe-form-group">
+            <div class="fe-form-group" style="{{ $isPassport ? '' : 'display:none;' }}">
                 <label class="fe-label">
                     {{ __('Passport Issue Date') }}
                     <span style="font-weight:500;color:var(--gray-400);font-size:0.78rem;margin-inline-start:4px;">{{ __('(if required by airline)') }}</span>
@@ -131,7 +142,7 @@
             <div class="fe-form-group" style="width: 100%;">
                 <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px;">
                     <h6 style="color: #334155; font-weight: 700; margin-bottom: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">
-                        <i class="fas fa-passport text-primary" style="margin-inline-end: 8px;"></i>{{ __('Extracted Passport Data') }}
+                        <i class="fas fa-passport text-primary" style="margin-inline-end: 8px;"></i>{{ $isPassport ? __('Extracted Passport Data') : __('Extracted Document Data') }}
                     </h6>
                     
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
@@ -152,7 +163,7 @@
                             <div style="font-weight: 600; color: #0f172a; font-size: 0.95rem; margin-top: 2px;" class="ai-display-dob-{{ $index }}">---</div>
                         </div>
                         <div>
-                            <span style="font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">{{ __('Passport Number') }}</span>
+                            <span style="font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">{{ $isPassport ? __('Passport Number') : __('Document Number') }}</span>
                             <div style="font-weight: 600; color: #0f172a; font-size: 0.95rem; margin-top: 2px;" class="ai-display-passport_no-{{ $index }}">---</div>
                         </div>
                         <div>
@@ -172,5 +183,8 @@
             </div>
         </div>
         @endif
+        
+        <!-- INJECT EXTRA SERVICES HERE -->
+        <div id="passenger-extras-{{ $index }}"></div>
     </div>
 </div>

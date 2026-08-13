@@ -22,15 +22,19 @@ class FlightBooking extends Model
         'infants',
         'flight_class',
         'flight_number',
+        'airline_code',
+        'airline_name',
         'itinerary_data',
         'total_amount',
         'currency',
+        'extra_services',
     ];
 
     protected $casts = [
         'departure_date' => 'date',
         'return_date' => 'date',
         'itinerary_data' => 'array',
+        'extra_services' => 'array',
         'total_amount' => 'decimal:2',
     ];
 

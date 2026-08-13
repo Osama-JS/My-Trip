@@ -84,7 +84,7 @@ class TraveloproService
     /**
      * Return a pre-configured HTTP client with SSL verification via cacert.pem.
      */
-    private function httpClient(int $timeout = 60): \Illuminate\Http\Client\PendingRequest
+    private function httpClient(int $timeout = 120): \Illuminate\Http\Client\PendingRequest
     {
         $certPath = base_path('cacert.pem');
         $options = file_exists($certPath)
@@ -92,7 +92,7 @@ class TraveloproService
             : ['verify' => false];   // fallback only if file missing
 
         return \Illuminate\Support\Facades\Http::withOptions($options)
-            ->connectTimeout(60)
+            ->connectTimeout(120)
             ->timeout($timeout);
     }
 
@@ -133,7 +133,7 @@ class TraveloproService
 
         $startTime = microtime(true);
         try {
-            $response = $this->httpClient(60)->post($url = $this->endpoint('search'), $payload);
+            $response = $this->httpClient(120)->post($url = $this->endpoint('search'), $payload);
             $executionTime = microtime(true) - $startTime;
 
             $this->logApiTransaction('search', $url, 'POST', $payload, $response->json(), $response->status(), $executionTime);
@@ -639,6 +639,14 @@ class TraveloproService
                 $details['ExtraServiceInbound'] = array_column($paxList, 'extra_services_inbound');
             }
 
+            // Seats
+            if (!empty($paxList[0]['seat_outbound'])) {
+                $details['SeatOutbound'] = array_column($paxList, 'seat_outbound');
+            }
+            if (!empty($paxList[0]['seat_inbound'])) {
+                $details['SeatInbound'] = array_column($paxList, 'seat_inbound');
+            }
+
             $formatted[$type] = $details;
         }
 
@@ -888,8 +896,14 @@ class TraveloproService
 
             if ($response->successful()) {
                 $raw = $response->json();
-                Log::info('Travelopro Extra Services Response', ['keys' => array_keys($raw ?? [])]);
-                return $this->normalizeExtraServices($raw);
+                if (isset($raw['Errors']) || isset($raw['Error'])) {
+                    Log::warning('Travelopro Extra Services Response Error', ['response' => $raw]);
+                } else {
+                    Log::info('Travelopro Extra Services Response Data', ['data' => $raw]);
+                }
+                
+                // Return raw so frontend can parse DynamicBaggage, DynamicMeal, DynamicSeat
+                return $raw;
             }
 
             Log::error('Travelopro Extra Services Error', [
@@ -903,43 +917,6 @@ class TraveloproService
             Log::error('Travelopro Extra Services Exception', ['message' => $e->getMessage()]);
             return ['status' => 'error', 'message' => 'Service unavailable', 'data' => []];
         }
-    }
-
-    /**
-     * Normalize the raw ExtraServices response into a predictable structure.
-     *
-     * Travelopro can return either:
-     *   - ExtraServiceResponse → ExtraServiceResult → Services[]
-     *   - a flat 'Services' key at the root
-     */
-    private function normalizeExtraServices(?array $raw): array
-    {
-        if (empty($raw)) {
-            return ['status' => 'ok', 'data' => []];
-        }
-
-        // Drill down to the service list
-        $result  = $raw['ExtraServiceResponse']['ExtraServiceResult'] ?? $raw;
-        $services = $result['Services'] ?? $result['services'] ?? [];
-
-        if (!is_array($services)) {
-            return ['status' => 'ok', 'data' => []];
-        }
-
-        $normalized = [];
-        foreach ($services as $svc) {
-            $normalized[] = [
-                'type'        => $svc['ServiceType']   ?? $svc['type']        ?? 'unknown',
-                'code'        => $svc['ServiceCode']   ?? $svc['code']        ?? '',
-                'description' => $svc['Description']   ?? $svc['description'] ?? '',
-                'price'       => (float)($svc['Price'] ?? $svc['price']       ?? 0),
-                'currency'    => $svc['Currency']      ?? $svc['currency']    ?? 'SAR',
-                'flight_type' => $svc['FlightType']    ?? $svc['flight_type'] ?? 'outbound', // outbound / inbound
-                'pax_index'   => $svc['PaxIndex']      ?? $svc['pax_index']   ?? 0,
-            ];
-        }
-
-        return ['status' => 'ok', 'data' => $normalized];
     }
 
     /**

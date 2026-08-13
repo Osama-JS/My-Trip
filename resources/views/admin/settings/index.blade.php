@@ -534,6 +534,30 @@
                                     <small class="text-muted mt-2 d-block">{{ __('Select whether to send OTP codes via WhatsApp or Email during user registration and login.') }}</small>
                                 </div>
                             </div>
+                            
+                            <div class="form-section-title mt-4">{{ __('Flight & Booking Features') }}</div>
+                            <div class="row align-items-start">
+                                <div class="col-md-12 mb-4 form-group">
+                                    <label class="d-block mb-3">{{ __('Flight Seat Selection Method') }}</label>
+                                    <div class="maintenance-options">
+                                        <div class="maintenance-option">
+                                            <input type="radio" name="visual_seat_map" id="seat_map_visual" value="1" {{ \App\Models\Setting::get('visual_seat_map', '1') == '1' ? 'checked' : '' }}>
+                                            <label for="seat_map_visual">
+                                                <i class="fas fa-plane text-success"></i>
+                                                <span>{{ __('Visual Seat Map') }}</span>
+                                            </label>
+                                        </div>
+                                        <div class="maintenance-option">
+                                            <input type="radio" name="visual_seat_map" id="seat_map_list" value="0" {{ \App\Models\Setting::get('visual_seat_map', '1') == '0' ? 'checked' : '' }}>
+                                            <label for="seat_map_list">
+                                                <i class="fas fa-list text-primary"></i>
+                                                <span>{{ __('Standard List') }}</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted mt-2 d-block">{{ __('Choose whether customers see an interactive visual aircraft map or a standard dropdown list when selecting flight seats.') }}</small>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- AI Settings Tab -->

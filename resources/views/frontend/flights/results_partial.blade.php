@@ -9,7 +9,7 @@
         $itineraries = [$itineraries];
     }
 
-    $sessionId = $results['AirSearchResponse']['AirSearchResult']['SessionId'] ?? '';
+    $sessionId = $results['AirSearchResponse']['session_id'] ?? ($results['AirSearchResponse']['AirSearchResult']['SessionId'] ?? '');
 @endphp
 
 @if(empty($itineraries))
