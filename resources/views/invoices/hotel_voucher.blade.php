@@ -444,7 +444,7 @@
                         </td>
                         <td width="50%" style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }};">
                             <span class="stay-info-strip-label">{{ __('Total Amount') }}</span><br>
-                            <span style="color: #f2cb57; font-weight: 900; font-size: 18px;">{{ number_format($booking->total_selling, 2) }} {{ $booking->currency }}</span>
+                            <span style="color: #f2cb57; font-weight: 900; font-size: 18px;">{{ number_format($booking->total_price, 2) }} {{ $booking->currency }}</span>
                         </td>
                     </tr>
                 </table>
