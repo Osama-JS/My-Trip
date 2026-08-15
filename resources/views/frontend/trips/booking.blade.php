@@ -73,17 +73,22 @@
                         </div>
                         <div class="fe-pax-body">
                             
-                            <div class="fe-upload-zone mt-2 mb-3" id="passport_dropzone_{{ $i }}" onclick="openPassportModal({{ $i }})" style="cursor: pointer;">
-                                <input type="file" name="passengers[{{ $i }}][passport_image]" id="hidden_passport_input_{{ $i }}" accept="image/*" class="d-none">
-                                <label class="fe-upload-label" style="pointer-events: none;">
-                                    <div class="fe-upload-icon"><i class="fas fa-camera-retro"></i></div>
-                                    <div class="fe-upload-text">
-                                        <b id="file_name_display_{{ $i }}">{{ __('Scan/Upload Passport') }}</b>
-                                        <span>{{ __('Extract details automatically via AI') }}</span>
+                            <div class="passport-dropzone mb-3" id="passport_dropzone_{{ $i }}" onclick="openPassportModal({{ $i }})">
+                                <div class="dropzone-content">
+                                    <i class="fas fa-cloud-upload-alt fa-3x mb-3 text-primary"></i>
+                                    <h5>{{ __('Click or Drag & Drop Passport') }}</h5>
+                                    <p class="text-muted mb-0">{{ __('Supports JPG, PNG for AI auto-fill') }}</p>
+
+                                    <div class="success-indicator mt-2" id="success_indicator_{{ $i }}" style="display:none;">
+                                        <i class="fas fa-check-circle text-success fa-3x mb-2"></i>
+                                        <h6 class="text-success fw-bold mb-0 mt-1" id="file_name_display_{{ $i }}"></h6>
+                                        <p class="text-muted small mt-2"><i class="fas fa-pen"></i> {{ __('Click to change') }}</p>
                                     </div>
-                                </label>
-                                
-                                <div class="ai-loading-overlay d-none align-items-center justify-content-center" id="ai-loading-{{ $i }}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 10; border-radius: 14px;">
+                                </div>
+
+                                <input type="file" name="passengers[{{ $i }}][passport_image]" id="hidden_passport_input_{{ $i }}" accept="image/*" style="display:none;">
+
+                                <div class="ai-loading-overlay" id="ai-loading-{{ $i }}" style="display:none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 10; border-radius: 14px; align-items: center; justify-content: center;">
                                     <div class="text-center">
                                         <i class="fas fa-circle-notch fa-spin fa-3x mb-3" style="color: var(--primary);"></i>
                                         <div style="font-weight: 800; color: var(--dark); font-size: 1.1rem;">{{ __('Scanning AI Data...') }}</div>
@@ -99,15 +104,18 @@
                             </div>
 
                             <div class="fe-form-row mt-4">
-                                <div class="fe-form-group" style="max-width: 200px;">
-                                    <label class="fe-label">{{ __('Title') }}</label>
-                                    <select name="passengers[{{ $i }}][title]" class="fe-input" onchange="document.getElementById('hidden_title_{{ $i }}').value = this.value">
-                                        <option value="Mr">{{ __('Mr') }}</option>
-                                        <option value="Mrs">{{ __('Mrs') }}</option>
-                                        <option value="Ms">{{ __('Ms') }}</option>
-                                        <option value="Master">{{ __('Master') }}</option>
-                                        <option value="Miss">{{ __('Miss') }}</option>
-                                    </select>
+                                <div class="fe-input-group" style="max-width: 200px;">
+                                    <label>{{ __('Title') }}</label>
+                                    <div class="fe-input-icon">
+                                        <i class="fas fa-user-tag"></i>
+                                        <select name="passengers[{{ $i }}][title]" id="title_select_{{ $i }}" class="fe-input fe-select2" style="width: 100%;">
+                                            <option value="Mr">{{ __('Mr') }}</option>
+                                            <option value="Mrs">{{ __('Mrs') }}</option>
+                                            <option value="Ms">{{ __('Ms') }}</option>
+                                            <option value="Master">{{ __('Master') }}</option>
+                                            <option value="Miss">{{ __('Miss') }}</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
 
@@ -350,9 +358,38 @@
         </div>
     </form>
 </div>
+
+{{-- Passport Upload & Crop Modal (Custom - matches flights/booking) --}}
+<div class="fe-modal-overlay d-none" id="passportUploadModal">
+  <div class="fe-modal-dialog">
+    <div class="fe-modal-content">
+      <div class="fe-modal-header">
+        <h5 style="margin: 0; font-weight: 800; color: #0f172a;"><i class="fas fa-id-card text-primary me-2"></i> {{ __('Upload & Edit Passport') }}</h5>
+        <button type="button" class="fe-btn-close" onclick="closePassportModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="fe-modal-body bg-light">
+        {{-- Drag & Drop Area (Visible Initially) --}}
+        <div id="modalDropArea" class="p-5 text-center" style="border: 2px dashed #cbd5e1; margin: 20px; border-radius: 15px; background: white; cursor: pointer; transition: all 0.3s;">
+            <i class="fas fa-cloud-upload-alt" style="font-size: 3rem; color: #94a3b8; margin-bottom: 15px;"></i>
+            <h4 style="font-weight: 700; color: #334155;">{{ __('Drag & Drop here or Click to Browse') }}</h4>
+            <p style="color: #64748b; font-size: 0.9rem;">{{ __('Ensure the data page is clear and readable.') }}</p>
+            <input type="file" id="modalFileInput" accept="image/*" style="display:none;">
+        </div>
+        {{-- Cropper Area (Hidden Initially - content injected by JS on file select) --}}
+        <div id="modalCropperArea" style="display:none; padding: 20px;"></div>
+      </div>
+      <div class="fe-modal-footer">
+        <button type="button" class="fe-btn fe-btn-light fw-bold" id="btnChangeImage" style="display:none; padding: 10px 20px;"><i class="fas fa-undo"></i> {{ __('Change Image') }}</button>
+        <button type="button" class="fe-btn fe-btn-outline fw-bold ms-auto" onclick="closePassportModal()" style="padding: 10px 20px;">{{ __('Cancel') }}</button>
+        <button type="button" class="fe-btn fe-btn-primary fw-bold" id="btnConfirmUpload" disabled style="padding: 10px 20px;">{{ __('Confirm & Scan') }} <i class="fas fa-magic ms-1"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
 @endsection
 
 @push('styles')
+<link href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.css" rel="stylesheet">
 <style>
     :root {
         --glass-bg: rgba(255, 255, 255, 0.8);
@@ -422,14 +459,22 @@
     .fe-input-icon input { width: 100%; height: 52px; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 0 45px; font-weight: 700; color: var(--dark-text); transition: all 0.3s; }
     .fe-input-icon input:focus { border-color: var(--accent); box-shadow: 0 0 0 5px rgba(14, 165, 233, 0.1); outline: none; }
     .fe-input-icon input:focus + i { color: var(--accent); }
+    
+    /* Select2 overriding inside fe-input-icon to match input style */
+    .fe-input-icon .select2-container--default .select2-selection--single { height: 52px; border: 1.5px solid #e2e8f0; border-radius: 12px; display: flex; align-items: center; outline: none; transition: all 0.3s; }
+    .fe-input-icon .select2-container--default.select2-container--focus .select2-selection--single { border-color: var(--accent); box-shadow: 0 0 0 5px rgba(14, 165, 233, 0.1); }
+    .fe-input-icon .select2-container--default .select2-selection--single .select2-selection__rendered { padding: 0 45px; font-weight: 700; color: var(--dark-text); line-height: normal; width: 100%; }
+    .fe-input-icon .select2-container--default .select2-selection--single .select2-selection__arrow { height: 50px; right: 15px; }
+    html[dir="rtl"] .fe-input-icon .select2-container--default .select2-selection--single .select2-selection__arrow { left: 15px; right: auto; }
+    html[dir="rtl"] .fe-input-icon i { left: auto; right: 18px; }
 
-    .fe-upload-zone { margin-top: 5px; position: relative; }
-    .fe-upload-input { display: none; }
-    .fe-upload-label { cursor: pointer; display: flex; align-items: center; gap: 15px; border: 2px dashed #e2e8f0; padding: 15px; border-radius: 12px; background: #f8fafc; transition: all 0.3s; position: relative; }
-    .fe-upload-label:hover { border-color: var(--accent); background: white; }
-    .fe-upload-icon { width: 42px; height: 42px; background: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 1.1rem; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-    .fe-upload-text b { display: block; font-size: 0.85rem; color: var(--dark-text); }
-    .fe-upload-text span { font-size: 0.7rem; color: #94a3b8; font-weight: 600; }
+    .passport-dropzone { border: 2px dashed var(--accent, #0ea5e9); border-radius: 16px; background: #f8fafc; padding: 30px 20px; text-align: center; cursor: pointer; transition: all 0.3s ease; position: relative; overflow: hidden; }
+    .passport-dropzone:hover { background: #f0f9ff; border-color: var(--accent); }
+    .passport-dropzone h5 { font-weight: 800; font-size: 1.1rem; color: #1e293b; margin-top: 10px; }
+    .passport-dropzone.has-file { border: 2px solid #10b981; background: #f0fdf4; }
+    .passport-dropzone.has-file h5, .passport-dropzone.has-file p.text-muted { display: none; }
+    .passport-dropzone.has-file i.fa-cloud-upload-alt { display: none; }
+    .passport-dropzone.has-file .success-indicator { display: flex; flex-direction: column; align-items: center; justify-content: center; }
 
     /* ACTIONS */
     .fe-booking-nav { display: flex; align-items: center; justify-content: space-between; margin-top: 30px; }
@@ -478,10 +523,37 @@
         opacity: 0.8 !important;
         border-color: #e2e8f0 !important;
     }
+
+    /* ─── Custom Modal (Passport Upload) ─── */
+    .fe-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: all 0.3s ease; }
+    .fe-modal-overlay.show { opacity: 1; visibility: visible; }
+    .fe-modal-overlay.d-none { display: none !important; }
+    .fe-modal-dialog { background: white; border-radius: 20px; width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto; transform: translateY(-20px); transition: all 0.3s ease; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+    .fe-modal-overlay.show .fe-modal-dialog { transform: translateY(0); }
+    .fe-modal-header { padding: 20px 25px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
+    .fe-modal-body { padding: 0; background: #f8fafc; }
+    .fe-modal-footer { padding: 15px 25px; border-top: 1px solid #e2e8f0; display: flex; gap: 10px; align-items: center; background: #f8fafc; }
+    .fe-btn-close { background: transparent; border: none; font-size: 1.5rem; color: #64748b; cursor: pointer; transition: color 0.2s; }
+    .fe-btn-close:hover { color: #0f172a; }
+    .fe-btn { display: inline-flex; align-items: center; gap: 6px; border-radius: 10px; font-weight: 700; font-size: 0.9rem; cursor: pointer; border: none; transition: all 0.2s; }
+    .fe-btn-primary { background: var(--accent, #0ea5e9); color: white; padding: 10px 20px; }
+    .fe-btn-primary:hover:not(:disabled) { background: #0284c7; }
+    .fe-btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+    .fe-btn-outline { background: transparent; color: #64748b; border: 1.5px solid #e2e8f0; padding: 10px 20px; }
+    .fe-btn-outline:hover { background: #f8fafc; }
+    .fe-btn-light { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+    .fe-btn-light:hover { background: #e2e8f0; }
+    .ms-auto { margin-inline-start: auto; }
+    .fw-bold { font-weight: 700 !important; }
+    .p-5 { padding: 3rem !important; }
+    .me-2 { margin-inline-end: 0.5rem !important; }
+    .ms-1 { margin-inline-start: 0.25rem !important; }
+    .bg-light { background-color: #f8fafc !important; }
 </style>
 @endpush
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.js"></script>
 <script>
     function updateFileName(input, index) {
         const nameLabel = document.getElementById('file_name_' + index);
@@ -499,95 +571,120 @@
     });
 </script>
 <script>
-    // OCR Logic    
+    // ═══ PASSPORT OCR LOGIC WITH MODAL & CROPPER (matches flights/booking) ═══
     let currentUploadIndex = null;
     let currentModalFile = null;
     let cropper = null;
 
-    function openPassportModal(index) {
+    window.openPassportModal = function(index) {
         currentUploadIndex = index;
-        const hiddenInput = document.getElementById('hidden_passport_input_' + index);
-        // We use a separate input for file selection to trigger onChange repeatedly if needed
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.accept = 'image/*';
-        fileInput.onchange = function(e) {
-            if(e.target.files && e.target.files.length > 0) {
-                currentModalFile = e.target.files[0];
-                showCropperModal();
+        resetModalState();
+        const modal = document.getElementById('passportUploadModal');
+        modal.classList.remove('d-none');
+        setTimeout(() => modal.classList.add('show'), 10);
+        document.body.style.overflow = 'hidden';
+    };
+
+    window.closePassportModal = function() {
+        const modal = document.getElementById('passportUploadModal');
+        modal.classList.remove('show');
+        setTimeout(() => {
+            modal.classList.add('d-none');
+            document.body.style.overflow = '';
+            if(cropper) {
+                cropper.destroy();
+                cropper = null;
             }
-        };
-        fileInput.click();
+        }, 300);
+    };
+
+    function resetModalState() {
+        currentModalFile = null;
+        if(cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+        $('#modalFileInput').val('');
+        $('#modalDropArea').show();
+        $('#modalCropperArea').hide().empty();
+        $('#btnChangeImage').hide();
+        $('#btnConfirmUpload').prop('disabled', true).html('{{ __("Confirm & Scan") }} <i class="fas fa-magic ms-1"></i>');
     }
 
-    function showCropperModal() {
-        if(!currentModalFile) return;
+    // Handle Drag & Drop on Modal
+    const dropArea = document.getElementById('modalDropArea');
+    dropArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropArea.style.borderColor = 'var(--accent)';
+        dropArea.style.background = '#f0f9ff';
+    });
+    dropArea.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        dropArea.style.borderColor = '#cbd5e1';
+        dropArea.style.background = 'white';
+    });
+    dropArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropArea.style.borderColor = '#cbd5e1';
+        dropArea.style.background = 'white';
+        if(e.dataTransfer.files.length) {
+            handleModalFile(e.dataTransfer.files[0]);
+        }
+    });
+    dropArea.addEventListener('click', () => {
+        document.getElementById('modalFileInput').click();
+    });
+    document.getElementById('modalFileInput').addEventListener('change', function() {
+        if(this.files.length) {
+            handleModalFile(this.files[0]);
+        }
+    });
+
+    function handleModalFile(file) {
+        currentModalFile = file;
+        $('#modalDropArea').hide();
+        $('#btnChangeImage').show();
+        $('#btnConfirmUpload').prop('disabled', false);
+
+        const cropperHtml = '<div style="max-height: 50vh; display:flex; justify-content:center; background: #000; border-radius: 10px; overflow: hidden;"><img id="modalImageToCrop" src="" style="max-width: 100%;"></div><p class="text-muted text-center mt-3 mb-0" style="font-size: 0.85rem;"><i class="fas fa-crop-alt"></i> {{ __("Adjust the frame to focus tightly on the passport data page for optimal AI scanning.") }}</p>';
+        $('#modalCropperArea').html(cropperHtml).show();
 
         const reader = new FileReader();
-        reader.onload = function(e) {
-            $('#cropperImage').attr('src', e.target.result);
-            
-            // Re-initialize modal completely manually to avoid BS4/BS5 conflicts
-            $('#passportUploadModal').css({
-                'display': 'block',
-                'background': 'rgba(0,0,0,0.5)',
-                'opacity': '1'
-            }).addClass('show');
-            $('body').append('<div class="modal-backdrop fade show"></div>');
-            $('body').addClass('modal-open');
-
-            if (cropper) cropper.destroy();
-            const image = document.getElementById('cropperImage');
-            cropper = new Cropper(image, {
-                viewMode: 1,
-                dragMode: 'move',
+        reader.onload = function(event) {
+            const img = document.getElementById('modalImageToCrop');
+            img.src = event.target.result;
+            if(cropper) { cropper.destroy(); cropper = null; }
+            cropper = new Cropper(img, {
+                viewMode: 2,
                 autoCropArea: 1,
-                restore: false,
-                guides: true,
-                center: true,
-                highlight: false,
-                cropBoxMovable: true,
-                cropBoxResizable: true,
-                toggleDragModeOnDblclick: false,
+                responsive: true,
+                background: false
             });
-        }
-        reader.readAsDataURL(currentModalFile);
+        };
+        reader.readAsDataURL(file);
     }
-    
-    function closePassportModal() {
-        $('#passportUploadModal').removeClass('show').css('display', 'none');
-        $('.modal-backdrop').remove();
-        $('body').removeClass('modal-open');
-        if(cropper) cropper.destroy();
-    }
-    
-    $('#cancelCropBtn').on('click', closePassportModal);
 
-    $('#confirmCropBtn').on('click', function() {
-        if (!cropper) return;
+    $('#btnChangeImage').on('click', function() {
+        resetModalState();
+    });
+
+    $('#btnConfirmUpload').on('click', function() {
+        if(!currentModalFile) return;
+
         const btn = $(this);
         const originalText = btn.html();
         btn.html('<i class="fas fa-spinner fa-spin"></i> {{ __("Processing...") }}').prop('disabled', true);
 
-        cropper.getCroppedCanvas({
-            maxWidth: 2000,
-            maxHeight: 2000,
-            imageSmoothingEnabled: true,
-            imageSmoothingQuality: 'high',
-        }).toBlob(function(blob) {
-            if (!blob) {
-                btn.html(originalText).prop('disabled', false);
-                return;
-            }
-            
+        if(!cropper) return;
+        cropper.getCroppedCanvas({ maxWidth: 2000, maxHeight: 2000 }).toBlob(function(blob) {
             let originalName = currentModalFile.name;
             if(!originalName.toLowerCase().endsWith('.jpg') && !originalName.toLowerCase().endsWith('.jpeg') && !originalName.toLowerCase().endsWith('.png')) {
                 originalName += '.jpg';
             }
             const croppedFile = new File([blob], originalName, { type: 'image/jpeg' });
-            
+
             commitFile(croppedFile);
-            
+
             btn.html(originalText).prop('disabled', false);
             closePassportModal();
         }, 'image/jpeg', 0.85);
@@ -602,6 +699,7 @@
         // Update UI
         const dropzone = $('#passport_dropzone_' + currentUploadIndex);
         dropzone.addClass('has-file');
+        dropzone.find('.success-indicator').show();
         $('#file_name_display_' + currentUploadIndex).text(file.name);
 
         triggerTripOcr(hiddenInput, currentUploadIndex);
@@ -614,7 +712,7 @@
         $('#scan_error_' + index).remove();
 
         const loader = $('#ai-loading-' + index);
-        loader.removeClass('d-none').css('display', 'flex').show();
+        loader.css('display', 'flex').show();
         
         const formData = new FormData();
         formData.append('passport_image', file);
@@ -635,6 +733,7 @@
                         $('#hidden_passport_input_' + index).val('');
                         const dropzone = $('#passport_dropzone_' + index);
                         dropzone.removeClass('has-file');
+                        dropzone.find('.success-indicator').hide();
                         
                         $('#scan_error_' + index).remove();
                         const errorHtml = `
@@ -700,8 +799,9 @@
                         }
                         
                         if (title) {
-                            $('select[name="passengers['+index+'][title]"]').val(title).trigger('change');
-                            $('#hidden_title_'+index).val(title);
+                            // Use id-based selector to avoid triggering broken onchange
+                            $('#title_select_' + index).val(title);
+                            $('select[name="passengers['+index+'][title]"]').val(title);
                             $('.ai-display-title-'+index).text(title);
                         }
                     }
@@ -722,6 +822,7 @@
                 $('#hidden_passport_input_' + index).val('');
                 const dropzone = $('#passport_dropzone_' + index);
                 dropzone.removeClass('has-file');
+                dropzone.find('.success-indicator').hide();
                 
                 $('#scan_error_' + index).remove();
                 const errorHtml = `
@@ -735,7 +836,7 @@
                 dropzone.after(errorHtml);
             },
             complete: function() {
-                loader.addClass('d-none').hide();
+                loader.css('display', 'none');
             }
         });
     }
@@ -789,6 +890,12 @@
                     }, 500);
                 }
             }
+        }
+    });
+
+    $(document).ready(function() {
+        if($.fn.select2) {
+            $('.fe-select2').select2({ width: '100%' });
         }
     });
 
