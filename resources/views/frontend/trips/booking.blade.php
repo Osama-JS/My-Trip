@@ -73,9 +73,32 @@
                         </div>
                         <div class="fe-pax-body">
                             
+                            <div class="fe-upload-zone mt-2 mb-3" id="passport_dropzone_{{ $i }}" onclick="openPassportModal({{ $i }})" style="cursor: pointer;">
+                                <input type="file" name="passengers[{{ $i }}][passport_image]" id="hidden_passport_input_{{ $i }}" accept="image/*" class="d-none">
+                                <label class="fe-upload-label" style="pointer-events: none;">
+                                    <div class="fe-upload-icon"><i class="fas fa-camera-retro"></i></div>
+                                    <div class="fe-upload-text">
+                                        <b id="file_name_display_{{ $i }}">{{ __('Scan/Upload Passport') }}</b>
+                                        <span>{{ __('Extract details automatically via AI') }}</span>
+                                    </div>
+                                </label>
+                                
+                                <div class="ai-loading-overlay d-none align-items-center justify-content-center" id="ai-loading-{{ $i }}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 10; border-radius: 14px;">
+                                    <div class="text-center">
+                                        <i class="fas fa-circle-notch fa-spin fa-3x mb-3" style="color: var(--primary);"></i>
+                                        <div style="font-weight: 800; color: var(--dark); font-size: 1.1rem;">{{ __('Scanning AI Data...') }}</div>
+                                        <p class="text-muted small mt-1">{{ __('Extracting your details automatically') }}</p>
+                                    </div>
+                                </div>
+                            </div>
+
                             @if(\App\Models\Setting::get('allow_manual_passport_edit', '1') == '1')
                             
-                            <div class="fe-form-row mt-3">
+                            <div class="text-center mb-3" style="position: relative; border-bottom: 1px solid #e2e8f0; margin-top: -10px;">
+                                <span style="background: #fff; padding: 0 15px; font-size: 0.85rem; color: #64748b; position: relative; top: 10px;">{{ __('Or enter details manually') }}</span>
+                            </div>
+
+                            <div class="fe-form-row mt-4">
                                 <div class="fe-form-group" style="max-width: 200px;">
                                     <label class="fe-label">{{ __('Title') }}</label>
                                     <select name="passengers[{{ $i }}][title]" class="fe-input" onchange="document.getElementById('hidden_title_{{ $i }}').value = this.value">
@@ -223,25 +246,6 @@
                                 </div>
                             </div>
                             @endif
-
-                            <div class="fe-upload-zone" id="passport_dropzone_{{ $i }}" onclick="openPassportModal({{ $i }})" style="cursor: pointer;">
-                                <input type="file" name="passengers[{{ $i }}][passport_image]" id="hidden_passport_input_{{ $i }}" accept="image/*" class="d-none">
-                                <label class="fe-upload-label" style="pointer-events: none;">
-                                    <div class="fe-upload-icon"><i class="fas fa-camera-retro"></i></div>
-                                    <div class="fe-upload-text">
-                                        <b id="file_name_display_{{ $i }}">{{ __('Scan/Upload Passport') }}</b>
-                                        <span>{{ __('Required for international insurance') }}</span>
-                                    </div>
-                                </label>
-                                
-                                <div class="ai-loading-overlay d-none align-items-center justify-content-center" id="ai-loading-{{ $i }}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 10; border-radius: 14px;">
-                                    <div class="text-center">
-                                        <i class="fas fa-circle-notch fa-spin fa-3x mb-3" style="color: var(--primary);"></i>
-                                        <div style="font-weight: 800; color: var(--dark); font-size: 1.1rem;">{{ __('Scanning AI Data...') }}</div>
-                                        <p class="text-muted small mt-1">{{ __('Extracting your details automatically') }}</p>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 @endfor
