@@ -741,7 +741,7 @@
         let allowManualEdit = "{{ \App\Models\Setting::get('allow_manual_passport_edit', '1') }}";
         if (allowManualEdit !== '1') {
             let isValid = true;
-            let totalPax = {{ $ticketsCount }};
+            let totalPax = {{ $tickets_count ?? 1 }};
             
             for (let i = 0; i < totalPax; i++) {
                 let requiredFields = [
