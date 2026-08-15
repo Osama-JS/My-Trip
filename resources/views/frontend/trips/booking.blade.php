@@ -423,9 +423,9 @@
     .fe-input-icon input:focus { border-color: var(--accent); box-shadow: 0 0 0 5px rgba(14, 165, 233, 0.1); outline: none; }
     .fe-input-icon input:focus + i { color: var(--accent); }
 
-    .fe-upload-zone { margin-top: 5px; }
+    .fe-upload-zone { margin-top: 5px; position: relative; }
     .fe-upload-input { display: none; }
-    .fe-upload-label { cursor: pointer; display: flex; align-items: center; gap: 15px; border: 2px dashed #e2e8f0; padding: 15px; border-radius: 12px; background: #f8fafc; transition: all 0.3s; }
+    .fe-upload-label { cursor: pointer; display: flex; align-items: center; gap: 15px; border: 2px dashed #e2e8f0; padding: 15px; border-radius: 12px; background: #f8fafc; transition: all 0.3s; position: relative; }
     .fe-upload-label:hover { border-color: var(--accent); background: white; }
     .fe-upload-icon { width: 42px; height: 42px; background: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 1.1rem; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
     .fe-upload-text b { display: block; font-size: 0.85rem; color: var(--dark-text); }
