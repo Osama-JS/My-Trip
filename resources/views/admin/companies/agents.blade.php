@@ -295,7 +295,7 @@
         agentsTable = $('#agents-table').DataTable({
             processing: true,
             serverSide: false,
-            ajax: "{{ route('admin.companies.agents.data', [$company->id], false) }}",
+            ajax: "{{ route('admin.companies.agents.data', [$company->id]) }}",
             columns: [
                 { data: 'name' },
                 { data: 'phone' },
