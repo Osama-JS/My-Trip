@@ -415,6 +415,22 @@ Route::middleware(['auth', 'isAgent'])->prefix('agent')->name('agent.')->group(f
     Route::post('/trips/itinerary/{itinerary}', [\App\Http\Controllers\Agent\AgentTripController::class, 'updateItinerary'])->name('trips.itinerary.update');
     Route::delete('/trips/itinerary/{itinerary}', [\App\Http\Controllers\Agent\AgentTripController::class, 'destroyItinerary'])->name('trips.itinerary.destroy');
 
+    // Trip Add-ons
+    Route::post('/trips/{trip}/addons', [\App\Http\Controllers\Agent\AgentTripController::class, 'storeAddon'])->name('trips.addons.store');
+    Route::put('/trips/addons/{addon}', [\App\Http\Controllers\Agent\AgentTripController::class, 'updateAddon'])->name('trips.addons.update');
+    Route::delete('/trips/addons/{addon}', [\App\Http\Controllers\Agent\AgentTripController::class, 'destroyAddon'])->name('trips.addons.destroy');
+
+    // Trip Pricing & Packages
+    Route::get('/trips/{trip}/pricing', [\App\Http\Controllers\Agent\AgentTripController::class, 'pricing'])->name('trips.pricing');
+    
+    Route::post('/trips/{trip}/packages', [\App\Http\Controllers\Agent\AgentTripPackageController::class, 'store'])->name('trips.packages.store');
+    Route::put('/trips/packages/{package}', [\App\Http\Controllers\Agent\AgentTripPackageController::class, 'update'])->name('trips.packages.update');
+    Route::delete('/trips/packages/{package}', [\App\Http\Controllers\Agent\AgentTripPackageController::class, 'destroy'])->name('trips.packages.destroy');
+    
+    Route::post('/trips/{trip}/seasons', [\App\Http\Controllers\Agent\AgentTripSeasonController::class, 'store'])->name('trips.seasons.store');
+    Route::put('/trips/seasons/{season}', [\App\Http\Controllers\Agent\AgentTripSeasonController::class, 'update'])->name('trips.seasons.update');
+    Route::delete('/trips/seasons/{season}', [\App\Http\Controllers\Agent\AgentTripSeasonController::class, 'destroy'])->name('trips.seasons.destroy');
+
     // Bookings (Company-scoped)
     Route::get('/bookings', [\App\Http\Controllers\Agent\AgentBookingController::class, 'index'])->name('bookings.index');
     Route::get('/bookings/{booking}', [\App\Http\Controllers\Agent\AgentBookingController::class, 'show'])->name('bookings.show');

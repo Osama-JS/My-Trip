@@ -12,12 +12,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
     {{-- CSS --}}
-    <link rel="stylesheet" href="{{ asset('css/frontend/app.css') }}?v={{ time() }}">
-    <link rel="stylesheet" href="{{ asset('css/frontend/components.css') }}?v={{ time() }}">
+    <link rel="stylesheet" href="{{ asset('vendor/bootstrap/dist/css/bootstrap.min.css') }}">
     <link href="{{ asset('icons/font-awesome/css/all.min.css') }}" rel="stylesheet">
-    @if(app()->getLocale() === 'ar')
-    <link rel="stylesheet" href="{{ asset('css/frontend/rtl.css') }}">
-    @endif
+    <link rel="stylesheet" href="{{ asset('vendor/toastr/toastr.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('vendor/sweetalert2/dist/sweetalert2.min.css') }}">
+    {{-- Agent dashboard base styles are inline in this file --}}
 
     @stack('styles')
 
@@ -1082,6 +1081,104 @@ window.addEventListener('resize', function() {
         closeSidebar();
     }
 });
+</script>
+
+{{-- Core JS Libraries --}}
+<script src="{{ asset('vendor/jquery/jquery.min.js') }}"></script>
+<script src="{{ asset('vendor/bootstrap/dist/js/bootstrap.bundle.min.js') }}"></script>
+<script src="{{ asset('vendor/toastr/toastr.min.js') }}"></script>
+<script src="{{ asset('vendor/sweetalert2/dist/sweetalert2.min.js') }}"></script>
+
+<script>
+// ═══════════════════════════
+// Global AJAX Setup
+// ═══════════════════════════
+$(document).ready(function () {
+    $.ajaxSetup({
+        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
+    });
+});
+
+// ═══════════════════════════
+// Global submitAjaxForm Helper
+// ═══════════════════════════
+window.submitAjaxForm = function({
+    formId,
+    url,
+    method = "POST",
+    modalId = null,
+    table = null,
+    successMessage = "{{ __('Saved successfully') }}",
+    buttonText = "{{ __('Save') }}",
+    usePut = false,
+    resetSelect2 = false,
+    useSweetAlert = false,
+    onSuccess = null
+}) {
+    const form = document.getElementById(formId);
+    let formData = new FormData(form);
+
+    if (usePut) {
+        formData.append('_method', 'PUT');
+    }
+
+    $.ajax({
+        url: url,
+        type: method,
+        data: formData,
+        processData: false,
+        contentType: false,
+
+        beforeSend: function () {
+            $(`#${formId}`).find('button[type="submit"]')
+                .prop('disabled', true)
+                .html('<i class="fas fa-spinner fa-spin"></i>');
+        },
+
+        success: function (response) {
+            if (response.success) {
+                if (modalId) {
+                    $(`#${modalId}`).modal('hide');
+                }
+                if (form) form.reset();
+
+                if (useSweetAlert) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: response.message ?? successMessage,
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                } else {
+                    toastr.success(response.message ?? successMessage);
+                }
+
+                if (typeof onSuccess === 'function') {
+                    onSuccess(response);
+                }
+            } else {
+                toastr.error(response.message || "{{ __('Something went wrong') }}");
+            }
+        },
+
+        error: function (xhr) {
+            if (xhr.status === 422) {
+                let errors = xhr.responseJSON?.errors ?? {};
+                Object.values(errors).forEach(err => {
+                    toastr.error(err[0]);
+                });
+            } else {
+                toastr.error("{{ __('Something went wrong') }}");
+            }
+        },
+
+        complete: function () {
+            $(`#${formId}`).find('button[type="submit"]')
+                .prop('disabled', false)
+                .html(buttonText || "{{ __('Save') }}");
+        }
+    });
+};
 </script>
 
 @stack('scripts')

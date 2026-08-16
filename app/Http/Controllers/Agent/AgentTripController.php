@@ -10,6 +10,7 @@ use App\Models\City;
 use App\Models\TripCategory;
 use App\Models\TripImage;
 use App\Models\TripItinerary;
+use App\Models\TripAddon;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -314,6 +315,80 @@ class AgentTripController extends Controller
             TripItinerary::where('id', $id)->update(['sort_order' => $index + 1]);
         }
         return response()->json(['success' => true, 'message' => __('Itinerary reordered successfully')]);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+
+    // ─────────────────────────────────────────────────────────────
+    // Add-ons
+    // ─────────────────────────────────────────────────────────────
+    public function storeAddon(Request $request, Trip $trip)
+    {
+        $this->authorizeAgent($trip);
+        $data = $request->validate([
+            'title_ar'     => 'required|string|max:255',
+            'title_en'     => 'required|string|max:255',
+            'price'        => 'required|numeric|min:0',
+            'type'         => 'required|in:addition,replacement',
+            'pricing_type' => 'required|in:per_person,fixed_per_booking',
+        ]);
+
+        try {
+            $addon = $trip->addons()->create([
+                'name_ar'        => $data['title_ar'],
+                'name_en'        => $data['title_en'],
+                'extra_cost'     => $data['price'],
+                'currency'       => config('services.hyperpay.currency', 'SAR'),
+                'is_replacement' => $data['type'] === 'replacement',
+                'pricing_type'   => $data['pricing_type'],
+            ]);
+            return response()->json(['success' => true, 'message' => __('Add-on created successfully')]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function updateAddon(Request $request, TripAddon $addon)
+    {
+        $this->authorizeAgent($addon->trip);
+        $data = $request->validate([
+            'title_ar'     => 'required|string|max:255',
+            'title_en'     => 'required|string|max:255',
+            'price'        => 'required|numeric|min:0',
+            'type'         => 'required|in:addition,replacement',
+            'pricing_type' => 'required|in:per_person,fixed_per_booking',
+        ]);
+
+        try {
+            $addon->update([
+                'name_ar'        => $data['title_ar'],
+                'name_en'        => $data['title_en'],
+                'extra_cost'     => $data['price'],
+                'is_replacement' => $data['type'] === 'replacement',
+                'pricing_type'   => $data['pricing_type'],
+            ]);
+            return response()->json(['success' => true, 'message' => __('Add-on updated successfully')]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function destroyAddon(TripAddon $addon)
+    {
+        $this->authorizeAgent($addon->trip);
+        $addon->delete();
+        return response()->json(['success' => true, 'message' => __('Add-on deleted successfully')]);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Pricing & Packages
+    // ─────────────────────────────────────────────────────────────
+    public function pricing(Trip $trip)
+    {
+        $this->authorizeAgent($trip);
+        $trip->load(['seasons', 'packages.prices']);
+        
+        return view('frontend.agent.trips.pricing', compact('trip'));
     }
 
     // ─────────────────────────────────────────────────────────────

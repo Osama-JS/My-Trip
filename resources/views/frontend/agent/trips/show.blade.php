@@ -327,6 +327,10 @@
                 <span class="{{ $trip->active ? 'badge-confirmed' : 'badge-pending' }} badge-status">
                     {{ $trip->active ? __('Active') : __('Inactive') }}
                 </span>
+                <a href="{{ route('agent.trips.pricing', $trip->id) }}"
+                   style="padding: 8px 18px; background: #eab308; color:#fff; border-radius:10px; font-size:.85rem; font-weight:700; text-decoration:none;">
+                    <i class="fas fa-tags me-1"></i> {{ __('Pricing & Packages') }}
+                </a>
                 <a href="{{ route('agent.trips.edit', $trip->id) }}"
                    style="padding: 8px 18px; background: var(--accent); color:#fff; border-radius:10px; font-size:.85rem; font-weight:700; text-decoration:none;">
                     <i class="fas fa-pen me-1"></i> {{ __('Edit Trip') }}
@@ -518,6 +522,111 @@
         </div>
     </div>
 
+    {{-- ──────────────────────── SECTION ADD-ONS ──────────────────────── --}}
+    <div class="agent-section">
+        <div class="agent-section-header">
+            <h5>
+                <span class="icon-wrap"><i class="fas fa-plus-circle"></i></span>
+                {{ __('Add-ons') }}
+            </h5>
+            <span style="background:#f1f5f9; border-radius:8px; padding:4px 12px; font-size:.8rem; color:#64748b; font-weight:700;">
+                {{ $trip->addons->count() }} {{ __('Total') }}
+            </span>
+        </div>
+        <div class="agent-section-body">
+            <div class="itin-layout">
+                {{-- Add Form --}}
+                <div class="itin-add-box">
+                    <div class="itin-add-box-header">
+                        <span class="hdr-icon"><i class="fas fa-plus"></i></span>
+                        <h6>{{ __('Add New Add-on') }}</h6>
+                    </div>
+                    <div class="itin-add-box-body">
+                        <form id="addAddonForm">
+                            @csrf
+                            <div class="pf">
+                                <label><i class="fas fa-heading"></i>{{ __('Title (AR)') }}</label>
+                                <input type="text" name="title_ar" class="pf-input" placeholder="{{ __('e.g. وجبة إضافية') }}" required>
+                            </div>
+                            <div class="pf">
+                                <label><i class="fas fa-heading"></i>{{ __('Title (EN)') }}</label>
+                                <input type="text" name="title_en" class="pf-input" placeholder="{{ __('e.g. Extra Meal') }}" required>
+                            </div>
+                            <div class="pf">
+                                <label><i class="fas fa-money-bill-wave"></i>{{ __('Price (SAR)') }}</label>
+                                <input type="number" name="price" class="pf-input" min="0" required>
+                            </div>
+                            <div class="pf">
+                                <label><i class="fas fa-tags"></i>{{ __('Type') }}</label>
+                                <select name="type" class="pf-input" required>
+                                    <option value="addition">{{ __('Addition') }}</option>
+                                    <option value="replacement">{{ __('Replacement') }}</option>
+                                </select>
+                            </div>
+                            <div class="pf">
+                                <label><i class="fas fa-calculator"></i>{{ __('Pricing Type') }}</label>
+                                <select name="pricing_type" class="pf-input" required>
+                                    <option value="per_person">{{ __('Per Person') }}</option>
+                                    <option value="fixed_per_booking">{{ __('Fixed per booking') }}</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn-add-day">
+                                <i class="fas fa-plus"></i> {{ __('Save Add-on') }}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                {{-- Addons List --}}
+                <div>
+                    @if($trip->addons->isEmpty())
+                        <div style="text-align:center; padding:60px; color:#94a3b8;">
+                            <i class="fas fa-puzzle-piece" style="font-size:3rem; margin-bottom:12px; display:block;"></i>
+                            <p style="font-weight:600;">{{ __('No add-ons added yet.') }}</p>
+                        </div>
+                    @else
+                        <div id="addons-list">
+                            @foreach($trip->addons as $addon)
+                            <div class="itinerary-card" data-id="{{ $addon->id }}">
+                                <div style="flex:1; min-width:0;">
+                                    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px;">
+                                        <h6 style="font-weight:800; color:#1e293b; margin:0; flex:1;">{{ $addon->name_ar }} / {{ $addon->name_en }}</h6>
+                                        <div style="display:flex; gap:6px; flex-shrink:0;">
+                                            <button class="btn-itin-action btn-itin-edit"
+                                                    type="button"
+                                                    onclick="editAddon({{ $addon->id }}, '{{ addslashes($addon->name_ar) }}', '{{ addslashes($addon->name_en) }}', {{ $addon->extra_cost }}, '{{ $addon->is_replacement ? 'replacement' : 'addition' }}', '{{ $addon->pricing_type }}')"
+                                                    title="{{ __('Edit') }}">
+                                                <i class="fas fa-pen"></i>
+                                            </button>
+                                            <button class="btn-itin-action btn-itin-delete"
+                                                    type="button"
+                                                    onclick="deleteAddon({{ $addon->id }})"
+                                                    title="{{ __('Delete') }}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                            <form method="POST" id="del-addon-{{ $addon->id }}"
+                                                  action="{{ route('agent.trips.addons.destroy', $addon->id) }}"
+                                                  style="display:none;">
+                                                @csrf @method('DELETE')
+                                            </form>
+                                        </div>
+                                    </div>
+                                    <p style="color:#64748b; font-size:.88rem; margin:0;">
+                                        <strong>{{ number_format($addon->extra_cost, 0) }} {{ __('SAR') }}</strong> -
+                                        {{ $addon->is_replacement ? __('Replacement') : __('Addition') }} ({{ $addon->pricing_type === 'per_person' ? __('Per Person') : __('Fixed per booking') }})
+                                    </p>
+                                </div>
+                            </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
     {{-- ──────────────────────── SECTION 4: BOOKINGS ──────────────────────── --}}
     <div class="agent-section">
         <div class="agent-section-header">
@@ -623,6 +732,64 @@
         </div>
     </div>
 </div>
+
+{{-- ── Edit Addon Modal ── --}}
+<div id="editAddonModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,.55); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+    <div style="background:#fff; border-radius:20px; width:100%; max-width:500px; margin:20px; overflow:hidden; box-shadow:0 24px 60px rgba(0,0,0,.18);">
+        <div style="padding:18px 22px; background:linear-gradient(135deg,var(--accent-soft),rgba(232,83,46,.04)); border-bottom:1.5px solid rgba(232,83,46,.12); display:flex; align-items:center; justify-content:space-between;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span style="width:34px;height:34px;border-radius:10px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-size:.8rem; flex-shrink:0;">
+                    <i class="fas fa-pen"></i>
+                </span>
+                <h5 style="margin:0; font-weight:800; color:#1e293b; font-size:.95rem;">{{ __('Edit Add-on') }}</h5>
+            </div>
+            <button type="button" onclick="closeEditAddonModal()" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:1.3rem;line-height:1;">&times;</button>
+        </div>
+        <div style="padding:22px;">
+            <form id="editAddonForm">
+                @csrf
+                @method('PUT')
+                <input type="hidden" id="edit_addon_id">
+                <div class="pf">
+                    <label><i class="fas fa-heading"></i>{{ __('Title (AR)') }}</label>
+                    <input type="text" id="edit_addon_title_ar" name="title_ar" class="pf-input" required>
+                </div>
+                <div class="pf">
+                    <label><i class="fas fa-heading"></i>{{ __('Title (EN)') }}</label>
+                    <input type="text" id="edit_addon_title_en" name="title_en" class="pf-input" required>
+                </div>
+                <div class="pf">
+                    <label><i class="fas fa-money-bill-wave"></i>{{ __('Price (SAR)') }}</label>
+                    <input type="number" id="edit_addon_price" name="price" class="pf-input" min="0" required>
+                </div>
+                <div class="pf">
+                    <label><i class="fas fa-tags"></i>{{ __('Type') }}</label>
+                    <select id="edit_addon_type" name="type" class="pf-input" required>
+                        <option value="addition">{{ __('Addition') }}</option>
+                        <option value="replacement">{{ __('Replacement') }}</option>
+                    </select>
+                </div>
+                <div class="pf">
+                    <label><i class="fas fa-calculator"></i>{{ __('Pricing Type') }}</label>
+                    <select id="edit_addon_pricing_type" name="pricing_type" class="pf-input" required>
+                        <option value="per_person">{{ __('Per Person') }}</option>
+                        <option value="fixed_per_booking">{{ __('Fixed per booking') }}</option>
+                    </select>
+                </div>
+                <div style="display:flex; gap:10px; margin-top:4px;">
+                    <button type="button" onclick="closeEditAddonModal()" style="flex:1; padding:12px; border:1.5px solid #e2e8f0; border-radius:11px; background:#f8fafc; color:#64748b; font-weight:700; cursor:pointer; font-size:.88rem; transition:all .2s;" onmouseover="this.style.borderColor='#cbd5e1'" onmouseout="this.style.borderColor='#e2e8f0'">
+                        {{ __('Cancel') }}
+                    </button>
+                    <button type="submit" class="btn-add-day" style="flex:2; margin-top:0;">
+                        <i class="fas fa-check"></i> {{ __('Update Changes') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
 @endsection
 
 @push('scripts')
@@ -776,5 +943,82 @@ function deleteItinerary(id) {
         }
     });
 }
+
+// ─── Add-ons ─────────────────────────────────────────────────
+document.getElementById('addAddonForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    fetch("{{ route('agent.trips.addons.store', $trip->id) }}", {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': formData.get('_token')
+        },
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) { location.reload(); }
+        else { Swal.fire({ icon: 'error', text: data.message || '{{ __("Error") }}' }); }
+    })
+    .catch(() => { Swal.fire({ icon: 'error', text: '{{ __("Connection error") }}' }); });
+});
+
+function editAddon(id, title_ar, title_en, price, type, pricing_type) {
+    document.getElementById('edit_addon_id').value = id;
+    document.getElementById('edit_addon_title_ar').value = title_ar;
+    document.getElementById('edit_addon_title_en').value = title_en;
+    document.getElementById('edit_addon_price').value = price;
+    document.getElementById('edit_addon_type').value = type;
+    document.getElementById('edit_addon_pricing_type').value = pricing_type;
+    document.getElementById('editAddonModal').style.display = 'flex';
+}
+
+function closeEditAddonModal() {
+    document.getElementById('editAddonModal').style.display = 'none';
+}
+
+document.getElementById('editAddonForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const id = document.getElementById('edit_addon_id').value;
+    const formData = new FormData(this);
+    fetch("{{ route('agent.trips.addons.update', ':id') }}".replace(':id', id), {
+        method: 'POST', // uses _method=PUT from form
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': formData.get('_token')
+        },
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) { location.reload(); }
+        else { Swal.fire({ icon: 'error', text: data.message || '{{ __("Error") }}' }); }
+    })
+    .catch(() => { Swal.fire({ icon: 'error', text: '{{ __("Connection error") }}' }); });
+});
+
+document.getElementById('editAddonModal').addEventListener('click', function(e) {
+    if (e.target === this) closeEditAddonModal();
+});
+
+function deleteAddon(id) {
+    Swal.fire({
+        title: '{{ __("Delete this add-on?") }}',
+        text: '{{ __("This action cannot be undone!") }}',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: '<i class="fas fa-trash"></i> {{ __("Yes, Delete") }}',
+        cancelButtonText: '{{ __("Cancel") }}',
+        reverseButtons: true,
+    }).then(result => {
+        if (result.isConfirmed) {
+            document.getElementById('del-addon-' + id).submit();
+        }
+    });
+}
 </script>
 @endpush
+
