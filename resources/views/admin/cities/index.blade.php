@@ -168,7 +168,7 @@
 
                         <!-- Status Card -->
                         <div class="col-12">
-                            <div class="mt-2 p-3 bg-light rounded-4 d-flex justify-content-between align-items-center border">
+                            <div class="mt-2 p-3 bg-white rounded-4 d-flex justify-content-between align-items-center border">
                                 <div>
                                     <h6 class="mb-1 fw-semibold">{{ __('City Status') }}</h6>
                                     <small class="text-muted">{{ __('Enable or disable this city in the system') }}</small>
@@ -187,7 +187,7 @@
 
                 <!-- Footer -->
                 <div class="modal-footer border-0 pt-0 px-4">
-                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">{{ __('Close') }}</button>
+                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">{{ __('Close') }}</button>
                     <button type="submit" class="btn btn-primary px-4 shadow-sm">
                         <i class="fas fa-save me-1"></i> {{ __('Save City') }}
                     </button>
@@ -266,7 +266,7 @@
 
                         <!-- Status Card -->
                         <div class="col-12">
-                            <div class="mt-3 p-3 bg-light rounded-4 d-flex justify-content-between align-items-center border">
+                            <div class="mt-3 p-3 bg-white rounded-4 d-flex justify-content-between align-items-center border">
                                 <div>
                                     <h6 class="mb-1 fw-semibold">{{ __('City Status') }}</h6>
                                     <small class="text-muted">{{ __('Enable or disable this city in the system') }}</small>
@@ -287,7 +287,7 @@
 
                 <!-- Footer -->
                 <div class="modal-footer border-0 pt-0 px-4">
-                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">{{ __('Close') }}</button>
+                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">{{ __('Close') }}</button>
                     <button type="submit" class="btn btn-primary px-4 shadow-sm">
                         <i class="fas fa-save me-1"></i> {{ __('Update City') }}
                     </button>

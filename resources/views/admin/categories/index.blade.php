@@ -166,7 +166,7 @@
 <div class="modal fade" id="addCategoryModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header bg-light border-0 px-4 py-3">
+            <div class="modal-header border-0 px-4 py-3 bg-white">
                 <h5 class="modal-title fw-bold text-dark"><i class="fas fa-folder-plus me-2 text-primary"></i>{{ __('Add New Category') }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -176,16 +176,16 @@
                     <div class="row g-3">
                         <div class="col-md-12">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Name (AR)') }}</label>
-                            <input type="text" name="name_ar" class="form-control form-control-lg rounded-3 bg-light border-0" required placeholder="{{ __('Enter Arabic Name') }}">
+                            <input type="text" name="name_ar" class="form-control form-control-lg rounded-3 border" required placeholder="{{ __('Enter Arabic Name') }}">
                         </div>
                         <div class="col-md-12">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Name (EN)') }}</label>
-                            <input type="text" name="name_en" class="form-control form-control-lg rounded-3 bg-light border-0" required placeholder="{{ __('Enter English Name') }}">
+                            <input type="text" name="name_en" class="form-control form-control-lg rounded-3 border" required placeholder="{{ __('Enter English Name') }}">
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer bg-light border-0 px-4 py-3">
-                    <button type="button" class="btn btn-light rounded-pill px-4 shadow-sm" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                <div class="modal-footer border-0 px-4 py-3 bg-white">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4 shadow-sm" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
                     <button type="submit" class="btn btn-primary rounded-pill px-5 shadow-sm"><i class="fas fa-save me-2"></i>{{ __('Save Category') }}</button>
                 </div>
             </form>
@@ -197,7 +197,7 @@
 <div class="modal fade" id="editCategoryModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header bg-light border-0 px-4 py-3">
+            <div class="modal-header border-0 px-4 py-3 bg-white">
                 <h5 class="modal-title fw-bold text-dark"><i class="fas fa-edit me-2 text-primary"></i>{{ __('Edit Category') }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -209,16 +209,16 @@
                     <div class="row g-3">
                         <div class="col-md-12">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Name (AR)') }}</label>
-                            <input type="text" id="edit_name_ar" name="name_ar" class="form-control form-control-lg rounded-3 bg-light border-0" required>
+                            <input type="text" id="edit_name_ar" name="name_ar" class="form-control form-control-lg rounded-3 border" required>
                         </div>
                         <div class="col-md-12">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Name (EN)') }}</label>
-                            <input type="text" id="edit_name_en" name="name_en" class="form-control form-control-lg rounded-3 bg-light border-0" required>
+                            <input type="text" id="edit_name_en" name="name_en" class="form-control form-control-lg rounded-3 border" required>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer bg-light border-0 px-4 py-3">
-                    <button type="button" class="btn btn-light rounded-pill px-4 shadow-sm" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                <div class="modal-footer border-0 px-4 py-3 bg-white">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4 shadow-sm" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
                     <button type="submit" class="btn btn-primary rounded-pill px-5 shadow-sm"><i class="fas fa-save me-2"></i>{{ __('Update Category') }}</button>
                 </div>
             </form>

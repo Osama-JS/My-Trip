@@ -223,7 +223,7 @@
                 <button type="button" class="fe-btn-close" onclick="closeVisualSeatMap()"><i class="fas fa-times"></i></button>
             </div>
             
-            <div class="fe-modal-body bg-light" style="flex: 1; overflow-y: auto; padding: 0;">
+            <div class="fe-modal-body bg-white" style="flex: 1; overflow-y: auto; padding: 0;">
                 <div class="seat-map-layout">
                     <!-- Left: Passengers List -->
                     <div class="seat-pax-sidebar">
@@ -264,7 +264,7 @@
         <h5 style="margin: 0; font-weight: 800; color: #0f172a;"><i class="fas fa-id-card text-primary me-2"></i> {{ __('Upload & Edit Passport') }}</h5>
         <button type="button" class="fe-btn-close" onclick="closePassportModal()"><i class="fas fa-times"></i></button>
       </div>
-      <div class="fe-modal-body bg-light">
+      <div class="fe-modal-body bg-white">
         
         <!-- Drag & Drop Area (Visible Initially) -->
         <div id="modalDropArea" class="p-5 text-center" style="border: 2px dashed #cbd5e1; margin: 20px; border-radius: 15px; background: white; cursor: pointer; transition: all 0.3s;">

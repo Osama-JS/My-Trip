@@ -17,6 +17,8 @@ class Company extends Model
         'phone',
         'phone_code',
         'commission_rate',
+        'commission_type',
+        'commission_value',
         'notes',
         'active',
         'bank_name',
@@ -28,6 +30,8 @@ class Company extends Model
 
     protected $casts = [
         'active' => 'boolean',
+        'commission_value' => 'decimal:2',
+        'commission_rate' => 'decimal:2',
     ];
 
 

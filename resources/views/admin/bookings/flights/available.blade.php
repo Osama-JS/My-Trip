@@ -179,7 +179,7 @@
                     </div>
 
                     <div class="modal-footer border-0 px-0 mt-4">
-                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
                         <button type="submit" class="btn btn-success btn-lg px-5 shadow">
                             <i class="fa fa-check-circle me-2"></i>{{ __('Confirm Booking') }}
                         </button>
@@ -194,14 +194,14 @@
 <div class="modal fade" id="pnrModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg text-center">
-            <div class="modal-body p-5">
+            <div class="modal-body p-5 bg-white">
                 <div class="mb-4">
                     <i class="fa fa-check-circle text-success fs-100"></i>
                 </div>
                 <h2 class="font-w700 mb-2">{{ __('Booking Successful!') }}</h2>
                 <p class="text-muted fs-16">{{ __('Your flight has been reserved successfully.') }}</p>
 
-                <div class="bg-light p-4 rounded-3 my-4">
+                <div class="border p-4 rounded-3 my-4 bg-white">
                     <h5 class="text-uppercase mb-1 text-muted">{{ __('Booking Reference (PNR)') }}</h5>
                     <h1 class="font-w800 text-black mb-0" id="pnr-value">------</h1>
                 </div>

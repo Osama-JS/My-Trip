@@ -27,11 +27,16 @@ class TripBooking extends Model
     protected $fillable = [
         'user_id',
         'trip_id',
+        'company_id',
         'package_id',
         'season_id',
         'occupancy',
         'status', // pending, confirmed, cancelled
         'total_price',
+        'commission_type',
+        'commission_value',
+        'platform_profit',
+        'provider_price',
         'booking_date',
         'tickets_count',
         'notes',
@@ -55,6 +60,9 @@ class TripBooking extends Model
         'booking_date' => 'date',
         'tickets_count' => 'integer',
         'total_price' => 'decimal:2',
+        'commission_value' => 'decimal:2',
+        'platform_profit' => 'decimal:2',
+        'provider_price' => 'decimal:2',
         'addons' => 'array',
     ];
 
@@ -66,6 +74,11 @@ class TripBooking extends Model
     public function trip(): BelongsTo
     {
         return $this->belongsTo(Trip::class);
+    }
+
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
     }
 
     public function package(): BelongsTo

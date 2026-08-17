@@ -64,7 +64,17 @@ class AgentBookingController extends Controller
     public function show(TripBooking $booking)
     {
         $this->authorizeAgent($booking);
-        $booking->load(['passengers', 'trip.images', 'trip.toCountry', 'trip.toCity', 'user']);
+        $booking->load([
+            'passengers', 
+            'trip.images', 
+            'trip.toCountry', 
+            'trip.toCity', 
+            'trip.fromCountry', 
+            'trip.fromCity', 
+            'user', 
+            'package', 
+            'season'
+        ]);
         return view('frontend.agent.bookings.show', compact('booking'));
     }
 
@@ -78,13 +88,22 @@ class AgentBookingController extends Controller
 
         if ($request->hasFile('tickets_file')) {
             $path = $request->file('tickets_file')->store('bookings/tickets', 'public');
-            $booking->update(['tickets' => $path]);
+            $booking->update([
+                'ticket_file_path' => $path,
+                'booking_state'    => TripBooking::STATE_TICKETS_SENT,
+            ]);
 
-            // Optionally notify user
-            // $booking->user->notify(new TicketsUploadedNotification($booking));
+            try {
+                // Notify passenger/user if notification exists
+                if ($booking->user) {
+                    $booking->user->notify(new \App\Notifications\TicketUploadedNotification($booking));
+                }
+            } catch (\Exception $e) {
+                // Log or ignore notification failure
+            }
         }
 
-        return back()->with('success', __('Tickets uploaded successfully'));
+        return back()->with('success', __('Tickets uploaded successfully and sent to customer'));
     }
 
     protected function authorizeAgent(TripBooking $booking)

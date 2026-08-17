@@ -69,6 +69,33 @@
     .filter-icon { position:absolute; inset-inline-start:10px; color:var(--dash-muted); font-size:12px; z-index:1; pointer-events:none; }
     .filter-wrapper .form-select { padding-inline-start:28px; height:38px; border-radius:10px; border:1px solid var(--dash-border); font-size:13px; background:#f8fafc; }
     .modal-section-header { font-size:0.75rem; font-weight:700; text-transform:uppercase; color:#041741; letter-spacing:0.5px; border-bottom:2px solid #f1f5f9; padding-bottom:5px; margin-top:15px; margin-bottom:15px; }
+    .modal .select2-container { width: 100% !important; }
+    .modal .select2-container .select2-selection--single {
+        height: 48px !important;
+        border: 1px solid #dee2e6 !important;
+        border-radius: 0.5rem !important;
+        padding: 6px 12px !important;
+        display: flex;
+        align-items: center;
+        background-color: #fff !important;
+    }
+    .modal .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 34px !important;
+        color: #1e293b !important;
+        font-size: 0.95rem;
+        padding-left: 0;
+        padding-right: 0;
+    }
+    .modal .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 46px !important;
+        inset-inline-end: 10px;
+    }
+    .select2-dropdown {
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 0.5rem !important;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+        z-index: 1070 !important;
+    }
 </style>
 @endpush
 
@@ -122,15 +149,15 @@
 <div class="modal fade" id="viewCompanyModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header bg-light border-0 px-4 py-3">
+            <div class="modal-header border-0 px-4 py-3 bg-white">
                 <h5 class="modal-title fw-bold text-dark"><i class="fas fa-id-card me-2 text-primary"></i>{{ __('Company Profile') }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4 bg-white" id="viewCompanyBody">
                 <!-- Loaded via AJAX -->
             </div>
-            <div class="modal-footer bg-light border-0 px-4 py-2">
-                <button type="button" class="btn btn-light rounded-pill px-4 shadow-sm" data-bs-dismiss="modal">{{ __('Close') }}</button>
+            <div class="modal-footer border-0 px-4 py-2 bg-white">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-4 shadow-sm" data-bs-dismiss="modal">{{ __('Close') }}</button>
             </div>
         </div>
     </div>
@@ -140,7 +167,7 @@
 <div class="modal fade" id="addCompanyModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header bg-light border-0 px-4 py-3">
+            <div class="modal-header border-0 px-4 py-3 bg-white">
                 <h5 class="modal-title fw-bold text-dark"><i class="fas fa-building me-2 text-primary"></i>{{ __('Add New Company') }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -164,30 +191,39 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Name (AR)') }} <span class="text-danger">*</span></label>
-                            <input type="text" name="name" class="form-control form-control-lg rounded-3 bg-light border-0" placeholder="{{ __('Arabic Name') }}" required>
+                            <input type="text" name="name" class="form-control form-control-lg rounded-3 border" placeholder="{{ __('Arabic Name') }}" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Name (EN)') }} <span class="text-danger">*</span></label>
-                            <input type="text" name="en_name" class="form-control form-control-lg rounded-3 bg-light border-0" placeholder="{{ __('English Name') }}" required>
+                            <input type="text" name="en_name" class="form-control form-control-lg rounded-3 border" placeholder="{{ __('English Name') }}" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Email Address') }} <span class="text-danger">*</span></label>
-                            <div class="input-group input-group-lg bg-light rounded-3">
+                            <div class="input-group input-group-lg rounded-3 border">
                                 <span class="input-group-text bg-transparent border-0"><i class="fas fa-envelope text-muted"></i></span>
                                 <input type="email" name="email" class="form-control bg-transparent border-0 ps-0" placeholder="{{ __('company@example.com') }}" required>
                             </div>
                         </div>
-                        <div class="col-md-2">
-                            <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Code') }}</label>
-                            <input type="text" name="phone_code" class="form-control form-control-lg rounded-3 bg-light border-0" placeholder="+966">
+                        <div class="col-md-3 position-relative">
+                            <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Country Code') }}</label>
+                            <select name="phone_code" id="add_phone_code" class="form-select form-select-lg rounded-3 border" style="width: 100%;">
+                                <option value="">{{ __('Select Code') }}</option>
+                                @if(isset($countries))
+                                    @foreach($countries as $country)
+                                        <option value="{{ $country->phonecode }}" {{ $country->phonecode == '966' ? 'selected' : '' }}>
+                                            +{{ $country->phonecode }} ({{ $country->name }})
+                                        </option>
+                                    @endforeach
+                                @endif
+                            </select>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Phone Number') }}</label>
-                            <input type="text" name="phone" class="form-control form-control-lg rounded-3 bg-light border-0" placeholder="5xxxxxxxx">
+                            <input type="text" name="phone" class="form-control form-control-lg rounded-3 border" placeholder="5xxxxxxxx">
                         </div>
                         <div class="col-md-12">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Notes') }}</label>
-                            <textarea name="notes" class="form-control rounded-3 bg-light border-0" rows="2" placeholder="{{ __('Additional Notes...') }}"></textarea>
+                            <textarea name="notes" class="form-control rounded-3 border" rows="2" placeholder="{{ __('Additional Notes...') }}"></textarea>
                         </div>
                     </div>
 
@@ -196,24 +232,43 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Bank Name') }}</label>
-                            <input type="text" name="bank_name" class="form-control form-control-lg rounded-3 bg-light border-0" placeholder="{{ __('Bank Name') }}">
+                            <input type="text" name="bank_name" class="form-control form-control-lg rounded-3 border" placeholder="{{ __('Bank Name') }}">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Beneficiary Name') }}</label>
-                            <input type="text" name="beneficiary_name" class="form-control form-control-lg rounded-3 bg-light border-0" placeholder="{{ __('Beneficiary Name') }}">
+                            <input type="text" name="beneficiary_name" class="form-control form-control-lg rounded-3 border" placeholder="{{ __('Beneficiary Name') }}">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Account Number') }}</label>
-                            <input type="text" name="account_number" class="form-control form-control-lg rounded-3 bg-light border-0" placeholder="{{ __('Account Number') }}">
+                            <input type="text" name="account_number" class="form-control form-control-lg rounded-3 border" placeholder="{{ __('Account Number') }}">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('IBAN') }}</label>
-                            <input type="text" name="iban_number" class="form-control form-control-lg rounded-3 bg-light border-0" placeholder="{{ __('IBAN') }}">
+                            <input type="text" name="iban_number" class="form-control form-control-lg rounded-3 border" placeholder="{{ __('IBAN') }}">
+                        </div>
+                    </div>
+
+                    <!-- Commission Information Section -->
+                    <div class="modal-section-header">{{ __('Commission Information') }}</div>
+                    <div class="row g-3">
+                        <div class="col-md-6 position-relative">
+                            <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Commission Type') }} <span class="text-danger">*</span></label>
+                            <select name="commission_type" id="add_commission_type" class="form-select form-select-lg rounded-3 border" style="width: 100%;">
+                                <option value="percentage">{{ __('Percentage') }} (%)</option>
+                                <option value="fixed">{{ __('Fixed Amount') }} (SAR)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Commission Value') }} <span class="text-danger">*</span></label>
+                            <div class="input-group input-group-lg rounded-3 border">
+                                <input type="number" step="0.01" min="0" name="commission_value" id="add_commission_value" class="form-control bg-transparent border-0" placeholder="0.00" value="0.00" required>
+                                <span class="input-group-text bg-transparent border-0 fw-bold text-primary" id="add_commission_unit">%</span>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Status Switcher -->
-                    <div class="mt-4 p-3 bg-light rounded-4 d-flex justify-content-between align-items-center">
+                    <div class="mt-4 p-3 border rounded-4 d-flex justify-content-between align-items-center">
                         <div>
                             <h6 class="mb-0 fw-bold text-dark">{{ __('Status') }}</h6>
                             <small class="text-muted">{{ __('Enable or disable this company profile') }}</small>
@@ -223,8 +278,8 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer bg-light border-0 px-4 py-3">
-                    <button type="button" class="btn btn-light rounded-pill px-4 shadow-sm" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                <div class="modal-footer border-0 px-4 py-3 bg-white">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4 shadow-sm" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
                     <button type="submit" class="btn btn-primary rounded-pill px-5 shadow-sm"><i class="fas fa-save me-2"></i>{{ __('Create Company') }}</button>
                 </div>
             </form>
@@ -236,7 +291,7 @@
 <div class="modal fade" id="editCompanyModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header bg-light border-0 px-4 py-3">
+            <div class="modal-header border-0 px-4 py-3 bg-white">
                 <h5 class="modal-title fw-bold text-dark"><i class="fas fa-edit me-2 text-primary"></i>{{ __('Edit Company') }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -262,30 +317,39 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Name (AR)') }} <span class="text-danger">*</span></label>
-                            <input type="text" name="name" id="edit_name" class="form-control form-control-lg rounded-3 bg-light border-0" required>
+                            <input type="text" name="name" id="edit_name" class="form-control form-control-lg rounded-3 border" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Name (EN)') }} <span class="text-danger">*</span></label>
-                            <input type="text" name="en_name" id="edit_en_name" class="form-control form-control-lg rounded-3 bg-light border-0" required>
+                            <input type="text" name="en_name" id="edit_en_name" class="form-control form-control-lg rounded-3 border" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Email Address') }} <span class="text-danger">*</span></label>
-                            <div class="input-group input-group-lg bg-light rounded-3">
+                            <div class="input-group input-group-lg rounded-3 border">
                                 <span class="input-group-text bg-transparent border-0"><i class="fas fa-envelope text-muted"></i></span>
                                 <input type="email" name="email" id="edit_email" class="form-control bg-transparent border-0 ps-0" required>
                             </div>
                         </div>
-                        <div class="col-md-2">
-                            <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Code') }}</label>
-                            <input type="text" name="phone_code" id="edit_phone_code" class="form-control form-control-lg rounded-3 bg-light border-0">
+                        <div class="col-md-3 position-relative">
+                            <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Country Code') }}</label>
+                            <select name="phone_code" id="edit_phone_code" class="form-select form-select-lg rounded-3 border" style="width: 100%;">
+                                <option value="">{{ __('Select Code') }}</option>
+                                @if(isset($countries))
+                                    @foreach($countries as $country)
+                                        <option value="{{ $country->phonecode }}">
+                                            +{{ $country->phonecode }} ({{ $country->name }})
+                                        </option>
+                                    @endforeach
+                                @endif
+                            </select>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Phone Number') }}</label>
-                            <input type="text" name="phone" id="edit_phone" class="form-control form-control-lg rounded-3 bg-light border-0">
+                            <input type="text" name="phone" id="edit_phone" class="form-control form-control-lg rounded-3 border">
                         </div>
                         <div class="col-md-12">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Notes') }}</label>
-                            <textarea name="notes" id="edit_notes" class="form-control rounded-3 bg-light border-0" rows="2"></textarea>
+                            <textarea name="notes" id="edit_notes" class="form-control rounded-3 border" rows="2"></textarea>
                         </div>
                     </div>
 
@@ -294,35 +358,54 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Bank Name') }}</label>
-                            <input type="text" name="bank_name" id="edit_bank_name" class="form-control form-control-lg rounded-3 bg-light border-0">
+                            <input type="text" name="bank_name" id="edit_bank_name" class="form-control form-control-lg rounded-3 border">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Beneficiary Name') }}</label>
-                            <input type="text" name="beneficiary_name" id="edit_beneficiary_name" class="form-control form-control-lg rounded-3 bg-light border-0">
+                            <input type="text" name="beneficiary_name" id="edit_beneficiary_name" class="form-control form-control-lg rounded-3 border">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Account Number') }}</label>
-                            <input type="text" name="account_number" id="edit_account_number" class="form-control form-control-lg rounded-3 bg-light border-0">
+                            <input type="text" name="account_number" id="edit_account_number" class="form-control form-control-lg rounded-3 border">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('IBAN') }}</label>
-                            <input type="text" name="iban_number" id="edit_iban_number" class="form-control form-control-lg rounded-3 bg-light border-0">
+                            <input type="text" name="iban_number" id="edit_iban_number" class="form-control form-control-lg rounded-3 border">
+                        </div>
+                    </div>
+
+                    <!-- Commission Information Section -->
+                    <div class="modal-section-header">{{ __('Commission Information') }}</div>
+                    <div class="row g-3">
+                        <div class="col-md-6 position-relative">
+                            <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Commission Type') }} <span class="text-danger">*</span></label>
+                            <select name="commission_type" id="edit_commission_type" class="form-select form-select-lg rounded-3 border" style="width: 100%;">
+                                <option value="percentage">{{ __('Percentage') }} (%)</option>
+                                <option value="fixed">{{ __('Fixed Amount') }} (SAR)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Commission Value') }} <span class="text-danger">*</span></label>
+                            <div class="input-group input-group-lg rounded-3 border">
+                                <input type="number" step="0.01" min="0" name="commission_value" id="edit_commission_value" class="form-control bg-transparent border-0" placeholder="0.00" required>
+                                <span class="input-group-text bg-transparent border-0 fw-bold text-primary" id="edit_commission_unit">%</span>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Status Switcher -->
-                    <div class="mt-4 p-3 bg-light rounded-4 d-flex justify-content-between align-items-center">
+                    <div class="mt-4 p-3 border rounded-4 d-flex justify-content-between align-items-center">
                         <div>
                             <h6 class="mb-0 fw-bold text-dark">{{ __('Status') }}</h6>
-                            <small class="text-muted">{{ __('Activate or deactivate this company profile') }}</small>
+                            <small class="text-muted">{{ __('Enable or disable this company profile') }}</small>
                         </div>
                         <div class="form-check form-switch form-check-lg mb-0">
                             <input class="form-check-input" type="checkbox" id="edit_active" name="active">
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer bg-light border-0 px-4 py-3">
-                    <button type="button" class="btn btn-light rounded-pill px-4 shadow-sm" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                <div class="modal-footer border-0 px-4 py-3 bg-white">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4 shadow-sm" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
                     <button type="submit" class="btn btn-primary rounded-pill px-5 shadow-sm"><i class="fas fa-save me-2"></i>{{ __('Update Changes') }}</button>
                 </div>
             </form>
@@ -352,19 +435,54 @@
                                 <i class="fas fa-folder-open"></i>
                                 <h5>لا توجد بيانات</h5>
                                 <p>لم يتم العثور على أية سجلات لعرضها هنا.</p>
-                               </div>`,
+                                </div>`,
                 "zeroRecords": `<div class="empty-state">
                                 <i class="fas fa-search"></i>
                                 <h5>لا توجد نتائج</h5>
                                 <p>لم يتم العثور على أية سجلات مطابقة للبحث.</p>
-                               </div>`
+                                </div>`
             }
         });
 
-        // Initialize select2
+        // Initialize select2 on filter
         $('#filter-status').select2({
             minimumResultsForSearch: -1,
             width: '100%'
+        });
+
+        // Initialize Select2 inside Add and Edit Modals with dropdownParent set to each element's parent container
+        $('#addCompanyModal').on('shown.bs.modal', function () {
+            $('#add_phone_code').select2({
+                dropdownParent: $('#add_phone_code').parent(),
+                width: '100%',
+                placeholder: "{{ __('Select Code') }}"
+            });
+            $('#add_commission_type').select2({
+                dropdownParent: $('#add_commission_type').parent(),
+                width: '100%',
+                minimumResultsForSearch: -1
+            });
+        });
+
+        $('#editCompanyModal').on('shown.bs.modal', function () {
+            $('#edit_phone_code').select2({
+                dropdownParent: $('#edit_phone_code').parent(),
+                width: '100%',
+                placeholder: "{{ __('Select Code') }}"
+            });
+            $('#edit_commission_type').select2({
+                dropdownParent: $('#edit_commission_type').parent(),
+                width: '100%',
+                minimumResultsForSearch: -1
+            });
+        });
+
+        $('#add_commission_type').on('change', function() {
+            updateCommissionBadge('add');
+        });
+
+        $('#edit_commission_type').on('change', function() {
+            updateCommissionBadge('edit');
         });
 
         // Instant filter search logic helper
@@ -438,11 +556,31 @@
                             </table>
 
                             <h6 class="fw-bold text-primary mb-3"><i class="fas fa-university me-2"></i>{{ __('Bank Details') }}</h6>
-                            <table class="table table-borderless table-sm mb-0">
+                            <table class="table table-borderless table-sm mb-4">
                                 <tr><th class="text-muted" style="width: 35%;">{{ __('Bank Name') }}</th><td class="fw-bold">${company.bank_name || '---'}</td></tr>
                                 <tr><th class="text-muted">{{ __('Beneficiary Name') }}</th><td class="fw-bold">${company.beneficiary_name || '---'}</td></tr>
                                 <tr><th class="text-muted">{{ __('Account Number') }}</th><td class="fw-bold">${company.account_number || '---'}</td></tr>
                                 <tr><th class="text-muted">{{ __('IBAN') }}</th><td class="fw-bold">${company.iban_number || '---'}</td></tr>
+                            </table>
+
+                            <h6 class="fw-bold text-primary mb-3"><i class="fas fa-percentage me-2"></i>{{ __('Commission Information') }}</h6>
+                            <table class="table table-borderless table-sm mb-0">
+                                <tr>
+                                    <th class="text-muted" style="width: 35%;">{{ __('Commission Type') }}</th>
+                                    <td class="fw-bold">
+                                        ${company.commission_type === 'fixed' 
+                                            ? '<span class="badge badge-light text-secondary px-3 py-1 rounded-pill">{{ __("Fixed Amount") }}</span>' 
+                                            : '<span class="badge badge-light text-primary px-3 py-1 rounded-pill">{{ __("Percentage") }}</span>'}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">{{ __('Commission Value') }}</th>
+                                    <td class="fw-bold text-success">
+                                        ${company.commission_type === 'fixed' 
+                                            ? parseFloat(company.commission_value || 0).toFixed(2) + ' SAR' 
+                                            : parseFloat(company.commission_value || company.commission_rate || 0).toFixed(2) + ' %'}
+                                    </td>
+                                </tr>
                             </table>
                         </div>
                     </div>
@@ -462,18 +600,26 @@
                 $('#edit_name').val(company.name);
                 $('#edit_en_name').val(company.en_name);
                 $('#edit_email').val(company.email);
-                $('#edit_phone_code').val(company.phone_code);
+                $('#edit_phone_code').val(company.phone_code).trigger('change');
                 $('#edit_phone').val(company.phone);
                 $('#edit_notes').val(company.notes);
                 $('#edit_bank_name').val(company.bank_name);
                 $('#edit_beneficiary_name').val(company.beneficiary_name);
                 $('#edit_account_number').val(company.account_number);
                 $('#edit_iban_number').val(company.iban_number);
+                $('#edit_commission_type').val(company.commission_type || 'percentage').trigger('change');
+                $('#edit_commission_value').val(company.commission_value !== null ? parseFloat(company.commission_value) : (company.commission_rate ? parseFloat(company.commission_rate) : 0));
+                updateCommissionBadge('edit');
                 $('#edit_active').prop('checked', company.active);
                 $('#logoPreviewEdit').attr('src', response.logo_url);
                 $('#editCompanyModal').modal('show');
             }
         });
+    }
+
+    function updateCommissionBadge(prefix) {
+        const type = $('#' + prefix + '_commission_type').val();
+        $('#' + prefix + '_commission_unit').text(type === 'fixed' ? 'SAR' : '%');
     }
 
     function togglecompanytatus(id) {
@@ -548,6 +694,10 @@
     function resetForm() {
         $('#addCompanyForm')[0].reset();
         $('#logoPreviewAdd').attr('src', "{{ asset('images/demo/company-placeholder.jpg') }}");
+        $('#add_phone_code').val('966').trigger('change');
+        $('#add_commission_type').val('percentage').trigger('change');
+        $('#add_commission_value').val('0.00');
+        updateCommissionBadge('add');
     }
 </script>
 @endpush

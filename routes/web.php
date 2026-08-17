@@ -281,6 +281,12 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     Route::resource('pages', App\Http\Controllers\Admin\PageController::class);
 
      // Trips Management
+    Route::get('trips/analytics', [App\Http\Controllers\Admin\TripBookingController::class, 'analytics'])->name('trips.analytics');
+    Route::get('trips/profits', [App\Http\Controllers\Admin\TripBookingController::class, 'profits'])->name('trips.profits');
+    Route::get('trips/profits/data', [App\Http\Controllers\Admin\TripBookingController::class, 'getProfitsData'])->name('trips.profits.data');
+    Route::get('bookings/trips/analytics', [App\Http\Controllers\Admin\TripBookingController::class, 'analytics'])->name('bookings.trips.analytics');
+    Route::get('bookings/trips/profits', [App\Http\Controllers\Admin\TripBookingController::class, 'profits'])->name('bookings.trips.profits');
+    Route::get('bookings/trips/profits/data', [App\Http\Controllers\Admin\TripBookingController::class, 'getProfitsData'])->name('bookings.trips.profits.data');
     Route::get('trips/data', [App\Http\Controllers\Admin\TripsController::class, 'getData'])->name('trips.data');
     Route::post('trips/{trip}/toggle-status', [App\Http\Controllers\Admin\TripsController::class, 'toggleStatus'])->name('trips.toggle-status');
     Route::post('/trips/{trip}/renew', [App\Http\Controllers\Admin\TripsController::class, 'renew'])->name('trips.renew');

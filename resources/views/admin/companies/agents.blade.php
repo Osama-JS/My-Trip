@@ -158,7 +158,7 @@
 <div class="modal fade" id="addAgentModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header bg-light border-0 px-4 py-3">
+            <div class="modal-header border-0 px-4 py-3 bg-white">
                 <h5 class="modal-title fw-bold text-dark"><i class="fas fa-user-plus me-2 text-primary"></i>{{ __('Add New Agent') }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -168,22 +168,22 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('First Name') }} <span class="text-danger">*</span></label>
-                            <input type="text" name="first_name" class="form-control form-control-lg rounded-3 bg-light border-0" required>
+                            <input type="text" name="first_name" class="form-control form-control-lg rounded-3 border" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Last Name') }} <span class="text-danger">*</span></label>
-                            <input type="text" name="last_name" class="form-control form-control-lg rounded-3 bg-light border-0" required>
+                            <input type="text" name="last_name" class="form-control form-control-lg rounded-3 border" required>
                         </div>
                         <div class="col-md-12">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Email Address') }} <span class="text-danger">*</span></label>
-                            <div class="input-group input-group-lg bg-light rounded-3">
+                            <div class="input-group input-group-lg rounded-3 border">
                                 <span class="input-group-text bg-transparent border-0"><i class="fas fa-envelope text-muted"></i></span>
                                 <input type="email" name="email" class="form-control bg-transparent border-0 ps-0" required>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Dial Code') }} <span class="text-danger">*</span></label>
-                            <select name="country_code" class="form-select form-select-lg rounded-3 bg-light border-0" required>
+                            <select name="country_code" class="form-select form-select-lg rounded-3 border" required>
                                 @foreach($countries as $country)
                                     <option value="{{ $country->phonecode }}" {{ $country->phonecode == '966' ? 'selected' : '' }}>
                                         +{{ $country->phonecode }} ({{ $country->nicename }})
@@ -193,26 +193,26 @@
                         </div>
                         <div class="col-md-8">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Phone Number') }} <span class="text-danger">*</span></label>
-                            <input type="text" name="phone" class="form-control form-control-lg rounded-3 bg-light border-0" required placeholder="5xxxxxxxx">
+                            <input type="text" name="phone" class="form-control form-control-lg rounded-3 border" required placeholder="5xxxxxxxx">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Password') }} <span class="text-danger">*</span></label>
-                            <div class="input-group input-group-lg bg-light rounded-3">
+                            <div class="input-group input-group-lg rounded-3 border">
                                 <span class="input-group-text bg-transparent border-0"><i class="fas fa-lock text-muted"></i></span>
                                 <input type="password" name="password" class="form-control bg-transparent border-0 ps-0" required minlength="8">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Confirm Password') }} <span class="text-danger">*</span></label>
-                            <div class="input-group input-group-lg bg-light rounded-3">
+                            <div class="input-group input-group-lg rounded-3 border">
                                 <span class="input-group-text bg-transparent border-0"><i class="fas fa-lock text-muted"></i></span>
                                 <input type="password" name="password_confirmation" class="form-control bg-transparent border-0 ps-0" required minlength="8">
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer bg-light border-0 px-4 py-3">
-                    <button type="button" class="btn btn-light rounded-pill px-4 shadow-sm" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                <div class="modal-footer border-0 px-4 py-3 bg-white">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4 shadow-sm" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
                     <button type="submit" class="btn btn-primary rounded-pill px-5 shadow-sm"><i class="fas fa-save me-2"></i>{{ __('Add Agent') }}</button>
                 </div>
             </form>
@@ -224,7 +224,7 @@
 <div class="modal fade" id="editAgentModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header bg-light border-0 px-4 py-3">
+            <div class="modal-header border-0 px-4 py-3 bg-white">
                 <h5 class="modal-title fw-bold text-dark"><i class="fas fa-user-edit me-2 text-primary"></i>{{ __('Edit Agent') }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -236,22 +236,22 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('First Name') }} <span class="text-danger">*</span></label>
-                            <input type="text" name="first_name" id="edit_first_name" class="form-control form-control-lg rounded-3 bg-light border-0" required>
+                            <input type="text" name="first_name" id="edit_first_name" class="form-control form-control-lg rounded-3 border" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Last Name') }} <span class="text-danger">*</span></label>
-                            <input type="text" name="last_name" id="edit_last_name" class="form-control form-control-lg rounded-3 bg-light border-0" required>
+                            <input type="text" name="last_name" id="edit_last_name" class="form-control form-control-lg rounded-3 border" required>
                         </div>
                         <div class="col-md-12">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Email Address') }} <span class="text-danger">*</span></label>
-                            <div class="input-group input-group-lg bg-light rounded-3">
+                            <div class="input-group input-group-lg rounded-3 border">
                                 <span class="input-group-text bg-transparent border-0"><i class="fas fa-envelope text-muted"></i></span>
                                 <input type="email" name="email" id="edit_email" class="form-control bg-transparent border-0 ps-0" required>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Dial Code') }} <span class="text-danger">*</span></label>
-                            <select name="country_code" id="edit_country_code" class="form-select form-select-lg rounded-3 bg-light border-0" required>
+                            <select name="country_code" id="edit_country_code" class="form-select form-select-lg rounded-3 border" required>
                                 @foreach($countries as $country)
                                     <option value="{{ $country->phonecode }}">
                                         +{{ $country->phonecode }} ({{ $country->nicename }})
@@ -261,26 +261,26 @@
                         </div>
                         <div class="col-md-8">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Phone Number') }} <span class="text-danger">*</span></label>
-                            <input type="text" name="phone" id="edit_phone" class="form-control form-control-lg rounded-3 bg-light border-0" required placeholder="5xxxxxxxx">
+                            <input type="text" name="phone" id="edit_phone" class="form-control form-control-lg rounded-3 border" required placeholder="5xxxxxxxx">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('New Password') }} <small class="text-muted">({{ __('Leave empty to keep current') }})</small></label>
-                            <div class="input-group input-group-lg bg-light rounded-3">
+                            <div class="input-group input-group-lg rounded-3 border">
                                 <span class="input-group-text bg-transparent border-0"><i class="fas fa-lock text-muted"></i></span>
                                 <input type="password" name="password" class="form-control bg-transparent border-0 ps-0">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Confirm Password') }}</label>
-                            <div class="input-group input-group-lg bg-light rounded-3">
+                            <div class="input-group input-group-lg rounded-3 border">
                                 <span class="input-group-text bg-transparent border-0"><i class="fas fa-lock text-muted"></i></span>
                                 <input type="password" name="password_confirmation" class="form-control bg-transparent border-0 ps-0">
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer bg-light border-0 px-4 py-3">
-                    <button type="button" class="btn btn-light rounded-pill px-4 shadow-sm" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                <div class="modal-footer border-0 px-4 py-3 bg-white">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4 shadow-sm" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
                     <button type="submit" class="btn btn-primary rounded-pill px-5 shadow-sm"><i class="fas fa-save me-2"></i>{{ __('Update Changes') }}</button>
                 </div>
             </form>

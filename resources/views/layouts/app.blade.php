@@ -1253,8 +1253,76 @@
             from { opacity: 0; transform: translateY(-5px); }
             to { opacity: 1; transform: translateY(0); }
         }
-    </style>
 
+        /* ══════════════════════════════════════════════════════════════ */
+        /* MODALS — Fullscreen Backdrop, Z-Index & RTL Header Fix        */
+        /* ══════════════════════════════════════════════════════════════ */
+        .modal-backdrop {
+            z-index: 1050 !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+        }
+
+        .modal {
+            z-index: 1055 !important;
+            position: fixed !important;
+        }
+
+        /* Prevent sidebar and header from appearing above modal backdrop in any mode */
+        body.modal-open .dlabnav,
+        body.modal-open .nav-header,
+        body.modal-open .header,
+        body.modal-open .deznav,
+        body.modal-open #main-wrapper > .dlabnav,
+        body.modal-open #main-wrapper > .nav-header,
+        body.modal-open #main-wrapper > .header {
+            z-index: 1000 !important;
+        }
+
+        /* Modal Header Flex and Close Button (RTL / LTR) */
+        .modal-header {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            width: 100% !important;
+        }
+
+        .modal-header .modal-title {
+            margin: 0 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            flex-grow: 1 !important;
+        }
+
+        .modal-header .btn-close {
+            flex-shrink: 0 !important;
+            margin: 0 !important;
+            padding: 0.5rem !important;
+            opacity: 0.7;
+            transition: all 0.2s ease;
+        }
+
+        .modal-header .btn-close:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        /* In RTL, ensure close button is pushed to far left */
+        [dir="rtl"] .modal-header .btn-close,
+        .rtl .modal-header .btn-close {
+            margin-left: 0 !important;
+            margin-right: auto !important;
+        }
+
+        /* In LTR, ensure close button is pushed to far right */
+        [dir="ltr"] .modal-header .btn-close {
+            margin-right: 0 !important;
+            margin-left: auto !important;
+        }
+    </style>
 </head>
 <body
     data-typography="{{ $typography }}"
@@ -1697,9 +1765,9 @@
                     }
                 };
 
-                // If inside a modal, attach dropdown to the modal so it stays above
+                // If inside a modal, attach dropdown to element's parent container
                 if ($modal.length) {
-                    config.dropdownParent = $modal;
+                    config.dropdownParent = $el.parent();
                 }
 
                 $el.select2(config);
@@ -1711,7 +1779,13 @@
             initSelect2Elements();
         });
 
-        // Re-init when modals open (handles dynamic content)
+        // Ensure modals are direct children of body and re-init select2 when shown
+        $(document).on('show.bs.modal', '.modal', function() {
+            if (!$(this).parent().is('body')) {
+                $(this).appendTo('body');
+            }
+        });
+
         $(document).on('shown.bs.modal', function(e) {
             initSelect2Elements(e.target);
         });

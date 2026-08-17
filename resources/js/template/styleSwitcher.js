@@ -11,8 +11,7 @@ function addSwitcher() {
         <div class="sidebar-right-inner">
             <div class="admin-settings">
                 <div class="opt-header-logo">
-                    <img src="/images/logo.png" alt="" class="logo-abbr">
-                    <img src="/images/logo-text.png" alt="" class="brand-title">
+                    <h5 class="mb-0 text-white font-w600" style="padding: 10px 15px;">{{ __('Theme Settings') }}</h5>
                 </div>
                 <div class="opt-body">
                     <div class="opt-row">

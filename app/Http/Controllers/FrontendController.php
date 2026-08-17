@@ -1059,15 +1059,49 @@ class FrontendController extends Controller
             $totalPrice = $baseTotal + ($addonsCostPerPax * $request->tickets_count);
         }
 
+        // Calculate Platform Commission & Company Earnings
+        $company = $trip->company;
+        $companyId = $company ? $company->id : ($trip->company_id ?? null);
+        $commType = 'percentage';
+        $commVal = 0.00;
+        $platformProfit = 0.00;
+
+        if ($company) {
+            $commType = $company->commission_type ?? 'percentage';
+            $commVal = floatval($company->commission_value ?? $company->commission_rate ?? 0);
+            if ($commVal > 0) {
+                if ($commType === 'percentage') {
+                    $platformProfit = ($totalPrice * $commVal) / 100;
+                } else {
+                    $platformProfit = $commVal * $request->tickets_count;
+                }
+            }
+        } elseif ($trip->percentage_profit_margin > 0) {
+            $commType = 'percentage';
+            $commVal = floatval($trip->percentage_profit_margin);
+            $platformProfit = ($totalPrice * $commVal) / 100;
+        } elseif ($trip->profit > 0) {
+            $commType = 'fixed';
+            $commVal = floatval($trip->profit);
+            $platformProfit = $commVal * $request->tickets_count;
+        }
+
+        $providerPrice = max(0, $totalPrice - $platformProfit);
+
         $booking = TripBooking::create([
             'user_id' => auth()->id(),
             'trip_id' => $trip->id,
+            'company_id' => $companyId,
             'package_id' => $request->package_id,
             'season_id' => $request->season_id,
             'occupancy' => $request->occupancy_type,
             'status' => 'pending',
             'booking_state' => TripBooking::STATE_RECEIVED,
             'total_price' => $totalPrice,
+            'commission_type' => $commType,
+            'commission_value' => $commVal,
+            'platform_profit' => $platformProfit,
+            'provider_price' => $providerPrice,
             'booking_date' => $request->booking_date ?? $trip->expiry_date ?? now()->addDay(),
             'tickets_count' => $request->tickets_count,
             'notes' => $request->notes,

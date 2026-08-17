@@ -192,7 +192,7 @@
                 </div>
 
                 <!-- Status Card -->
-                <div class="mt-4 p-3 bg-light rounded-3 d-flex justify-content-between align-items-center border">
+                <div class="mt-4 p-3 bg-white rounded-3 d-flex justify-content-between align-items-center border">
                     <div>
                         <h6 class="mb-1 fw-semibold">
                             {{ __('Code Status') }}
@@ -216,7 +216,7 @@
             <!-- Footer -->
             <div class="modal-footer border-0 pt-0">
                 <button type="button"
-                        class="btn btn-light px-4"
+                        class="btn btn-outline-secondary px-4"
                         data-bs-dismiss="modal">
                     {{ __('Close') }}
                 </button>
@@ -322,7 +322,7 @@
                     </div>
 
                     <!-- Status Card -->
-                    <div class="mt-4 p-3 bg-light rounded-3 d-flex justify-content-between align-items-center border">
+                    <div class="mt-4 p-3 bg-white rounded-3 d-flex justify-content-between align-items-center border">
                         <div>
                             <h6 class="mb-1 fw-semibold">
                                 {{ __('Code Status') }}
@@ -346,7 +346,7 @@
                 <!-- Footer -->
                 <div class="modal-footer border-0 pt-0">
                     <button type="button"
-                            class="btn btn-light px-4"
+                            class="btn btn-outline-secondary px-4"
                             data-bs-dismiss="modal">
                         {{ __('Close') }}
                     </button>

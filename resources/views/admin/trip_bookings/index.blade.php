@@ -171,11 +171,14 @@
         </div>
     </div>
 
+@endsection
+
+@push('scripts')
 <script>
     $(document).ready(function() {
         var table = $('#bookings-table').DataTable({
             processing: true,
-            serverSide: false, // Client-side processing for now as per controller
+            serverSide: false,
             ajax: "{{ parse_url(route('admin.trip-bookings.data'), PHP_URL_PATH) }}",
             columns: [
                 { data: 'id' },
@@ -200,34 +203,59 @@
                                 <p>لم يتم العثور على أية سجلات مطابقة للبحث.</p>
                                </div>`
             },
-            order: [[0, 'desc']] // Order by ID desc
+            order: [[0, 'desc']]
         });
 
-        // إخفاء حقل البحث الافتراضي
+        // Hide default search
         $('#bookings-table_filter').hide();
 
-        // بحث مخصص
+        // Custom search
         $('#custom-search').on('keyup', function() {
             table.search(this.value).draw();
         });
 
         // Initialize tooltips
         $('body').tooltip({selector: '[data-toggle="tooltip"]'});
-
-        // Handle Delete/Status Confirmations
-        $(document).on('submit', '.confirm-action', function(e) {
-            e.preventDefault();
-            var form = this;
-            var message = $(this).data('confirm-message') || "{{ __('Are you sure?') }}";
-
-            WJHTAKAdmin.confirm(message, function() {
-                form.submit();
-            });
-        });
     });
+
+    // Handle Delete Booking with Swal
+    window.deleteBooking = function(id) {
+        let url = "{{ route('admin.trip-bookings.destroy', ':id') }}".replace(':id', id);
+
+        Swal.fire({
+            title: '{{ __("Delete Booking?") }}',
+            text: '{{ __("Are you sure you want to delete this cancelled booking? This action cannot be undone.") }}',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: '{{ __("Yes, delete it!") }}',
+            cancelButtonText: '{{ __("Cancel") }}'
+        }).then((result) => {
+            if (result.value || result.isConfirmed) {
+                $.ajax({
+                    url: url,
+                    type: "DELETE",
+                    data: { _token: "{{ csrf_token() }}" },
+                    success: function(response) {
+                        if (response.success) {
+                            if (typeof table !== 'undefined') {
+                                table.ajax.reload(null, false);
+                            } else {
+                                $('#bookings-table').DataTable().ajax.reload(null, false);
+                            }
+                            toastr.success(response.message);
+                        } else {
+                            toastr.error(response.message || '{{ __("Something went wrong") }}');
+                        }
+                    },
+                    error: function(xhr) {
+                        toastr.error(xhr.responseJSON?.message || '{{ __("Something went wrong") }}');
+                    }
+                });
+            }
+        });
+    };
 </script>
-
-
-
-@endsection
+@endpush
 

@@ -88,7 +88,7 @@
                             <i class="fas fa-search subs-search-icon"></i>
                             <input type="text" id="custom-search" class="subs-search-input" placeholder="{{ __('Search...') }}">
                         </div>
-                        <button type="button" class="btn btn-primary btn-sm px-4 rounded-pill shadow-sm" data-bs-toggle="modal" data-bs-target="#addCountryModal">
+                        <button type="button" class="btn btn-primary btn-sm px-4 rounded-pill shadow-sm" data-bs-toggle="modal" data-bs-target="#addCountryModal" onclick="resetCountryAddForm()">
                             <i class="fa fa-plus me-2"></i> {{ __('Add Country') }}
                         </button>
                     </div>
@@ -116,14 +116,14 @@
         </div>
     </div>
 
-
+<!-- Add Country Modal -->
 <div class="modal fade" id="addCountryModal" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-4">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
 
             <!-- Header -->
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold">
+            <div class="modal-header border-0 px-4 py-3 bg-white">
+                <h5 class="modal-title fw-bold text-dark">
                     <i class="fas fa-globe text-primary me-2"></i>
                     {{ __('Add New Country') }}
                 </h5>
@@ -133,90 +133,96 @@
             <form id="addCountryForm" enctype="multipart/form-data">
                 @csrf
 
-                <div class="modal-body pt-2 px-4">
+                <div class="modal-body p-4 bg-white">
 
-                    <div class="row g-4">
+                    <div class="row g-3">
 
                         <!-- Arabic Name -->
                         <div class="col-md-6">
-                            <div class="form-floating position-relative">
-                                <input type="text"
-                                       name="name_ar"
-                                       class="form-control ps-5"
-                                       placeholder="Arabic Name"
-                                       required>
-                                <label>{{ __('Name (Arabic)') }}</label>
-                                <i class="fas fa-language position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                            <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Name (Arabic)') }} <span class="text-danger">*</span></label>
+                            <div class="input-group input-group-lg rounded-3 border">
+                                <span class="input-group-text bg-transparent border-0"><i class="fas fa-language text-muted"></i></span>
+                                <input type="text" name="name_ar" class="form-control bg-transparent border-0 ps-0" placeholder="{{ __('Arabic Name') }}" required>
                             </div>
                         </div>
 
                         <!-- English Name -->
                         <div class="col-md-6">
-                            <div class="form-floating position-relative">
-                                <input type="text"
-                                       name="name_en"
-                                       class="form-control ps-5"
-                                       placeholder="English Name"
-                                       required>
-                                <label>{{ __('Name (English)') }}</label>
-                                <i class="fas fa-font position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                            <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Name (English)') }} <span class="text-danger">*</span></label>
+                            <div class="input-group input-group-lg rounded-3 border">
+                                <span class="input-group-text bg-transparent border-0"><i class="fas fa-font text-muted"></i></span>
+                                <input type="text" name="name_en" class="form-control bg-transparent border-0 ps-0" placeholder="{{ __('English Name') }}" required>
                             </div>
                         </div>
 
                         <!-- ISO Code -->
                         <div class="col-md-6">
-                            <div class="form-floating position-relative">
-                                <input type="text"
-                                       name="numcode"
-                                       class="form-control ps-5"
-                                       placeholder="ISO Code"
-                                       required>
-                                <label>{{ __('Country Code (ISO)') }}</label>
-                                <i class="fas fa-hashtag position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                            <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Country Code (ISO)') }} <span class="text-danger">*</span></label>
+                            <div class="input-group input-group-lg rounded-3 border">
+                                <span class="input-group-text bg-transparent border-0"><i class="fas fa-hashtag text-muted"></i></span>
+                                <input type="text" name="numcode" class="form-control bg-transparent border-0 ps-0" placeholder="SA / 682" required>
                             </div>
                         </div>
 
                         <!-- Phone Code -->
                         <div class="col-md-6">
-                            <div class="form-floating position-relative">
-                                <input type="text"
-                                       name="phonecode"
-                                       class="form-control ps-5"
-                                       placeholder="Phone Code"
-                                       required>
-                                <label>{{ __('Phone Code') }}</label>
-                                <i class="fas fa-phone position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                            <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Phone Code') }}</label>
+                            <div class="input-group input-group-lg rounded-3 border">
+                                <span class="input-group-text bg-transparent border-0"><i class="fas fa-phone text-muted"></i></span>
+                                <input type="text" name="phonecode" class="form-control bg-transparent border-0 ps-0" placeholder="966">
                             </div>
                         </div>
 
-                        <!-- Flag Upload -->
-                        <div class="col-12">
-                            <div class="border rounded-3 p-3 bg-light">
-                                <label class="form-label fw-semibold mb-2">
-                                    <i class="fas fa-flag me-2 text-primary"></i>
-                                    {{ __('Country Flag') }}
-                                </label>
-                                <x-forms.file-upload  name="flag" class="form-control"  accept="image/*" preview />
+                        <!-- Country Flag Upload Box -->
+                        <div class="col-md-6">
+                            <div class="border rounded-4 p-3 bg-white h-100 text-center d-flex flex-column align-items-center justify-content-between shadow-xs position-relative">
+                                <div class="d-flex align-items-center justify-content-between w-100 mb-2">
+                                    <span class="fw-bold text-dark small text-uppercase"><i class="fas fa-flag text-primary me-2"></i>{{ __('Country Flag') }}</span>
+                                    <span class="badge badge-light text-muted px-2 py-1" style="font-size: 10px;">{{ __('Flag Icon') }}</span>
+                                </div>
+                                
+                                <div class="position-relative my-2">
+                                    <div class="rounded-3 p-1 d-flex align-items-center justify-content-center overflow-hidden border" style="width: 120px; height: 80px; background-color: #f8fafc !important;">
+                                        <img id="add_flag_preview" src="{{ asset('images/flags/default.svg') }}" class="rounded-2" style="width: 100%; height: 100%; object-fit: contain;" alt="Flag">
+                                    </div>
+                                    <label for="add_flag_input" class="btn btn-primary btn-sm rounded-circle position-absolute bottom-0 end-0 p-0 d-flex align-items-center justify-content-center shadow-sm" style="width: 32px; height: 32px; border: 2px solid #fff; cursor: pointer; transform: translate(25%, 25%);">
+                                        <i class="fas fa-camera text-white" style="font-size: 12px;"></i>
+                                    </label>
+                                    <input type="file" name="flag" id="add_flag_input" class="d-none" accept="image/*" onchange="previewCountryImage(this, 'add_flag_preview')">
+                                </div>
+                                
+                                <small class="text-muted d-block mt-2" style="font-size: 11px;">{{ __('PNG, SVG, JPG (Max 2MB)') }}</small>
                             </div>
                         </div>
 
-                        <!-- Flag Upload -->
-                        <div class="col-12">
-                            <div class="border rounded-3 p-3 bg-light">
-                                <label class="form-label fw-semibold mb-2">
-                                    <i class="fas fa-flag me-2 text-primary"></i>
-                                    {{ __('Landmark Image') }}
-                                </label>
-                                <x-forms.file-upload  name="landmark_image" class="form-control"  accept="image/*" preview />
+                        <!-- Landmark Image Upload Box -->
+                        <div class="col-md-6">
+                            <div class="border rounded-4 p-3 bg-white h-100 text-center d-flex flex-column align-items-center justify-content-between shadow-xs position-relative">
+                                <div class="d-flex align-items-center justify-content-between w-100 mb-2">
+                                    <span class="fw-bold text-dark small text-uppercase"><i class="fas fa-landmark text-primary me-2"></i>{{ __('Landmark Image') }}</span>
+                                    <span class="badge badge-light text-muted px-2 py-1" style="font-size: 10px;">{{ __('Landscape Photo') }}</span>
+                                </div>
+                                
+                                <div class="position-relative my-2">
+                                    <div class="rounded-3 p-1 d-flex align-items-center justify-content-center overflow-hidden border" style="width: 180px; height: 80px; background-color: #f8fafc !important;">
+                                        <img id="add_landmark_preview" src="{{ asset('images/demo/destination-placeholder.svg') }}" class="rounded-2" style="width: 100%; height: 100%; object-fit: cover;" alt="Landmark">
+                                    </div>
+                                    <label for="add_landmark_input" class="btn btn-primary btn-sm rounded-circle position-absolute bottom-0 end-0 p-0 d-flex align-items-center justify-content-center shadow-sm" style="width: 32px; height: 32px; border: 2px solid #fff; cursor: pointer; transform: translate(25%, 25%);">
+                                        <i class="fas fa-camera text-white" style="font-size: 12px;"></i>
+                                    </label>
+                                    <input type="file" name="landmark_image" id="add_landmark_input" class="d-none" accept="image/*" onchange="previewCountryImage(this, 'add_landmark_preview')">
+                                </div>
+                                
+                                <small class="text-muted d-block mt-2" style="font-size: 11px;">{{ __('PNG, JPG, WebP (Max 2MB)') }}</small>
                             </div>
                         </div>
 
                     </div>
 
                     <!-- Status Card -->
-                    <div class="mt-4 p-4 bg-light rounded-4 d-flex justify-content-between align-items-center border">
+                    <div class="mt-4 p-3 border rounded-4 d-flex justify-content-between align-items-center bg-white">
                         <div>
-                            <h6 class="mb-1 fw-semibold">
+                            <h6 class="mb-0 fw-bold text-dark">
                                 {{ __('Country Status') }}
                             </h6>
                             <small class="text-muted">
@@ -224,11 +230,12 @@
                             </small>
                         </div>
 
-                        <div class="form-check form-switch form-switch-lg">
+                        <div class="form-check form-switch form-check-lg mb-0">
                             <input class="form-check-input"
                                    type="checkbox"
                                    name="active"
                                    value="1"
+                                   role="switch"
                                    checked>
                         </div>
                     </div>
@@ -236,16 +243,16 @@
                 </div>
 
                 <!-- Footer -->
-                <div class="modal-footer border-0 pt-0 px-4">
+                <div class="modal-footer border-0 px-4 py-3 bg-white">
                     <button type="button"
-                            class="btn btn-light px-4"
+                            class="btn btn-outline-secondary rounded-pill px-4 shadow-sm"
                             data-bs-dismiss="modal">
                         {{ __('Cancel') }}
                     </button>
 
                     <button type="submit"
-                            class="btn btn-primary px-4 shadow-sm">
-                        <i class="fas fa-save me-1"></i>
+                            class="btn btn-primary rounded-pill px-5 shadow-sm">
+                        <i class="fas fa-save me-2"></i>
                         {{ __('Save Country') }}
                     </button>
                 </div>
@@ -260,11 +267,11 @@
 <!-- Edit Country Modal -->
 <div class="modal fade" id="editCountryModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-4">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
 
             <!-- Header -->
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold">
+            <div class="modal-header border-0 px-4 py-3 bg-white">
+                <h5 class="modal-title fw-bold text-dark">
                     <i class="fas fa-globe text-primary me-2"></i>
                     {{ __('Edit Country') }}
                 </h5>
@@ -277,97 +284,119 @@
                 @method('PUT')
                 <input type="hidden" id="edit_country_id">
 
-                <div class="modal-body pt-2 px-4">
+                <div class="modal-body p-4 bg-white">
 
-                    <div class="row g-4">
+                    <div class="row g-3">
 
-                        <!-- Name Arabic -->
+                        <!-- Arabic Name -->
                         <div class="col-md-6">
-                            <div class="form-floating position-relative">
+                            <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Name (Arabic)') }} <span class="text-danger">*</span></label>
+                            <div class="input-group input-group-lg rounded-3 border">
+                                <span class="input-group-text bg-transparent border-0"><i class="fas fa-language text-muted"></i></span>
                                 <input type="text"
                                        id="edit_name_ar"
                                        name="name_ar"
-                                       class="form-control ps-5"
-                                       placeholder="Name (Arabic)"
+                                       class="form-control bg-transparent border-0 ps-0"
                                        required>
-                                <label>{{ __('Name (Arabic)') }}</label>
-                                <i class="fas fa-language position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
                             </div>
                         </div>
 
-                        <!-- Name English -->
+                        <!-- English Name -->
                         <div class="col-md-6">
-                            <div class="form-floating position-relative">
+                            <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Name (English)') }} <span class="text-danger">*</span></label>
+                            <div class="input-group input-group-lg rounded-3 border">
+                                <span class="input-group-text bg-transparent border-0"><i class="fas fa-font text-muted"></i></span>
                                 <input type="text"
                                        id="edit_name_en"
                                        name="name_en"
-                                       class="form-control ps-5"
-                                       placeholder="Name (English)"
+                                       class="form-control bg-transparent border-0 ps-0"
                                        required>
-                                <label>{{ __('Name (English)') }}</label>
-                                <i class="fas fa-font position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
                             </div>
                         </div>
 
-                        <!-- ISO & Phone -->
+                        <!-- ISO Code -->
                         <div class="col-md-6">
-                            <div class="form-floating position-relative">
+                            <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Country Code (ISO)') }} <span class="text-danger">*</span></label>
+                            <div class="input-group input-group-lg rounded-3 border">
+                                <span class="input-group-text bg-transparent border-0"><i class="fas fa-hashtag text-muted"></i></span>
                                 <input type="text"
                                        id="edit_numcode"
                                        name="numcode"
-                                       class="form-control ps-5"
-                                       placeholder="Country Code (ISO)"
+                                       class="form-control bg-transparent border-0 ps-0"
                                        required>
-                                <label>{{ __('Country Code (ISO)') }}</label>
-                                <i class="fas fa-hashtag position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
                             </div>
                         </div>
+
+                        <!-- Phone Code -->
                         <div class="col-md-6">
-                            <div class="form-floating position-relative">
+                            <label class="form-label fw-medium text-muted small text-uppercase">{{ __('Phone Code') }}</label>
+                            <div class="input-group input-group-lg rounded-3 border">
+                                <span class="input-group-text bg-transparent border-0"><i class="fas fa-phone text-muted"></i></span>
                                 <input type="text"
                                        id="edit_phonecode"
                                        name="phonecode"
-                                       class="form-control ps-5"
-                                       placeholder="Phone Code">
-                                <label>{{ __('Phone Code') }}</label>
-                                <i class="fas fa-phone position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                                       class="form-control bg-transparent border-0 ps-0">
                             </div>
                         </div>
 
-                        <!-- Flag Upload with Preview -->
-                        <div class="col-12">
-                            <div class="border rounded-3 p-3 bg-light">
-                                <label class="form-label fw-semibold mb-2">
-                                    <i class="fas fa-flag me-2 text-primary"></i>
-                                    {{ __('Country Flag') }}
-                                </label>
-                                <x-forms.file-upload  id="edit_flag" name="flag" class="form-control"  accept="image/*" preview />
+                        <!-- Country Flag Upload Box -->
+                        <div class="col-md-6">
+                            <div class="border rounded-4 p-3 bg-white h-100 text-center d-flex flex-column align-items-center justify-content-between shadow-xs position-relative">
+                                <div class="d-flex align-items-center justify-content-between w-100 mb-2">
+                                    <span class="fw-bold text-dark small text-uppercase"><i class="fas fa-flag text-primary me-2"></i>{{ __('Country Flag') }}</span>
+                                    <span class="badge badge-light text-muted px-2 py-1" style="font-size: 10px;">{{ __('Flag Icon') }}</span>
+                                </div>
+                                
+                                <div class="position-relative my-2">
+                                    <div class="rounded-3 p-1 d-flex align-items-center justify-content-center overflow-hidden border" style="width: 120px; height: 80px; background-color: #f8fafc !important;">
+                                        <img id="edit_flag_preview" src="{{ asset('images/flags/default.svg') }}" class="rounded-2" style="width: 100%; height: 100%; object-fit: contain;" alt="Flag">
+                                    </div>
+                                    <label for="edit_flag_input" class="btn btn-primary btn-sm rounded-circle position-absolute bottom-0 end-0 p-0 d-flex align-items-center justify-content-center shadow-sm" style="width: 32px; height: 32px; border: 2px solid #fff; cursor: pointer; transform: translate(25%, 25%);">
+                                        <i class="fas fa-camera text-white" style="font-size: 12px;"></i>
+                                    </label>
+                                    <input type="file" name="flag" id="edit_flag_input" class="d-none" accept="image/*" onchange="previewCountryImage(this, 'edit_flag_preview')">
+                                </div>
+                                
+                                <small class="text-muted d-block mt-2" style="font-size: 11px;">{{ __('Change Country Flag') }}</small>
                             </div>
                         </div>
 
-                        <div class="col-12">
-                            <div class="border rounded-3 p-3 bg-light">
-                                <label class="form-label fw-semibold mb-2">
-                                    <i class="fas fa-flag me-2 text-primary"></i>
-                                    {{ __('Landmark Image') }}
-                                </label>
-                                <x-forms.file-upload  id="edit_landmark_image" name="landmark_image" class="form-control"  accept="image/*" preview />
+                        <!-- Landmark Image Upload Box -->
+                        <div class="col-md-6">
+                            <div class="border rounded-4 p-3 bg-white h-100 text-center d-flex flex-column align-items-center justify-content-between shadow-xs position-relative">
+                                <div class="d-flex align-items-center justify-content-between w-100 mb-2">
+                                    <span class="fw-bold text-dark small text-uppercase"><i class="fas fa-landmark text-primary me-2"></i>{{ __('Landmark Image') }}</span>
+                                    <span class="badge badge-light text-muted px-2 py-1" style="font-size: 10px;">{{ __('Landscape Photo') }}</span>
+                                </div>
+                                
+                                <div class="position-relative my-2">
+                                    <div class="rounded-3 p-1 d-flex align-items-center justify-content-center overflow-hidden border" style="width: 180px; height: 80px; background-color: #f8fafc !important;">
+                                        <img id="edit_landmark_preview" src="{{ asset('images/demo/destination-placeholder.svg') }}" class="rounded-2" style="width: 100%; height: 100%; object-fit: cover;" alt="Landmark">
+                                    </div>
+                                    <label for="edit_landmark_input" class="btn btn-primary btn-sm rounded-circle position-absolute bottom-0 end-0 p-0 d-flex align-items-center justify-content-center shadow-sm" style="width: 32px; height: 32px; border: 2px solid #fff; cursor: pointer; transform: translate(25%, 25%);">
+                                        <i class="fas fa-camera text-white" style="font-size: 12px;"></i>
+                                    </label>
+                                    <input type="file" name="landmark_image" id="edit_landmark_input" class="d-none" accept="image/*" onchange="previewCountryImage(this, 'edit_landmark_preview')">
+                                </div>
+                                
+                                <small class="text-muted d-block mt-2" style="font-size: 11px;">{{ __('Change Landmark Image') }}</small>
                             </div>
                         </div>
 
                     </div>
 
                     <!-- Status Card -->
-                    <div class="mt-4 p-4 bg-light rounded-4 d-flex justify-content-between align-items-center border">
+                    <div class="mt-4 p-3 border rounded-4 d-flex justify-content-between align-items-center bg-white">
                         <div>
-                            <h6 class="mb-1 fw-semibold">{{ __('Country Status') }}</h6>
+                            <h6 class="mb-0 fw-bold text-dark">{{ __('Country Status') }}</h6>
                             <small class="text-muted">{{ __('Enable or disable this country in the system') }}</small>
                         </div>
-                        <div class="form-check form-switch form-switch-lg">
+                        <div class="form-check form-switch form-check-lg mb-0">
                             <input class="form-check-input"
                                    type="checkbox"
                                    id="edit_active"
                                    name="active"
+                                   role="switch"
                                    value="1">
                         </div>
                     </div>
@@ -375,10 +404,10 @@
                 </div>
 
                 <!-- Footer -->
-                <div class="modal-footer border-0 pt-0 px-4">
-                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">{{ __('Close') }}</button>
-                    <button type="submit" class="btn btn-primary px-4 shadow-sm">
-                        <i class="fas fa-save me-1"></i> {{ __('Update Country') }}
+                <div class="modal-footer border-0 px-4 py-3 bg-white">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4 shadow-sm" data-bs-dismiss="modal">{{ __('Close') }}</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-5 shadow-sm">
+                        <i class="fas fa-save me-2"></i> {{ __('Update Changes') }}
                     </button>
                 </div>
 
@@ -417,7 +446,10 @@
             }
         });
 
-        
+        // Instant search
+        $('#custom-search').on('keyup', function() {
+            countriesTable.search(this.value).draw();
+        });
 
         // Add Country Form Submit
         $('#addCountryForm').on('submit', function(e) {
@@ -431,62 +463,13 @@
                 buttonText: "{{ __('Save Country') }}"
             });
         });
-       
-    //    $('#addCountryForm').on('submit', function (e) {
-    //         e.preventDefault();
 
-    //         let form = document.getElementById('addCountryForm');
-    //         let formData = new FormData(form);
-
-    //         // تحويل checkbox إلى 1 أو 0
-    //         let isActive = $('#activeStatus').is(':checked') ? 1 : 0;
-    //         formData.set('active', isActive);
-
-    //         $.ajax({
-    //             url: "{{ route('admin.countries.store') }}",
-    //             type: "POST",
-    //             data: formData,
-    //             processData: false, // مهم
-    //             contentType: false, // مهم
-    //             beforeSend: function() {
-    //                 $('button[type="submit"]').prop('disabled', true)
-    //                     .html('<i class="fas fa-spinner fa-spin"></i>');
-    //             },
-    //             success: function (response) {
-    //                 if (response.success) {
-    //                     $('#addCountryModal').modal('hide');
-    //                     $('#addCountryForm')[0].reset();
-    //                     countriesTable.ajax.reload(null, false);
-    //                     toastr.success(response.message);
-    //                 }
-    //             },
-    //             error: function (xhr) {
-    //                 if (xhr.status === 422) {
-    //                     let errors = xhr.responseJSON.errors;
-    //                     Object.keys(errors).forEach(key => {
-    //                         toastr.error(errors[key][0]);
-    //                     });
-    //                 } else {
-    //                     toastr.error('Something went wrong');
-    //                 }
-    //             },
-    //             complete: function() {
-    //                 $('button[type="submit"]').prop('disabled', false)
-    //                     .html('<i class="fas fa-save me-1"></i> {{ __("Save Country") }}');
-    //             }
-    //         });
-    //     });
-    
         // Edit Country Form Submit
-        
         $('#editCountryForm').on('submit', function(e) {
             e.preventDefault();
 
             const id = $('#edit_country_id').val();
             let url = "{{ route('admin.countries.update', ':id') }}".replace(':id', id);
-
-            let form = document.getElementById('editCountryForm');
-            let formData = new FormData(form);
 
             submitAjaxForm({
                 formId: "editCountryForm",
@@ -498,17 +481,13 @@
                 usePut: true
             });
         });
-});
-
-
+    });
 
     function editCountry(id) {
         let url = "{{ route('admin.countries.show', ':id') }}".replace(':id', id);
-        console.log(url);
         $.get(url, function(response) {
             if (response.success) {
                 const country = response.country;
-                console.log(country);
                 $('#edit_country_id').val(country.id);
                 $('#edit_name_ar').val(country.name_ar);
                 $('#edit_name_en').val(country.name_en);
@@ -516,41 +495,41 @@
                 $('#edit_phonecode').val(country.phonecode);
                 $('#edit_active').prop('checked', country.active == 1);
 
-                // Show current flag
-                let flagPreviewDiv = $('#editCountryForm input[name="flag"]').closest('.form-group').find('.current-image-preview');
-                if (country.flag) {
-                    flagPreviewDiv.find('img').attr('src', response.flag_url);
-                    flagPreviewDiv.show();
-                } else {
-                    flagPreviewDiv.hide();
-                }
-
-                // Show current landmark image
-                let landmarkPreviewDiv = $('#editCountryForm input[name="landmark_image"]').closest('.form-group').find('.current-image-preview');
-                if (country.landmark_image) {
-                    landmarkPreviewDiv.find('img').attr('src', response.landmark_image_url);
-                    landmarkPreviewDiv.show();
-                } else {
-                    landmarkPreviewDiv.hide();
-                }
+                // Show current flag & landmark
+                $('#edit_flag_preview').attr('src', response.flag_url || "{{ asset('images/flags/default.svg') }}");
+                $('#edit_landmark_preview').attr('src', response.landmark_image_url || "{{ asset('images/demo/destination-placeholder.svg') }}");
 
                 $('#editCountryModal').modal('show');
             }
         });
     }
 
+    function previewCountryImage(input, previewId) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                $('#' + previewId).attr('src', e.target.result);
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function resetCountryAddForm() {
+        $('#addCountryForm')[0].reset();
+        $('#add_flag_preview').attr('src', "{{ asset('images/flags/default.svg') }}");
+        $('#add_landmark_preview').attr('src', "{{ asset('images/demo/destination-placeholder.svg') }}");
+    }
 
     function toggleCountryStatus(id) {
-        let url = "{{ route('admin.countries.toggle-status', ':id') }}".replace(':id', id);
+        const url = "{{ route('admin.countries.toggle-status', ':id') }}".replace(':id', id);
         Swal.fire({
             title: '{{ __("Are you sure?") }}',
             text: '{{ __("Do you want to toggle this country status?") }}',
-            type: 'question',
+            icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#041741',
-            cancelButtonColor: '#777',
-            confirmButtonText: '{{ __("Yes, toggle it!") }}',
-            cancelButtonText: '{{ __("Cancel") }}'
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#041741',
+            confirmButtonText: '{{ __("Yes, Change it!") }}'
         }).then((result) => {
             if (result.value) {
                 $.ajax({
@@ -560,30 +539,15 @@
                     success: function(response) {
                         if (response.success) {
                             if (typeof countriesTable !== 'undefined') {
-                                countriesTable.ajax.reload();
+                                countriesTable.ajax.reload(null, false);
                             }
-                            Swal.fire({
-                                title: '{{ __("Updated!") }}',
-                                text: response.message,
-                                type: 'success',
-                                confirmButtonColor: '#041741'
-                            });
+                            toastr.success(response.message);
                         } else {
-                            Swal.fire({
-                                title: '{{ __("Error!") }}',
-                                text: response.message || '{{ __("Something went wrong") }}',
-                                type: 'error',
-                                confirmButtonColor: '#041741'
-                            });
+                            toastr.error(response.message || '{{ __("Something went wrong") }}');
                         }
                     },
                     error: function(xhr) {
-                        Swal.fire({
-                            title: '{{ __("Error!") }}',
-                            text: xhr.responseJSON?.message || '{{ __("Something went wrong") }}',
-                            type: 'error',
-                            confirmButtonColor: '#041741'
-                        });
+                        toastr.error(xhr.responseJSON?.message || '{{ __("Something went wrong") }}');
                     }
                 });
             }
@@ -594,14 +558,13 @@
         let url = "{{ route('admin.countries.destroy', ':id') }}".replace(':id', id);
 
         Swal.fire({
-            title: '{{ __("Are you sure?") }}',
+            title: '{{ __("Delete Country?") }}',
             text: '{{ __("This will delete the country and related data!") }}',
-            type: 'warning',
+            icon: 'error',
             showCancelButton: true,
             confirmButtonColor: '#041741',
-            cancelButtonColor: '#777',
-            confirmButtonText: '{{ __("Yes, delete it!") }}',
-            cancelButtonText: '{{ __("Cancel") }}'
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: '{{ __("Yes, delete it!") }}'
         }).then((result) => {
             if (result.value) {
                 $.ajax({
@@ -611,7 +574,7 @@
                     success: function(response) {
                         if (response.success) {
                             if (typeof countriesTable !== 'undefined') {
-                                countriesTable.ajax.reload();
+                                countriesTable.ajax.reload(null, false);
                             }
                             toastr.success(response.message);
                         } else {
@@ -626,6 +589,7 @@
         });
     }
 </script>
+@endpushscript>
 @endpush
 
 @push('styles')

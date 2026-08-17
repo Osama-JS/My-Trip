@@ -65,6 +65,8 @@
                     <li><a href="{{ route('admin.trips.index') }}"><i class="fa fa-suitcase"></i>{{ __('Manage Tours') }}</a></li>
                     <li><a href="{{ route('admin.trip-categories.index') }}"><i class="fa fa-tags"></i>{{ __('Categories') }}</a></li>
                     <li><a href="{{ route('admin.trip-bookings.index') }}"><i class="fa fa-calendar-check"></i>{{ __('Tour Bookings') }}</a></li>
+                    <li><a href="{{ route('admin.trips.analytics') }}"><i class="fa fa-chart-pie"></i>{{ __('Tour Analytics') }}</a></li>
+                    <li><a href="{{ route('admin.trips.profits') }}"><i class="fa fa-dollar-sign text-success"></i>{{ __('Tour Profits') }}</a></li>
                 </ul>
             </li>
 

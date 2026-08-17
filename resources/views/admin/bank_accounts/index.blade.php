@@ -141,7 +141,7 @@
                             </div>
                         </div>
                         <div class="col-12">
-                            <div class="border rounded-3 p-3 bg-light">
+                            <div class="border rounded-3 p-3 bg-white">
                                 <label class="form-label fw-semibold mb-2">
                                     <i class="fas fa-image me-2 text-primary"></i>
                                     {{ __('Bank Logo') }}
@@ -151,7 +151,7 @@
                         </div>
                     </div>
 
-                    <div class="mt-4 p-4 bg-light rounded-4 d-flex justify-content-between align-items-center border">
+                    <div class="mt-4 p-4 bg-white rounded-4 d-flex justify-content-between align-items-center border">
                         <div>
                             <h6 class="mb-1 fw-semibold">{{ __('Account Status') }}</h6>
                             <small class="text-muted">{{ __('Enable or disable this bank account for payments') }}</small>
@@ -163,7 +163,7 @@
                 </div>
 
                 <div class="modal-footer border-0 pt-0 px-4">
-                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
                     <button type="submit" class="btn btn-primary px-4 shadow-sm">
                         <i class="fas fa-save me-1"></i> {{ __('Save Account') }}
                     </button>
@@ -190,7 +190,7 @@
                 @method('PUT')
                 <input type="hidden" id="edit_account_id">
 
-                <div class="modal-body pt-2 px-4">
+                <div class="modal-body pt-2 px-4 bg-white">
                     <div class="row g-4">
                         <div class="col-md-12">
                             <div class="form-floating position-relative">
@@ -214,7 +214,7 @@
                             </div>
                         </div>
                         <div class="col-12">
-                            <div class="border rounded-3 p-3 bg-light">
+                            <div class="border rounded-3 p-3 bg-white">
                                 <label class="form-label fw-semibold mb-2">
                                     <i class="fas fa-image me-2 text-primary"></i>
                                     {{ __('Bank Logo') }}
@@ -224,7 +224,7 @@
                         </div>
                     </div>
 
-                    <div class="mt-4 p-4 bg-light rounded-4 d-flex justify-content-between align-items-center border">
+                    <div class="mt-4 p-4 bg-white rounded-4 d-flex justify-content-between align-items-center border">
                         <div>
                             <h6 class="mb-1 fw-semibold">{{ __('Account Status') }}</h6>
                             <small class="text-muted">{{ __('Enable or disable this bank account for payments') }}</small>
@@ -235,8 +235,8 @@
                     </div>
                 </div>
 
-                <div class="modal-footer border-0 pt-0 px-4">
-                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                <div class="modal-footer border-0 pt-0 px-4 bg-white">
+                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
                     <button type="submit" class="btn btn-primary px-4 shadow-sm">
                         <i class="fas fa-save me-1"></i> {{ __('Update Account') }}
                     </button>

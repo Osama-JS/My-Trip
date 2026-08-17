@@ -197,8 +197,10 @@ window.deleteAllCookie = deleteAllCookie;
 
     function themeChange(theme) {
         var themeSettings = themeSets[theme] || themeSets[0];
-        dlabSettingsOptions = themeSettings; /* For Screen Resize */
-        new dlabSettings(themeSettings);
+        window.dlabSettingsOptions = dlabSettingsOptions = themeSettings; /* For Screen Resize */
+        if (typeof dlabSettings !== 'undefined') {
+            new dlabSettings(themeSettings);
+        }
 
         setThemeInCookie(themeSettings);
     }
@@ -229,16 +231,18 @@ window.deleteAllCookie = deleteAllCookie;
 
     function setThemeOptionOnPage() {
         if (getCookie("version") != "") {
+            var currentOptions = typeof window.dlabSettingsOptions !== "undefined" ? window.dlabSettingsOptions : (typeof dlabSettingsOptions !== "undefined" ? dlabSettingsOptions : {});
             jQuery.each(themeOptionArr, function (optionKey, optionValue) {
                 var optionData = getCookie(optionKey);
                 themeOptionArr[optionKey] =
                     optionData != ""
                         ? optionData
-                        : dlabSettingsOptions[optionKey];
+                        : (currentOptions[optionKey] || "");
             });
-            console.log(themeOptionArr);
-            dlabSettingsOptions = themeOptionArr;
-            new dlabSettings(dlabSettingsOptions);
+            window.dlabSettingsOptions = themeOptionArr;
+            if (typeof dlabSettings !== 'undefined') {
+                new dlabSettings(themeOptionArr);
+            }
 
             setThemeLogo();
         }

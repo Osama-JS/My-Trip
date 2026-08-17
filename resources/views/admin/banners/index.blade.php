@@ -142,7 +142,7 @@
 
                         <!-- Banner Image -->
                         <div class="col-12">
-                            <div class="border rounded-3 p-3 bg-light">
+                            <div class="border rounded-3 p-3 bg-white">
                                 <label class="form-label fw-semibold mb-2">
                                     <i class="fas fa-image me-2 text-primary"></i>
                                     {{ __('Banner Image') }}
@@ -194,7 +194,7 @@
 
                 <!-- Footer -->
                 <div class="modal-footer border-0 pt-0 px-4">
-                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">
+                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
                         {{ __('Cancel') }}
                     </button>
 
@@ -259,7 +259,7 @@
 
                         <!-- Banner Image -->
                         <div class="col-12">
-                            <div class="border rounded-3 p-3 bg-light">
+                            <div class="border rounded-3 p-3 bg-white">
                                 <label class="form-label fw-semibold mb-2">
                                     <i class="fas fa-image me-2 text-primary"></i>
                                     {{ __('Banner Image') }}

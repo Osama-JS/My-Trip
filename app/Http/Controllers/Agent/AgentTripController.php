@@ -76,8 +76,12 @@ class AgentTripController extends Controller
         $user = Auth::user();
 
         $data = $request->validate([
-            'title'                 => 'required|string|max:255',
-            'description'           => 'required|string',
+            'title'                 => 'nullable|string|max:255',
+            'title_ar'              => 'nullable|string|max:255',
+            'title_en'              => 'nullable|string|max:255',
+            'description'           => 'nullable|string',
+            'description_ar'        => 'nullable|string',
+            'description_en'        => 'nullable|string',
             'from_country_id'       => 'required|exists:countries,id',
             'from_city_id'          => 'required|exists:cities,id',
             'to_country_id'         => 'required|exists:countries,id',
@@ -94,16 +98,32 @@ class AgentTripController extends Controller
             'active'                => 'nullable|boolean',
             'category_ids'          => 'nullable|array',
             'category_ids.*'        => 'exists:trip_categories,id',
+            'thumbnail'             => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,jfif|max:5120',
+            'images'                => 'nullable|array',
+            'images.*'              => 'image|mimes:jpeg,png,jpg,gif,webp,jfif|max:5120',
         ]);
 
-        $data['company_id'] = $user->company_id;
-        $data['user_id'] = $user->id;
+        // Require at least one title and one description
+        $titleAr = $request->filled('title_ar') ? $request->title_ar : ($request->filled('title') ? $request->title : $request->title_en);
+        $titleEn = $request->filled('title_en') ? $request->title_en : $titleAr;
 
-        // Map titles and descriptions for bilingual support in DB
-        $data['title_ar'] = $data['title'];
-        $data['title_en'] = $data['title'];
-        $data['description_ar'] = $data['description'];
-        $data['description_en'] = $data['description'];
+        $descAr = $request->filled('description_ar') ? $request->description_ar : ($request->filled('description') ? $request->description : $request->description_en);
+        $descEn = $request->filled('description_en') ? $request->description_en : $descAr;
+
+        if (empty($titleAr) && empty($titleEn)) {
+            return back()->withErrors(['title_ar' => __('Please provide a trip title.')])->withInput();
+        }
+        if (empty($descAr) && empty($descEn)) {
+            return back()->withErrors(['description_ar' => __('Please provide a trip description.')])->withInput();
+        }
+
+        $data['title_ar'] = $titleAr;
+        $data['title_en'] = $titleEn ?? $titleAr;
+        $data['description_ar'] = $descAr;
+        $data['description_en'] = $descEn ?? $descAr;
+
+        $data['company_id'] = $user->company_id;
+        $data['user_id']    = $user->id;
 
         // Checkbox handling
         $data['is_public']   = $request->boolean('is_public');
@@ -113,10 +133,46 @@ class AgentTripController extends Controller
         $data['is_featured'] = false;
         $data['is_ad']       = false;
 
+        // Clean arrays from fillable attributes
+        unset($data['thumbnail'], $data['images'], $data['title'], $data['description']);
+
         $trip = Trip::create($data);
 
         if ($request->has('category_ids')) {
             $trip->categories()->sync($request->category_ids);
+        }
+
+        // Handle Thumbnail Upload
+        if ($request->hasFile('thumbnail')) {
+            try {
+                $file = $request->file('thumbnail');
+                $fileName = time() . '_thumb_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $path = $file->storeAs('trips/' . $trip->id, $fileName, 'public');
+
+                TripImage::create([
+                    'trip_id'    => $trip->id,
+                    'image_path' => $path,
+                ]);
+            } catch (\Exception $e) {
+                Log::error("Agent thumbnail upload failed for trip {$trip->id}: " . $e->getMessage());
+            }
+        }
+
+        // Handle Additional Gallery Images
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $file) {
+                try {
+                    $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                    $path = $file->storeAs('trips/' . $trip->id, $fileName, 'public');
+
+                    TripImage::create([
+                        'trip_id'    => $trip->id,
+                        'image_path' => $path,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error("Agent gallery upload failed for trip {$trip->id}: " . $e->getMessage());
+                }
+            }
         }
 
         return redirect()->route('agent.trips.index')->with('success', __('Trip created successfully'));
@@ -138,8 +194,12 @@ class AgentTripController extends Controller
         $this->authorizeAgent($trip);
 
         $data = $request->validate([
-            'title'                 => 'required|string|max:255',
-            'description'           => 'required|string',
+            'title'                 => 'nullable|string|max:255',
+            'title_ar'              => 'nullable|string|max:255',
+            'title_en'              => 'nullable|string|max:255',
+            'description'           => 'nullable|string',
+            'description_ar'        => 'nullable|string',
+            'description_en'        => 'nullable|string',
             'from_country_id'       => 'required|exists:countries,id',
             'from_city_id'          => 'required|exists:cities,id',
             'to_country_id'         => 'required|exists:countries,id',
@@ -156,22 +216,65 @@ class AgentTripController extends Controller
             'active'                => 'nullable|boolean',
             'category_ids'          => 'nullable|array',
             'category_ids.*'        => 'exists:trip_categories,id',
+            'thumbnail'             => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,jfif|max:5120',
+            'images'                => 'nullable|array',
+            'images.*'              => 'image|mimes:jpeg,png,jpg,gif,webp,jfif|max:5120',
         ]);
 
-        // Map titles and descriptions for bilingual support in DB
-        $data['title_ar'] = $data['title'];
-        $data['title_en'] = $data['title'];
-        $data['description_ar'] = $data['description'];
-        $data['description_en'] = $data['description'];
+        $titleAr = $request->filled('title_ar') ? $request->title_ar : ($request->filled('title') ? $request->title : $trip->title_ar);
+        $titleEn = $request->filled('title_en') ? $request->title_en : ($request->filled('title') ? $request->title : ($titleAr ?? $trip->title_en));
+
+        $descAr = $request->filled('description_ar') ? $request->description_ar : ($request->filled('description') ? $request->description : $trip->description_ar);
+        $descEn = $request->filled('description_en') ? $request->description_en : ($request->filled('description') ? $request->description : ($descAr ?? $trip->description_en));
+
+        $data['title_ar'] = $titleAr;
+        $data['title_en'] = $titleEn ?? $titleAr;
+        $data['description_ar'] = $descAr;
+        $data['description_en'] = $descEn ?? $descAr;
 
         // Checkbox handling
         $data['is_public']   = $request->boolean('is_public');
         $data['active']      = $request->boolean('active');
 
+        unset($data['thumbnail'], $data['images'], $data['title'], $data['description']);
+
         $trip->update($data);
 
         if ($request->has('category_ids')) {
             $trip->categories()->sync($request->category_ids);
+        }
+
+        // Handle Thumbnail Upload if provided
+        if ($request->hasFile('thumbnail')) {
+            try {
+                $file = $request->file('thumbnail');
+                $fileName = time() . '_thumb_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $path = $file->storeAs('trips/' . $trip->id, $fileName, 'public');
+
+                TripImage::create([
+                    'trip_id'    => $trip->id,
+                    'image_path' => $path,
+                ]);
+            } catch (\Exception $e) {
+                Log::error("Agent thumbnail update upload failed for trip {$trip->id}: " . $e->getMessage());
+            }
+        }
+
+        // Handle Additional Gallery Images if provided
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $file) {
+                try {
+                    $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                    $path = $file->storeAs('trips/' . $trip->id, $fileName, 'public');
+
+                    TripImage::create([
+                        'trip_id'    => $trip->id,
+                        'image_path' => $path,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error("Agent gallery upload on update failed for trip {$trip->id}: " . $e->getMessage());
+                }
+            }
         }
 
         return redirect()->route('agent.trips.index')->with('success', __('Trip updated successfully'));
@@ -183,11 +286,33 @@ class AgentTripController extends Controller
 
         // Deletion Guard: Check for bookings
         if ($trip->bookings()->exists()) {
-            return redirect()->route('agent.trips.index')->with('error', __('Cannot delete trip because it has existing bookings.'));
+            return redirect()->route('agent.trips.index')->with('error', __('Cannot delete trip because it has existing bookings and customer reservations.'));
         }
 
-        $trip->delete();
-        return redirect()->route('agent.trips.index')->with('success', __('Trip deleted successfully'));
+        try {
+            DB::transaction(function () use ($trip) {
+                if (Storage::disk('public')->exists('trips/' . $trip->id)) {
+                    Storage::disk('public')->deleteDirectory('trips/' . $trip->id);
+                }
+
+                $trip->images()->delete();
+                $trip->itineraries()->delete();
+                $trip->addons()->delete();
+                foreach ($trip->packages as $pkg) {
+                    $pkg->prices()->delete();
+                    $pkg->delete();
+                }
+                foreach ($trip->seasons as $season) {
+                    $season->prices()->delete();
+                    $season->delete();
+                }
+                $trip->delete();
+            });
+
+            return redirect()->route('agent.trips.index')->with('success', __('Trip deleted successfully'));
+        } catch (\Exception $e) {
+            return redirect()->route('agent.trips.index')->with('error', __('Error deleting trip: ') . $e->getMessage());
+        }
     }
 
     public function show(Trip $trip)
@@ -195,7 +320,7 @@ class AgentTripController extends Controller
         $this->authorizeAgent($trip);
         $trip->load(['images', 'itineraries' => function($q) {
             $q->orderBy('sort_order');
-        }, 'bookings.user', 'fromCountry', 'toCountry', 'fromCity', 'toCity', 'company']);
+        }, 'addons', 'bookings.user', 'fromCountry', 'toCountry', 'fromCity', 'toCity', 'company']);
 
         return view('frontend.agent.trips.show', compact('trip'));
     }

@@ -237,11 +237,11 @@
                                                       <h5 class="modal-title">{{ __('Log Detail') }}: {{ $log->action }}</h5>
                                                       <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                   </div>
-                                                  <div class="modal-body">
+                                                  <div class="modal-body bg-white">
                                                       <h6>{{ __('Request Payload') }}</h6>
-                                                      <pre class="bg-light p-2"><code>{{ json_encode($log->request_payload, JSON_PRETTY_PRINT) }}</code></pre>
+                                                      <pre class="p-3 border rounded bg-white"><code>{{ json_encode($log->request_payload, JSON_PRETTY_PRINT) }}</code></pre>
                                                       <h6 class="mt-3">{{ __('Response Payload') }}</h6>
-                                                      <pre class="bg-light p-2"><code>{{ json_encode($log->response_payload, JSON_PRETTY_PRINT) }}</code></pre>
+                                                      <pre class="p-3 border rounded bg-white"><code>{{ json_encode($log->response_payload, JSON_PRETTY_PRINT) }}</code></pre>
                                                   </div>
                                               </div>
                                           </div>

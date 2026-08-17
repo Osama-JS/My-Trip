@@ -70,6 +70,14 @@ class TripSeasonController extends Controller
      */
     public function destroy(Trip $trip, TripSeason $season)
     {
+        // Guard: Check for existing bookings with this season
+        if (\App\Models\TripBooking::where('season_id', $season->id)->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => __('Cannot delete this season because there are active customer bookings linked to it.'),
+            ], 422);
+        }
+
         $season->prices()->delete();
         $season->delete();
 

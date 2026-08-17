@@ -337,7 +337,7 @@
     <div class="modal fade" id="tripImagesModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
-                <div class="modal-header bg-light border-0 py-3 px-4">
+                <div class="modal-header border-0 py-3 px-4 bg-white">
                     <h5 class="modal-title fw-bold text-dark mb-0" style="font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
                         <i class="fas fa-images text-primary"></i>
                         {{ __('Upload photos of the trip') }}: 
@@ -345,7 +345,7 @@
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body px-4 py-4" style="max-height: 70vh; overflow-y: auto;">
+                <div class="modal-body px-4 py-4 bg-white" style="max-height: 70vh; overflow-y: auto;">
                     {{-- Dropzone Form Container --}}
                     <div id="trip-images-upload" class="dropzone dz-premium-zone">
                         <div class="dz-message">
@@ -355,10 +355,10 @@
                             <h5 class="fw-bold mb-1">{{ __('Drag and drop photos here to upload') }}</h5>
                             <span class="text-muted small">{{ __('or click to browse local files') }}</span>
                             <div class="upload-limits mt-3">
-                                <span class="badge bg-light text-dark border-0 px-3 py-2" style="border-radius: 8px;">
+                                <span class="badge border text-dark px-3 py-2" style="border-radius: 8px;">
                                     <i class="fas fa-file-image text-muted me-1"></i> JPG, PNG, GIF
                                 </span>
-                                <span class="badge bg-light text-dark border-0 px-3 py-2 ms-2" style="border-radius: 8px;">
+                                <span class="badge border text-dark px-3 py-2 ms-2" style="border-radius: 8px;">
                                     <i class="fas fa-weight-hanging text-muted me-1"></i> {{ __('Max') }} 5MB
                                 </span>
                             </div>
@@ -383,7 +383,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer bg-light border-0 py-3 px-4">
+                <div class="modal-footer border-0 py-3 px-4 bg-white">
                     <button type="button" class="btn btn-primary rounded-pill px-4" data-bs-dismiss="modal">{{ __('Done') }}</button>
                 </div>
             </div>

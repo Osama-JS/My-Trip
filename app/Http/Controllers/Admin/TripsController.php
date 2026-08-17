@@ -380,12 +380,43 @@ class TripsController extends Controller
 
     public function destroy(Trip $trip)
     {
-       $trip->delete();
+        if ($trip->bookings()->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => __('Cannot delete trip because it has existing bookings and customer reservations.'),
+            ], 422);
+        }
 
-        return response()->json([
-            'success' => true,
-            'message' => __('Trip deleted successfully'),
-        ]);
+        try {
+            DB::transaction(function () use ($trip) {
+                if (\Illuminate\Support\Facades\Storage::disk('public')->exists('trips/' . $trip->id)) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->deleteDirectory('trips/' . $trip->id);
+                }
+
+                $trip->images()->delete();
+                $trip->itineraries()->delete();
+                $trip->addons()->delete();
+                foreach ($trip->packages as $pkg) {
+                    $pkg->prices()->delete();
+                    $pkg->delete();
+                }
+                foreach ($trip->seasons as $season) {
+                    $season->prices()->delete();
+                    $season->delete();
+                }
+                $trip->delete();
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => __('Trip deleted successfully'),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => __('Error occurred while deleting the trip: ') . $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function imagestore(Request $request, $trip_id) // نمرر الـ ID مباشرة

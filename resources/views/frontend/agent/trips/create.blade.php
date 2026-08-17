@@ -7,12 +7,10 @@
 @push('styles')
 <style>
 /* ══════════════════════════════════════════════
-   AGENT TRIPS — FORM STYLES (Shared Create/Edit)
-   Uses layout CSS variables for full dark mode support
+   AGENT TRIPS — FORM STYLES
    ══════════════════════════════════════════════ */
 
-/* ─── Container ─── */
-.atrip-form-container { max-width: 1100px; margin: 0 auto; }
+.atrip-form-container { width: 100%; max-width: 100%; margin: 0; }
 
 /* ─── Page Header Banner ─── */
 .atrip-page-banner {
@@ -45,7 +43,7 @@
 }
 .atrip-page-banner p {
     font-size: 0.95rem;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.85);
     margin: 0;
     font-weight: 500;
 }
@@ -77,6 +75,12 @@
     padding: 22px 28px;
     background: var(--bg-card);
     border-bottom: 1px solid var(--border-soft);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+}
+.atrip-card-header .hdr-left {
     display: flex;
     align-items: center;
     gap: 14px;
@@ -143,7 +147,7 @@
 .atrip-field .field-label i {
     color: var(--accent);
     font-size: 0.78rem;
-    opacity: 0.7;
+    opacity: 0.8;
 }
 .atrip-field .field-label .required-dot {
     width: 5px;
@@ -154,7 +158,7 @@
     flex-shrink: 0;
 }
 
-/* ─── Inputs & Selects ─── */
+/* ─── Inputs & Overrides ─── */
 .atrip-input {
     width: 100%;
     padding: 13px 16px;
@@ -176,21 +180,160 @@
 .atrip-input:hover:not(:focus) {
     border-color: var(--text-muted);
 }
-select.atrip-input {
-    cursor: pointer;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: left 14px center;
-    padding-inline-start: 16px;
-    padding-inline-end: 36px;
+
+/* ─── SELECT2 PREMIUM THEME (Matches Agent Dashboard) ─── */
+.select2-container {
+    width: 100% !important;
 }
-html[dir="ltr"] select.atrip-input {
-    background-position: right 14px center;
+.select2-container--default .select2-selection--single {
+    height: 48px !important;
+    border-radius: var(--radius-md) !important;
+    border: 1.5px solid var(--border) !important;
+    background: var(--bg-card) !important;
+    padding: 8px 14px !important;
+    display: flex !important;
+    align-items: center !important;
+    transition: all var(--transition-fast) !important;
+}
+.select2-container--default .select2-selection--single:hover {
+    border-color: var(--text-muted) !important;
+}
+.select2-container--default.select2-container--focus .select2-selection--single,
+.select2-container--default.select2-container--open .select2-selection--single {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 4px var(--accent-soft) !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: var(--text-primary) !important;
+    font-size: 0.93rem !important;
+    font-weight: 600 !important;
+    line-height: normal !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__placeholder {
+    color: var(--text-muted) !important;
+    font-weight: 500 !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 100% !important;
+    width: 32px !important;
+    top: 0 !important;
+    right: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+html[dir="rtl"] .select2-container--default .select2-selection--single .select2-selection__arrow {
+    right: auto !important;
+    left: 8px !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow b {
+    border: none !important;
+    width: 14px !important;
+    height: 14px !important;
+    margin: 0 !important;
+    top: auto !important;
+    left: auto !important;
+    position: static !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='%236366f1' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-size: contain !important;
+    transition: transform var(--transition-fast) !important;
+}
+.select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
+    transform: rotate(180deg) !important;
+}
+.select2-dropdown {
+    border: 1.5px solid var(--border) !important;
+    border-radius: var(--radius-lg) !important;
+    background: var(--bg-card) !important;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12) !important;
+    overflow: hidden !important;
+    z-index: 99999 !important;
+}
+.select2-container--default .select2-search--dropdown {
+    padding: 10px !important;
+    background: var(--bg-body) !important;
+    border-bottom: 1px solid var(--border-soft) !important;
+}
+.select2-container--default .select2-search--dropdown .select2-search__field {
+    border: 1.5px solid var(--border) !important;
+    border-radius: var(--radius-md) !important;
+    padding: 8px 12px !important;
+    background: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    font-size: 0.88rem !important;
+    outline: none !important;
+}
+.select2-container--default .select2-search--dropdown .select2-search__field:focus {
+    border-color: var(--accent) !important;
+}
+.select2-results__options {
+    max-height: 240px !important;
+    padding: 6px !important;
+}
+.select2-container--default .select2-results__option {
+    padding: 10px 14px !important;
+    border-radius: var(--radius-md) !important;
+    font-size: 0.9rem !important;
+    font-weight: 500 !important;
+    color: var(--text-primary) !important;
+    margin-bottom: 2px !important;
+    transition: background var(--transition-fast) !important;
+}
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background: var(--accent) !important;
+    color: #fff !important;
+}
+.select2-container--default .select2-results__option[aria-selected=true] {
+    background: var(--accent-soft) !important;
+    color: var(--accent) !important;
+    font-weight: 700 !important;
+}
+
+/* ─── Language Switcher Tabs ─── */
+.lang-tabs {
+    display: inline-flex;
+    background: var(--bg-body);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 3px;
+    gap: 4px;
+}
+.lang-tab-btn {
+    border: none;
+    background: transparent;
+    padding: 6px 14px;
+    border-radius: calc(var(--radius-md) - 3px);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.lang-tab-btn:hover { color: var(--text-primary); }
+.lang-tab-btn.active {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 2px 8px var(--accent-glow);
+}
+.lang-pane { display: none; }
+.lang-pane.active { display: block; animation: fadeIn 0.25s ease-in-out; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* ─── CKEditor Integration ─── */
 .ck-editor__editable {
-    min-height: 280px;
+    min-height: 240px;
     border-radius: 0 0 var(--radius-md) var(--radius-md) !important;
     border: 1.5px solid var(--border) !important;
     background: var(--bg-card) !important;
@@ -253,6 +396,106 @@ html[dir="ltr"] select.atrip-input {
     background-repeat: no-repeat;
     background-position: center;
 }
+
+/* ─── Media Upload Zone ─── */
+.atrip-upload-dropzone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-xl);
+    padding: 32px 20px;
+    text-align: center;
+    background: var(--bg-body);
+    transition: all var(--transition-fast);
+    cursor: pointer;
+    position: relative;
+}
+.atrip-upload-dropzone:hover, .atrip-upload-dropzone.dragover {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+}
+.atrip-upload-dropzone .upload-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    color: var(--accent);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 12px;
+}
+.atrip-upload-dropzone h6 {
+    font-weight: 800;
+    margin: 0 0 4px;
+    color: var(--text-primary);
+    font-size: 0.98rem;
+}
+.atrip-upload-dropzone p {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+.atrip-file-input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+}
+
+.preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 14px;
+    margin-top: 16px;
+}
+.preview-card {
+    position: relative;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 1.5px solid var(--border);
+    background: var(--bg-card);
+    aspect-ratio: 16/10;
+    box-shadow: var(--shadow-sm);
+}
+.preview-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.preview-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: rgba(0,0,0,0.7);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+    backdrop-filter: blur(4px);
+}
+.preview-remove {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    width: 24px;
+    height: 24px;
+    background: #ef4444;
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    transition: transform 0.15s;
+}
+.preview-remove:hover { transform: scale(1.15); }
 
 /* ─── Switch Groups ─── */
 .atrip-switch-group {
@@ -374,26 +617,8 @@ html[dir="ltr"] select.atrip-input {
 }
 .atrip-error i { font-size: 0.72rem; }
 .atrip-input.is-invalid { border-color: #ef4444; }
-.atrip-input.is-invalid:focus { box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1); }
 
-/* ── Step Indicator ── */
-.atrip-steps {
-    display: flex;
-    gap: 4px;
-    margin-bottom: 28px;
-}
-.atrip-step {
-    flex: 1;
-    height: 4px;
-    border-radius: 4px;
-    background: var(--border);
-    transition: var(--transition-fast);
-}
-.atrip-step.active { background: var(--accent); }
-
-/* ══════════════════════════════════════════════
-   RESPONSIVE
-   ══════════════════════════════════════════════ */
+/* ── Responsive ── */
 @media (max-width: 1024px) {
     .atrip-row-3 { grid-template-columns: repeat(2, 1fr); }
 }
@@ -402,23 +627,11 @@ html[dir="ltr"] select.atrip-input {
     .atrip-page-banner h2 { font-size: 1.3rem; }
     .atrip-page-banner .banner-icon { display: none; }
     .atrip-card-body { padding: 20px; }
-    .atrip-card-header { padding: 18px 20px; }
+    .atrip-card-header { padding: 18px 20px; flex-direction: column; align-items: flex-start; }
     .atrip-row, .atrip-row-3 { grid-template-columns: 1fr; }
     .atrip-actions { flex-direction: column-reverse; }
     .atrip-btn { width: 100%; justify-content: center; }
     .atrip-chips-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
-}
-@media (max-width: 480px) {
-    .atrip-form-container { margin: 0 -4px; }
-    .atrip-page-banner { padding: 22px 18px; border-radius: var(--radius-lg); }
-    .atrip-card { border-radius: var(--radius-lg); }
-    .atrip-card-body { padding: 16px; }
-    .atrip-card-header { padding: 14px 16px; gap: 10px; }
-    .atrip-card-header .hdr-icon { width: 36px; height: 36px; font-size: 0.95rem; }
-    .atrip-card-header h5 { font-size: 0.95rem; }
-    .atrip-input { padding: 11px 14px; font-size: 0.9rem; }
-    .atrip-btn { padding: 13px 24px; font-size: 0.9rem; }
-    .atrip-switch-group { padding: 14px 16px; flex-wrap: wrap; gap: 12px; }
 }
 </style>
 @endpush
@@ -432,16 +645,11 @@ html[dir="ltr"] select.atrip-input {
         <i class="fas fa-suitcase-rolling banner-icon"></i>
     </div>
 
-    {{-- Step Indicator --}}
-    <div class="atrip-steps">
-        <div class="atrip-step active"></div>
-        <div class="atrip-step active"></div>
-        <div class="atrip-step active"></div>
-    </div>
-
     @if($errors->any())
     <div style="background:rgba(239,68,68,0.08); border:1.5px solid rgba(239,68,68,0.2); border-radius:var(--radius-md); padding:16px 20px; margin-bottom:24px;">
-        <p style="font-weight:700; color:#ef4444; margin:0 0 8px; font-size:0.9rem;"><i class="fas fa-exclamation-triangle" style="margin-inline-end:6px;"></i>{{ __('Please fix the following errors:') }}</p>
+        <p style="font-weight:700; color:#ef4444; margin:0 0 8px; font-size:0.9rem;">
+            <i class="fas fa-exclamation-triangle" style="margin-inline-end:6px;"></i>{{ __('Please fix the following errors:') }}
+        </p>
         <ul style="margin:0; padding-inline-start:20px; color:#dc2626; font-size:0.85rem;">
             @foreach($errors->all() as $error)
                 <li>{{ $error }}</li>
@@ -450,74 +658,182 @@ html[dir="ltr"] select.atrip-input {
     </div>
     @endif
 
-    <form action="{{ route('agent.trips.store') }}" method="POST">
+    <form action="{{ route('agent.trips.store') }}" method="POST" enctype="multipart/form-data" id="tripCreateForm">
         @csrf
 
-        {{-- ── Section 1: General Information ── --}}
+        {{-- ── Section 1: General Information & Bilingual Inputs ── --}}
         <div class="atrip-card">
             <div class="atrip-card-header">
-                <span class="hdr-icon"><i class="fas fa-file-alt"></i></span>
-                <div>
-                    <h5>{{ __('General Information') }}</h5>
-                    <p class="hdr-subtitle">{{ __('Basic details about the trip') }}</p>
+                <div class="hdr-left">
+                    <span class="hdr-icon"><i class="fas fa-file-alt"></i></span>
+                    <div>
+                        <h5>{{ __('General Information') }}</h5>
+                        <p class="hdr-subtitle">{{ __('Basic details, categories, and bilingual description') }}</p>
+                    </div>
+                </div>
+                {{-- Language Switcher Tab Buttons --}}
+                <div class="lang-tabs">
+                    <button type="button" class="lang-tab-btn active" data-lang="ar">
+                        <span>🇸🇦</span> {{ __('Arabic') }}
+                    </button>
+                    <button type="button" class="lang-tab-btn" data-lang="en">
+                        <span>🇬🇧</span> {{ __('English') }}
+                    </button>
+                </div>
+            </div>
+            <div class="atrip-card-body">
+                
+                {{-- Arabic Language Content --}}
+                <div class="lang-pane active" id="pane-ar">
+                    <div class="atrip-row">
+                        <div class="atrip-field">
+                            <label class="field-label">
+                                <i class="fas fa-heading"></i>
+                                {{ __('Trip Title (Arabic)') }}
+                                <span class="required-dot"></span>
+                            </label>
+                            <input type="text" name="title_ar" class="atrip-input @error('title_ar') is-invalid @enderror"
+                                   value="{{ old('title_ar') }}" required placeholder="مثال: رحلة الأحلام إلى جزر المالديف">
+                            @error('title_ar')
+                                <span class="atrip-error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>
+                            @enderror
+                        </div>
+
+                        <div class="atrip-field">
+                            <label class="field-label">
+                                <i class="fas fa-tags"></i>
+                                {{ __('Trip Categories') }}
+                            </label>
+                            <div class="atrip-chips-grid">
+                                @foreach($categories as $category)
+                                    <label class="atrip-chip">
+                                        <input type="checkbox" name="category_ids[]" value="{{ $category->id }}"
+                                            {{ (collect(old('category_ids'))->contains($category->id)) ? 'checked' : '' }}>
+                                        <div class="chip-label">{{ $category->name }}</div>
+                                    </label>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="atrip-field">
+                        <label class="field-label">
+                            <i class="fas fa-align-left"></i>
+                            {{ __('Detailed Description (Arabic)') }}
+                            <span class="required-dot"></span>
+                        </label>
+                        <textarea id="description_ar" name="description_ar" class="atrip-input">{{ old('description_ar') }}</textarea>
+                        @error('description_ar')
+                            <span class="atrip-error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>
+                        @enderror
+                    </div>
+                </div>
+
+                {{-- English Language Content --}}
+                <div class="lang-pane" id="pane-en">
+                    <div class="atrip-row">
+                        <div class="atrip-field">
+                            <label class="field-label">
+                                <i class="fas fa-heading"></i>
+                                {{ __('Trip Title (English)') }}
+                                <span style="font-size:0.75rem; color:var(--text-muted); font-weight:normal;">({{ __('Optional') }})</span>
+                            </label>
+                            <input type="text" name="title_en" class="atrip-input @error('title_en') is-invalid @enderror"
+                                   value="{{ old('title_en') }}" placeholder="e.g. Dream Escape to Maldives">
+                            @error('title_en')
+                                <span class="atrip-error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div class="atrip-field" style="display:flex; align-items:center;">
+                            <p style="margin:0; font-size:0.85rem; color:var(--text-muted); line-height:1.5;">
+                                <i class="fas fa-info-circle" style="color:var(--accent); margin-inline-end:6px;"></i>
+                                {{ __('If left empty, the Arabic title and description will be used automatically.') }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="atrip-field">
+                        <label class="field-label">
+                            <i class="fas fa-align-left"></i>
+                            {{ __('Detailed Description (English)') }}
+                            <span style="font-size:0.75rem; color:var(--text-muted); font-weight:normal;">({{ __('Optional') }})</span>
+                        </label>
+                        <textarea id="description_en" name="description_en" class="atrip-input">{{ old('description_en') }}</textarea>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        {{-- ── Section 2: Media & Image Upload ── --}}
+        <div class="atrip-card">
+            <div class="atrip-card-header">
+                <div class="hdr-left">
+                    <span class="hdr-icon"><i class="fas fa-images"></i></span>
+                    <div>
+                        <h5>{{ __('Trip Photos & Media') }}</h5>
+                        <p class="hdr-subtitle">{{ __('Upload primary thumbnail and gallery photos directly') }}</p>
+                    </div>
                 </div>
             </div>
             <div class="atrip-card-body">
                 <div class="atrip-row">
+                    {{-- Primary Thumbnail --}}
                     <div class="atrip-field">
                         <label class="field-label">
-                            <i class="fas fa-heading"></i>
-                            {{ __('Trip Title') }}
-                            <span class="required-dot"></span>
+                            <i class="fas fa-image"></i>
+                            {{ __('Primary Cover Image') }}
                         </label>
-                        <input type="text" name="title" class="atrip-input @error('title') is-invalid @enderror"
-                               value="{{ old('title') }}" required placeholder="{{ __('e.g. Dream Escape to Maldives') }}">
-                        @error('title')
-                            <span class="atrip-error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>
-                        @enderror
-                    </div>
-                    <div class="atrip-field">
-                        <label class="field-label">
-                            <i class="fas fa-tags"></i>
-                            {{ __('Trip Categories') }}
-                        </label>
-                        <div class="atrip-chips-grid">
-                            @foreach($categories as $category)
-                                <label class="atrip-chip">
-                                    <input type="checkbox" name="category_ids[]" value="{{ $category->id }}"
-                                        {{ (collect(old('category_ids'))->contains($category->id)) ? 'checked' : '' }}>
-                                    <div class="chip-label">{{ $category->name }}</div>
-                                </label>
-                            @endforeach
+                        <div class="atrip-upload-dropzone" id="thumbDropzone">
+                            <input type="file" name="thumbnail" id="thumbnailInput" class="atrip-file-input" accept="image/*">
+                            <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                            <h6>{{ __('Click or Drag & Drop Cover Image') }}</h6>
+                            <p>{{ __('Recommended 1200x800 px (Max 5MB)') }}</p>
+                        </div>
+                        <div id="thumbPreviewContainer" style="display:none; margin-top:12px;">
+                            <div class="preview-card" style="max-width:240px;">
+                                <img id="thumbPreviewImg" src="" alt="Thumbnail Preview">
+                                <span class="preview-badge">{{ __('Cover') }}</span>
+                                <button type="button" class="preview-remove" id="thumbRemoveBtn"><i class="fas fa-times"></i></button>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="atrip-field">
-                    <label class="field-label">
-                        <i class="fas fa-align-left"></i>
-                        {{ __('Detailed Description') }}
-                    </label>
-                    <textarea id="description" name="description" class="atrip-input">{{ old('description') }}</textarea>
+                    {{-- Gallery Images --}}
+                    <div class="atrip-field">
+                        <label class="field-label">
+                            <i class="fas fa-photo-video"></i>
+                            {{ __('Additional Gallery Images') }}
+                        </label>
+                        <div class="atrip-upload-dropzone" id="galleryDropzone">
+                            <input type="file" name="images[]" id="galleryInput" class="atrip-file-input" accept="image/*" multiple>
+                            <div class="upload-icon"><i class="fas fa-images"></i></div>
+                            <h6>{{ __('Upload Multiple Gallery Photos') }}</h6>
+                            <p>{{ __('Select multiple photos to showcase in the trip gallery') }}</p>
+                        </div>
+                        <div class="preview-grid" id="galleryPreviewContainer"></div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        {{-- ── Section 2: Logistics & Pricing ── --}}
+        {{-- ── Section 3: Route, Logistics & Pricing ── --}}
         <div class="atrip-card">
             <div class="atrip-card-header">
-                <span class="hdr-icon"><i class="fas fa-map-marked-alt"></i></span>
-                <div>
-                    <h5>{{ __('Logistics & Pricing') }}</h5>
-                    <p class="hdr-subtitle">{{ __('Route, pricing, and capacity details') }}</p>
+                <div class="hdr-left">
+                    <span class="hdr-icon"><i class="fas fa-map-marked-alt"></i></span>
+                    <div>
+                        <h5>{{ __('Logistics & Pricing') }}</h5>
+                        <p class="hdr-subtitle">{{ __('Route destinations, pricing structure, and passenger capacity') }}</p>
+                    </div>
                 </div>
             </div>
             <div class="atrip-card-body">
-                {{-- Countries --}}
+                {{-- Countries (Select2 Dropdowns) --}}
                 <div class="atrip-row">
                     <div class="atrip-field">
                         <label class="field-label"><i class="fas fa-plane-departure"></i>{{ __('Departure From') }}<span class="required-dot"></span></label>
-                        <select name="from_country_id" class="atrip-input" required>
+                        <select name="from_country_id" id="from_country_id" class="atrip-input select2" data-placeholder="{{ __('Select Country') }}" required>
                             <option value="">{{ __('Select Country') }}</option>
                             @foreach($countries as $country)
                                 <option value="{{ $country->id }}" {{ old('from_country_id') == $country->id ? 'selected' : '' }}>{{ $country->name }}</option>
@@ -526,7 +842,7 @@ html[dir="ltr"] select.atrip-input {
                     </div>
                     <div class="atrip-field">
                         <label class="field-label"><i class="fas fa-plane-arrival"></i>{{ __('Destination To') }}<span class="required-dot"></span></label>
-                        <select name="to_country_id" class="atrip-input" required>
+                        <select name="to_country_id" id="to_country_id" class="atrip-input select2" data-placeholder="{{ __('Select Country') }}" required>
                             <option value="">{{ __('Select Country') }}</option>
                             @foreach($countries as $country)
                                 <option value="{{ $country->id }}" {{ old('to_country_id') == $country->id ? 'selected' : '' }}>{{ $country->name }}</option>
@@ -535,23 +851,23 @@ html[dir="ltr"] select.atrip-input {
                     </div>
                 </div>
 
-                {{-- Cities --}}
+                {{-- Cities (Select2 Dropdowns filtered dynamically by JS) --}}
                 <div class="atrip-row">
                     <div class="atrip-field">
                         <label class="field-label"><i class="fas fa-city"></i>{{ __('From City') }}<span class="required-dot"></span></label>
-                        <select name="from_city_id" class="atrip-input" required>
+                        <select name="from_city_id" id="from_city_id" class="atrip-input select2" data-placeholder="{{ __('Select City') }}" required>
                             <option value="">{{ __('Select City') }}</option>
                             @foreach($cities as $city)
-                                <option value="{{ $city->id }}" {{ old('from_city_id') == $city->id ? 'selected' : '' }}>{{ $city->name }}</option>
+                                <option value="{{ $city->id }}" data-country="{{ $city->country_id }}" {{ old('from_city_id') == $city->id ? 'selected' : '' }}>{{ $city->name }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="atrip-field">
                         <label class="field-label"><i class="fas fa-map-marker-alt"></i>{{ __('Destination City') }}<span class="required-dot"></span></label>
-                        <select name="to_city_id" class="atrip-input" required>
+                        <select name="to_city_id" id="to_city_id" class="atrip-input select2" data-placeholder="{{ __('Select City') }}" required>
                             <option value="">{{ __('Select City') }}</option>
                             @foreach($cities as $city)
-                                <option value="{{ $city->id }}" {{ old('to_city_id') == $city->id ? 'selected' : '' }}>{{ $city->name }}</option>
+                                <option value="{{ $city->id }}" data-country="{{ $city->country_id }}" {{ old('to_city_id') == $city->id ? 'selected' : '' }}>{{ $city->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -561,32 +877,32 @@ html[dir="ltr"] select.atrip-input {
                 <div class="atrip-row-3">
                     <div class="atrip-field">
                         <label class="field-label"><i class="fas fa-tag"></i>{{ __('Selling Price') }} (SAR)<span class="required-dot"></span></label>
-                        <input type="number" name="price" class="atrip-input @error('price') is-invalid @enderror" value="{{ old('price') }}" required>
+                        <input type="number" step="0.01" name="price" class="atrip-input @error('price') is-invalid @enderror" value="{{ old('price') }}" required placeholder="0.00">
                         @error('price')<span class="atrip-error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
                     </div>
                     <div class="atrip-field">
                         <label class="field-label"><i class="fas fa-tag"></i>{{ __('Original Price') }} (SAR)</label>
-                        <input type="number" name="price_before_discount" class="atrip-input" value="{{ old('price_before_discount') }}">
+                        <input type="number" step="0.01" name="price_before_discount" class="atrip-input" value="{{ old('price_before_discount') }}" placeholder="0.00">
                     </div>
                     <div class="atrip-field">
                         <label class="field-label"><i class="fas fa-ticket-alt"></i>{{ __('Tickets Info') }}</label>
-                        <input type="text" name="tickets" class="atrip-input" value="{{ old('tickets') }}" placeholder="{{ __('e.g. Economy Class') }}">
+                        <input type="text" name="tickets" class="atrip-input" value="{{ old('tickets') }}" placeholder="{{ __('e.g. Economy Class Included') }}">
                     </div>
                 </div>
 
                 {{-- Capacity --}}
                 <div class="atrip-row-3">
                     <div class="atrip-field">
-                        <label class="field-label"><i class="fas fa-users"></i>{{ __('Max Capacity') }}</label>
-                        <input type="number" name="personnel_capacity" class="atrip-input" value="{{ old('personnel_capacity') }}">
+                        <label class="field-label"><i class="fas fa-users"></i>{{ __('Max Total Capacity') }}</label>
+                        <input type="number" name="personnel_capacity" class="atrip-input" value="{{ old('personnel_capacity', 20) }}" placeholder="e.g. 20">
                     </div>
                     <div class="atrip-field">
-                        <label class="field-label"><i class="fas fa-user-friends"></i>{{ __('Base Capacity') }}</label>
-                        <input type="number" name="base_capacity" class="atrip-input" value="{{ old('base_capacity') }}">
+                        <label class="field-label"><i class="fas fa-user-friends"></i>{{ __('Base Included Capacity') }}</label>
+                        <input type="number" name="base_capacity" class="atrip-input" value="{{ old('base_capacity', 1) }}" placeholder="e.g. 1">
                     </div>
                     <div class="atrip-field">
-                        <label class="field-label"><i class="fas fa-user-plus"></i>{{ __('Extra Pax Price') }}</label>
-                        <input type="number" name="extra_passenger_price" class="atrip-input" value="{{ old('extra_passenger_price') }}">
+                        <label class="field-label"><i class="fas fa-user-plus"></i>{{ __('Extra Pax Price') }} (SAR)</label>
+                        <input type="number" step="0.01" name="extra_passenger_price" class="atrip-input" value="{{ old('extra_passenger_price', 0) }}" placeholder="0.00">
                     </div>
                 </div>
 
@@ -594,7 +910,7 @@ html[dir="ltr"] select.atrip-input {
                 <div class="atrip-row">
                     <div class="atrip-field">
                         <label class="field-label"><i class="fas fa-clock"></i>{{ __('Duration') }}</label>
-                        <input type="text" name="duration" class="atrip-input" value="{{ old('duration') }}" placeholder="{{ __('e.g. 5 Days') }}">
+                        <input type="text" name="duration" class="atrip-input" value="{{ old('duration') }}" placeholder="{{ __('e.g. 5 Days / 4 Nights') }}">
                     </div>
                     <div class="atrip-field">
                         <label class="field-label"><i class="fas fa-calendar-alt"></i>{{ __('Expiry Date') }}<span class="required-dot"></span></label>
@@ -605,13 +921,15 @@ html[dir="ltr"] select.atrip-input {
             </div>
         </div>
 
-        {{-- ── Section 3: Settings & Visibility ── --}}
+        {{-- ── Section 4: Settings & Visibility ── --}}
         <div class="atrip-card">
             <div class="atrip-card-header">
-                <span class="hdr-icon"><i class="fas fa-sliders-h"></i></span>
-                <div>
-                    <h5>{{ __('Settings & Visibility') }}</h5>
-                    <p class="hdr-subtitle">{{ __('Control who can see and book this trip') }}</p>
+                <div class="hdr-left">
+                    <span class="hdr-icon"><i class="fas fa-sliders-h"></i></span>
+                    <div>
+                        <h5>{{ __('Settings & Visibility') }}</h5>
+                        <p class="hdr-subtitle">{{ __('Control who can see and book this trip') }}</p>
+                    </div>
                 </div>
             </div>
             <div class="atrip-card-body">
@@ -619,7 +937,7 @@ html[dir="ltr"] select.atrip-input {
                     <div class="atrip-switch-group">
                         <div class="atrip-switch-info">
                             <div class="switch-title">{{ __('Public Visibility') }}</div>
-                            <div class="switch-desc">{{ __('Make this trip visible to all users') }}</div>
+                            <div class="switch-desc">{{ __('Make this trip visible to all customers on the portal') }}</div>
                         </div>
                         <label class="atrip-toggle">
                             <input type="checkbox" name="is_public" value="1" checked>
@@ -629,7 +947,7 @@ html[dir="ltr"] select.atrip-input {
                     <div class="atrip-switch-group">
                         <div class="atrip-switch-info">
                             <div class="switch-title">{{ __('Active Status') }}</div>
-                            <div class="switch-desc">{{ __('Enable or disable bookings') }}</div>
+                            <div class="switch-desc">{{ __('Enable or disable customer bookings') }}</div>
                         </div>
                         <label class="atrip-toggle">
                             <input type="checkbox" name="active" value="1" checked>
@@ -656,11 +974,151 @@ html[dir="ltr"] select.atrip-input {
 @push('scripts')
 <script src="https://cdn.ckeditor.com/ckeditor5/35.0.1/classic/ckeditor.js"></script>
 <script>
-    ClassicEditor
-        .create(document.querySelector('#description'), {
-            language: '{{ app()->getLocale() }}',
-            toolbar: [ 'heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', 'insertTable', 'undo', 'redo' ]
-        })
-        .catch(error => { console.error(error); });
+$(document).ready(function () {
+    const isRtl = $('html').attr('dir') === 'rtl';
+
+    // ─── 1. Select2 Initialization ───
+    $('.select2').select2({
+        width: '100%',
+        dir: isRtl ? 'rtl' : 'ltr',
+        placeholder: function() {
+            return $(this).data('placeholder') || "{{ __('Select an option') }}";
+        },
+        allowClear: true
+    });
+
+    // ─── 2. CKEditor Initialization ───
+    const editorConfig = {
+        toolbar: [ 'heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', 'insertTable', 'undo', 'redo' ]
+    };
+
+    if (document.querySelector('#description_ar')) {
+        ClassicEditor.create(document.querySelector('#description_ar'), {
+            ...editorConfig,
+            language: 'ar'
+        }).catch(err => console.error('CKEditor AR Error:', err));
+    }
+
+    if (document.querySelector('#description_en')) {
+        ClassicEditor.create(document.querySelector('#description_en'), {
+            ...editorConfig,
+            language: 'en'
+        }).catch(err => console.error('CKEditor EN Error:', err));
+    }
+
+    // ─── 3. Language Switcher Tabs ───
+    $('.lang-tab-btn').on('click', function () {
+        $('.lang-tab-btn').removeClass('active');
+        $(this).addClass('active');
+
+        const lang = $(this).attr('data-lang');
+        $('.lang-pane').removeClass('active');
+        $('#pane-' + lang).addClass('active');
+    });
+
+    // ─── 4. Cascading Select2 Country -> City Dropdowns ───
+    function initCascadingDropdown(countrySelectId, citySelectId) {
+        const $country = $('#' + countrySelectId);
+        const $city = $('#' + citySelectId);
+        if (!$country.length || !$city.length) return;
+
+        // Cache all city options with country references
+        const allCityOptions = [];
+        $city.find('option').each(function() {
+            const val = $(this).val();
+            if (val) {
+                allCityOptions.push({
+                    value: val,
+                    text: $(this).text(),
+                    countryId: $(this).attr('data-country'),
+                    selected: $(this).is(':selected')
+                });
+            }
+        });
+
+        function filterCities() {
+            const selectedCountryId = $country.val();
+            const currentSelectedCity = $city.val();
+
+            $city.empty();
+            $city.append(new Option("{{ __('Select City') }}", '', false, false));
+
+            let matched = 0;
+            allCityOptions.forEach(opt => {
+                if (!selectedCountryId || opt.countryId === selectedCountryId) {
+                    const isSelected = (opt.value === currentSelectedCity || (opt.selected && !selectedCountryId));
+                    const newOpt = new Option(opt.text, opt.value, isSelected, isSelected);
+                    $(newOpt).attr('data-country', opt.countryId || '');
+                    $city.append(newOpt);
+                    matched++;
+                }
+            });
+
+            $city.prop('disabled', matched === 0 && selectedCountryId !== '');
+            $city.trigger('change.select2');
+        }
+
+        $country.on('change', filterCities);
+        if ($country.val()) {
+            filterCities();
+        }
+    }
+
+    initCascadingDropdown('from_country_id', 'from_city_id');
+    initCascadingDropdown('to_country_id', 'to_city_id');
+
+    // ─── 5. Image Upload & Live Previews ───
+    const thumbInput = document.getElementById('thumbnailInput');
+    const thumbContainer = document.getElementById('thumbPreviewContainer');
+    const thumbImg = document.getElementById('thumbPreviewImg');
+    const thumbRemove = document.getElementById('thumbRemoveBtn');
+
+    if (thumbInput) {
+        thumbInput.addEventListener('change', function () {
+            if (this.files && this.files[0]) {
+                const file = this.files[0];
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    thumbImg.src = e.target.result;
+                    thumbContainer.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    if (thumbRemove) {
+        thumbRemove.addEventListener('click', function (e) {
+            e.stopPropagation();
+            thumbInput.value = '';
+            thumbImg.src = '';
+            thumbContainer.style.display = 'none';
+        });
+    }
+
+    const galleryInput = document.getElementById('galleryInput');
+    const galleryContainer = document.getElementById('galleryPreviewContainer');
+
+    if (galleryInput) {
+        galleryInput.addEventListener('change', function () {
+            galleryContainer.innerHTML = '';
+            if (this.files && this.files.length > 0) {
+                Array.from(this.files).forEach((file, index) => {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        const card = document.createElement('div');
+                        card.className = 'preview-card';
+                        card.innerHTML = `
+                            <img src="${e.target.result}" alt="Gallery ${index+1}">
+                            <span class="preview-badge">${(file.size / 1024).toFixed(0)} KB</span>
+                        `;
+                        galleryContainer.appendChild(card);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+        });
+    }
+});
 </script>
 @endpush

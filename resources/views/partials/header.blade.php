@@ -374,7 +374,7 @@
         right: auto !important;
         width: 260px !important;
         height: 70px !important;
-        z-index: 10001 !important;
+        z-index: 100 !important;
         display: flex !important;
         align-items: center !important;
         padding: 0 20px !important;
@@ -395,7 +395,7 @@
         width: auto !important;
         /* Remove any margin that could cause a gap */
         margin: 0 !important;
-        z-index: 9999 !important;
+        z-index: 98 !important;
     }
     [dir="rtl"] body.sidebar-mode .header {
         left: 0 !important;
@@ -432,7 +432,7 @@
         overflow-y: auto !important;
         overflow-x: hidden !important;
         box-shadow: 2px 0 12px rgba(0,0,0,0.1) !important;
-        z-index: 10000 !important;
+        z-index: 99 !important;
         padding-top: 70px !important;
         align-items: flex-start !important;
         margin: 0 !important;

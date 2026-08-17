@@ -67,14 +67,24 @@ class CommissionController extends Controller
 
         foreach ($tripBookings as $booking) {
             $totalAmount = floatval($booking->total_price);
-            $companyRate = 0;
+            $commissionType = 'percentage';
+            $commissionVal = 0;
+
             if ($booking->trip && $booking->trip->company) {
-                $companyRate = floatval($booking->trip->company->commission_rate);
+                $company = $booking->trip->company;
+                $commissionType = $company->commission_type ?? 'percentage';
+                $commissionVal = floatval($company->commission_value ?? $company->commission_rate ?? 0);
             }
             
-            $profit = $totalAmount * ($companyRate / 100);
+            if ($commissionType === 'fixed') {
+                $profit = $commissionVal;
+            } else {
+                $profit = $totalAmount * ($commissionVal / 100);
+            }
+
             $booking->profit = round($profit, 2);
-            $booking->commission_rate = $companyRate;
+            $booking->commission_type = $commissionType;
+            $booking->commission_value = $commissionVal;
             $totalTripProfit += $profit;
         }
 

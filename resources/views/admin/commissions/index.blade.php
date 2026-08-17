@@ -235,7 +235,7 @@
                                     <th>{{ __('Company') }}</th>
                                     <th>{{ __('Customer') }}</th>
                                     <th>{{ __('Total Price') }}</th>
-                                    <th>{{ __('Commission Rate') }}</th>
+                                    <th>{{ __('Commission') }}</th>
                                     <th>{{ __('Profit') }}</th>
                                 </tr>
                             </thead>
@@ -247,7 +247,13 @@
                                     <td>{{ $b->trip->company->en_name ?? 'N/A' }}</td>
                                     <td>{{ $b->user->name ?? '-' }}</td>
                                     <td class="fw-semibold">{{ number_format($b->total_price, 2) }} SAR</td>
-                                    <td><span class="badge badge-light badge-sm text-primary">{{ $b->commission_rate }} %</span></td>
+                                    <td>
+                                        @if(($b->commission_type ?? 'percentage') === 'fixed')
+                                            <span class="badge badge-light badge-sm text-secondary">{{ number_format($b->commission_value ?? 0, 2) }} SAR Fixed</span>
+                                        @else
+                                            <span class="badge badge-light badge-sm text-primary">{{ number_format($b->commission_value ?? $b->commission_rate ?? 0, 2) }} %</span>
+                                        @endif
+                                    </td>
                                     <td class="text-success fw-bolder fs-15">+{{ number_format($b->profit, 2) }} SAR</td>
                                 </tr>
                                 @endforeach

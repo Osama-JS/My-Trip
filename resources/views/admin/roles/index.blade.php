@@ -228,7 +228,7 @@
 <div class="modal fade" id="roleModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
         <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-light border-bottom py-3 px-4">
+            <div class="modal-header bg-white border-bottom border-light py-3 px-4">
                 <div class="d-flex align-items-center">
                     <div class="bg-primary-light text-primary rounded-circle p-2 d-flex align-items-center justify-content-center me-3" style="width: 45px; height: 45px; background: rgba(4, 23, 65, 0.1);">
                         <i class="fa fa-user-shield fs-4"></i>
@@ -243,7 +243,7 @@
             <form id="roleForm">
                 @csrf
                 <input type="hidden" id="role_id" name="id">
-                <div class="modal-body p-4" style="max-height: 70vh; overflow-y: auto;">
+                <div class="modal-body p-4 bg-white" style="max-height: 70vh; overflow-y: auto;">
                     
                     {{-- Role Name Section --}}
                     <div class="card border border-light shadow-sm mb-4" style="border-radius: 12px; background: rgba(255, 255, 255, 0.02);">
@@ -289,7 +289,7 @@
                         @foreach($groupedPerms as $key => $group)
                         <div class="col-md-6 permission-group-card" data-group-name="{{ $key }}">
                             <div class="card h-100 border border-light shadow-sm" style="border-radius: 12px; transition: all 0.3s ease;">
-                                <div class="card-header bg-light d-flex justify-content-between align-items-center py-3 px-3 border-bottom-0" style="border-radius: 12px 12px 0 0;">
+                                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 px-3 border-bottom" style="border-radius: 12px 12px 0 0;">
                                     <div class="d-flex align-items-center">
                                         <div class="bg-white rounded p-2 d-flex align-items-center justify-content-center me-2 text-primary shadow-sm" style="width: 36px; height: 36px;">
                                             <i class="fa {{ $group['icon'] }} fs-5"></i>
@@ -340,8 +340,8 @@
                     </div>
 
                 </div>
-                <div class="modal-footer bg-light border-top py-3 px-4">
-                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal" style="border-radius: 8px; font-weight: 500;">
+                <div class="modal-footer bg-white border-top border-light py-3 px-4">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" style="border-radius: 8px; font-weight: 500;">
                         {{ __('Close') }}
                     </button>
                     <button type="submit" class="btn btn-primary" id="saveBtn" style="border-radius: 8px; font-weight: 500; min-width: 130px;">

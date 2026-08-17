@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Company;
+use App\Models\Country;
 
 class CompanyController extends Controller
 {
@@ -13,12 +14,16 @@ class CompanyController extends Controller
      */
     public function index()
     {
+        $locale = app()->getLocale();
+        $column = $locale === 'ar' ? 'name_ar' : 'name_en';
+        $countries = Country::whereNotNull('phonecode')->where('phonecode', '!=', '')->orderBy($column)->get();
+
         $stats = [
             'total' => Company::count(),
             'active' => Company::where('active', true)->count(),
             'inactive' => Company::where('active', false)->count(),
         ];
-        return view('admin.companies.index', compact('stats'));
+        return view('admin.companies.index', compact('stats', 'countries'));
     }
 
 
@@ -80,7 +85,7 @@ class CompanyController extends Controller
             'name'   => 'required|string|max:100',
             'en_name' => 'nullable|string|max:100',
             'logo'   => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'email'  => 'required|email|',
+            'email'  => 'required|email',
             'phone'  => 'nullable|string|max:100',
             'phone_code' => 'nullable|string|max:10',
             'notes'  => 'nullable|string',
@@ -89,11 +94,17 @@ class CompanyController extends Controller
             'beneficiary_name' => 'nullable|string|max:255',
             'account_number' => 'nullable|string|max:255',
             'iban_number' => 'nullable|string|max:255',
+            'commission_type' => 'nullable|in:percentage,fixed',
+            'commission_value' => 'nullable|numeric|min:0',
         ]);
 
         if ($request->hasFile('logo')) {
             $validated['logo'] = $request->file('logo')->store('companies/logos', 'public');
         }
+
+        $validated['commission_type'] = $request->input('commission_type', 'percentage');
+        $validated['commission_value'] = $request->input('commission_value', 0.00);
+        $validated['commission_rate'] = $validated['commission_type'] === 'percentage' ? $validated['commission_value'] : 0.00;
 
         Company::create($validated);
 
@@ -128,8 +139,8 @@ class CompanyController extends Controller
             'name' => 'required|string|max:100',
             'en_name' => 'nullable|string|max:100',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'email' => 'nullable|email|',
-            'phone' => 'nullable|',
+            'email' => 'nullable|email',
+            'phone' => 'nullable',
             'phone_code' => 'nullable|string|max:10',
             'notes' => 'nullable',
             'active' => 'sometimes|boolean',
@@ -137,6 +148,8 @@ class CompanyController extends Controller
             'beneficiary_name' => 'nullable|string|max:255',
             'account_number' => 'nullable|string|max:255',
             'iban_number' => 'nullable|string|max:255',
+            'commission_type' => 'nullable|in:percentage,fixed',
+            'commission_value' => 'nullable|numeric|min:0',
         ]);
 
         if ($request->hasFile('logo')) {
@@ -146,8 +159,18 @@ class CompanyController extends Controller
             $validated['logo'] = $request->file('logo')->store('companies/logos', 'public');
         }
 
-        $data = $request->only(['name','en_name', 'email', 'phone','phone_code', 'notes', 'bank_name', 'beneficiary_name', 'account_number', 'iban_number']);
+        $data = $request->only([
+            'name', 'en_name', 'email', 'phone', 'phone_code', 'notes',
+            'bank_name', 'beneficiary_name', 'account_number', 'iban_number',
+            'commission_type', 'commission_value'
+        ]);
+        $data['commission_type'] = $request->input('commission_type', 'percentage');
+        $data['commission_value'] = $request->input('commission_value', 0.00);
+        $data['commission_rate'] = $data['commission_type'] === 'percentage' ? $data['commission_value'] : 0.00;
         $data['active'] = $request->boolean('active');
+        if (isset($validated['logo'])) {
+            $data['logo'] = $validated['logo'];
+        }
         $company->update($data);
 
         return response()->json([

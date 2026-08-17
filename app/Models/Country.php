@@ -74,7 +74,7 @@ class Country extends Model
         if ($this->flag) {
             return asset('storage/' . $this->flag);
         }
-        return asset('images/flags/default.png');
+        return asset('images/flags/default.svg');
     }
 
      /**
@@ -109,7 +109,7 @@ class Country extends Model
             }
         }
 
-        return asset('images/demo/destination-placeholder.jpg');
+        return asset('images/demo/destination-placeholder.svg');
     }
 
     /**

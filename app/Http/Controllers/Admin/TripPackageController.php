@@ -99,6 +99,14 @@ class TripPackageController extends Controller
      */
     public function destroy(Trip $trip, TripPackage $package)
     {
+        // Guard: Check for existing bookings with this package
+        if (\App\Models\TripBooking::where('package_id', $package->id)->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => __('Cannot delete this package because there are active customer bookings linked to it.'),
+            ], 422);
+        }
+
         $package->prices()->delete();
         $package->delete();
 

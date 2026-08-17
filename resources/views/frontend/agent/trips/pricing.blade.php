@@ -5,181 +5,677 @@
 
 @push('styles')
 <style>
-    /* ─── Pricing Page Local Utilities ─── */
-    /* NOTE: We intentionally do NOT override :root here because @stack('styles')
-       is rendered BEFORE the layout's main <style> block, so :root overrides
-       would be clobbered. Instead we scope variables to .pricing-page. */
-    .pricing-page {
-        --pg-accent: #6366f1;
-        --pg-accent-soft: rgba(99, 102, 241, 0.08);
-        --pg-accent-glow: rgba(99, 102, 241, 0.2);
-    }
+/* ══════════════════════════════════════════════
+   AGENT TRIP PRICING & PACKAGES — UNIFIED THEME
+   ══════════════════════════════════════════════ */
 
-    /* fs-14 utility (not in layout globals) */
-    .fs-14 { font-size: 14px; }
+.aprice-container { width: 100%; max-width: 100%; margin: 0; }
 
-    /* ─── Section Cards ─── */
-    .pricing-page .agent-section {
-        background: #fff;
-        border-radius: 20px;
-        border: 1px solid #f1f5f9;
-        box-shadow: 0 4px 20px rgba(0,0,0,.03);
-        margin-bottom: 28px;
-        overflow: hidden;
-    }
-    .pricing-page .agent-section-header {
-        padding: 20px 28px;
-        border-bottom: 1px solid #f1f5f9;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-    }
-    .pricing-page .agent-section-header h5 {
-        margin: 0;
-        font-weight: 800;
-        color: #1e293b;
-        font-size: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    .pricing-page .agent-section-header h5 .icon-wrap {
-        width: 36px; height: 36px;
-        border-radius: 10px;
-        background: var(--pg-accent-soft);
-        display: flex; align-items: center; justify-content: center;
-        color: var(--pg-accent); font-size: .9rem;
-    }
-    .pricing-page .agent-section-body { padding: 24px 28px; }
+/* ─── Hero Banner ─── */
+.aprice-hero {
+    background: linear-gradient(135deg, #f59e0b, #d97706, #b45309);
+    border-radius: var(--radius-2xl);
+    padding: 32px 38px;
+    margin-bottom: 26px;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 14px 34px rgba(245, 158, 11, 0.28);
+}
+.aprice-hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 400px;
+    height: 400px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    pointer-events: none;
+}
+.aprice-hero-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    position: relative;
+    z-index: 2;
+}
+.aprice-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.85);
+    margin-bottom: 6px;
+}
+.aprice-breadcrumb a {
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color var(--transition-fast);
+}
+.aprice-breadcrumb a:hover { color: #fff; }
+.aprice-hero-title {
+    font-size: 1.6rem;
+    font-weight: 900;
+    margin: 0 0 6px;
+    color: #fff;
+}
+.aprice-hero-route {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.88rem;
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.15);
+    padding: 4px 14px;
+    border-radius: 20px;
+    backdrop-filter: blur(6px);
+}
+.aprice-hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.aprice-back-btn {
+    padding: 9px 18px;
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    font-size: 0.88rem;
+    font-weight: 700;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    backdrop-filter: blur(8px);
+    transition: all var(--transition-fast);
+}
+.aprice-back-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    color: #fff;
+    transform: translateY(-2px);
+}
 
-    /* ─── Pricing Table Inputs ─── */
-    .pricing-page .bg-light-info { background: #f8fafc; }
-    .pricing-page .price-input {
-        border-radius: 8px;
-        border: 1px solid #e2e8f0;
-        text-align: center;
-        font-weight: 600;
-    }
-    .pricing-page .price-input:focus {
-        border-color: var(--pg-accent);
-        box-shadow: 0 0 0 0.2rem var(--pg-accent-soft);
-    }
+/* ─── Workflow Step Cards ─── */
+.aprice-workflow {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 26px;
+}
+.aprice-step-box {
+    background: var(--bg-card);
+    border: 1.5px solid var(--border-soft);
+    border-radius: var(--radius-xl);
+    padding: 20px 22px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    transition: all var(--transition-fast);
+}
+.aprice-step-box:hover {
+    border-color: var(--border);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+.aprice-step-num {
+    width: 42px;
+    height: 42px;
+    border-radius: var(--radius-md);
+    background: var(--accent-soft);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    font-weight: 900;
+    flex-shrink: 0;
+}
+.aprice-step-info h6 {
+    margin: 0 0 4px;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+.aprice-step-info p {
+    margin: 0;
+    font-size: 0.83rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
 
-    /* ─── Package Tier Badges ─── */
-    .badge-tier { font-size: 11px; padding: 4px 10px; border-radius: 6px; font-weight: 700; }
-    .tier-vip     { background: rgba(250,204,21,.15); color: #b45309; }
-    .tier-gold    { background: rgba(99,102,241,.15);  color: #4338ca; }
-    .tier-economy { background: #f1f5f9; color: #475569; }
+/* ─── Main Grid Layout ─── */
+.aprice-grid {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 24px;
+    align-items: start;
+}
 
-    /* ─── Empty State ─── */
-    .pricing-page .empty-dashed-section {
-        background: transparent;
-        border: 2px dashed #cbd5e1;
-        border-radius: 20px;
-        box-shadow: none;
-    }
+/* ─── Section Cards ─── */
+.aprice-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-soft);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 24px;
+    overflow: hidden;
+    transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+.aprice-card:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--border);
+}
+.aprice-card-header {
+    padding: 18px 24px;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border-soft);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+.aprice-card-header .hdr-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.aprice-card-header .hdr-icon {
+    width: 38px;
+    height: 38px;
+    background: rgba(245, 158, 11, 0.12);
+    color: #f59e0b;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+.aprice-card-header h5 {
+    margin: 0;
+    font-weight: 800;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+.aprice-btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 7px 15px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.aprice-btn-primary:hover {
+    background: var(--accent-hover);
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px var(--accent-glow);
+}
 
-    /* ─── Action Buttons ─── */
-    .btn-pg-primary {
-        background: var(--pg-accent);
-        color: #fff;
-        border: none;
-        border-radius: 8px;
-        padding: 7px 16px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-    }
-    .btn-pg-primary:hover {
-        background: #4f46e5;
-        box-shadow: 0 4px 12px var(--pg-accent-glow);
-        transform: translateY(-1px);
-        color: #fff;
-    }
+/* ─── Seasons Table ─── */
+.aprice-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.aprice-table th {
+    padding: 12px 18px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: var(--bg-body);
+    text-align: start;
+    border-bottom: 1.5px solid var(--border-soft);
+}
+.aprice-table td {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border-soft);
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+}
+.aprice-table tr:hover td { background: var(--bg-body); }
+.aprice-season-dates {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+.aprice-action-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+.aprice-action-btn.btn-edit:hover {
+    border-color: #3b82f6;
+    color: #3b82f6;
+    background: rgba(59, 130, 246, 0.08);
+}
+.aprice-action-btn.btn-del:hover {
+    border-color: #ef4444;
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.08);
+}
+
+/* ─── Packages & Matrix ─── */
+.aprice-pkg-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    border: 1.5px solid var(--border-soft);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 24px;
+    overflow: hidden;
+    transition: all var(--transition-fast);
+}
+.aprice-pkg-card:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--border);
+}
+.aprice-pkg-header {
+    padding: 18px 24px;
+    background: var(--bg-card);
+    border-bottom: 1.5px solid var(--border-soft);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+.aprice-tier-badge {
+    font-size: 0.75rem;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.tier-vip { background: rgba(245, 158, 11, 0.15); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.3); }
+.tier-gold { background: rgba(99, 102, 241, 0.15); color: #4f46e5; border: 1px solid rgba(99, 102, 241, 0.3); }
+.tier-silver { background: rgba(148, 163, 184, 0.2); color: #475569; border: 1px solid rgba(148, 163, 184, 0.4); }
+.tier-economy { background: var(--bg-body); color: var(--text-secondary); border: 1px solid var(--border); }
+
+.aprice-pkg-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0;
+}
+.aprice-hotel-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 4px;
+    font-size: 0.83rem;
+    color: var(--text-muted);
+    flex-wrap: wrap;
+}
+.aprice-hotel-info span { display: inline-flex; align-items: center; gap: 4px; }
+.aprice-hotel-info a { color: var(--accent); text-decoration: none; font-weight: 600; }
+.aprice-hotel-info a:hover { text-decoration: underline; }
+
+/* ─── Matrix Inputs ─── */
+.aprice-matrix-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: center;
+}
+.aprice-matrix-table th {
+    padding: 12px 14px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: var(--bg-body);
+    border-bottom: 1.5px solid var(--border-soft);
+}
+.aprice-matrix-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-soft);
+    border-inline-end: 1px solid var(--border-soft);
+}
+.aprice-matrix-table td:last-child { border-inline-end: none; }
+.aprice-season-cell {
+    background: rgba(99, 102, 241, 0.03);
+    text-align: start;
+    padding: 12px 18px !important;
+}
+.aprice-season-cell h6 {
+    margin: 0 0 2px;
+    font-weight: 800;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+.aprice-season-cell small {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.aprice-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.aprice-currency-label {
+    position: absolute;
+    right: 8px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    pointer-events: none;
+}
+html[dir="rtl"] .aprice-currency-label {
+    right: auto;
+    left: 8px;
+}
+.aprice-cell-input {
+    width: 100%;
+    padding: 8px 10px;
+    padding-inline-end: 32px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 0.88rem;
+    font-weight: 700;
+    text-align: center;
+    font-family: inherit;
+    outline: none;
+    transition: all var(--transition-fast);
+}
+.aprice-cell-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+    background: #fff;
+}
+
+/* ─── Modals ─── */
+.aprice-modal-content {
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-soft);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+}
+.aprice-modal-header {
+    padding: 18px 24px;
+    background: var(--accent-soft);
+    border-bottom: 1.5px solid rgba(99, 102, 241, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.aprice-modal-header h5 {
+    margin: 0;
+    font-weight: 800;
+    color: var(--text-primary);
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.aprice-modal-body { padding: 24px; }
+.aprice-modal-field { margin-bottom: 16px; }
+.aprice-modal-field label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    display: block;
+}
+.aprice-modal-input {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    font-family: inherit;
+    outline: none;
+    transition: all var(--transition-fast);
+}
+.aprice-modal-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+    .aprice-grid { grid-template-columns: 1fr; }
+    .aprice-workflow { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+    .aprice-hero { padding: 24px 20px; }
+    .aprice-hero-top { flex-direction: column; }
+    .aprice-matrix-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
 </style>
 @endpush
 
 @section('content')
-<div class="container-fluid pb-5 mb-5 pricing-page" style="min-height: 100vh;">
+<div class="aprice-container">
 
-    <div class="d-flex align-items-center justify-content-between mb-4">
-        <div>
-            <h4 class="mb-1 fw-bold text-dark">{{ $trip->title }}</h4>
-            <div class="text-muted fs-14">
-                <i class="fas fa-map-marker-alt me-1"></i> {{ $trip->fromCity?->name }} <i class="fas fa-arrow-right mx-1"></i> {{ $trip->toCity?->name }}
+    {{-- ── Hero Banner ── --}}
+    <div class="aprice-hero">
+        <div class="aprice-hero-top">
+            <div>
+                <div class="aprice-breadcrumb">
+                    <a href="{{ route('agent.trips.index') }}"><i class="fas fa-suitcase-rolling" style="margin-inline-end:5px;"></i>{{ __('My Trips') }}</a>
+                    <span>›</span>
+                    <a href="{{ route('agent.trips.show', $trip->id) }}">{{ __('Details') }}</a>
+                    <span>›</span>
+                    <span style="color:#fff;">{{ __('Pricing & Packages') }}</span>
+                </div>
+                <h1 class="aprice-hero-title">{{ $trip->title }}</h1>
+                <div class="aprice-hero-route">
+                    <i class="fas fa-map-marker-alt"></i> {{ $trip->fromCity?->name ?? '-' }}
+                    <i class="fas fa-arrow-right" style="font-size:0.75rem; margin:0 4px;"></i>
+                    {{ $trip->toCity?->name ?? '-' }}
+                </div>
             </div>
-        </div>
-        <a href="{{ route('agent.trips.show', $trip->id) }}" class="btn btn-outline-secondary btn-sm rounded-pill px-4">
-            <i class="fas fa-arrow-left me-1"></i> {{ __('Back to Details') }}
-        </a>
-    </div>
-
-    {{-- Instructions Alert --}}
-    <div class="alert alert-info border-0 rounded-4 shadow-sm mb-4 d-flex align-items-start p-4" style="background: #eff6ff;">
-        <div class="me-3 mt-1">
-            <div style="width: 40px; height: 40px; border-radius: 12px; background: #bfdbfe; color: #1d4ed8; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                <i class="fas fa-info-circle" style="font-size: 1.1rem;"></i>
+            <div class="aprice-hero-actions">
+                <a href="{{ route('agent.trips.show', $trip->id) }}" class="aprice-back-btn">
+                    <i class="fas fa-arrow-left"></i> {{ __('Back to Details') }}
+                </a>
             </div>
-        </div>
-        <div>
-            <h6 class="fw-bold mb-2 text-dark">{{ __('How to manage pricing:') }}</h6>
-            <ul class="mb-0 text-secondary ps-3" style="font-size: 0.9rem;">
-                <li class="mb-1"><strong>{{ __('Step 1 (Seasons):') }}</strong> {{ __('Add seasons first (e.g., Summer 2024, Winter 2024) with start and end dates.') }}</li>
-                <li class="mb-1"><strong>{{ __('Step 2 (Packages):') }}</strong> {{ __('Add different packages (e.g., Economy, Gold, VIP) and their hotel details.') }}</li>
-                <li><strong>{{ __('Step 3 (Pricing):') }}</strong> {{ __('A pricing table will appear for each package based on the added seasons. Enter prices for single, double, and other rooms. (Prices are saved automatically upon typing).') }}</li>
-            </ul>
         </div>
     </div>
 
-    <div class="row">
-        {{-- Seasons Management --}}
-        <div class="col-xl-4 col-lg-5 mb-4">
-            <div class="agent-section h-100 mb-0">
-                <div class="agent-section-header">
-                    <h5>
-                        <div class="icon-wrap"><i class="fas fa-calendar-alt"></i></div>
-                        {{ __('Seasons') }}
-                    </h5>
-                    <button type="button" class="btn-pg-primary" onclick="openSeasonModal()">
-                        <i class="fa fa-plus"></i> {{ __('Add') }}
+    {{-- ── Step by Step Workflow Cards (Fully Localized) ── --}}
+    <div class="aprice-workflow">
+        <div class="aprice-step-box">
+            <div class="aprice-step-num">1</div>
+            <div class="aprice-step-info">
+                <h6>{{ app()->getLocale() == 'ar' ? '١. تعريف وتحديد المواسم' : __('Define Seasons') }}</h6>
+                <p>{{ app()->getLocale() == 'ar' ? 'أضف الفترات الزمنية ومواسم السفر (مثل: موسم الصيف، الشتاء، أو العطلات) لتحديد تواريخ الرحلات.' : __('Add seasonal date ranges (e.g. Summer, Winter, Holidays) to group travel dates.') }}</p>
+            </div>
+        </div>
+        <div class="aprice-step-box">
+            <div class="aprice-step-num">2</div>
+            <div class="aprice-step-info">
+                <h6>{{ app()->getLocale() == 'ar' ? '٢. إنشاء وتصنيف الباقات' : __('Create Packages') }}</h6>
+                <p>{{ app()->getLocale() == 'ar' ? 'حدد مستويات الباقات (VIP، ذهبية، فضية، اقتصادية) وأضف بيانات وتصنيف النجوم للفنادق.' : __('Add package tiers (VIP, Gold, Economy) and attach hotel & star ratings.') }}</p>
+            </div>
+        </div>
+        <div class="aprice-step-box">
+            <div class="aprice-step-num">3</div>
+            <div class="aprice-step-info">
+                <h6>{{ app()->getLocale() == 'ar' ? '٣. تعبئة مصفوفة الأسعار' : __('Set Pricing Matrix') }}</h6>
+                <p>{{ app()->getLocale() == 'ar' ? 'أدخل أسعار الغرف حسب الإشغال (مفردة، مزدوجة، ثلاثية...) مع ميزة الحفظ التلقائي الفوري.' : __('Fill prices for room occupancy (Single, Double, etc.) with instant auto-save.') }}</p>
+            </div>
+        </div>
+    </div>
+
+    {{-- ── Main Two-Column Grid ── --}}
+    <div class="aprice-grid">
+
+        {{-- ── Left Column: Seasons Management ── --}}
+        <div>
+            <div class="aprice-card">
+                <div class="aprice-card-header">
+                    <div class="hdr-left">
+                        <span class="hdr-icon"><i class="fas fa-calendar-alt"></i></span>
+                        <h5>{{ __('Seasons') }}</h5>
+                    </div>
+                    <button type="button" class="aprice-btn-primary" onclick="openSeasonModal()">
+                        <i class="fas fa-plus"></i> {{ __('Add Season') }}
                     </button>
                 </div>
-                <div class="agent-section-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0" style="border-collapse: collapse;">
-                            <thead class="bg-light">
+                <div style="padding:0;">
+                    <table class="aprice-table">
+                        <thead>
+                            <tr>
+                                <th>{{ __('Season') }}</th>
+                                <th>{{ __('Date Range') }}</th>
+                                <th style="text-align:end;">{{ __('Actions') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody id="seasons-list">
+                            @forelse($trip->seasons as $season)
                                 <tr>
-                                    <th class="border-0 px-4 py-3 text-secondary" style="font-size: 0.85rem; font-weight: 600;">{{ __('Title') }}</th>
-                                    <th class="border-0 py-3 text-secondary" style="font-size: 0.85rem; font-weight: 600;">{{ __('Date Range') }}</th>
-                                    <th class="border-0 px-4 py-3 text-end text-secondary" style="font-size: 0.85rem; font-weight: 600;">{{ __('Actions') }}</th>
+                                    <td style="font-weight:800; color:var(--text-primary);">{{ $season->name }}</td>
+                                    <td>
+                                        <div class="aprice-season-dates">
+                                            <span>{{ $season->start_date }}</span>
+                                            <i class="fas fa-arrow-right" style="font-size:0.65rem; color:var(--text-muted);"></i>
+                                            <span>{{ $season->end_date }}</span>
+                                        </div>
+                                    </td>
+                                    <td style="text-align:end;">
+                                        <button class="aprice-action-btn btn-edit me-1" onclick="openSeasonModal({{ $season }})" title="{{ __('Edit') }}">
+                                            <i class="fas fa-pen"></i>
+                                        </button>
+                                        <button class="aprice-action-btn btn-del" onclick="deleteSeason({{ $season->id }})" title="{{ __('Delete') }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="3" style="text-align:center; padding:36px 20px; color:var(--text-muted);">
+                                        <i class="fas fa-calendar-times" style="font-size:2rem; margin-bottom:8px; display:block; opacity:0.4;"></i>
+                                        {{ __('No seasons defined yet. Click Add Season to start.') }}
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {{-- ── Right Column: Packages & Pricing Matrix ── --}}
+        <div id="packages-container">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+                <h5 style="margin:0; font-weight:900; color:var(--text-primary); font-size:1.1rem; display:flex; align-items:center; gap:8px;">
+                    <i class="fas fa-box-open" style="color:var(--accent);"></i> {{ __('Packages & Pricing Matrix') }}
+                </h5>
+                <button type="button" class="aprice-btn-primary" onclick="openPackageModal()">
+                    <i class="fas fa-plus"></i> {{ __('Create New Package') }}
+                </button>
+            </div>
+
+            @forelse($trip->packages as $package)
+                @php $tierKey = strtolower($package->tier); @endphp
+                <div class="aprice-pkg-card">
+                    <div class="aprice-pkg-header">
+                        <div>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <span class="aprice-tier-badge tier-{{ $tierKey }}">{{ strtoupper($package->tier) }}</span>
+                                <h4 class="aprice-pkg-title">{{ $package->name }}</h4>
+                            </div>
+                            <div class="aprice-hotel-info">
+                                <span><i class="fas fa-hotel"></i> {{ $package->hotel_name ?? __('No Hotel specified') }}</span>
+                                @if($package->hotel_stars > 0)
+                                <span style="color:#f59e0b;">
+                                    @for($i=0; $i<$package->hotel_stars; $i++) <i class="fas fa-star" style="font-size:0.75rem;"></i> @endfor
+                                </span>
+                                @endif
+                                @if($package->hotel_website)
+                                    <a href="{{ $package->hotel_website }}" target="_blank"><i class="fas fa-external-link-alt"></i> {{ __('Hotel Website') }}</a>
+                                @endif
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            <button class="aprice-action-btn btn-edit" onclick="openPackageModal({{ $package }})" title="{{ __('Edit Package') }}">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                            <button class="aprice-action-btn btn-del" onclick="deletePackage({{ $package->id }})" title="{{ __('Delete Package') }}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- Pricing Matrix Table --}}
+                    <div style="overflow-x:auto;">
+                        <table class="aprice-matrix-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:24%; text-align:start; padding-inline-start:18px;">{{ __('Season / Period') }}</th>
+                                    <th style="width:15%;">{{ __('Single') }}</th>
+                                    <th style="width:15%;">{{ __('Double') }}</th>
+                                    <th style="width:15%;">{{ __('Triple') }}</th>
+                                    <th style="width:15%;">{{ __('4 Persons') }}</th>
+                                    <th style="width:16%;">{{ __('5 Persons') }}</th>
                                 </tr>
                             </thead>
-                            <tbody id="seasons-list">
+                            <tbody>
+                                @php
+                                    $occupancyTypes = ['single', 'double', 'triple', 'quadruple', 'quintuple'];
+                                    $prices = $package->prices->groupBy('season_id');
+                                @endphp
                                 @forelse($trip->seasons as $season)
-                                    <tr style="border-bottom: 1px solid #f1f5f9;">
-                                        <td class="px-4 py-3 fw-bold text-dark">{{ $season->name }}</td>
-                                        <td class="py-3">
-                                            <div class="d-flex align-items-center gap-2" style="font-size: 0.85rem;">
-                                                <span class="text-secondary">{{ $season->start_date }}</span>
-                                                <i class="fas fa-arrow-right text-muted" style="font-size: 10px;"></i>
-                                                <span class="text-secondary">{{ $season->end_date }}</span>
-                                            </div>
+                                    @php $seasonPrices = ($prices->get($season->id) ?? collect())->keyBy('occupancy_type'); @endphp
+                                    <tr>
+                                        <td class="aprice-season-cell">
+                                            <h6>{{ $season->name }}</h6>
+                                            <small>{{ $season->start_date }} &bull; {{ $season->end_date }}</small>
                                         </td>
-                                        <td class="px-4 py-3 text-end">
-                                            <button class="btn btn-sm btn-light text-primary me-1 rounded-3" onclick="openSeasonModal({{ $season }})" style="padding: 6px 10px;"><i class="fa fa-pencil"></i></button>
-                                            <button class="btn btn-sm btn-light text-danger rounded-3" onclick="deleteSeason({{ $season->id }})" style="padding: 6px 10px;"><i class="fa fa-trash"></i></button>
-                                        </td>
+                                        @foreach($occupancyTypes as $type)
+                                            <td>
+                                                <div class="aprice-input-wrap">
+                                                    <input type="number" step="0.01" min="0"
+                                                           class="aprice-cell-input"
+                                                           data-package-id="{{ $package->id }}"
+                                                           data-season-id="{{ $season->id }}"
+                                                           data-occupancy="{{ $type }}"
+                                                           value="{{ $seasonPrices->get($type)?->price }}"
+                                                           placeholder="0.00"
+                                                           onchange="updatePrice(this)">
+                                                    <span class="aprice-currency-label">SAR</span>
+                                                </div>
+                                            </td>
+                                        @endforeach
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="3" class="text-center py-5 text-muted">
-                                            <i class="fas fa-info-circle fs-4 mb-2 opacity-50"></i><br>
-                                            <small>{{ __('No seasons defined yet.') }}</small>
+                                        <td colspan="6" style="padding:36px; text-align:center; color:var(--text-muted);">
+                                            <i class="fas fa-calendar-times" style="font-size:2rem; opacity:0.4; margin-bottom:8px; display:block;"></i>
+                                            <p style="font-size:0.9rem; margin:0 0 12px;">{{ __('Please add seasons first to start entering prices for this package.') }}</p>
+                                            <button type="button" class="aprice-btn-primary" onclick="openSeasonModal()">{{ __('Add First Season') }}</button>
                                         </td>
                                     </tr>
                                 @endforelse
@@ -187,223 +683,140 @@
                         </table>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        {{-- Packages & Pricing Grid --}}
-        <div class="col-xl-8 col-lg-7" id="packages-container">
-            <div class="d-flex justify-content-between align-items-center mb-3 px-1">
-                <h5 class="mb-0 fw-bold text-dark d-flex align-items-center gap-2">
-                    <i class="fas fa-box-open" style="color: #6366f1;"></i> {{ __('Booking Packages') }}
-                </h5>
-                <button type="button" class="btn-pg-primary" onclick="openPackageModal()">
-                    <i class="fa fa-plus"></i> {{ __('Create New Package') }}
-                </button>
-            </div>
-
-            @forelse($trip->packages as $package)
-                @php $tierKey = strtolower($package->tier); @endphp
-                <div class="agent-section mb-4" style="border-left: 4px solid {{ $tierKey == 'vip' ? '#eab308' : ($tierKey == 'gold' ? '#3b82f6' : '#94a3b8') }};">
-                    <div class="agent-section-header bg-white" style="padding-top: 16px; padding-bottom: 16px;">
-                        <div>
-                            <div class="d-flex align-items-center gap-2 mb-1">
-                                <span class="badge-tier tier-{{ $tierKey }}">{{ strtoupper($package->tier) }}</span>
-                                <h6 class="mb-0 fw-bold text-dark fs-5">{{ $package->name }}</h6>
-                            </div>
-                            <div class="d-flex align-items-center gap-3 mt-2 text-muted" style="font-size: 0.85rem;">
-                                <span><i class="fas fa-hotel me-1 opacity-75"></i> {{ $package->hotel_name ?? __('No Hotel specified') }}</span>
-                                @if($package->hotel_stars > 0)
-                                <span class="text-warning">
-                                    @for($i=0; $i<$package->hotel_stars; $i++) <i class="fas fa-star" style="font-size: 11px;"></i> @endfor
-                                </span>
-                                @endif
-                                @if($package->hotel_website)
-                                    <a href="{{ $package->hotel_website }}" target="_blank" class="text-primary text-decoration-none"><i class="fas fa-external-link-alt me-1"></i> Website</a>
-                                @endif
-                            </div>
-                        </div>
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-sm btn-light text-primary rounded-3" onclick="openPackageModal({{ $package }})"><i class="fa fa-edit me-1"></i> {{ __('Edit') }}</button>
-                            <button class="btn btn-sm btn-light text-danger rounded-3" onclick="deletePackage({{ $package->id }})"><i class="fa fa-trash me-1"></i> {{ __('Delete') }}</button>
-                        </div>
-                    </div>
-                    <div class="agent-section-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-bordered mb-0 align-middle text-center" style="border: 0;">
-                                <thead class="bg-light">
-                                    <tr>
-                                        <th class="border-start-0 py-3 text-secondary" style="width: 25%; font-size: 0.85rem; font-weight: 600;">{{ __('Season / Date') }}</th>
-                                        <th class="py-3 text-secondary" style="width: 15%; font-size: 0.85rem; font-weight: 600;">{{ __('Single') }}</th>
-                                        <th class="py-3 text-secondary" style="width: 15%; font-size: 0.85rem; font-weight: 600;">{{ __('Double') }}</th>
-                                        <th class="py-3 text-secondary" style="width: 15%; font-size: 0.85rem; font-weight: 600;">{{ __('Triple') }}</th>
-                                        <th class="py-3 text-secondary" style="width: 15%; font-size: 0.85rem; font-weight: 600;">{{ __('4 Persons') }}</th>
-                                        <th class="border-end-0 py-3 text-secondary" style="width: 15%; font-size: 0.85rem; font-weight: 600;">{{ __('5 Persons') }}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @php
-                                        $occupancyTypes = ['single', 'double', 'triple', 'quadruple', 'quintuple'];
-                                        $prices = $package->prices->groupBy('season_id');
-                                    @endphp
-                                    @forelse($trip->seasons as $season)
-                                        @php $seasonPrices = ($prices->get($season->id) ?? collect())->keyBy('occupancy_type'); @endphp
-                                        <tr>
-                                            <td class="bg-light-info text-start px-4 border-start-0">
-                                                <div class="fw-bold text-dark fs-6">{{ $season->name }}</div>
-                                                <div class="text-muted" style="font-size: 0.75rem; margin-top: 2px;">{{ $season->start_date }} - {{ $season->end_date }}</div>
-                                            </td>
-                                            @foreach($occupancyTypes as $type)
-                                                <td class="{{ $loop->last ? 'border-end-0' : '' }} p-2">
-                                                    <div class="input-group input-group-sm rounded-3">
-                                                        <span class="input-group-text bg-white text-muted border-end-0" style="font-size: 0.8rem;">$</span>
-                                                        <input type="number" step="0.01" 
-                                                            class="form-control border-start-0 price-input ps-0" 
-                                                            style="box-shadow: none;"
-                                                            data-package-id="{{ $package->id }}" 
-                                                            data-season-id="{{ $season->id }}" 
-                                                            data-occupancy="{{ $type }}" 
-                                                            value="{{ $seasonPrices->get($type)?->price }}"
-                                                            placeholder="0.00"
-                                                            onchange="updatePrice(this)"
-                                                        >
-                                                    </div>
-                                                </td>
-                                            @endforeach
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="6" class="py-5 text-center bg-light border-0">
-                                                <div class="text-muted mb-3 opacity-75">
-                                                    <i class="fas fa-calendar-times fs-1 mb-3"></i><br>
-                                                    {{ __('Please add seasons first to start setting prices for this package.') }}
-                                                </div>
-                                                <button class="btn btn-outline-primary btn-sm rounded-pill px-4" onclick="openSeasonModal()">{{ __('Add First Season') }}</button>
-                                            </td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
             @empty
-                <div class="empty-dashed-section text-center py-5" style="overflow: hidden;">
-                    <div style="padding: 2rem;">
-                        <i class="fas fa-boxes text-muted mb-4" style="font-size: 4rem; opacity: 0.2;"></i>
-                        <h4 class="fw-bold text-dark">{{ __('No Packages Defined') }}</h4>
-                        <p class="text-muted mb-4">{{ __('Create tiers like Economy or VIP with corresponding hotel details to start adding prices.') }}</p>
-                        <button class="btn-pg-primary" style="border-radius: 10px; padding: 10px 24px;" onclick="openPackageModal()">
-                            <i class="fa fa-plus"></i> {{ __('Add Your First Package') }}
-                        </button>
-                    </div>
+                <div class="aprice-card" style="text-align:center; padding:54px 20px; border-style:dashed;">
+                    <i class="fas fa-boxes" style="font-size:3.2rem; color:var(--accent); opacity:0.3; margin-bottom:14px; display:block;"></i>
+                    <h4 style="font-weight:800; color:var(--text-primary); margin:0 0 6px;">{{ __('No Packages Defined Yet') }}</h4>
+                    <p style="color:var(--text-muted); font-size:0.92rem; max-width:440px; margin:0 auto 20px;">
+                        {{ __('Create tiers like Economy, Gold, or VIP with corresponding hotel details to start adding prices.') }}
+                    </p>
+                    <button type="button" class="aprice-btn-primary" style="padding:10px 24px; font-size:0.92rem;" onclick="openPackageModal()">
+                        <i class="fas fa-plus"></i> {{ __('Add Your First Package') }}
+                    </button>
                 </div>
             @endforelse
         </div>
+
     </div>
 </div>
 
-{{-- Modals --}}
-
-<!-- Season Modal -->
+{{-- ── Modal: Add / Edit Season ── --}}
 <div class="modal fade" id="seasonModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <form id="seasonForm" class="modal-content" style="border-radius: 16px; border: 0;">
-            <div class="modal-header border-bottom-0 pb-0">
-                <h5 class="modal-title fw-bold text-dark">{{ __('Add/Edit Season') }}</h5>
+        <form id="seasonForm" class="modal-content aprice-modal-content">
+            <div class="aprice-modal-header">
+                <h5><i class="fas fa-calendar-alt"></i> {{ __('Add / Edit Season') }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body pt-4">
+            <div class="aprice-modal-body">
                 <input type="hidden" name="id" id="s_id">
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-secondary fs-14">{{ __('Season Name (AR)') }}</label>
-                        <input type="text" name="name_ar" id="s_name_ar" class="form-control rounded-3" placeholder="e.g. صيف 2024">
+                        <div class="aprice-modal-field">
+                            <label>{{ __('Season Name (AR)') }}</label>
+                            <input type="text" name="name_ar" id="s_name_ar" class="aprice-modal-input" placeholder="مثال: صيف 2026">
+                        </div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-secondary fs-14">{{ __('Season Name (EN)') }} <span class="text-danger">*</span></label>
-                        <input type="text" name="name_en" id="s_name_en" class="form-control rounded-3" required placeholder="e.g. Summer 2024">
+                        <div class="aprice-modal-field">
+                            <label>{{ __('Season Name (EN)') }} <span style="color:#ef4444;">*</span></label>
+                            <input type="text" name="name_en" id="s_name_en" class="aprice-modal-input" required placeholder="e.g. Summer 2026">
+                        </div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-secondary fs-14">{{ __('Start Date') }} <span class="text-danger">*</span></label>
-                        <input type="date" name="start_date" id="s_start" class="form-control rounded-3" required>
+                        <div class="aprice-modal-field">
+                            <label>{{ __('Start Date') }} <span style="color:#ef4444;">*</span></label>
+                            <input type="date" name="start_date" id="s_start" class="aprice-modal-input" required>
+                        </div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-secondary fs-14">{{ __('End Date') }} <span class="text-danger">*</span></label>
-                        <input type="date" name="end_date" id="s_end" class="form-control rounded-3" required>
+                        <div class="aprice-modal-field">
+                            <label>{{ __('End Date') }} <span style="color:#ef4444;">*</span></label>
+                            <input type="date" name="end_date" id="s_end" class="aprice-modal-input" required>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="modal-footer border-top-0 pt-0 mt-3">
-                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
-                <button type="submit" class="btn text-white rounded-pill px-4" style="background: #6366f1;">{{ __('Save Season') }}</button>
+                <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                    <button type="submit" class="aprice-btn-primary" style="padding:10px 24px; border-radius:30px;">{{ __('Save Season') }}</button>
+                </div>
             </div>
         </form>
     </div>
 </div>
 
-<!-- Package Modal -->
+{{-- ── Modal: Add / Edit Package ── --}}
 <div class="modal fade" id="packageModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-lg">
-        <form id="packageForm" class="modal-content" style="border-radius: 16px; border: 0;">
-            <div class="modal-header border-bottom-0 pb-0">
-                <h5 class="modal-title fw-bold text-dark">{{ __('Add/Edit Package') }}</h5>
+        <form id="packageForm" class="modal-content aprice-modal-content">
+            <div class="aprice-modal-header">
+                <h5><i class="fas fa-box-open"></i> {{ __('Add / Edit Package') }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body pt-4">
+            <div class="aprice-modal-body">
                 <input type="hidden" name="id" id="p_id">
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-secondary fs-14">{{ __('Package Name (AR)') }} <span class="text-danger">*</span></label>
-                        <input type="text" name="name_ar" id="p_name_ar" class="form-control rounded-3" required placeholder="{{ __('Economy Plus, etc.') }}">
+                        <div class="aprice-modal-field">
+                            <label>{{ __('Package Name (AR)') }} <span style="color:#ef4444;">*</span></label>
+                            <input type="text" name="name_ar" id="p_name_ar" class="aprice-modal-input" required placeholder="مثال: الباقة الذهبية">
+                        </div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-secondary fs-14">{{ __('Package Name (EN)') }} <span class="text-danger">*</span></label>
-                        <input type="text" name="name_en" id="p_name_en" class="form-control rounded-3" required placeholder="{{ __('Economy Plus, etc.') }}">
-                    </div>
-                    
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold text-secondary fs-14">{{ __('Package Type/Tier') }} <span class="text-danger">*</span></label>
-                        <select name="tier" id="p_type" class="form-select rounded-3" required>
-                            @foreach(\App\Models\TripPackage::TIER_LABELS as $key => $label)
-                                <option value="{{ $key }}">{{ app()->getLocale() == 'ar' ? $label['ar'] : $label['en'] }}</option>
-                            @endforeach
-                        </select>
+                        <div class="aprice-modal-field">
+                            <label>{{ __('Package Name (EN)') }} <span style="color:#ef4444;">*</span></label>
+                            <input type="text" name="name_en" id="p_name_en" class="aprice-modal-input" required placeholder="e.g. Gold VIP Package">
+                        </div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-secondary fs-14">{{ __('Hotel Stars') }}</label>
-                        <select name="hotel_stars" id="p_stars" class="form-select rounded-3">
-                            <option value="3">3 Stars</option>
-                            <option value="4">4 Stars</option>
-                            <option value="5">5 Stars</option>
-                            <option value="0">Unrated / Boutique</option>
-                        </select>
+                        <div class="aprice-modal-field">
+                            <label>{{ __('Package Tier / Category') }} <span style="color:#ef4444;">*</span></label>
+                            <select name="tier" id="p_type" class="aprice-modal-input" required>
+                                @foreach(\App\Models\TripPackage::TIER_LABELS as $key => $label)
+                                    <option value="{{ $key }}">{{ app()->getLocale() == 'ar' ? $label['ar'] : $label['en'] }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
-                    
+                    <div class="col-md-6">
+                        <div class="aprice-modal-field">
+                            <label>{{ __('Hotel Stars') }}</label>
+                            <select name="hotel_stars" id="p_stars" class="aprice-modal-input">
+                                <option value="3">⭐⭐⭐ 3 Stars</option>
+                                <option value="4">⭐⭐⭐⭐ 4 Stars</option>
+                                <option value="5">⭐⭐⭐⭐⭐ 5 Stars</option>
+                                <option value="0">{{ __('Unrated / Boutique') }}</option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="col-md-12">
-                        <label class="form-label fw-bold text-secondary fs-14">{{ __('Hotel Name/Details (Support Multiple Hotels)') }}</label>
-                        <textarea name="hotel_name" id="p_hotel_name" class="form-control rounded-3" rows="3" placeholder="{{ __('Enter hotel names, each on a new line') }}"></textarea>
+                        <div class="aprice-modal-field">
+                            <label>{{ __('Hotel Name / Details') }}</label>
+                            <textarea name="hotel_name" id="p_hotel_name" class="aprice-modal-input" rows="3" placeholder="{{ __('Enter hotel names, each on a new line') }}"></textarea>
+                        </div>
                     </div>
                     <div class="col-md-12">
-                        <label class="form-label fw-bold text-secondary fs-14">{{ __('Hotel Website URL') }}</label>
-                        <input type="url" name="hotel_website" id="p_hotel_website" class="form-control rounded-3" placeholder="https://...">
+                        <div class="aprice-modal-field">
+                            <label>{{ __('Hotel Website URL') }}</label>
+                            <input type="url" name="hotel_website" id="p_hotel_website" class="aprice-modal-input" placeholder="https://...">
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="modal-footer border-top-0 pt-0 mt-3">
-                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
-                <button type="submit" class="btn text-white rounded-pill px-4" style="background: #6366f1;">{{ __('Save Package') }}</button>
+                <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                    <button type="submit" class="aprice-btn-primary" style="padding:10px 24px; border-radius:30px;">{{ __('Save Package') }}</button>
+                </div>
             </div>
         </form>
     </div>
 </div>
-
 @endsection
 
 @push('scripts')
 <script>
     const tripId = {{ $trip->id }};
 
-    // --- Seasons Logic ---
+    // ─── Seasons Logic ───
     function openSeasonModal(season = null) {
         if (season) {
             $('#s_id').val(season.id);
@@ -445,8 +858,10 @@
             text: "{{ __('Deleting a season will also delete all associated prices!') }}",
             icon: "warning",
             showCancelButton: true,
-            confirmButtonColor: '#e8532e',
-            confirmButtonText: "{{ __('Yes, delete it!') }}"
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: "{{ __('Yes, delete it!') }}",
+            cancelButtonText: "{{ __('Cancel') }}"
         }).then((result) => {
             if (result.isConfirmed || result.value) {
                 $.ajax({
@@ -457,15 +872,15 @@
                         toastr.success(res.message);
                         refreshPricingUI();
                     },
-                    error: function(err) {
-                        toastr.error('Error deleting season');
+                    error: function() {
+                        toastr.error("{{ __('Error deleting season') }}");
                     }
                 });
             }
         });
     }
 
-    // --- Packages Logic ---
+    // ─── Packages Logic ───
     function openPackageModal(package = null) {
         if (package) {
             $('#p_id').val(package.id);
@@ -509,8 +924,10 @@
             text: "{{ __('This package and all its prices will be removed!') }}",
             icon: "warning",
             showCancelButton: true,
-            confirmButtonColor: '#e8532e',
-            confirmButtonText: "{{ __('Yes, delete it!') }}"
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: "{{ __('Yes, delete it!') }}",
+            cancelButtonText: "{{ __('Cancel') }}"
         }).then((result) => {
             if (result.isConfirmed || result.value) {
                 $.ajax({
@@ -521,24 +938,24 @@
                         toastr.success(res.message);
                         refreshPricingUI();
                     },
-                    error: function(err) {
-                        toastr.error('Error deleting package');
+                    error: function() {
+                        toastr.error("{{ __('Error deleting package') }}");
                     }
                 });
             }
         });
     }
 
-    // --- Pricing Logic ---
+    // ─── Real-time Auto-saving Pricing Matrix ───
     function updatePrice(input) {
         const packageId = $(input).data('package-id');
         const seasonId = $(input).data('season-id');
         const occupancy = $(input).data('occupancy');
         const price = $(input).val();
 
-        // Loading state
+        // Visual saving feedback
         const originalBg = $(input).css('background-color');
-        $(input).css('background-color', '#fef3c7'); // soft yellow
+        $(input).css({ 'background-color': '#fef3c7', 'border-color': '#f59e0b' });
 
         $.ajax({
             url: "{{ route('agent.trips.packages.update', ['trip' => $trip->id, 'package' => '__ID__']) }}".replace('__ID__', packageId),
@@ -554,12 +971,12 @@
             },
             success: function(res) {
                 if (res.success) {
-                    $(input).css('background-color', '#d1fae5'); // soft green
-                    setTimeout(() => $(input).css('background-color', originalBg), 1000);
+                    $(input).css({ 'background-color': '#d1fae5', 'border-color': '#10b981' });
+                    setTimeout(() => $(input).css({ 'background-color': originalBg, 'border-color': '' }), 900);
                 }
             },
             error: function() {
-                $(input).css('background-color', '#fee2e2'); // soft red
+                $(input).css({ 'background-color': '#fee2e2', 'border-color': '#ef4444' });
                 toastr.error("{{ __('Failed to update price') }}");
             }
         });

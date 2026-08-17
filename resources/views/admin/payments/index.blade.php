@@ -128,8 +128,8 @@
                 <h5 class="modal-title">{{ __('Gateway Response Details') }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <pre id="jsonContent" class="bg-light p-3 rounded" style="max-height: 500px; overflow-y: auto;"></pre>
+            <div class="modal-body bg-white">
+                <pre id="jsonContent" class="p-3 border rounded bg-white" style="max-height: 500px; overflow-y: auto;"></pre>
             </div>
         </div>
     </div>

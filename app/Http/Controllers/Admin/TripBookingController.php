@@ -79,17 +79,71 @@ class TripBookingController extends Controller
             $showBtn = '<a href="' . route('admin.trip-bookings.show', $booking->id) . '" class="act-action-btn" title="' . __('View Details') . '"><i class="fas fa-eye"></i></a>';
         }
 
-        // Status Buttons
-        $statusBtns = '';
+        // Status Buttons / Delete
+        $deleteBtn = '';
         if (auth()->user()->can('manage bookings')) {
-            $statusBtns .= '<form action="' . route('admin.trip-bookings.destroy', $booking->id) . '" method="POST" class="d-inline confirm-action" data-confirm-message="' . __('Are you sure you want to delete this booking?') . '">
-                ' . csrf_field() . '
-                ' . method_field('DELETE') . '
-                <button type="submit" class="act-action-btn" style="color: #ef4444; background: rgba(239,68,68,0.1); border:none;" title="' . __('Delete') . '"><i class="fas fa-trash"></i></button>
-            </form>';
+            $isCancelled = ($booking->status === 'cancelled' || $booking->booking_state === TripBooking::STATE_CANCELLED);
+            if ($isCancelled) {
+                $deleteBtn = '<button type="button" onclick="deleteBooking(' . $booking->id . ')" class="act-action-btn" style="color: #ef4444; background: rgba(239,68,68,0.1); border:none;" title="' . __('Delete') . '"><i class="fas fa-trash"></i></button>';
+            } else {
+                $deleteBtn = '<button type="button" class="act-action-btn" style="color: #94a3b8; background: rgba(148,163,184,0.1); border:none; cursor:not-allowed; opacity:0.6;" title="' . __('Cannot delete active booking (must be cancelled first)') . '" onclick="toastr.warning(\'' . __('Cannot delete booking unless its status is cancelled.') . '\')"><i class="fas fa-trash"></i></button>';
+            }
         }
 
-        return '<div class="d-flex align-items-center gap-1">' . $showBtn . $statusBtns . '</div>';
+        return '<div class="d-flex align-items-center gap-1">' . $showBtn . $deleteBtn . '</div>';
+    }
+
+    /**
+     * Delete a booking only if it is cancelled.
+     */
+    public function destroy($id)
+    {
+        if (!auth()->user()->can('manage bookings')) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => __('Unauthorized action.')], 403);
+            }
+            return redirect()->back()->with('error', __('Unauthorized action.'));
+        }
+
+        $booking = TripBooking::findOrFail($id);
+
+        $isCancelled = ($booking->status === 'cancelled' || $booking->booking_state === TripBooking::STATE_CANCELLED);
+        if (!$isCancelled) {
+            $msg = __('Cannot delete booking unless its status is cancelled.');
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $msg], 422);
+            }
+            return redirect()->back()->with('error', $msg);
+        }
+
+        DB::beginTransaction();
+        try {
+            if ($booking->ticket_file_path && Storage::disk('public')->exists($booking->ticket_file_path)) {
+                Storage::disk('public')->delete($booking->ticket_file_path);
+            }
+            $booking->passengers()->delete();
+            $booking->histories()->delete();
+            $booking->delete();
+
+            DB::commit();
+
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => __('Booking deleted successfully.')
+                ]);
+            }
+            return redirect()->route('admin.trip-bookings.index')->with('success', __('Booking deleted successfully.'));
+        } catch (\Exception $e) {
+            DB::rollBack();
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => __('Failed to delete booking: ') . $e->getMessage()
+                ], 500);
+            }
+            return redirect()->back()->with('error', __('Failed to delete booking: ') . $e->getMessage());
+        }
     }
 
     /**
@@ -171,17 +225,6 @@ class TripBookingController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy($id)
-    {
-        $booking = TripBooking::findOrFail($id);
-        $booking->passengers()->delete();
-        $booking->delete();
-
-        return redirect()->route('admin.trip-bookings.index')->with('success', __('Booking deleted successfully.'));
-    }
-    /**
      * Upload ticket for a booking
      */
     public function uploadTicket(Request $request, $id)
@@ -256,5 +299,198 @@ class TripBookingController extends Controller
         $booking->user->notify(new TicketUploadedNotification($booking));
 
         return redirect()->back()->with('success', __('Ticket sent to customer successfully.'));
+    }
+
+    /**
+     * Display Platform Profits for Tour Packages.
+     */
+    public function profits(Request $request)
+    {
+        $query = TripBooking::where(function($q) {
+            $q->whereIn('status', ['confirmed', 'paid', 'completed'])
+              ->whereNotIn('booking_state', [TripBooking::STATE_AWAITING_PAYMENT, TripBooking::STATE_CANCELLED]);
+        });
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+        if ($request->filled('company_id')) {
+            $query->where('company_id', $request->company_id);
+        }
+
+        $allBookings = $query->get();
+        $totalProfit = $allBookings->sum('platform_profit');
+        $totalRevenue = $allBookings->sum('total_price');
+        $totalProviderEarnings = $allBookings->sum('provider_price');
+        $companies = \App\Models\Company::active()->orderBy('name')->get();
+
+        return view('admin.trip_bookings.profits', compact('totalProfit', 'totalRevenue', 'totalProviderEarnings', 'companies'));
+    }
+
+    /**
+     * Get JSON data for Tour Packages profits DataTable.
+     */
+    public function getProfitsData(Request $request)
+    {
+        $query = TripBooking::with(['user', 'trip.company', 'company', 'passengers'])
+            ->where(function($q) {
+                $q->whereIn('status', ['confirmed', 'paid', 'completed'])
+                  ->whereNotIn('booking_state', [TripBooking::STATE_AWAITING_PAYMENT, TripBooking::STATE_CANCELLED]);
+            });
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+        if ($request->filled('company_id')) {
+            $query->where('company_id', $request->company_id);
+        }
+
+        $bookings = $query->latest()->get();
+        $data = $bookings->map(function ($b) {
+            $companyName = optional($b->company)->name ?? (optional(optional($b->trip)->company)->name ?? __('Direct Platform'));
+            $tripTitle = optional($b->trip)->title_ar ?? (optional($b->trip)->title ?? __('Tour Package'));
+            $commLabel = '';
+            if ($b->commission_type === 'percentage') {
+                $commLabel = '<small class="text-muted d-block">(' . floatval($b->commission_value) . '%)</small>';
+            } elseif ($b->commission_type === 'fixed') {
+                $commLabel = '<small class="text-muted d-block">(' . number_format($b->commission_value, 2) . ' ' . __('SAR/Pax') . ')</small>';
+            }
+
+            return [
+                'id' => $b->id,
+                'reference' => '<strong>#TRIP-' . str_pad($b->id, 5, '0', STR_PAD_LEFT) . '</strong>',
+                'trip' => '<div><strong>' . e($tripTitle) . '</strong><small class="text-muted d-block">' . ($b->tickets_count ?? 1) . ' ' . __('Pax') . '</small></div>',
+                'company' => '<span class="badge bg-light text-dark border px-2 py-1"><i class="fas fa-building me-1 text-primary"></i>' . e($companyName) . '</span>',
+                'customer' => optional($b->user)->full_name ?? (optional($b->passengers->first())->name ?? __('Guest')),
+                'date' => $b->created_at->format('Y-m-d H:i'),
+                'provider_price' => number_format($b->provider_price, 2) . ' ' . __('SAR'),
+                'total_amount' => number_format($b->total_price, 2) . ' ' . __('SAR'),
+                'profit' => '<span class="text-success fw-bold">+' . number_format($b->platform_profit, 2) . ' ' . __('SAR') . '</span>' . $commLabel,
+                'actions' => '<a href="' . route('admin.trip-bookings.show', $b->id) . '" class="btn btn-primary shadow btn-xs sharp" title="' . __('View') . '"><i class="fas fa-eye"></i></a>'
+            ];
+        });
+
+        return response()->json(['data' => $data]);
+    }
+
+    /**
+     * Display Tour Packages Analytics and Statistics.
+     */
+    public function analytics(Request $request)
+    {
+        $query = TripBooking::with(['user', 'trip.company', 'company', 'passengers']);
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+        if ($request->filled('status')) {
+            $status = $request->status;
+            if ($status === 'confirmed') {
+                $query->where(function($q) {
+                    $q->whereIn('status', ['confirmed', 'paid', 'completed'])
+                      ->orWhereIn('booking_state', ['confirmed', 'tickets_uploaded', 'completed']);
+                });
+            } else {
+                $query->where('status', $status);
+            }
+        }
+        if ($request->filled('company_id')) {
+            $query->where('company_id', $request->company_id);
+        }
+
+        $allFiltered = $query->get();
+
+        // KPIs
+        $totalBookings = $allFiltered->count();
+        $confirmedList = $allFiltered->filter(function($b) {
+            return in_array($b->status, ['confirmed', 'paid', 'completed']) || in_array($b->booking_state, ['confirmed', 'tickets_uploaded', 'completed']);
+        });
+
+        $totalRevenue = $confirmedList->sum('total_price');
+        $totalProfit = $confirmedList->sum('platform_profit');
+        $totalProviderEarnings = $confirmedList->sum('provider_price');
+
+        $pendingBookings = $allFiltered->filter(function($b) {
+            return $b->status === 'pending' || $b->booking_state === 'awaiting_payment';
+        })->count();
+
+        $confirmedBookings = $confirmedList->count();
+
+        $cancelledBookings = $allFiltered->filter(function($b) {
+            return $b->status === 'cancelled' || $b->booking_state === 'cancelled';
+        })->count();
+
+        $totalPassengers = $allFiltered->sum('tickets_count');
+
+        // Timeline Trend
+        $groupByFormat = $request->filled('date_from') && $request->filled('date_to') ? 'Y-m-d' : 'Y-m';
+        $trendData = $allFiltered->groupBy(function($b) use ($groupByFormat) {
+            return optional($b->created_at)->format($groupByFormat) ?? date($groupByFormat);
+        })->map->count();
+
+        $chartLabels = $trendData->keys()->toArray();
+        $chartDataValues = $trendData->values()->toArray();
+
+        // Top Companies Doughnut
+        $companiesData = $allFiltered->map(function($b) {
+            return optional($b->company)->name ?? (optional(optional($b->trip)->company)->name ?? __('Direct Platform'));
+        })->countBy()->sortDesc()->take(5);
+
+        // Status Distribution Doughnut
+        $statusData = [
+            __('Confirmed / Completed') => $confirmedBookings,
+            __('Pending') => $pendingBookings,
+            __('Cancelled') => $cancelledBookings,
+        ];
+
+        // Top Packages Bar Chart
+        $packagesData = $allFiltered->map(function($b) {
+            return optional($b->trip)->title_ar ?? (optional($b->trip)->title ?? __('Tour Package'));
+        })->countBy()->sortDesc()->take(5);
+
+        $stats = [
+            'total' => $totalBookings,
+            'revenue' => $totalRevenue,
+            'profit' => $totalProfit,
+            'provider_earnings' => $totalProviderEarnings,
+            'pending' => $pendingBookings,
+            'confirmed' => $confirmedBookings,
+            'cancelled' => $cancelledBookings,
+            'passengers' => $totalPassengers,
+            'chartLabels' => $chartLabels,
+            'chartData' => $chartDataValues,
+            'companiesLabels' => $companiesData->keys()->toArray(),
+            'companiesData' => $companiesData->values()->toArray(),
+            'statusLabels' => array_keys($statusData),
+            'statusData' => array_values($statusData),
+            'packagesLabels' => $packagesData->keys()->toArray(),
+            'packagesData' => $packagesData->values()->toArray(),
+        ];
+
+        // Top Customers
+        $topCustomers = $confirmedList->groupBy('user_id')->map(function($userBookings) {
+            $first = $userBookings->first();
+            return (object) [
+                'name' => optional($first->user)->full_name ?? (optional($first->passengers->first())->name ?? __('Guest')),
+                'email' => optional($first->user)->email ?? (optional($first->passengers->first())->phone ?? __('N/A')),
+                'bookings_count' => $userBookings->count(),
+                'total_spent' => $userBookings->sum('total_price'),
+                'platform_profit' => $userBookings->sum('platform_profit'),
+            ];
+        })->sortByDesc('bookings_count')->take(10);
+
+        $recentBookings = $allFiltered->sortByDesc('created_at')->take(10);
+        $companies = \App\Models\Company::active()->orderBy('name')->get();
+
+        return view('admin.trip_bookings.analytics', compact('stats', 'recentBookings', 'topCustomers', 'companies'));
     }
 }

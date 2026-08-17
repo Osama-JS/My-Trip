@@ -124,7 +124,7 @@
                         </div>
                     </div>
 
-                    <div class="p-3 bg-light rounded-3 d-flex justify-content-between align-items-center border border-2 border-light-subtle">
+                    <div class="p-3 border rounded-3 d-flex justify-content-between align-items-center">
                         <div>
                             <h6 class="mb-0 fw-bold text-dark"><i class="fas fa-toggle-on me-2 text-primary"></i>{{ __('Status') }}</h6>
                             <small class="text-muted">{{ __('Enable or disable this question from appearing') }}</small>
@@ -135,8 +135,8 @@
                     </div>
                 </div>
 
-                <div class="modal-footer bg-light border-0 py-3">
-                    <button type="button" class="btn btn-light shadow-sm px-4" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                <div class="modal-footer border-0 py-3 bg-white">
+                    <button type="button" class="btn btn-outline-secondary shadow-sm px-4" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
                     <button type="submit" class="btn btn-primary shadow-sm px-4 fw-bold">
                         <i class="fas fa-save me-1"></i> {{ __('Save Question') }}
                     </button>
@@ -150,7 +150,7 @@
 <div class="modal fade" id="editQuestionModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header">
+            <div class="modal-header border-0 bg-white">
                 <h5 class="modal-title"><i class="fas fa-edit me-2"></i>{{ __('Edit Question') }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -160,7 +160,7 @@
                 @method('PUT')
                 <input type="hidden" id="edit_question_id">
 
-                <div class="modal-body p-4">
+                <div class="modal-body p-4 bg-white">
                     <div class="row">
                         <div class="col-md-6 mb-4">
                             <label class="form-label fw-bold text-dark">{{ __('Question (Arabic)') }} <span class="text-danger">*</span></label>
@@ -183,7 +183,7 @@
                         </div>
                     </div>
 
-                    <div class="p-3 bg-light rounded-3 d-flex justify-content-between align-items-center border border-2 border-light-subtle">
+                    <div class="p-3 border rounded-3 d-flex justify-content-between align-items-center">
                         <div>
                             <h6 class="mb-0 fw-bold text-dark"><i class="fas fa-toggle-on me-2 text-primary"></i>{{ __('Visibility Status') }}</h6>
                             <small class="text-muted">{{ __('Enable or disable this question from the public site') }}</small>
@@ -194,8 +194,8 @@
                     </div>
                 </div>
 
-                <div class="modal-footer bg-light border-0 py-3">
-                    <button type="button" class="btn btn-light shadow-sm px-4" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                <div class="modal-footer border-0 py-3 bg-white">
+                    <button type="button" class="btn btn-outline-secondary shadow-sm px-4" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
                     <button type="submit" class="btn btn-primary shadow-sm px-4 fw-bold">
                         <i class="fas fa-check-circle me-1"></i> {{ __('Save Changes') }}
                     </button>

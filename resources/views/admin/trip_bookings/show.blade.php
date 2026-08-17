@@ -102,13 +102,10 @@
                             <i class="fas fa-times"></i> {{ __('Cancel Booking') }}
                         </button>
                     @endif
-                    @if($booking->status != 'confirmed')
-                        <form action="{{ route('admin.trip-bookings.destroy', $booking->id) }}" method="POST" class="d-inline confirm-action" data-confirm-message="{{ __('Delete this booking?') }}">
-                            @csrf @method('DELETE')
-                            <button type="submit" class="btn-action btn-action--red">
-                                <i class="fas fa-trash"></i> {{ __('Delete') }}
-                            </button>
-                        </form>
+                    @if($booking->status == 'cancelled' || $booking->booking_state == \App\Models\TripBooking::STATE_CANCELLED)
+                        <button type="button" class="btn-action btn-action--red" onclick="deleteBooking({{ $booking->id }})">
+                            <i class="fas fa-trash"></i> {{ __('Delete') }}
+                        </button>
                     @endif
                 </div>
             </div>
@@ -515,17 +512,35 @@
 
 @section('scripts')
 <script>
-    $(document).ready(function() {
-        // Handle Action Confirmations
-        $(document).on('submit', '.confirm-action', function(e) {
-            e.preventDefault();
-            var form = this;
-            var message = $(this).data('confirm-message') || "{{ __('Are you sure?') }}";
-
-            WJHTAKAdmin.confirm(message, function() {
+    function deleteBooking(id) {
+        Swal.fire({
+            title: '{{ __("Delete Booking?") }}',
+            text: '{{ __("Are you sure you want to delete this cancelled booking? This action cannot be undone.") }}',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: '{{ __("Yes, delete it!") }}',
+            cancelButtonText: '{{ __("Cancel") }}'
+        }).then((result) => {
+            if (result.value || result.isConfirmed) {
+                var form = document.createElement('form');
+                form.method = 'POST';
+                form.action = "{{ route('admin.trip-bookings.destroy', ':id') }}".replace(':id', id);
+                var csrf = document.createElement('input');
+                csrf.type = 'hidden';
+                csrf.name = '_token';
+                csrf.value = "{{ csrf_token() }}";
+                var method = document.createElement('input');
+                method.type = 'hidden';
+                method.name = '_method';
+                method.value = 'DELETE';
+                form.appendChild(csrf);
+                form.appendChild(method);
+                document.body.appendChild(form);
                 form.submit();
-            });
+            }
         });
-    });
+    }
 </script>
 @endsection
