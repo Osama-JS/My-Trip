@@ -869,11 +869,12 @@ html[dir="rtl"] .aprice-currency-label {
                     type: 'DELETE',
                     data: { _token: '{{ csrf_token() }}' },
                     success: function(res) {
-                        toastr.success(res.message);
+                        Swal.fire({ icon: 'success', title: '{{ __("Deleted!") }}', text: res.message, timer: 1800, showConfirmButton: false });
                         refreshPricingUI();
                     },
-                    error: function() {
-                        toastr.error("{{ __('Error deleting season') }}");
+                    error: function(xhr) {
+                        const msg = xhr.responseJSON?.message || "{{ __('Error deleting season') }}";
+                        Swal.fire({ icon: 'error', title: '{{ __("Error") }}', text: msg });
                     }
                 });
             }
@@ -935,11 +936,12 @@ html[dir="rtl"] .aprice-currency-label {
                     type: 'DELETE',
                     data: { _token: '{{ csrf_token() }}' },
                     success: function(res) {
-                        toastr.success(res.message);
+                        Swal.fire({ icon: 'success', title: '{{ __("Deleted!") }}', text: res.message, timer: 1800, showConfirmButton: false });
                         refreshPricingUI();
                     },
-                    error: function() {
-                        toastr.error("{{ __('Error deleting package') }}");
+                    error: function(xhr) {
+                        const msg = xhr.responseJSON?.message || "{{ __('Error deleting package') }}";
+                        Swal.fire({ icon: 'error', title: '{{ __("Error") }}', text: msg });
                     }
                 });
             }

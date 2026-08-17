@@ -104,7 +104,7 @@
                 {{-- Mobile Auth & Lang inside Drawer --}}
                 <div class="fe-nav-bottom-mobile">
                     @auth
-                        <a href="{{ auth()->user()->isAdmin() ? route('admin.dashboard') : route('customer.dashboard') }}"
+                        <a href="{{ auth()->user()->dashboard_url }}"
                             class="fe-btn fe-btn-primary w-full" style="justify-content: center;">
                             <i class="fas fa-user"></i> {{ __('Dashboard') }}
                         </a>
@@ -138,7 +138,7 @@
 
                 <div class="fe-desktop-actions">
                     @auth
-                        <a href="{{ auth()->user()->isAdmin() ? route('admin.dashboard') : route('customer.dashboard') }}"
+                        <a href="{{ auth()->user()->dashboard_url }}"
                             class="fe-btn fe-btn-primary fe-btn-sm">
                             <i class="fas fa-user"></i> {{ __('Dashboard') }}
                         </a>

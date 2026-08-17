@@ -413,6 +413,12 @@ class FrontendController extends Controller
      */
     public function hotelBookingForm(Request $request)
     {
+        if (auth()->check() && !auth()->user()->canBookDirectly()) {
+            return redirect()->route('hotels')->with('error', app()->getLocale() == 'ar' 
+                ? 'عذراً، حسابات الوكلاء والمسؤولين مخصصة لإدارة العمليات ولا يمكنها إجراء حجوزات استهلاكية مباشرة. يرجى استخدام حساب عميل.' 
+                : 'Agent and Admin accounts are not permitted to make direct consumer bookings. Please use a customer account.');
+        }
+
         if (auth()->check() && !auth()->user()->isProfileComplete()) {
             session()->put('url.intended', url()->full());
             return redirect()->route('profile.complete.form');
@@ -445,6 +451,12 @@ class FrontendController extends Controller
      */
     public function processHotelBooking(Request $request)
     {
+        if (auth()->check() && !auth()->user()->canBookDirectly()) {
+            return redirect()->route('hotels')->with('error', app()->getLocale() == 'ar' 
+                ? 'عذراً، حسابات الوكلاء والمسؤولين مخصصة لإدارة العمليات ولا يمكنها إجراء حجوزات استهلاكية مباشرة. يرجى استخدام حساب عميل.' 
+                : 'Agent and Admin accounts are not permitted to make direct consumer bookings. Please use a customer account.');
+        }
+
         // 1. Validate Input
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'hotelId' => 'required',
@@ -658,6 +670,12 @@ class FrontendController extends Controller
      */
     public function flightBookingForm(Request $request)
     {
+        if (auth()->check() && !auth()->user()->canBookDirectly()) {
+            return redirect()->route('flights')->with('error', app()->getLocale() == 'ar' 
+                ? 'عذراً، حسابات الوكلاء والمسؤولين مخصصة لإدارة العمليات ولا يمكنها إجراء حجوزات استهلاكية مباشرة. يرجى استخدام حساب عميل.' 
+                : 'Agent and Admin accounts are not permitted to make direct consumer bookings. Please use a customer account.');
+        }
+
         if (auth()->check() && !auth()->user()->isProfileComplete()) {
             session()->put('url.intended', url()->full());
             return redirect()->route('profile.complete.form');
@@ -737,6 +755,12 @@ class FrontendController extends Controller
      */
     public function processFlightBooking(Request $request)
     {
+        if (auth()->check() && !auth()->user()->canBookDirectly()) {
+            return redirect()->route('flights')->with('error', app()->getLocale() == 'ar' 
+                ? 'عذراً، حسابات الوكلاء والمسؤولين مخصصة لإدارة العمليات ولا يمكنها إجراء حجوزات استهلاكية مباشرة. يرجى استخدام حساب عميل.' 
+                : 'Agent and Admin accounts are not permitted to make direct consumer bookings. Please use a customer account.');
+        }
+
         // 1. Call Travelopro Create Booking
         $result = $this->traveloproService->createBooking($request->all());
 
@@ -941,6 +965,12 @@ class FrontendController extends Controller
      */
     public function tripBookingForm(Request $request)
     {
+        if (auth()->check() && !auth()->user()->canBookDirectly()) {
+            return redirect()->route('trips.show', $request->trip_id ?: 1)->with('error', app()->getLocale() == 'ar' 
+                ? 'عذراً، حسابات الوكلاء والمسؤولين مخصصة لإدارة العمليات ولا يمكنها إجراء حجوزات استهلاكية مباشرة. يرجى استخدام حساب عميل.' 
+                : 'Agent and Admin accounts are not permitted to make direct consumer bookings. Please use a customer account.');
+        }
+
         $request->validate([
             'trip_id' => 'required|exists:trips,id',
             'tickets_count' => 'required|integer|min:1',
@@ -969,16 +999,32 @@ class FrontendController extends Controller
 
         // Handle Add-ons
         $selectedAddons = [];
+        $addonsCostPerPax = 0;
         if ($request->has('addons') && is_array($request->addons)) {
             $selectedAddons = \App\Models\TripAddon::whereIn('id', $request->addons)->get();
             foreach ($selectedAddons as $addon) {
-                $unitPrice += $addon->extra_cost;
+                $addonsCostPerPax += $addon->extra_cost;
             }
+        }
+
+        $ticketsCount = max(1, (int) ($request->tickets_count ?? 1));
+        $baseCapacity = (int) ($trip->base_capacity ?? 1);
+        $extraPassengerPrice = (float) ($trip->extra_passenger_price ?? 0);
+
+        if (!$request->package_id && $baseCapacity > 0) {
+            if ($ticketsCount > $baseCapacity && $extraPassengerPrice > 0) {
+                $extraPassengers = $ticketsCount - $baseCapacity;
+                $totalPrice = $trip->price + ($extraPassengerPrice * $extraPassengers) + ($addonsCostPerPax * $ticketsCount);
+            } else {
+                $totalPrice = $trip->price + ($addonsCostPerPax * $ticketsCount);
+            }
+        } else {
+            $totalPrice = ($unitPrice + $addonsCostPerPax) * $ticketsCount;
         }
 
         return view('frontend.trips.booking', [
             'trip' => $trip,
-            'tickets_count' => $request->tickets_count,
+            'tickets_count' => $ticketsCount,
             'package_id' => $request->package_id,
             'season_id' => $request->season_id,
             'occupancy_type' => $request->occupancy_type,
@@ -986,6 +1032,7 @@ class FrontendController extends Controller
             'selectedSeason' => $selectedSeason,
             'selectedAddons' => $selectedAddons,
             'unitPrice' => $unitPrice,
+            'totalPrice' => $totalPrice,
             'booking_date' => $request->booking_date,
             'notes' => $request->notes
         ]);
@@ -996,6 +1043,12 @@ class FrontendController extends Controller
      */
     public function bookTrip(Request $request)
     {
+        if (auth()->check() && !auth()->user()->canBookDirectly()) {
+            return redirect()->route('trips.index')->with('error', app()->getLocale() == 'ar' 
+                ? 'عذراً، حسابات الوكلاء والمسؤولين مخصصة لإدارة العمليات ولا يمكنها إجراء حجوزات استهلاكية مباشرة. يرجى استخدام حساب عميل.' 
+                : 'Agent and Admin accounts are not permitted to make direct consumer bookings. Please use a customer account.');
+        }
+
         $request->validate([
             'trip_id' => 'required|exists:trips,id',
             'tickets_count' => 'required|integer|min:1',
@@ -1050,13 +1103,14 @@ class FrontendController extends Controller
             }
         }
 
-        $totalPrice = ($unitPrice + $addonsCostPerPax) * $request->tickets_count;
+        $ticketsCount = (int) $request->tickets_count;
+        $totalPrice = ($unitPrice + $addonsCostPerPax) * $ticketsCount;
 
-        // Legacy Extra passenger pricing (Only if not using packages or as a fallback)
-        if (!$request->package_id && $trip->base_capacity && $request->tickets_count > $trip->base_capacity && $trip->extra_passenger_price) {
-            $extraPassengers = $request->tickets_count - $trip->base_capacity;
-            $baseTotal = ($trip->price * $trip->base_capacity) + ($trip->extra_passenger_price * $extraPassengers);
-            $totalPrice = $baseTotal + ($addonsCostPerPax * $request->tickets_count);
+        // Base Package extra passenger pricing (When not using tiered package pricing)
+        if (!$request->package_id && $trip->base_capacity && $ticketsCount > $trip->base_capacity && $trip->extra_passenger_price) {
+            $extraPassengers = $ticketsCount - $trip->base_capacity;
+            $baseTotal = $trip->price + ($trip->extra_passenger_price * $extraPassengers);
+            $totalPrice = $baseTotal + ($addonsCostPerPax * $ticketsCount);
         }
 
         // Calculate Platform Commission & Company Earnings

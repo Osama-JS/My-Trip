@@ -445,6 +445,17 @@
             </div>
             @endif
 
+            @if(!$maintenanceMode || $isBypassed)
+                <div class="mt-4 mb-2 text-center">
+                    <p class="mb-0 text-muted" style="font-size: 0.95rem;">
+                        {{ $locale == 'ar' ? 'ليس لديك حساب؟' : "Don't have an account?" }}
+                        <a href="{{ route('register', request()->has('secret') ? ['secret' => request()->query('secret')] : (request()->has('return_url') ? ['return_url' => request()->query('return_url')] : [])) }}" class="text-primary font-weight-bold ms-1" style="font-weight: 700; text-decoration: none;">
+                            {{ $locale == 'ar' ? 'إنشاء حساب جديد' : 'Create New Account' }}
+                        </a>
+                    </p>
+                </div>
+            @endif
+
             <div class="text-center">
                 @if($locale == 'ar')
                     <a href="{{ route('lang.switch', 'en') }}" class="lang-switch-btn">

@@ -14,7 +14,7 @@
     {{-- CSS --}}
     <link rel="stylesheet" href="{{ asset('vendor/bootstrap/dist/css/bootstrap.min.css') }}">
     <link href="{{ asset('icons/font-awesome/css/all.min.css') }}" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('vendor/toastr/toastr.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('vendor/toastr/css/toastr.min.css') }}">
     <link rel="stylesheet" href="{{ asset('vendor/sweetalert2/dist/sweetalert2.min.css') }}">
     <link rel="stylesheet" href="{{ asset('vendor/select2/css/select2.min.css') }}">
     {{-- Agent dashboard base styles are inline in this file --}}
@@ -1087,7 +1087,7 @@ window.addEventListener('resize', function() {
 {{-- Core JS Libraries --}}
 <script src="{{ asset('vendor/jquery/jquery.min.js') }}"></script>
 <script src="{{ asset('vendor/bootstrap/dist/js/bootstrap.bundle.min.js') }}"></script>
-<script src="{{ asset('vendor/toastr/toastr.min.js') }}"></script>
+<script src="{{ asset('vendor/toastr/js/toastr.min.js') }}"></script>
 <script src="{{ asset('vendor/sweetalert2/dist/sweetalert2.min.js') }}"></script>
 <script src="{{ asset('vendor/select2/js/select2.full.min.js') }}"></script>
 

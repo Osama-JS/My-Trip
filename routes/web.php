@@ -37,7 +37,7 @@ Route::get('/flights/payment/{booking_id}', [FrontendController::class, 'flightS
 Route::get('/airports/search', [FrontendController::class, 'searchAirports'])->name('airports.search');
 Route::get('/airports/sync', [FrontendController::class, 'syncAirports'])->name('airports.sync');
 
-Route::post('/ocr/passport', [\App\Http\Controllers\OcrController::class, 'scanPassport'])->name('ocr.passport')->middleware('auth');
+Route::post('/ocr/passport', [\App\Http\Controllers\OcrController::class, 'scanPassport'])->name('ocr.passport');
 
 // Hotel Routes
 Route::get('/hotels', [FrontendController::class, 'hotels'])->name('hotels');
@@ -55,7 +55,7 @@ Route::get('/hotels/cities/search', [FrontendController::class, 'searchHotelCiti
 Route::get('/destinations', [FrontendController::class, 'destinations'])->name('destinations');
 Route::get('/about', [FrontendController::class, 'about'])->name('about');
 Route::get('/search', [FrontendController::class, 'search'])->name('search');
-Route::get('/book-trip/form', [FrontendController::class, 'tripBookingForm'])->name('trips.booking.form')->middleware('auth');
+Route::get('/book-trip/form', [FrontendController::class, 'tripBookingForm'])->name('trips.booking.form');
 Route::post('/book-trip', [FrontendController::class, 'bookTrip'])->name('book.trip')->middleware('auth');
 
 // Guest Profile Completion
@@ -117,31 +117,18 @@ Route::get('lang/{locale}', function ($locale) {
 Route::get('/', [FrontendController::class, 'home'])->name('home');
 Route::get('/trips', [FrontendController::class, 'trips'])->name('trips.index');
 Route::get('/trips/{id}', [FrontendController::class, 'tripDetails'])->name('trips.show');
-Route::get('/flights', [FrontendController::class, 'flights'])->name('flights');
-Route::get('/hotels', [FrontendController::class, 'hotels'])->name('hotels');
-Route::get('/destinations', [FrontendController::class, 'destinations'])->name('destinations');
-Route::get('/about', [FrontendController::class, 'about'])->name('about');
-Route::get('/search', [FrontendController::class, 'search'])->name('search');
-Route::get('/book-trip/form', [FrontendController::class, 'tripBookingForm'])->name('trips.booking.form')->middleware('auth');
-Route::post('/book-trip', [FrontendController::class, 'bookTrip'])->name('book.trip')->middleware('auth');
 
-// Redirect root to login
+// Redirect logged-in users from login
 Route::get('/login', function () {
     if (auth()->check()) {
-        if (auth()->user()->isAdmin()) {
-            return redirect()->route('admin.dashboard');
-        }
-        return redirect()->route('customer.dashboard');
+        return redirect(auth()->user()->dashboard_url);
     }
     return redirect()->route('login');
 });
 
-// Default dashboard - redirect based on user type
+// Default dashboard - redirect based on user type (admin, agent, customer)
 Route::get('/dashboard', function () {
-    if (auth()->user()->isAdmin()) {
-        return redirect()->route('admin.dashboard');
-    }
-    return redirect()->route('customer.dashboard');
+    return redirect(auth()->user()->dashboard_url);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {

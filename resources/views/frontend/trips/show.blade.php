@@ -2,15 +2,17 @@
 
 @php
     $locale = app()->getLocale();
-    $title = $locale == 'ar' ? $trip->title_ar : $trip->title_en;
-    $description = $locale == 'ar' ? $trip->description_ar : $trip->description_en;
+    $title = $locale == 'ar' ? ($trip->title_ar ?: $trip->title) : ($trip->title_en ?: $trip->title);
+    $description = $locale == 'ar' ? ($trip->description_ar ?: $trip->description) : ($trip->description_en ?: $trip->description);
     $includes = $locale == 'ar' ? $trip->includes_ar : $trip->includes_en;
     $excludes = $locale == 'ar' ? $trip->excludes_ar : $trip->excludes_en;
     $policy = $locale == 'ar' ? $trip->children_policy_ar : $trip->children_policy_en;
 
-    $toCountry = optional($trip->toCountry)->nicename ?? optional($trip->toCountry)->name;
-    $toCity = $locale == 'ar' ? optional($trip->toCity)->title_ar : optional($trip->toCity)->title_en;
+    $toCountry = optional($trip->toCountry)->nicename ?? optional($trip->toCountry)->name ?? ($locale == 'ar' ? $trip->toCountry?->name_ar : $trip->toCountry?->name_en);
+    $toCity = $locale == 'ar' ? (optional($trip->toCity)->name_ar ?? optional($trip->toCity)->title_ar ?? optional($trip->toCity)->name) : (optional($trip->toCity)->name_en ?? optional($trip->toCity)->title_en ?? optional($trip->toCity)->name);
+    $fromCity = $locale == 'ar' ? (optional($trip->fromCity)->name_ar ?? optional($trip->fromCity)->title_ar ?? optional($trip->fromCity)->name) : (optional($trip->fromCity)->name_en ?? optional($trip->fromCity)->title_en ?? optional($trip->fromCity)->name);
     $avgRating = $trip->rates->avg('rate') ?? 0;
+    $currency = $locale == 'ar' ? 'ر.س' : 'SAR';
 
     // Check if we have the new pricing system data
     $hasPackages = $trip->packages->count() > 0;
@@ -42,6 +44,9 @@
             'is_replacement' => $a->is_replacement
         ];
     })->values();
+
+    $imgCount = count($trip->images);
+    $fallbackImg = 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1400&q=80';
 @endphp
 
 @section('title', $title)
@@ -49,1506 +54,1534 @@
 
 @push('styles')
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <link rel="stylesheet" href="{{ asset('vendor/lightgallery/css/lightgallery.min.css') }}" />
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap');
 
         :root {
             --fe-primary: #0f4c81;
+            --fe-primary-hover: #0a355c;
             --fe-primary-light: #eff6ff;
             --fe-primary-dark: #0f172a;
             --fe-accent: #f59e0b;
+            --fe-accent-hover: #d97706;
             --fe-accent-light: #fef3c7;
             --fe-surface: #ffffff;
-            --fe-border: #f1f5f9;
-            --fe-border-active: #e2e8f0;
+            --fe-border: #e2e8f0;
+            --fe-border-light: #f1f5f9;
             --fe-text-main: #1e293b;
             --fe-text-muted: #64748b;
-            --fe-radius-lg: 24px;
-            --fe-radius-md: 16px;
-            --fe-shadow-sm: 0 4px 20px rgba(0, 0, 0, 0.02);
-            --fe-shadow-md: 0 12px 30px rgba(15, 76, 129, 0.06);
-            --fe-shadow-hover: 0 20px 45px rgba(15, 76, 129, 0.12);
-            --fe-glass-bg: rgba(255, 255, 255, 0.85);
-            --fe-glass-border: rgba(255, 255, 255, 0.4);
+            --fe-radius-xl: 24px;
+            --fe-radius-lg: 18px;
+            --fe-radius-md: 12px;
+            --fe-shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.03);
+            --fe-shadow-md: 0 10px 28px rgba(15, 76, 129, 0.08);
+            --fe-transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         body {
-            font-family: 'Cairo', 'Outfit', sans-serif;
+            font-family: 'Tajawal', 'Outfit', sans-serif;
             background-color: #f8fafc;
+            color: var(--fe-text-main);
         }
 
-        /* Immersive Page Background and Container padding */
+        /* Clearance for fixed header */
         .fe-details-page {
+            padding-top: 110px;
             padding-bottom: 80px;
         }
 
         .fe-container {
             width: 100%;
-            max-width: 1280px;
+            max-width: 1320px;
             margin: 0 auto;
-            padding: 0 24px;
+            padding: 0 20px;
         }
 
-        .fe-premium-badge {
-            background: linear-gradient(135deg, #FFD700, #F59E0B);
-            color: #fff;
-            font-weight: 800;
-            padding: 6px 16px;
-            border-radius: 50px;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.25);
-            display: inline-flex;
-            align-items: center;
-        }
-
-        /* Modern Immersive Header Card */
-        .fe-trip-header-card {
-            background: var(--fe-surface);
-            border: 1px solid var(--fe-border);
+        /* ─── Hero Header Card ─── */
+        .fe-trip-header {
+            background: #ffffff;
+            border: 1px solid var(--fe-border-light);
             border-radius: var(--fe-radius-lg);
-            padding: 30px;
+            padding: 22px 26px;
             box-shadow: var(--fe-shadow-sm);
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             position: relative;
         }
 
-        /* Breadcrumbs Dark Background Override for Light Pages */
         .fe-breadcrumb {
-            color: #64748b !important;
-            margin-bottom: 20px;
             display: flex;
             align-items: center;
             flex-wrap: wrap;
-            font-size: 0.85rem;
-            gap: 6px;
+            gap: 8px;
+            font-size: 0.84rem;
+            margin-bottom: 12px;
         }
 
         .fe-breadcrumb a {
-            color: #64748b !important;
+            color: var(--fe-text-muted);
+            text-decoration: none;
             font-weight: 600;
-            transition: color 0.2s;
+            transition: var(--fe-transition);
         }
 
         .fe-breadcrumb a:hover {
-            color: var(--fe-primary) !important;
+            color: var(--fe-primary);
         }
 
-        .fe-breadcrumb span {
-            color: var(--fe-primary-dark) !important;
+        .fe-breadcrumb span.sep {
+            color: #cbd5e1;
+            font-size: 0.75rem;
+        }
+
+        .fe-breadcrumb span.current {
+            color: var(--fe-primary-dark);
             font-weight: 700;
         }
 
-        .fe-breadcrumb i {
-            color: #cbd5e1 !important;
-            font-size: 0.75rem;
-            margin: 0 4px;
-        }
-
-        [dir="rtl"] .fe-breadcrumb i {
-            transform: rotate(180deg);
+        .fe-title-wrapper {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
         }
 
         .fe-trip-title {
-            font-size: 2.4rem;
+            font-size: 1.95rem;
             font-weight: 900;
             color: var(--fe-primary-dark);
-            line-height: 1.25;
-            margin-bottom: 20px;
-            letter-spacing: -0.5px;
+            line-height: 1.3;
+            margin-bottom: 10px;
+            letter-spacing: -0.3px;
         }
 
-        .fe-details-meta {
+        .fe-meta-pills {
             display: flex;
-            flex-wrap: wrap;
-            gap: 25px;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
-        .fe-details-meta-item {
-            font-size: 0.95rem;
+        .fe-meta-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 50px;
+            font-size: 0.84rem;
+            font-weight: 700;
+            background: #f1f5f9;
             color: var(--fe-text-main);
-            font-weight: 600;
+            border: 1px solid #e2e8f0;
+        }
+
+        .fe-meta-pill.pill-rating {
+            background: #fefce8;
+            color: #854d0e;
+            border-color: #fef08a;
+        }
+
+        .fe-meta-pill.pill-location {
+            background: #eff6ff;
+            color: #1e40af;
+            border-color: #dbeafe;
+        }
+
+        .fe-meta-pill.pill-duration {
+            background: #f0fdf4;
+            color: #166534;
+            border-color: #bbf7d0;
+        }
+
+        .fe-header-actions {
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
-        .fe-details-meta-item i {
-            font-size: 1.1rem;
-        }
-
-        .fe-details-meta-item .rating-val {
-            color: var(--fe-primary-dark);
-            font-weight: 800;
-        }
-
-        .fe-details-meta-item .reviews-count {
-            color: var(--fe-text-muted);
-            font-weight: 500;
-        }
-
-        .fe-icon-btn {
-            width: 48px;
-            height: 48px;
+        .fe-action-icon-btn {
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
-            background: var(--fe-surface);
-            border: 1px solid var(--fe-border-active);
+            background: #ffffff;
+            border: 1.5px solid var(--fe-border);
             color: var(--fe-text-main);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.1rem;
+            font-size: 1rem;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: var(--fe-transition);
             box-shadow: var(--fe-shadow-sm);
         }
 
-        .fe-icon-btn:hover {
+        .fe-action-icon-btn:hover {
             background: var(--fe-primary-light);
             color: var(--fe-primary);
             border-color: var(--fe-primary);
             transform: translateY(-2px);
         }
 
-        /* Premium Photo Gallery Grid (Airbnb Style) */
-        .fe-gallery-wrapper {
-            margin-bottom: 40px;
+        /* ══════════════════════════════════════════════
+           SINGLE COMPACT UNIFIED SHOWCASE GALLERY
+           ══════════════════════════════════════════════ */
+        .fe-gallery-unified-wrapper {
+            margin-bottom: 25px;
             width: 100%;
-            clear: both;
         }
 
-        .fe-gallery-airbnb {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
-            gap: 12px;
-            height: 520px;
-        }
-
-        .fe-gallery-airbnb .main-img {
-            grid-column: 1;
-            grid-row: 1 / span 2;
-        }
-
-        .fe-gallery-grid-3 {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 12px;
-            height: 500px;
-        }
-
-        .fe-gallery-grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            height: 450px;
-        }
-
-        .fe-gallery-col-stack {
-            display: grid;
-            grid-template-rows: 1fr 1fr;
-            gap: 12px;
-            height: 100%;
-        }
-
-        .fe-gallery-img-container {
-            position: relative;
+        .fe-gallery-main-card {
+            background: #0f172a;
+            border-radius: var(--fe-radius-lg);
             overflow: hidden;
-            border-radius: var(--fe-radius-md);
-            height: 100%;
+            box-shadow: var(--fe-shadow-md);
+            position: relative;
+        }
+
+        /* Main Swiper Slider Container */
+        .fe-gallery-main-swiper {
             width: 100%;
-            box-shadow: var(--fe-shadow-sm);
+            height: 380px;
+            position: relative;
+            background: #0f172a;
+        }
+
+        .fe-main-slide-link {
+            display: block;
+            width: 100%;
+            height: 100%;
+            position: relative;
             cursor: pointer;
-            background: #f1f5f9;
+            overflow: hidden;
+            text-decoration: none;
         }
 
-        .fe-gallery-img-container::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: rgba(0, 0, 0, 0);
-            transition: background 0.3s ease;
-        }
-
-        .fe-gallery-wrapper:hover .fe-gallery-img-container::after {
-            background: rgba(0, 0, 0, 0.15);
-        }
-
-        .fe-gallery-wrapper .fe-gallery-img-container:hover::after {
-            background: rgba(0, 0, 0, 0);
-        }
-
-        .fe-gallery-img-container img {
+        .fe-main-slide-link img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transition: transform 0.8s cubic-bezier(0.2, 1, 0.3, 1);
+            transition: transform 0.6s cubic-bezier(0.2, 0.9, 0.3, 1);
+            display: block;
         }
 
-        .fe-gallery-img-container:hover img {
+        .fe-main-slide-link:hover img {
+            transform: scale(1.04);
+        }
+
+        .fe-slide-zoom-icon {
+            position: absolute;
+            top: 16px;
+            inset-inline-end: 16px;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(6px);
+            color: var(--fe-primary-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 5;
+            transition: var(--fe-transition);
+        }
+
+        .fe-main-slide-link:hover .fe-slide-zoom-icon {
+            background: #ffffff;
+            color: var(--fe-primary);
             transform: scale(1.08);
         }
 
-        .fe-gallery-overlay-badge {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            z-index: 10;
-            background: rgba(15, 23, 42, 0.75);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: white;
-            padding: 8px 18px;
-            border-radius: 50px;
-            font-weight: 700;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
+        /* Navigation Arrows on Main Slider */
+        .fe-swiper-arrow {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(6px);
+            color: var(--fe-primary-dark) !important;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+            transition: var(--fe-transition);
         }
 
-        .fe-gallery-overlay-badge:hover {
-            background: rgba(15, 23, 42, 0.9);
+        .fe-swiper-arrow::after {
+            font-size: 1.1rem !important;
+            font-weight: 900;
+        }
+
+        .fe-swiper-arrow:hover {
+            background: #ffffff;
+            color: var(--fe-primary) !important;
+            transform: scale(1.1);
+        }
+
+        /* Floating Overlays */
+        .fe-gallery-badge-top {
+            position: absolute;
+            top: 16px;
+            inset-inline-start: 16px;
+            z-index: 10;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 6px 14px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            pointer-events: none;
+        }
+
+        .fe-gallery-counter-badge {
+            position: absolute;
+            bottom: 16px;
+            inset-inline-start: 16px;
+            z-index: 10;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(8px);
+            color: #fff;
+            padding: 5px 12px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .fe-gallery-fullscreen-btn {
+            position: absolute;
+            bottom: 16px;
+            inset-inline-end: 16px;
+            z-index: 10;
+            background: #ffffff;
+            color: var(--fe-primary-dark);
+            border: none;
+            padding: 8px 18px;
+            border-radius: 50px;
+            font-weight: 800;
+            font-size: 0.86rem;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
+            cursor: pointer;
+            transition: var(--fe-transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .fe-gallery-fullscreen-btn:hover {
+            background: var(--fe-primary);
+            color: #ffffff;
             transform: translateY(-2px);
         }
 
-        [dir="rtl"] .fe-gallery-overlay-badge {
-            right: auto;
-            left: 20px;
+        /* Thumbnails Strip Swiper */
+        .fe-gallery-thumbs-swiper {
+            width: 100%;
+            height: 70px;
+            padding: 8px 12px;
+            background: #0f172a;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        /* Mobile Swiper Gallery */
-        .fe-gallery-mobile-wrapper {
-            margin-bottom: 30px;
-            box-shadow: var(--fe-shadow-sm);
-            border-radius: var(--fe-radius-lg);
+        .fe-thumb-slide {
+            width: 90px !important;
+            height: 100%;
+            border-radius: 8px;
             overflow: hidden;
+            cursor: pointer;
+            opacity: 0.55;
+            transition: var(--fe-transition);
+            border: 2px solid transparent;
         }
 
-        .fe-mobile-swiper .swiper-pagination-bullet {
-            background: rgba(255, 255, 255, 0.7);
+        .fe-thumb-slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .fe-thumb-slide:hover {
+            opacity: 0.9;
+        }
+
+        .fe-thumb-slide.active-thumb {
             opacity: 1;
+            border-color: #38bdf8;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+            transform: scale(1.03);
         }
 
-        .fe-mobile-swiper .swiper-pagination-bullet-active {
-            background: white;
-            width: 20px;
-            border-radius: 10px;
-        }
-
-        /* Sticky Columns Grid */
-        .fe-details-grid {
+        /* ─── Highlights Features Bar ─── */
+        .fe-highlights-grid {
             display: grid;
-            grid-template-columns: 1fr 400px;
-            gap: 40px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            margin-bottom: 30px;
+        }
+
+        .fe-highlight-box {
+            background: #ffffff;
+            border: 1px solid var(--fe-border-light);
+            border-radius: var(--fe-radius-md);
+            padding: 16px 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--fe-shadow-sm);
+            transition: var(--fe-transition);
+        }
+
+        .fe-highlight-box:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--fe-shadow-md);
+            border-color: #cbd5e1;
+        }
+
+        .fe-highlight-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            flex-shrink: 0;
+        }
+
+        .fe-highlight-icon.icon-blue { background: #eff6ff; color: var(--fe-primary); }
+        .fe-highlight-icon.icon-amber { background: #fef3c7; color: #d97706; }
+        .fe-highlight-icon.icon-emerald { background: #d1fae5; color: #059669; }
+        .fe-highlight-icon.icon-purple { background: #f3e8ff; color: #7c3aed; }
+
+        .fe-highlight-info h6 {
+            margin: 0 0 2px 0;
+            font-size: 0.92rem;
+            font-weight: 800;
+            color: var(--fe-primary-dark);
+        }
+
+        .fe-highlight-info p {
+            margin: 0;
+            font-size: 0.8rem;
+            color: var(--fe-text-muted);
+            font-weight: 600;
+        }
+
+        /* ─── Main Two-Column Layout ─── */
+        .fe-layout-grid {
+            display: grid;
+            grid-template-columns: 1fr 410px;
+            gap: 30px;
             align-items: start;
         }
 
-        /* Premium Fluid Tabs Styling */
-        .fe-details-tabs {
+        /* ─── Navigation Tabs ─── */
+        .fe-tabs-header {
             display: flex;
+            align-items: center;
             gap: 8px;
-            margin-bottom: 35px;
-            overflow-x: auto;
-            white-space: nowrap;
+            background: #ffffff;
             padding: 6px;
-            background: var(--fe-surface);
-            border: 1px solid var(--fe-border);
-            border-radius: 50px;
+            border-radius: var(--fe-radius-md);
+            border: 1px solid var(--fe-border-light);
+            margin-bottom: 20px;
             box-shadow: var(--fe-shadow-sm);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
-        .fe-details-tabs::-webkit-scrollbar {
-            display: none;
-        }
-
-        .fe-details-tabs {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-
-        .fe-tab-btn {
-            background: transparent;
+        .fe-tab-nav-btn {
+            padding: 9px 18px;
+            border-radius: 10px;
             border: none;
-            font-size: 0.95rem;
-            font-weight: 700;
+            background: transparent;
             color: var(--fe-text-muted);
-            padding: 12px 24px;
-            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.9rem;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: var(--fe-transition);
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        .fe-tab-btn:hover {
+        .fe-tab-nav-btn:hover {
             color: var(--fe-primary);
-            background: var(--fe-primary-light);
+            background: #f8fafc;
         }
 
-        .fe-tab-btn.active {
+        .fe-tab-nav-btn.active {
             background: var(--fe-primary);
-            color: white;
-            box-shadow: 0 4px 15px rgba(15, 76, 129, 0.2);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(15, 76, 129, 0.22);
         }
 
         .fe-tab-pane {
             display: none;
-            animation: feFadeUp 0.5s ease forwards;
-            opacity: 0;
-            transform: translateY(15px);
-            background: var(--fe-surface);
-            border: 1px solid var(--fe-border);
-            border-radius: var(--fe-radius-lg);
-            padding: 35px;
-            box-shadow: var(--fe-shadow-sm);
+            animation: feFadeIn 0.3s ease;
         }
 
         .fe-tab-pane.active {
             display: block;
         }
 
-        @keyframes feFadeUp {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        @keyframes feFadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Custom Checked Inclusions/Exclusions Lists */
-        .fe-inclusions-list li {
-            position: relative;
-            padding-inline-start: 32px;
-            margin-bottom: 15px;
-            font-size: 1.05rem;
-            line-height: 1.6;
-            color: var(--fe-text-main);
-        }
-
-        .fe-inclusions-list li::before {
-            content: "\f058";
-            font-family: "Font Awesome 6 Free";
-            font-weight: 900;
-            color: #10b981;
-            position: absolute;
-            inset-inline-start: 0;
-            top: 2px;
-            font-size: 1.2rem;
-        }
-
-        .fe-exclusions-list li {
-            position: relative;
-            padding-inline-start: 32px;
-            margin-bottom: 15px;
-            font-size: 1.05rem;
-            line-height: 1.6;
-            color: var(--fe-text-main);
-        }
-
-        .fe-exclusions-list li::before {
-            content: "\f057";
-            font-family: "Font Awesome 6 Free";
-            font-weight: 900;
-            color: #ef4444;
-            position: absolute;
-            inset-inline-start: 0;
-            top: 2px;
-            font-size: 1.2rem;
-        }
-
-        /* Itinerary Timeline Components */
-        .fe-itinerary-timeline {
-            position: relative;
-            padding-inline-start: 10px;
-        }
-
-        .fe-itinerary-item {
-            position: relative;
-            padding-bottom: 30px;
-            padding-inline-start: 45px;
-            border-inline-start: 2px dashed #cbd5e1;
-        }
-
-        .fe-itinerary-item:last-child {
-            border-inline-start: none;
-            padding-bottom: 0;
-        }
-
-        .fe-itinerary-dot {
-            position: absolute;
-            top: 4px;
-            inset-inline-start: -10px;
-            width: 18px;
-            height: 18px;
-            background: var(--fe-surface);
-            border: 4px solid var(--fe-primary);
-            border-radius: 50%;
-            box-shadow: 0 0 0 4px rgba(15, 76, 129, 0.1);
-            transition: all 0.3s ease;
-        }
-
-        .fe-itinerary-card {
-            background: #f8fafc;
-            border: 1px solid var(--fe-border);
-            border-radius: var(--fe-radius-md);
-            padding: 24px;
-            transition: all 0.3s ease;
-        }
-
-        .fe-itinerary-item:hover .fe-itinerary-dot {
-            background: var(--fe-primary);
-            box-shadow: 0 0 0 6px rgba(15, 76, 129, 0.15);
-        }
-
-        .fe-itinerary-item:hover .fe-itinerary-card {
-            background: var(--fe-surface);
-            box-shadow: var(--fe-shadow-md);
-            border-color: var(--fe-border-active);
-        }
-
-        /* Packages Comparison Design */
-        .fe-packages-comparison {
-            padding: 10px 0;
-        }
-
-        .fe-pkg-compare-card {
+        .fe-card-section {
+            background: #ffffff;
+            border: 1px solid var(--fe-border-light);
             border-radius: var(--fe-radius-lg);
+            padding: 26px;
             box-shadow: var(--fe-shadow-sm);
-            border: 2px solid var(--fe-border);
-            background: var(--fe-surface);
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            overflow: hidden;
-            position: relative;
+            margin-bottom: 22px;
         }
 
-        .fe-pkg-compare-card:hover {
-            transform: translateY(-8px);
-            box-shadow: var(--fe-shadow-hover);
-            border-color: var(--fe-border-active);
-        }
-
-        .fe-pkg-compare-card[data-tier="vip"] {
-            border-color: #fde68a;
-        }
-
-        .fe-pkg-compare-card[data-tier="vip"]:hover {
-            border-color: #fbbf24;
-        }
-
-        .fe-pkg-compare-card[data-tier="gold"] {
-            border-color: #bae6fd;
-        }
-
-        .fe-pkg-compare-card[data-tier="gold"]:hover {
-            border-color: #38bdf8;
-        }
-
-        .fe-pkg-header {
-            padding: 30px 24px;
-            text-align: center;
-            border-bottom: 1px solid var(--fe-border);
-            position: relative;
-        }
-
-        .fe-pkg-header.vip {
-            background: linear-gradient(135deg, #fffbeb, #fef3c7);
-        }
-
-        .fe-pkg-header.gold {
-            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
-        }
-
-        .fe-pkg-header.economy {
-            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-        }
-
-        .fe-pkg-body {
-            padding: 24px;
-        }
-
-        .fe-season-price-group {
-            background: #f8fafc;
-            border: 1px solid var(--fe-border);
-            border-radius: var(--fe-radius-md);
-            padding: 18px;
-            margin-bottom: 15px;
-            transition: all 0.3s ease;
-        }
-
-        .fe-season-price-group:hover {
-            background: #f1f5f9;
-            border-color: var(--fe-border-active);
-        }
-
-        .fe-pkg-compare-badge {
-            display: inline-block;
-            margin-bottom: 10px;
-        }
-
-        .fe-pkg-badge {
-            font-size: 0.75rem;
+        .fe-card-section-title {
+            font-size: 1.2rem;
             font-weight: 800;
-            padding: 6px 14px;
-            border-radius: 50px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            color: var(--fe-primary-dark);
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 12px;
+        }
+
+        /* ─── Packages Tier Cards in Show ─── */
+        .fe-packages-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .fe-package-tier-box {
+            background: #ffffff;
+            border: 2px solid var(--fe-border-light);
+            border-radius: var(--fe-radius-md);
+            padding: 20px;
+            box-shadow: var(--fe-shadow-sm);
+            transition: var(--fe-transition);
+            position: relative;
+        }
+
+        .fe-package-tier-box:hover {
+            border-color: var(--fe-primary);
+            transform: translateY(-3px);
+            box-shadow: var(--fe-shadow-md);
+        }
+
+        .fe-tier-badge {
             display: inline-flex;
             align-items: center;
-            gap: 5px;
-        }
-
-        .badge-vip {
-            background: #fef3c7;
-            color: #92400e;
-            border: 1px solid #fde68a;
-        }
-
-        .badge-gold {
-            background: #e0f2fe;
-            color: #0369a1;
-            border: 1px solid #bae6fd;
-        }
-
-        .badge-economy {
-            background: #f1f5f9;
-            color: #475569;
-            border: 1px solid #e2e8f0;
-        }
-
-        /* Occupancy Price Box */
-        .fe-price-capsule {
-            background: var(--fe-surface);
-            border: 1px solid var(--fe-border);
-            border-radius: 10px;
-            padding: 10px;
-            text-align: center;
-            height: 100%;
-            transition: all 0.2s;
-        }
-
-        .fe-price-capsule:hover {
-            border-color: var(--fe-border-active);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
-        }
-
-        .fe-price-capsule span {
-            font-size: 0.75rem;
-            color: var(--fe-text-muted);
-            font-weight: 700;
-            display: block;
-            margin-bottom: 2px;
-        }
-
-        .fe-price-capsule strong {
-            font-size: 0.9rem;
-            color: var(--fe-primary);
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 50px;
             font-weight: 800;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
         }
 
-        /* Premium Sticky Booking Sidebar */
-        .fe-booking-sidebar {
-            position: sticky;
-            top: 110px;
-            z-index: 100;
+        .tier-vip { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+        .tier-gold { background: #fffbeb; color: #b45309; border: 1px solid #fef3c7; }
+        .tier-silver { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+        .tier-economy { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+
+        .fe-tier-hotel {
+            font-weight: 800;
+            font-size: 1.05rem;
+            color: var(--fe-primary-dark);
+            margin-bottom: 3px;
         }
 
-        .fe-booking-card {
-            background: var(--fe-surface);
-            border: 1px solid var(--fe-border);
-            border-radius: var(--fe-radius-lg);
-            box-shadow: var(--fe-shadow-md);
-            overflow: hidden;
-            transition: box-shadow 0.3s ease;
+        .fe-tier-stars {
+            color: #f59e0b;
+            font-size: 0.84rem;
+            margin-bottom: 14px;
         }
 
-        .fe-booking-card:hover {
-            box-shadow: var(--fe-shadow-hover);
+        .fe-tier-price-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 12px;
         }
 
-        .fe-booking-header {
-            background: linear-gradient(135deg, var(--fe-primary), #1e293b);
-            padding: 30px;
-            color: white;
+        .fe-tier-price-item {
+            font-size: 0.78rem;
+            color: var(--fe-text-muted);
+            font-weight: 600;
+        }
+
+        .fe-tier-price-item strong {
+            display: block;
+            color: var(--fe-primary-dark);
+            font-size: 0.92rem;
+            font-weight: 800;
+            margin-top: 2px;
+        }
+
+        /* ─── Timeline Itinerary ─── */
+        .fe-timeline {
             position: relative;
-            overflow: hidden;
+            padding-inline-start: 32px;
         }
 
-        .fe-booking-header::after {
+        .fe-timeline::before {
             content: '';
             position: absolute;
-            top: 0;
-            right: 0;
-            width: 180px;
-            height: 180px;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, transparent 75%);
+            top: 15px;
+            bottom: 15px;
+            inset-inline-start: 13px;
+            width: 3px;
+            background: linear-gradient(to bottom, var(--fe-primary), #cbd5e1);
+            border-radius: 10px;
+        }
+
+        .fe-timeline-step {
+            position: relative;
+            margin-bottom: 24px;
+        }
+
+        .fe-timeline-step:last-child {
+            margin-bottom: 0;
+        }
+
+        .fe-timeline-dot {
+            position: absolute;
+            top: 2px;
+            inset-inline-start: -32px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
-            transform: translate(30%, -30%);
-        }
-
-        /* Booking Sidebar Package Options */
-        .fe-pkg-selector {
+            background: var(--fe-primary);
+            color: #fff;
             display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-bottom: 25px;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.78rem;
+            box-shadow: 0 0 0 4px rgba(15, 76, 129, 0.15);
         }
 
-        .fe-pkg-card {
-            border: 2.5px solid var(--fe-border);
+        .fe-timeline-card {
+            background: #f8fafc;
+            border: 1px solid var(--fe-border-light);
             border-radius: var(--fe-radius-md);
             padding: 18px;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            background: white;
-            position: relative;
-            overflow: hidden;
+            transition: var(--fe-transition);
         }
 
-        .fe-pkg-card:hover {
-            border-color: var(--fe-border-active);
-            transform: translateY(-2px);
+        .fe-timeline-card:hover {
+            background: #ffffff;
+            border-color: var(--fe-border);
             box-shadow: var(--fe-shadow-sm);
         }
 
-        .fe-pkg-card.active {
-            background: #f8fafc;
+        .fe-timeline-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--fe-primary-dark);
+            margin-bottom: 6px;
+        }
+
+        /* ─── Inclusions & Exclusions ─── */
+        .fe-inc-exc-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+
+        .fe-inc-card {
+            background: #f0fdf4;
+            border: 1.5px solid #bbf7d0;
+            border-radius: var(--fe-radius-md);
+            padding: 20px;
+        }
+
+        .fe-exc-card {
+            background: #fef2f2;
+            border: 1.5px solid #fecaca;
+            border-radius: var(--fe-radius-md);
+            padding: 20px;
+        }
+
+        .fe-inc-card h5 { color: #166534; font-weight: 800; font-size: 1rem; margin-bottom: 12px; display: flex; align-items: center; gap: 7px; }
+        .fe-exc-card h5 { color: #991b1b; font-weight: 800; font-size: 1rem; margin-bottom: 12px; display: flex; align-items: center; gap: 7px; }
+
+        /* ─── Sticky Booking Sidebar Widget ─── */
+        .fe-sticky-sidebar {
+            position: sticky;
+            top: 100px;
+            z-index: 20;
+        }
+
+        .fe-booking-box {
+            background: #ffffff;
+            border: 1px solid var(--fe-border-light);
+            border-radius: var(--fe-radius-lg);
+            overflow: hidden;
             box-shadow: var(--fe-shadow-md);
         }
 
-        .fe-pkg-card.active[data-tier="vip"] {
-            border-color: #fbbf24;
-            background: #fffbeb;
+        .fe-booking-box-header {
+            background: linear-gradient(135deg, var(--fe-primary), #1e293b);
+            padding: 20px;
+            color: #ffffff;
+            position: relative;
         }
 
-        .fe-pkg-card.active[data-tier="gold"] {
-            border-color: #38bdf8;
-            background: #f0f9ff;
+        .fe-booking-starting {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.85;
+            margin-bottom: 3px;
         }
 
-        .fe-pkg-card.active[data-tier="economy"] {
-            border-color: #94a3b8;
-            background: #f8fafc;
-        }
-
-        .fe-pkg-card.active::before {
-            content: '\f058';
-            font-family: 'Font Awesome 6 Free';
+        .fe-booking-price-val {
+            font-size: 2.1rem;
             font-weight: 900;
-            position: absolute;
-            top: 18px;
-            right: 18px;
-            font-size: 1.35rem;
-            transition: all 0.3s ease;
+            line-height: 1;
+            margin: 0;
         }
 
-        .fe-pkg-card.active[data-tier="vip"]::before {
-            color: #d97706;
+        .fe-booking-box-body {
+            padding: 20px;
         }
 
-        .fe-pkg-card.active[data-tier="gold"]::before {
-            color: #0284c7;
-        }
-
-        .fe-pkg-card.active[data-tier="economy"]::before {
-            color: #475569;
-        }
-
-        [dir="rtl"] .fe-pkg-card.active::before {
-            left: 18px;
-            right: auto;
-        }
-
-        /* Quantity input buttons styling */
-        .fe-qty-wrapper {
+        .fe-form-group-label {
+            font-size: 0.86rem;
+            font-weight: 800;
+            color: var(--fe-primary-dark);
+            margin-bottom: 8px;
             display: flex;
             align-items: center;
-            border: 1px solid var(--fe-border-active);
-            border-radius: 12px;
-            background: #f8fafc;
-            overflow: hidden;
+            gap: 6px;
         }
 
-        .fe-qty-btn {
-            background: transparent;
-            border: none;
-            padding: 14px 20px;
-            color: var(--fe-text-main);
-            font-weight: 800;
+        /* Package selector cards */
+        .fe-pkg-select-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .fe-pkg-select-card {
+            border: 2px solid var(--fe-border);
+            border-radius: var(--fe-radius-md);
+            padding: 10px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: var(--fe-transition);
+            background: #f8fafc;
+            text-align: center;
         }
 
-        .fe-qty-btn:hover {
+        .fe-pkg-select-card:hover {
+            border-color: var(--fe-primary);
+            background: #ffffff;
+        }
+
+        .fe-pkg-select-card.active {
+            border-color: var(--fe-primary);
+            background: #eff6ff;
+            box-shadow: 0 4px 12px rgba(15, 76, 129, 0.12);
+        }
+
+        .fe-pkg-select-card .card-tier {
+            font-size: 0.72rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+            color: var(--fe-primary);
+        }
+
+        .fe-pkg-select-card .card-name {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--fe-primary-dark);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Occupancy Pills */
+        .fe-occ-pills-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+
+        .fe-occ-pill-btn {
+            border: 1.5px solid var(--fe-border);
+            border-radius: 8px;
+            padding: 8px 4px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            background: #ffffff;
+            color: var(--fe-text-main);
+            text-align: center;
+            cursor: pointer;
+            transition: var(--fe-transition);
+        }
+
+        .fe-occ-pill-btn:hover {
+            border-color: var(--fe-primary);
+            background: #f8fafc;
+        }
+
+        .fe-occ-pill-btn.active {
+            background: var(--fe-primary);
+            color: #ffffff;
+            border-color: var(--fe-primary);
+            box-shadow: 0 4px 10px rgba(15, 76, 129, 0.2);
+        }
+
+        /* Travelers count stepper */
+        .fe-stepper-box {
+            display: flex;
+            align-items: center;
+            border: 1.5px solid var(--fe-border);
+            border-radius: 10px;
+            overflow: hidden;
+            background: #ffffff;
+            margin-bottom: 16px;
+        }
+
+        .fe-stepper-btn {
+            width: 44px;
+            height: 42px;
+            border: none;
+            background: #f1f5f9;
+            color: var(--fe-primary-dark);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--fe-transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fe-stepper-btn:hover {
             background: #e2e8f0;
         }
 
-        .fe-qty-input {
+        .fe-stepper-input {
+            flex-grow: 1;
             border: none;
             text-align: center;
-            border-left: 1px solid var(--fe-border-active);
-            border-right: 1px solid var(--fe-border-active);
-            border-radius: 0;
-            background: transparent;
+            font-size: 1.1rem;
             font-weight: 800;
-        }
-
-        [dir="rtl"] .fe-qty-input {
-            border-left: 1px solid var(--fe-border-active);
-            border-right: 1px solid var(--fe-border-active);
-        }
-
-        .fe-booking-input {
-            width: 100%;
-            padding: 14px 18px;
-            border: 1px solid var(--fe-border-active);
-            border-radius: 12px;
-            background-color: #f8fafc;
-            color: var(--fe-text-main);
-            font-weight: 700;
-            font-size: 0.95rem;
+            color: var(--fe-primary-dark);
             outline: none;
-            appearance: none;
-            transition: all 0.3s ease;
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 16px center;
-            background-size: 16px;
-            padding-right: 45px;
+            background: transparent;
         }
 
-        [dir="rtl"] .fe-booking-input {
-            background-position: left 16px center;
-            padding-right: 18px;
-            padding-left: 45px;
-        }
-
-        .fe-booking-input:focus {
-            border-color: var(--fe-primary);
-            background-color: var(--fe-surface);
-            box-shadow: 0 0 0 4px rgba(15, 76, 129, 0.1);
-        }
-
-        .fe-occ-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-        }
-
-        .fe-occ-btn {
+        /* Addons Checkbox List */
+        .fe-addon-item-box {
             background: #f8fafc;
-            border: 1px solid var(--fe-border-active);
-            border-radius: 12px;
-            padding: 12px 8px;
-            text-align: center;
+            border: 1px solid var(--fe-border-light);
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: var(--fe-transition);
+        }
+
+        .fe-addon-item-box:hover {
+            background: #ffffff;
+            border-color: var(--fe-border);
+        }
+
+        /* Total Calculation Box */
+        .fe-total-calc-box {
+            background: #f8fafc;
+            border: 1.5px dashed #cbd5e1;
+            border-radius: var(--fe-radius-md);
+            padding: 14px 18px;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .fe-total-calc-box .label {
+            font-size: 0.88rem;
             font-weight: 700;
-            font-size: 0.85rem;
             color: var(--fe-text-muted);
         }
 
-        .fe-occ-btn:hover {
-            background: #f1f5f9;
-            border-color: #cbd5e1;
-            color: var(--fe-text-main);
-        }
-
-        .fe-occ-btn.active {
-            background: var(--fe-primary-light);
-            border-color: var(--fe-primary);
-            color: var(--fe-primary);
-            box-shadow: 0 4px 12px rgba(15, 76, 129, 0.05);
-        }
-
-        /* Extras checkboxes styling */
-        .fe-addon-item {
-            display: flex;
-            align-items: center;
-            padding: 16px;
-            border: 1px solid var(--fe-border);
-            border-radius: 12px;
-            background: #f8fafc;
-            transition: all 0.3s ease;
-        }
-
-        .fe-addon-item:hover {
-            border-color: var(--fe-border-active);
-            background: var(--fe-surface);
-            box-shadow: var(--fe-shadow-sm);
-        }
-
-        /* Total estimation box styling */
-        .fe-total-box {
-            background: linear-gradient(135deg, var(--fe-primary-light), #e0f2fe);
-            border: 1px solid #bae6fd;
-            padding: 20px 24px;
-            border-radius: var(--fe-radius-md);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .fe-total-label {
-            font-weight: 800;
-            color: var(--fe-primary-dark);
-            font-size: 1.05rem;
-        }
-
-        .fe-total-price {
-            font-size: 1.8rem;
+        .fe-total-calc-box .amount {
+            font-size: 1.5rem;
             font-weight: 900;
             color: var(--fe-primary);
-            display: flex;
-            align-items: baseline;
-            gap: 5px;
         }
 
-        .fe-total-price span {
-            font-size: 0.95rem;
-            font-weight: 700;
-        }
-
-        .fe-btn-submit {
-            background: linear-gradient(135deg, var(--fe-primary), #1a6bb5);
-            color: white;
-            border: none;
+        /* Submit Button */
+        .fe-btn-book-cta {
             width: 100%;
-            padding: 18px;
-            border-radius: 14px;
-            font-size: 1.1rem;
+            padding: 14px 20px;
+            border-radius: var(--fe-radius-md);
+            border: none;
+            background: linear-gradient(135deg, var(--fe-primary), #1e293b);
+            color: #ffffff;
+            font-size: 1rem;
             font-weight: 800;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 6px 18px rgba(15, 76, 129, 0.25);
+            transition: var(--fe-transition);
             display: flex;
-            justify-content: center;
             align-items: center;
-            gap: 10px;
-            box-shadow: 0 4px 15px rgba(15, 76, 129, 0.3);
+            justify-content: center;
+            gap: 8px;
+            text-decoration: none;
         }
 
-        .fe-btn-submit:hover:not(:disabled) {
+        .fe-btn-book-cta:hover {
+            background: linear-gradient(135deg, var(--fe-primary-hover), #0f172a);
+            color: #ffffff;
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(15, 76, 129, 0.4);
+            box-shadow: 0 8px 24px rgba(15, 76, 129, 0.35);
         }
 
-        .fe-btn-submit:disabled {
-            background: #cbd5e1;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        /* WhatsApp contact widget */
-        .fe-whatsapp-card {
-            background: var(--fe-surface);
-            padding: 30px;
-            border-radius: var(--fe-radius-lg);
-            box-shadow: var(--fe-shadow-sm);
-            border: 1px solid var(--fe-border);
+        /* WhatsApp Card */
+        .fe-whatsapp-help-box {
+            margin-top: 16px;
+            background: #ffffff;
+            border: 1px solid #bbf7d0;
+            border-radius: var(--fe-radius-md);
+            padding: 16px;
             text-align: center;
-            transition: all 0.3s ease;
-        }
-        .fe-whatsapp-card:hover {
-            box-shadow: var(--fe-shadow-md);
-            border-color: var(--fe-border-active);
-        }
-        .fe-whatsapp-btn {
-            background: linear-gradient(135deg, #25d366, #128c7e);
-            color: white;
-            border: none;
-            border-radius: 50px;
-            font-weight: 800;
-            box-shadow: 0 4px 15px rgba(37,211,102,0.3);
-            transition: all 0.3s;
-        }
-        .fe-whatsapp-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(37,211,102,0.4);
-            color: white;
+            box-shadow: var(--fe-shadow-sm);
         }
 
-        /* Swiper Slider Overrides */
-        .swiper-nav-glass {
-            width: 48px;
-            height: 48px;
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(8px);
-            border-radius: 50%;
-            color: var(--fe-primary-dark) !important;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            transition: all 0.3s;
-        }
-        .swiper-nav-glass::after {
-            font-size: 1.1rem !important;
-            font-weight: 900;
-        }
-        .swiper-nav-glass:hover {
-            background: white;
-            transform: scale(1.05);
-        }
-
-        /* Reviews widgets */
-        .fe-review-card {
-            transition: all 0.3s ease;
-        }
-        .fe-review-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--fe-shadow-md) !important;
-            border-color: var(--fe-border-active) !important;
-        }
-        .fe-review-avatar {
-            background: var(--fe-primary-light) !important;
-            color: var(--fe-primary) !important;
-            border-radius: var(--fe-radius-md) !important;
-            box-shadow: inset 0 0 10px rgba(15, 76, 129, 0.05);
-        }
-
-        /* Responsive Grid Layout Rules */
-        @media (max-width: 1024px) {
-            .fe-details-grid { grid-template-columns: 1fr; gap: 40px; }
-            .fe-booking-sidebar { position: static; margin-top: 20px; }
+        /* ─── Responsive Queries ─── */
+        @media (max-width: 1100px) {
+            .fe-details-page { padding-top: 90px; }
+            .fe-layout-grid { grid-template-columns: 1fr; }
+            .fe-highlights-grid { grid-template-columns: 1fr 1fr; }
+            .fe-sticky-sidebar { position: static; }
         }
         @media (max-width: 768px) {
-            .fe-trip-title { font-size: 1.8rem !important; }
-            .fe-details-tabs { gap: 4px; border-radius: 20px; padding: 4px; }
-            .fe-tab-btn { padding: 10px 16px; font-size: 0.85rem; }
-            .fe-tab-pane { padding: 25px; }
+            .fe-details-page { padding-top: 85px; }
+            .fe-trip-title { font-size: 1.5rem; }
+            .fe-highlights-grid { grid-template-columns: 1fr; }
+            .fe-inc-exc-grid { grid-template-columns: 1fr; }
+            .fe-gallery-main-swiper { height: 240px; }
+            .fe-gallery-thumbs-swiper { height: 56px; padding: 6px 8px; }
+            .fe-thumb-slide { width: 70px !important; }
         }
     </style>
 @endpush
 
 @section('content')
-    <div style="height: 85px; background: var(--color-bg);"></div>
+<div class="fe-details-page">
+    <div class="fe-container">
 
-    <section class="fe-details-page" style="margin-top: 30px;">
-        <div class="fe-container">
-            {{-- Header Card --}}
-            <div class="fe-trip-header-card">
-                <nav class="fe-breadcrumb">
-                    <a href="{{ route('home') }}">{{ __('Home') }}</a>
-                    <i class="fas fa-chevron-right"></i>
-                    <a href="{{ route('trips.index') }}">{{ __('Trips') }}</a>
-                    <i class="fas fa-chevron-right"></i>
-                    <span>{{ Str::limit($title, 40) }}</span>
-                </nav>
+        {{-- ── Hero Header Card ── --}}
+        <div class="fe-trip-header">
+            <div class="fe-breadcrumb">
+                <a href="{{ route('home') }}"><i class="fas fa-home me-1"></i>{{ $locale == 'ar' ? 'الرئيسية' : 'Home' }}</a>
+                <span class="sep">›</span>
+                <a href="{{ route('trips.index') }}">{{ $locale == 'ar' ? 'الرحلات والباقات' : 'Trips & Packages' }}</a>
+                <span class="sep">›</span>
+                <span class="current">{{ $title }}</span>
+            </div>
 
-                <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap;">
-                    <div style="flex: 1; min-width: 300px;">
-                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                            @if($trip->is_featured)
-                                <span class="fe-premium-badge"><i class="fas fa-crown me-1"></i> {{ __('Premium Selection') }}</span>
-                            @endif
-                            <span style="color: #64748b; font-weight: 700; font-size: 0.85rem; background: #f1f5f9; padding: 4px 12px; border-radius: 50px;">
-                                <i class="fas fa-hashtag me-1"></i> {{ $trip->id }}
+            <div class="fe-title-wrapper">
+                <div>
+                    <h1 class="fe-trip-title">{{ $title }}</h1>
+                    <div class="fe-meta-pills">
+                        @if($toCountry || $toCity)
+                            <span class="fe-meta-pill pill-location">
+                                <i class="fas fa-map-marker-alt text-danger"></i>
+                                {{ $fromCity ? $fromCity . ' ➔ ' : '' }}{{ $toCountry }}{{ $toCity ? ' • ' . $toCity : '' }}
                             </span>
-                        </div>
-                        <h1 class="fe-trip-title">{{ $title }}</h1>
-                        <div class="fe-details-meta">
-                            <div class="fe-details-meta-item">
-                                <i class="fas fa-star text-warning me-2"></i>
-                                <span class="rating-val">{{ number_format($avgRating, 1) }}</span>
-                                <span class="reviews-count">({{ $trip->rates->count() }} {{ __('Reviews') }})</span>
-                            </div>
-                            <div class="fe-details-meta-item">
-                                <i class="fas fa-map-marker-alt text-danger me-2"></i>
-                                {{ $toCountry }} • {{ $toCity }}
-                            </div>
-                            <div class="fe-details-meta-item">
-                                <i class="fas fa-clock text-primary me-2"></i>
+                        @endif
+                        @if($trip->duration)
+                            <span class="fe-meta-pill pill-duration">
+                                <i class="fas fa-clock text-success"></i>
                                 {{ $trip->duration }}
-                            </div>
-                        </div>
-                    </div>
-                    <div style="display: flex; gap: 15px;">
-                        <button class="fe-icon-btn"><i class="fas fa-share-alt"></i></button>
-                        @auth
-                            <button type="button" class="fe-icon-btn favorite-trigger {{ auth()->user()->favorites()->where('trip_id', $trip->id)->exists() ? 'active text-danger' : '' }}" onclick="toggleFavorite(this)" data-trip-id="{{ $trip->id }}">
-                                <i class="fas fa-heart"></i>
-                            </button>
-                        @endauth
+                            </span>
+                        @endif
+                        <span class="fe-meta-pill pill-rating">
+                            <i class="fas fa-star text-warning"></i>
+                            {{ number_format($avgRating, 1) }} ({{ $trip->rates->count() }} {{ $locale == 'ar' ? 'تقييم' : 'Reviews' }})
+                        </span>
+                        <span class="fe-meta-pill">
+                            <i class="fas fa-shield-alt text-primary"></i>
+                            {{ $locale == 'ar' ? 'تأكيد فوري' : 'Instant Confirmation' }}
+                        </span>
                     </div>
                 </div>
-            </div>
 
-            {{-- Gallery Desktop Premium Grid --}}
-            <div class="fe-gallery-wrapper d-none d-lg-block">
-                @if(count($trip->images) >= 5)
-                    <div class="fe-gallery-airbnb">
-                        <div class="fe-gallery-img-container main-img">
-                            <img src="{{ asset('storage/' . $trip->images[0]->image_path) }}" alt="{{ $title }}">
-                        </div>
-                        <div class="fe-gallery-img-container">
-                            <img src="{{ asset('storage/' . $trip->images[1]->image_path) }}" alt="{{ $title }}">
-                        </div>
-                        <div class="fe-gallery-img-container">
-                            <img src="{{ asset('storage/' . $trip->images[2]->image_path) }}" alt="{{ $title }}">
-                        </div>
-                        <div class="fe-gallery-img-container">
-                            <img src="{{ asset('storage/' . $trip->images[3]->image_path) }}" alt="{{ $title }}">
-                        </div>
-                        <div class="fe-gallery-img-container">
-                            <img src="{{ asset('storage/' . $trip->images[4]->image_path) }}" alt="{{ $title }}">
-                            @if(count($trip->images) > 5)
-                                <div class="fe-gallery-overlay-badge" style="cursor: pointer;">
-                                    <i class="fas fa-th me-2"></i> +{{ count($trip->images) - 5 }} {{ __('Photos') }}
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-                @elseif(count($trip->images) >= 3)
-                    <div class="fe-gallery-grid-3">
-                        <div class="fe-gallery-img-container">
-                            <img src="{{ asset('storage/' . $trip->images[0]->image_path) }}" alt="{{ $title }}">
-                        </div>
-                        <div class="fe-gallery-col-stack">
-                            <div class="fe-gallery-img-container">
-                                <img src="{{ asset('storage/' . $trip->images[1]->image_path) }}" alt="{{ $title }}">
-                            </div>
-                            <div class="fe-gallery-img-container">
-                                <img src="{{ asset('storage/' . $trip->images[2]->image_path) }}" alt="{{ $title }}">
-                                @if(count($trip->images) > 3)
-                                    <div class="fe-gallery-overlay-badge" style="cursor: pointer;">
-                                        <i class="fas fa-th me-2"></i> +{{ count($trip->images) - 3 }} {{ __('Photos') }}
-                                    </div>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                @elseif(count($trip->images) == 2)
-                    <div class="fe-gallery-grid-2">
-                        <div class="fe-gallery-img-container">
-                            <img src="{{ asset('storage/' . $trip->images[0]->image_path) }}" alt="{{ $title }}">
-                        </div>
-                        <div class="fe-gallery-img-container">
-                            <img src="{{ asset('storage/' . $trip->images[1]->image_path) }}" alt="{{ $title }}">
-                        </div>
-                    </div>
-                @else
-                    @php
-                                            $singleImage = $trip->images->first();
-                        $imageSrc = $singleImage ? asset('storage/' . $singleImage->image_path) : 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1200&q=80';
-                    @endphp
-                    <div class="fe-single-image-card rounded-4 shadow-sm overflow-hidden" style="width: 100%; height: 500px; position: relative; background: #eee;">
-                        <img src="{{ $imageSrc }}" alt="{{ $title }}" style="width: 100%; height: 100%; object-fit: cover;">
-                        @if($singleImage)
-                            <div class="fe-gallery-overlay-badge">
-                                <i class="fas fa-image me-2"></i> 1 {{ __('Photo') }}
-                            </div>
-                        @endif
-                    </div>
-                @endif
+                <div class="fe-header-actions">
+                    <button type="button" class="fe-action-icon-btn" onclick="navigator.clipboard.writeText(window.location.href); Swal.fire({icon:'success',title:'{{ $locale == 'ar' ? 'تم نسخ الرابط للحافظة' : 'Link copied to clipboard' }}',timer:1500,showConfirmButton:false});" title="{{ $locale == 'ar' ? 'مشاركة' : 'Share' }}">
+                        <i class="fas fa-share-alt"></i>
+                    </button>
+                    @auth
+                        <button type="button" class="fe-action-icon-btn favorite-trigger {{ auth()->user()->favorites()->where('trip_id', $trip->id)->exists() ? 'text-danger' : '' }}" onclick="toggleFavorite(this)" data-trip-id="{{ $trip->id }}" title="{{ $locale == 'ar' ? 'المفضلة' : 'Favorite' }}">
+                            <i class="fas fa-heart"></i>
+                        </button>
+                    @endauth
+                </div>
             </div>
+        </div>
 
-            {{-- Gallery Mobile Swiper --}}
-            <div class="fe-gallery-mobile-wrapper d-block d-lg-none">
-                <div class="swiper fe-mobile-swiper" style="width: 100%; height: 350px;">
-                    <div class="swiper-wrapper">
-                        @forelse($trip->images as $img)
+        {{-- ── Single Compact Unified Showcase Gallery (Desktop, Tablet & Mobile) ── --}}
+        <div class="fe-gallery-unified-wrapper">
+            <div class="fe-gallery-main-card">
+                {{-- Main Gallery Swiper --}}
+                <div class="swiper fe-gallery-main-swiper" id="mainGallerySwiper">
+                    <div class="swiper-wrapper" id="trip-lightgallery">
+                        @forelse($trip->images as $index => $img)
                             <div class="swiper-slide">
-                                <img src="{{ asset('storage/' . $img->image_path) }}" alt="{{ $title }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                <a href="{{ asset('storage/' . $img->image_path) }}" class="fe-main-slide-link" data-src="{{ asset('storage/' . $img->image_path) }}" data-sub-html="<h4>{{ $title }}</h4><p>{{ $locale == 'ar' ? 'صورة' : 'Photo' }} {{ $index + 1 }} / {{ $imgCount }}</p>">
+                                    <img src="{{ asset('storage/' . $img->image_path) }}" alt="{{ $title }}">
+                                    <div class="fe-slide-zoom-icon"><i class="fas fa-expand"></i></div>
+                                </a>
                             </div>
                         @empty
                             <div class="swiper-slide">
-                                <img src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1200&q=80" alt="{{ $title }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                <a href="{{ $fallbackImg }}" class="fe-main-slide-link" data-src="{{ $fallbackImg }}" data-sub-html="<h4>{{ $title }}</h4>">
+                                    <img src="{{ $fallbackImg }}" alt="{{ $title }}">
+                                </a>
                             </div>
                         @endforelse
                     </div>
-                    <div class="swiper-pagination" style="bottom: 15px;"></div>
-                </div>
-            </div>
 
-            <div class="fe-details-grid">
-                <div class="fe-details-content">
-                    {{-- Tabs Navigation --}}
-                    <div class="fe-details-tabs" id="tripTabs">
-                        <button class="fe-tab-btn active" data-tab="about">{{ __('Overview') }}</button>
-                        @if($hasPackages)
-                            <button class="fe-tab-btn" data-tab="packages">{{ $locale == 'ar' ? 'الباقات السياحية' : 'Tour Packages' }}</button>
-                        @endif
-                        <button class="fe-tab-btn" data-tab="itinerary">{{ __('Itinerary') }}</button>
-                        @if($includes || $excludes)<button class="fe-tab-btn" data-tab="includes">{{ __('Inclusions') }}</button>@endif
-                        @if($policy)<button class="fe-tab-btn" data-tab="policy">{{ __('Policies') }}</button>@endif
-                        <button class="fe-tab-btn" data-tab="reviews">{{ __('Reviews') }} ({{ $trip->rates->count() }})</button>
+                    {{-- Navigation Arrows --}}
+                    @if($imgCount > 1)
+                        <div class="swiper-button-next fe-swiper-arrow"></div>
+                        <div class="swiper-button-prev fe-swiper-arrow"></div>
+                    @endif
+
+                    {{-- Overlays --}}
+                    <div class="fe-gallery-badge-top">
+                        <i class="fas fa-crown text-warning"></i> {{ $locale == 'ar' ? 'تجربة سياحية مميزة' : 'Featured Tour Experience' }}
                     </div>
 
-                    {{-- Tab Content: About --}}
-                    <div class="fe-tab-pane active" id="tab-about">
-                        <div class="fe-rich-text" style="font-size: 1.15rem; line-height: 1.9; color: #475569;">
+                    <div class="fe-gallery-counter-badge">
+                        <i class="fas fa-camera me-1"></i> <span id="gallery-current-idx">1</span> / {{ max(1, $imgCount) }}
+                    </div>
+
+                    @if($imgCount > 1)
+                        <button type="button" class="fe-gallery-fullscreen-btn" onclick="triggerLightGallery()">
+                            <i class="fas fa-images"></i>
+                            <span>{{ $locale == 'ar' ? "عرض كافة الصور ($imgCount)" : "View All Photos ($imgCount)" }}</span>
+                        </button>
+                    @endif
+                </div>
+
+                {{-- Interactive Thumbnails Strip --}}
+                @if($imgCount > 1)
+                    <div class="swiper fe-gallery-thumbs-swiper" id="thumbsGallerySwiper">
+                        <div class="swiper-wrapper">
+                            @foreach($trip->images as $index => $img)
+                                <div class="swiper-slide fe-thumb-slide {{ $index === 0 ? 'active-thumb' : '' }}" data-index="{{ $index }}">
+                                    <img src="{{ asset('storage/' . $img->image_path) }}" alt="{{ $title }}">
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+            </div>
+        </div>
+
+        {{-- ── Key Highlights Feature Strip ── --}}
+        <div class="fe-highlights-grid">
+            <div class="fe-highlight-box">
+                <div class="fe-highlight-icon icon-blue"><i class="fas fa-plane-departure"></i></div>
+                <div class="fe-highlight-info">
+                    <h6>{{ $locale == 'ar' ? 'الوجهة والمسار' : 'Destination & Route' }}</h6>
+                    <p>{{ $fromCity ? $fromCity . ' ➔ ' : '' }}{{ $toCountry }}</p>
+                </div>
+            </div>
+            <div class="fe-highlight-box">
+                <div class="fe-highlight-icon icon-amber"><i class="fas fa-hotel"></i></div>
+                <div class="fe-highlight-info">
+                    <h6>{{ $locale == 'ar' ? 'الإقامة والفنادق' : 'Accommodations' }}</h6>
+                    <p>{{ $hasPackages ? ($locale == 'ar' ? 'فنادق ومنتجعات مميزة' : 'Premium Hotels & Resorts') : ($locale == 'ar' ? 'إقامة مختارة بعناية' : 'Curated Stays') }}</p>
+                </div>
+            </div>
+            <div class="fe-highlight-box">
+                <div class="fe-highlight-icon icon-emerald"><i class="fas fa-calendar-check"></i></div>
+                <div class="fe-highlight-info">
+                    <h6>{{ $locale == 'ar' ? 'المدة الزمنية' : 'Duration & Pacing' }}</h6>
+                    <p>{{ $trip->duration ?: ($locale == 'ar' ? 'جدول مرن' : 'Flexible Schedule') }}</p>
+                </div>
+            </div>
+            <div class="fe-highlight-box">
+                <div class="fe-highlight-icon icon-purple"><i class="fas fa-user-shield"></i></div>
+                <div class="fe-highlight-info">
+                    <h6>{{ $locale == 'ar' ? 'راحة وأمان' : 'Peace of Mind' }}</h6>
+                    <p>{{ $locale == 'ar' ? 'وكالة معتمدة وحجز آمن' : 'Verified Agency & Safe Pay' }}</p>
+                </div>
+            </div>
+        </div>
+
+        {{-- ── Main Two-Column Layout ── --}}
+        <div class="fe-layout-grid">
+
+            {{-- Left Content Column --}}
+            <div>
+                {{-- Tabs Header --}}
+                <div class="fe-tabs-header" id="detailsTabs">
+                    <button type="button" class="fe-tab-nav-btn active" data-tab="overview">
+                        <i class="fas fa-align-left"></i> {{ $locale == 'ar' ? 'نظرة عامة' : 'Overview' }}
+                    </button>
+                    @if($hasPackages)
+                        <button type="button" class="fe-tab-nav-btn" data-tab="packages">
+                            <i class="fas fa-layer-group"></i> {{ $locale == 'ar' ? 'الباقات والفنادق' : 'Packages & Hotels' }}
+                        </button>
+                    @endif
+                    <button type="button" class="fe-tab-nav-btn" data-tab="itinerary">
+                        <i class="fas fa-route"></i> {{ $locale == 'ar' ? 'جدول الرحلة' : 'Itinerary' }}
+                    </button>
+                    @if($includes || $excludes)
+                        <button type="button" class="fe-tab-nav-btn" data-tab="inclusions">
+                            <i class="fas fa-list-check"></i> {{ $locale == 'ar' ? 'المشتملات' : 'Inclusions' }}
+                        </button>
+                    @endif
+                    @if($policy)
+                        <button type="button" class="fe-tab-nav-btn" data-tab="policies">
+                            <i class="fas fa-file-contract"></i> {{ $locale == 'ar' ? 'السياسات والشروط' : 'Policies' }}
+                        </button>
+                    @endif
+                    <button type="button" class="fe-tab-nav-btn" data-tab="reviews">
+                        <i class="fas fa-star"></i> {{ $locale == 'ar' ? 'التقييمات' : 'Reviews' }} ({{ $trip->rates->count() }})
+                    </button>
+                </div>
+
+                {{-- Tab: Overview --}}
+                <div class="fe-tab-pane active" id="tab-overview">
+                    <div class="fe-card-section">
+                        <h3 class="fe-card-section-title">
+                            <i class="fas fa-info-circle text-primary"></i> {{ $locale == 'ar' ? 'عن هذه التجربة السياحية' : 'About This Experience' }}
+                        </h3>
+                        <div style="font-size: 1.05rem; line-height: 1.85; color: #334155;">
                             {!! $description !!}
                         </div>
                     </div>
+                </div>
 
-                    {{-- Tab Content: Packages --}}
-                    @if($hasPackages)
-                        <div class="fe-tab-pane" id="tab-packages">
-                            <div class="fe-packages-comparison">
-                                <div class="d-flex align-items-center gap-3 mb-4">
-                                    <div class="fe-icon-circle bg-primary-light text-primary d-flex align-items-center justify-content-center rounded-circle" style="width: 50px; height: 50px; background: #eff6ff; font-size: 1.3rem;">
-                                        <i class="fas fa-layer-group"></i>
-                                    </div>
-                                    <div>
-                                        <h3 class="font-w900 m-0 text-dark" style="font-size: 1.5rem;">{{ $locale == 'ar' ? 'تفاصيل مقارنة الباقات السياحية' : 'Tour Packages Comparison Details' }}</h3>
-                                        <p class="text-muted small m-0">{{ $locale == 'ar' ? 'اختر الباقة المناسبة لاحتياجاتك وقارن بين الفنادق والأسعار' : 'Choose the best package for your needs and compare hotels and pricing' }}</p>
-                                    </div>
-                                </div>
-
-                                <div class="row g-4">
-                                    @foreach($trip->packages as $pkg)
-                                        @php
-                                                                            $tierKey = strtolower($pkg->tier);
-                                            $pkgName = $locale == 'ar' ? $pkg->name_ar : $pkg->name_en;
-
-                                            // Tier specific styling details
-                                            $tierColor = 'var(--fe-text-muted)';
-                                            $tierBg = '#f1f5f9';
-                                            $cardBorder = 'var(--fe-border)';
-                                            $tierBadgeClass = 'badge-economy';
-                                            $crownIcon = '';
-
-                                            if ($tierKey == 'vip') {
-                                                $tierColor = '#d97706'; // VIP Amber/Gold
-                                                $tierBg = 'linear-gradient(135deg, #fef3c7, #fde68a)';
-                                                $cardBorder = '#fbbf24';
-                                                $tierBadgeClass = 'badge-vip';
-                                                $crownIcon = '<i class="fas fa-crown text-warning me-1"></i>';
-                                            } elseif ($tierKey == 'gold') {
-                                                $tierColor = '#0284c7'; // Gold/Sky Blue
-                                                $tierBg = 'linear-gradient(135deg, #e0f2fe, #bae6fd)';
-                                                $cardBorder = '#38bdf8';
-                                                $tierBadgeClass = 'badge-gold';
-                                                $crownIcon = '<i class="fas fa-gem text-info me-1"></i>';
-                                            } else {
-                                                $tierColor = '#475569'; // Economy/Slate
-                                                $tierBg = 'linear-gradient(135deg, #f1f5f9, #e2e8f0)';
-                                                $cardBorder = '#cbd5e1';
-                                                $tierBadgeClass = 'badge-economy';
-                                                $crownIcon = '<i class="fas fa-wallet text-secondary me-1"></i>';
-                                            }
-                                        @endphp
-                                        <div class="col-md-6 col-lg-4">
-                                            <div class="fe-pkg-compare-card h-100" data-tier="{{ $tierKey }}">
-                                                <div class="fe-pkg-header {{ $tierKey }}">
-                                                    <div class="fe-pkg-compare-badge mb-2">
-                                                        <span class="fe-pkg-badge {{ $tierBadgeClass }}">
-                                                            {!! $crownIcon !!} {{ \App\Models\TripPackage::TIER_LABELS[$tierKey][$locale] ?? $pkg->tier }}
-                                                        </span>
-                                                    </div>
-                                                    <h4 class="font-w900 text-dark mb-1" style="font-size: 1.3rem;">{{ $pkgName ?: __('Standard Package') }}</h4>
-                                                    <p class="text-muted small mb-0 font-w600"><i class="fas fa-hotel opacity-60 me-1"></i> {{ $pkg->hotel_name }}</p>
-                                                    <div class="text-warning mt-2">
-                                                        @for($i = 0; $i < $pkg->hotel_stars; $i++)<i class="fas fa-star fs-14"></i>@endfor
-                                                        @for($i = $pkg->hotel_stars; $i < 5; $i++)<i class="far fa-star fs-14 text-muted opacity-40"></i>@endfor
-                                                    </div>
-                                                </div>
-                                                <div class="fe-pkg-body">
-                                                    <h5 class="font-w800 text-dark mb-3" style="font-size: 0.95rem; border-bottom: 1px solid var(--fe-border); padding-bottom: 8px;">
-                                                        <i class="fas fa-tags me-2 text-primary"></i>{{ $locale == 'ar' ? 'تفاصيل الأسعار والخيارات' : 'Pricing & Options Details' }}
-                                                    </h5>
-
-                                                    <div class="fe-pkg-prices-list">
-                                                        @foreach($trip->seasons as $season)
-                                                            <div class="fe-season-price-group">
-                                                                <div class="font-w800 text-dark mb-2" style="font-size: 0.85rem; display: flex; justify-content: space-between;">
-                                                                    <span><i class="far fa-calendar-alt text-primary me-2"></i>{{ $season->label }}</span>
-                                                                </div>
-                                                                <div class="row g-2">
-                                                                    @foreach(['double', 'single', 'triple', 'quadruple', 'quintuple'] as $occ)
-                                                                        @php
-                                                                            $priceObj = $pkg->prices->where('season_id', $season->id)->where('occupancy_type', $occ)->first();
-                                                                            $occLabel = [
-                                                                                'single' => $locale == 'ar' ? 'فردية' : 'Single',
-                                                                                'double' => $locale == 'ar' ? 'ثنائية' : 'Double',
-                                                                                'triple' => $locale == 'ar' ? 'ثلاثية' : 'Triple',
-                                                                                'quadruple' => $locale == 'ar' ? '4 أشخاص' : '4 Persons',
-                                                                                'quintuple' => $locale == 'ar' ? '5 أشخاص' : '5 Persons',
-                                                                            ][$occ];
-                                                                            $priceVal = $priceObj && $priceObj->price > 0 ? number_format($priceObj->price, 0) . ' ' . __('SAR') : ($locale == 'ar' ? 'غير متوفر' : 'N/A');
-                                                                        @endphp
-                                                                        <div class="col-6">
-                                                                            <div class="fe-price-capsule">
-                                                                                <span>{{ $occLabel }}</span>
-                                                                                <strong>{{ $priceVal }}</strong>
-                                                                            </div>
-                                                                        </div>
-                                                                    @endforeach
-                                                                </div>
-                                                            </div>
-                                                        @endforeach
-                                                    </div>
-
-                                                    @if($pkg->hotel_website)
-                                                        <div class="text-center mt-3">
-                                                            <a href="{{ $pkg->hotel_website }}" target="_blank" class="fe-btn fe-btn-outline w-100" style="padding: 10px 16px; font-size: 0.9rem;">
-                                                                <i class="fas fa-external-link-alt me-1"></i> {{ $locale == 'ar' ? 'زيارة موقع الفندق الرسمي' : 'Visit Official Hotel Website' }}
-                                                            </a>
-                                                        </div>
-                                                    @endif
-
-                                                    <button type="button" class="fe-btn fe-btn-primary w-100 mt-2 select-pkg-btn" data-id="{{ $pkg->id }}" style="padding: 10px 16px; font-size: 0.9rem; border: none;">
-                                                        <i class="fas fa-check-circle me-1"></i> {{ $locale == 'ar' ? 'اختيار وحجز هذه الباقة' : 'Select & Book This Package' }}
-                                                    </button>
-                                                </div>
-                                            </div>
+                {{-- Tab: Packages & Hotels --}}
+                @if($hasPackages)
+                    <div class="fe-tab-pane" id="tab-packages">
+                        <div class="fe-card-section">
+                            <h3 class="fe-card-section-title">
+                                <i class="fas fa-boxes text-primary"></i> {{ $locale == 'ar' ? 'خيارات الباقات ومستويات الإقامة' : 'Package Tiers & Accommodation' }}
+                            </h3>
+                            <div class="fe-packages-cards-grid">
+                                @foreach($trip->packages as $pkg)
+                                    @php
+                                        $tierKey = strtolower($pkg->tier);
+                                        $pkgName = $locale == 'ar' ? $pkg->name_ar : $pkg->name_en;
+                                    @endphp
+                                    <div class="fe-package-tier-box">
+                                        <span class="fe-tier-badge tier-{{ $tierKey }}">
+                                            <i class="fas fa-gem"></i> {{ \App\Models\TripPackage::TIER_LABELS[$tierKey][$locale] ?? $pkg->tier }}
+                                        </span>
+                                        <div class="fe-tier-hotel">{{ $pkgName ?: ($locale == 'ar' ? 'باقة قياسية' : 'Standard Package') }}</div>
+                                        <div class="text-muted small mb-2"><i class="fas fa-hotel opacity-50 me-1"></i> {{ $pkg->hotel_name }}</div>
+                                        <div class="fe-tier-stars">
+                                            @for($i = 0; $i < $pkg->hotel_stars; $i++)<i class="fas fa-star"></i>@endfor
+                                            @for($i = $pkg->hotel_stars; $i < 5; $i++)<i class="far fa-star text-muted opacity-30"></i>@endfor
                                         </div>
-                                    @endforeach
-                                </div>
+
+                                        <div class="fe-tier-price-row">
+                                            @foreach(['double', 'single', 'triple', 'quadruple'] as $occ)
+                                                @php
+                                                    $prObj = $pkg->prices->where('occupancy_type', $occ)->first();
+                                                    $occLabel = ['single' => ($locale=='ar'?'فردية':'Single'), 'double' => ($locale=='ar'?'ثنائية':'Double'), 'triple' => ($locale=='ar'?'ثلاثية':'Triple'), 'quadruple' => ($locale=='ar'?'رباعية':'Quad')][$occ];
+                                                @endphp
+                                                @if($prObj && $prObj->price > 0)
+                                                    <div class="fe-tier-price-item">
+                                                        <span>{{ $occLabel }}</span>
+                                                        <strong>{{ number_format($prObj->price, 0) }} {{ $currency }}</strong>
+                                                    </div>
+                                                @endif
+                                            @endforeach
+                                        </div>
+
+                                        @if($pkg->hotel_website)
+                                            <a href="{{ $pkg->hotel_website }}" target="_blank" class="btn btn-sm btn-outline-secondary w-100 mb-2 rounded-pill font-w700" style="font-size: 0.82rem;">
+                                                <i class="fas fa-external-link-alt me-1"></i> {{ $locale == 'ar' ? 'زيارة موقع الفندق' : 'Visit Hotel Website' }}
+                                            </a>
+                                        @endif
+
+                                        <button type="button" class="btn btn-primary w-100 rounded-pill font-w800 select-pkg-cta" data-id="{{ $pkg->id }}" style="font-size: 0.86rem;">
+                                            <i class="fas fa-check me-1"></i> {{ $locale == 'ar' ? 'اختيار هذه الباقة' : 'Select This Package' }}
+                                        </button>
+                                    </div>
+                                @endforeach
                             </div>
                         </div>
-                    @endif
+                    </div>
+                @endif
 
-                    {{-- Tab Content: Itinerary --}}
-                    <div class="fe-tab-pane" id="tab-itinerary">
-                        <div class="fe-itinerary-timeline">
+                {{-- Tab: Itinerary --}}
+                <div class="fe-tab-pane" id="tab-itinerary">
+                    <div class="fe-card-section">
+                        <h3 class="fe-card-section-title">
+                            <i class="fas fa-map-marked-alt text-primary"></i> {{ $locale == 'ar' ? 'البرنامج اليومي للرحلة' : 'Day by Day Program' }}
+                        </h3>
+                        <div class="fe-timeline">
                             @forelse($trip->itineraries as $itinerary)
-                                <div class="fe-itinerary-item">
-                                    <div class="fe-itinerary-dot"></div>
-                                    <div class="fe-itinerary-card">
-                                        <div class="d-flex align-items-center gap-3 mb-2">
-                                            <span class="badge bg-primary px-3 py-2 rounded-pill fs-12">{{ __('Day') }} {{ $itinerary->day_number }}</span>
-                                            <h4 class="m-0 font-w800 text-dark">{{ $itinerary->title }}</h4>
+                                <div class="fe-timeline-step">
+                                    <div class="fe-timeline-dot">{{ $itinerary->day_number }}</div>
+                                    <div class="fe-timeline-card">
+                                        <div class="fe-timeline-title">
+                                            <span class="badge bg-primary me-2 px-2 py-1 fs-12">{{ $locale == 'ar' ? 'اليوم' : 'Day' }} {{ $itinerary->day_number }}</span>
+                                            {{ $itinerary->title }}
                                         </div>
                                         <div class="text-muted fs-15 lh-base">{!! $itinerary->description !!}</div>
                                     </div>
                                 </div>
                             @empty
-                                <div class="text-center py-4 bg-light rounded-4">{{ __('Itinerary coming soon') }}</div>
+                                <div class="text-center py-4 bg-light rounded-4 text-muted">{{ $locale == 'ar' ? 'سيتم مشاركة تفاصيل البرنامج اليومي عند إتمام الحجز.' : 'Itinerary details will be shared upon booking.' }}</div>
                             @endforelse
                         </div>
                     </div>
+                </div>
 
-                    {{-- Tab Content: Inclusions --}}
-                    <div class="fe-tab-pane" id="tab-includes">
-                        <div class="row">
-                            <div class="col-md-6 mb-4">
-                                <h4 class="mb-4 text-success"><i class="fas fa-check-circle me-2"></i> {{ __('Program Includes') }}</h4>
-                                <div class="fe-rich-text fs-15 fe-inclusions-list">{!! $includes !!}</div>
-                            </div>
-                            <div class="col-md-6 mb-4">
-                                <h4 class="mb-4 text-danger"><i class="fas fa-times-circle me-2"></i> {{ __('Program Excludes') }}</h4>
-                                <div class="fe-rich-text fs-15 fe-exclusions-list">{!! $excludes !!}</div>
+                {{-- Tab: Inclusions --}}
+                @if($includes || $excludes)
+                    <div class="fe-tab-pane" id="tab-inclusions">
+                        <div class="fe-card-section">
+                            <h3 class="fe-card-section-title">
+                                <i class="fas fa-tasks text-primary"></i> {{ $locale == 'ar' ? 'ما تشمله الرحلة وما لا تشمله' : 'What is Included & Excluded' }}
+                            </h3>
+                            <div class="fe-inc-exc-grid">
+                                @if($includes)
+                                    <div class="fe-inc-card">
+                                        <h5><i class="fas fa-check-circle"></i> {{ $locale == 'ar' ? 'تشمل الرحلة ما يلي' : 'Included in Tour' }}</h5>
+                                        <div class="fs-15 lh-lg">{!! $includes !!}</div>
+                                    </div>
+                                @endif
+                                @if($excludes)
+                                    <div class="fe-exc-card">
+                                        <h5><i class="fas fa-times-circle"></i> {{ $locale == 'ar' ? 'لا تشمل الرحلة ما يلي' : 'Not Included (Excluded)' }}</h5>
+                                        <div class="fs-15 lh-lg">{!! $excludes !!}</div>
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     </div>
+                @endif
 
-                    {{-- Tab Content: Policy --}}
-                    <div class="fe-tab-pane" id="tab-policy">
-                        <div class="bg-light p-4 rounded-4 border">
-                            <h4 class="mb-4"><i class="fas fa-child me-2 text-primary"></i> {{ __('Children Policy') }}</h4>
-                            <div class="fe-rich-text fs-15">{!! $policy !!}</div>
+                {{-- Tab: Policies --}}
+                @if($policy)
+                    <div class="fe-tab-pane" id="tab-policies">
+                        <div class="fe-card-section">
+                            <h3 class="fe-card-section-title">
+                                <i class="fas fa-shield-alt text-primary"></i> {{ $locale == 'ar' ? 'سياسات الحجز والأطفال' : 'Booking & Child Policies' }}
+                            </h3>
+                            <div style="font-size: 1.05rem; line-height: 1.8; color: #334155;">
+                                {!! $policy !!}
+                            </div>
                         </div>
                     </div>
+                @endif
 
-                    {{-- Tab Content: Reviews --}}
-                    <div class="fe-tab-pane" id="tab-reviews">
+                {{-- Tab: Reviews --}}
+                <div class="fe-tab-pane" id="tab-reviews">
+                    <div class="fe-card-section">
+                        <h3 class="fe-card-section-title">
+                            <i class="fas fa-comments text-primary"></i> {{ $locale == 'ar' ? 'تقييمات وآراء المسافرين' : 'Customer Reviews' }}
+                        </h3>
                         @forelse($trip->rates as $rate)
-                            <div class="fe-review-card bg-white border border-light rounded-4 p-4 mb-3 shadow-sm d-flex gap-3">
-                                <div class="fe-review-avatar shadow-sm" style="background: var(--primary-light); color: var(--primary); font-weight: 800; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 12px; font-size: 1.2rem;">
-                                    {{ mb_substr($rate->user->name ?? 'G', 0, 1) }}
-                                </div>
-                                <div class="flex-grow-1">
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <h5 class="m-0 font-w700 text-dark">{{ $rate->user->name ?? __('Guest') }}</h5>
-                                        <span class="text-muted small">{{ $rate->created_at->diffForHumans() }}</span>
+                            <div class="border-bottom pb-3 mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <h6 class="font-w800 mb-0 text-dark">{{ $rate->user?->name ?? ($locale == 'ar' ? 'مسافر' : 'Traveler') }}</h6>
+                                    <div class="text-warning fs-12">
+                                        @for($i = 0; $i < $rate->rate; $i++)<i class="fas fa-star"></i>@endfor
                                     </div>
-                                    <div class="mb-3 text-warning">
-                                        @for($i = 1; $i <= 5; $i++) <i class="{{ $i <= $rate->rate ? 'fas' : 'far' }} fa-star"></i> @endfor
-                                    </div>
-                                    <p class="text-muted m-0 fs-15 lh-base italic opacity-80">"{{ $rate->review }}"</p>
                                 </div>
+                                <p class="text-muted small mb-0">{{ $rate->comment }}</p>
                             </div>
                         @empty
-                            <div class="text-center py-5 border rounded-4 bg-light">
-                                <i class="far fa-star fs-30 text-muted op-40 mb-3"></i>
-                                <p class="text-muted">{{ __('No reviews yet') }}</p>
+                            <div class="text-center py-4 bg-light rounded-4 text-muted">
+                                <i class="far fa-star fs-2 text-muted opacity-30 mb-2 d-block"></i>
+                                {{ $locale == 'ar' ? 'لا توجد تقييمات لهذه الرحلة بعد.' : 'No reviews yet for this tour.' }}
                             </div>
                         @endforelse
                     </div>
                 </div>
 
-                {{-- Booking Widget --}}
-                <aside class="fe-booking-sidebar" style="position: sticky; top: 110px;">
-                    <div class="fe-booking-card">
-                        {{-- Booking Header --}}
-                        <div class="fe-booking-header">
-                            <p class="mb-2 text-uppercase op-80 fs-12 font-w700 letter-spacing-1">{{ __('Starting From') }}</p>
-                            @if($hasPackages)
-                                <h2 class="text-white m-0 font-w900" style="font-size: 2.8rem; letter-spacing: -1px;" id="display-price">{{ __('Loading...') }}</h2>
-                            @else
-                                <h2 class="text-white m-0 font-w900" style="font-size: 2.8rem; letter-spacing: -1px;" id="display-price">{{ number_format($trip->price, 0) }} <span style="font-size: 1.2rem; font-weight: 600; margin-left: 5px; opacity: 0.9;">{{ __('SAR') }}</span></h2>
-                            @endif
-                        </div>
+            </div>
 
-                        <form action="{{ route('trips.booking.form') }}" method="GET" class="p-4" id="booking-form">
-                            <input type="hidden" name="trip_id" value="{{ $trip->id }}">
-
-                            @if($hasPackages)
-                                {{-- Package Selector --}}
-                                <div class="mb-4">
-                                    <label class="font-w800 text-dark mb-3 d-flex align-items-center"><i class="fas fa-layer-group text-primary me-2 fs-5"></i>{{ __('Select Package') }}</label>
-                                    <div class="fe-pkg-selector">
-                                        @foreach($trip->packages as $pkg)
-                                            @php
-                                                                                        $tierKey = strtolower($pkg->tier);
-                                                $pkgName = $locale == 'ar' ? $pkg->name_ar : $pkg->name_en;
-                                            @endphp
-                                            <div class="fe-pkg-card package-option {{ $loop->first ? 'active' : '' }}" data-id="{{ $pkg->id }}" data-tier="{{ $tierKey }}">
-                                                <span class="fe-pkg-badge badge-{{ $tierKey }}">
-                                                    {{ \App\Models\TripPackage::TIER_LABELS[$tierKey][$locale] ?? $pkg->tier }}
-                                                </span>
-                                                <h6 class="m-0 font-w800 text-dark mb-1" style="font-size: 1.1rem;">{{ $pkgName ?: __('Standard Package') }}</h6>
-                                                <p class="text-muted small mb-3 lh-sm font-w500">
-                                                    <i class="fas fa-hotel me-1 opacity-50"></i> {{ $pkg->hotel_name }}
-                                                </p>
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <div class="text-warning fs-12">
-                                                        @for($i = 0; $i < $pkg->hotel_stars; $i++)<i class="fas fa-star"></i>@endfor
-                                                        @for($i = $pkg->hotel_stars; $i < 5; $i++)<i class="far fa-star text-muted opacity-25"></i>@endfor
-                                                    </div>
-                                                    @if($pkg->hotel_website)
-                                                        <a href="{{ $pkg->hotel_website }}" target="_blank" class="text-primary fs-12 font-w700 text-decoration-none" onclick="event.stopPropagation();">
-                                                            {{ __('View Hotel') }} <i class="fas fa-arrow-right ms-1 fs-10"></i>
-                                                        </a>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                        <input type="hidden" name="package_id" id="selected-package" value="{{ $trip->packages->first()?->id }}">
-                                    </div>
-                                </div>
-
-                                {{-- Season Selector --}}
-                                <div class="mb-4">
-                                    <label class="font-w800 text-dark mb-3 d-flex align-items-center"><i class="fas fa-calendar-alt text-primary me-2 fs-5"></i>{{ __('Traveling Date') }}</label>
-                                    <select name="season_id" id="season-selector" class="fe-booking-input cursor-pointer">
-                                        @foreach($trip->seasons as $season)
-                                            <option value="{{ $season->id }}">{{ $season->label }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
-                                {{-- Occupancy Selector --}}
-                                <div class="mb-4">
-                                    <label class="font-w800 text-dark mb-3 d-flex align-items-center"><i class="fas fa-bed text-primary me-2 fs-5"></i>{{ __('Room Occupancy') }}</label>
-                                    <div class="fe-occ-grid">
-                                        <div class="fe-occ-btn occ-option active" data-type="double"><i class="fas fa-user-friends mb-2 d-block fs-4"></i>{{ __('Double') }}</div>
-                                        <div class="fe-occ-btn occ-option" data-type="single"><i class="fas fa-user mb-2 d-block fs-4"></i>{{ __('Single') }}</div>
-                                        <div class="fe-occ-btn occ-option" data-type="triple"><i class="fas fa-users mb-2 d-block fs-4"></i>{{ __('Triple') }}</div>
-                                        <div class="fe-occ-btn occ-option" data-type="quadruple"><i class="fas fa-users mb-2 d-block fs-4"></i>{{ __('4 Persons') }}</div>
-                                        <div class="fe-occ-btn occ-option" data-type="quintuple"><i class="fas fa-users mb-2 d-block fs-4"></i>{{ __('5 Persons') }}</div>
-                                    </div>
-                                    <input type="hidden" name="occupancy_type" id="selected-occupancy" value="double">
-                                </div>
-                            @endif
-
-                            <div class="mb-4">
-                                <label class="font-w800 text-dark mb-3 d-flex align-items-center"><i class="fas fa-user-check text-primary me-2 fs-5"></i>{{ __('Travelers Count') }}</label>
-                                <div class="fe-qty-wrapper">
-                                    <button type="button" class="fe-qty-btn" onclick="decPax()"><i class="fas fa-minus"></i></button>
-                                    <input type="number" name="tickets_count" id="tickets_count" class="fe-qty-input flex-grow-1 font-w800 fs-5" value="1" min="1">
-                                    <button type="button" class="fe-qty-btn" onclick="incPax()"><i class="fas fa-plus"></i></button>
-                                </div>
-                            </div>
-
-                            @if($trip->addons->count() > 0)
-                                <div class="mb-4">
-                                    <label class="font-w800 text-dark mb-3 d-flex align-items-center"><i class="fas fa-plus-circle text-primary me-2 fs-5"></i>{{ __('Optional Extras') }}</label>
-                                    <div class="fe-addons-list">
-                                        @foreach($trip->addons as $addon)
-                                            <div class="form-check mb-3 custom-check d-flex align-items-center p-3 border rounded-3 bg-light">
-                                                <input class="form-check-input addon-checkbox me-3 ms-1" type="checkbox" name="addons[]" value="{{ $addon->id }}" id="addon_{{ $addon->id }}" data-cost="{{ $addon->extra_cost }}" style="width: 20px; height: 20px; cursor: pointer;">
-                                                <label class="form-check-label d-flex justify-content-between w-100 cursor-pointer mb-0" for="addon_{{ $addon->id }}">
-                                                    <span class="font-w600 text-dark">{{ $locale == 'ar' ? $addon->name_ar : $addon->name_en }}</span>
-                                                    <span class="text-primary font-w800 bg-white px-2 py-1 rounded shadow-sm">+{{ number_format($addon->extra_cost, 0) }} {{ __('SAR') }}</span>
-                                                </label>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                </div>
-                            @endif
-
-                            <div class="fe-total-box mb-4">
-                                <span class="fe-total-label">{{ __('Total Estimate') }}</span>
-                                <h3 class="fe-total-price" id="total-price">0</h3>
-                            </div>
-
-                            <button type="submit" class="fe-btn-submit">
-                                <i class="fas fa-check-circle fs-5"></i> {{ __('Book Experience') }}
-                            </button>
-                        </form>
-
-                        <div class="p-3 bg-light-warning text-center border-top">
-                            <span class="fs-12 text-muted">{{ __('Confirmation is instant upon payment') }}</span>
-                        </div>
+            {{-- Right Sticky Sidebar: Real-time Booking Calculator --}}
+            <aside class="fe-sticky-sidebar">
+                <div class="fe-booking-box">
+                    <div class="fe-booking-box-header">
+                        <div class="fe-booking-starting">{{ $locale == 'ar' ? 'السعر يبدأ من' : 'Starting Price' }}</div>
+                        <h2 class="fe-booking-price-val" id="display-price">
+                            {{ $hasPackages ? ($locale == 'ar' ? 'جاري الحساب...' : 'Calculating...') : number_format($trip->price, 0) . ' ' . $currency }}
+                        </h2>
                     </div>
 
-                    {{-- WhatsApp Help --}}
-                    <div class="fe-whatsapp-card mt-4">
-                        <i class="fab fa-whatsapp text-success mb-3" style="font-size: 2.8rem;"></i>
-                        <h6 class="font-w800 mb-2">{{ __('Need dynamic pricing?') }}</h6>
-                        <p class="text-muted fs-14 mb-4">{{ __('Our agents are available 24/7 to assist with complex bookings.') }}</p>
-                        <a href="https://wa.me/{{ \App\Models\Setting::get('whatsapp_number') }}" target="_blank" class="fe-btn fe-whatsapp-btn w-100 py-3 d-inline-flex align-items-center justify-content-center gap-2">
-                             <i class="fab fa-whatsapp"></i> {{ __('Chat Now') }}
+                    <form action="{{ route('trips.booking.form') }}" method="GET" class="fe-booking-box-body" id="booking-form">
+                        <input type="hidden" name="trip_id" value="{{ $trip->id }}">
+
+                        @if($hasPackages)
+                            {{-- Package Selector --}}
+                            <div class="mb-3">
+                                <label class="fe-form-group-label"><i class="fas fa-gem text-primary"></i>{{ $locale == 'ar' ? 'اختر الباقة' : 'Choose Package' }}</label>
+                                <div class="fe-pkg-select-grid">
+                                    @foreach($trip->packages as $pkg)
+                                        @php
+                                            $tKey = strtolower($pkg->tier);
+                                            $pName = $locale == 'ar' ? $pkg->name_ar : $pkg->name_en;
+                                        @endphp
+                                        <div class="fe-pkg-select-card package-option {{ $loop->first ? 'active' : '' }}" data-id="{{ $pkg->id }}">
+                                            <div class="card-tier">{{ \App\Models\TripPackage::TIER_LABELS[$tKey][$locale] ?? $pkg->tier }}</div>
+                                            <div class="card-name">{{ $pName ?: ($locale == 'ar' ? 'باقة' : 'Package') }}</div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                                <input type="hidden" name="package_id" id="selected-package" value="{{ $trip->packages->first()?->id }}">
+                            </div>
+
+                            {{-- Season Selector --}}
+                            <div class="mb-3">
+                                <label class="fe-form-group-label"><i class="fas fa-calendar-alt text-primary"></i>{{ $locale == 'ar' ? 'الموسم السياحي' : 'Travel Season' }}</label>
+                                <select name="season_id" id="season-selector" class="form-select font-w700" style="border-radius:10px;">
+                                    @foreach($trip->seasons as $season)
+                                        <option value="{{ $season->id }}">{{ $season->label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            {{-- Room Occupancy --}}
+                            <div class="mb-3">
+                                <label class="fe-form-group-label"><i class="fas fa-bed text-primary"></i>{{ $locale == 'ar' ? 'نوع الإقامة / الغرفة' : 'Room Occupancy' }}</label>
+                                <div class="fe-occ-pills-grid">
+                                    <div class="fe-occ-pill-btn occ-option active" data-type="double">{{ $locale == 'ar' ? 'ثنائية' : 'Double' }}</div>
+                                    <div class="fe-occ-pill-btn occ-option" data-type="single">{{ $locale == 'ar' ? 'فردية' : 'Single' }}</div>
+                                    <div class="fe-occ-pill-btn occ-option" data-type="triple">{{ $locale == 'ar' ? 'ثلاثية' : 'Triple' }}</div>
+                                    <div class="fe-occ-pill-btn occ-option" data-type="quadruple">{{ $locale == 'ar' ? 'رباعية' : '4 Persons' }}</div>
+                                    <div class="fe-occ-pill-btn occ-option" data-type="quintuple">{{ $locale == 'ar' ? 'خماسية' : '5 Persons' }}</div>
+                                </div>
+                                <input type="hidden" name="occupancy_type" id="selected-occupancy" value="double">
+                            </div>
+                        @endif
+
+                        {{-- Travelers Count --}}
+                        <div class="mb-3">
+                            <label class="fe-form-group-label"><i class="fas fa-users text-primary"></i>{{ $locale == 'ar' ? 'عدد المسافرين' : 'Travelers Count' }}</label>
+                            @php
+                                $initialPax = (!$hasPackages && $trip->base_capacity) ? $trip->base_capacity : 1;
+                                $minPax = (!$hasPackages && $trip->base_capacity) ? $trip->base_capacity : 1;
+                                $maxPax = $trip->personnel_capacity ?: 20;
+                            @endphp
+                            <div class="fe-stepper-box">
+                                <button type="button" class="fe-stepper-btn" onclick="decPax()"><i class="fas fa-minus"></i></button>
+                                <input type="number" name="tickets_count" id="tickets_count" class="fe-stepper-input" value="{{ $initialPax }}" min="{{ $minPax }}" max="{{ $maxPax }}">
+                                <button type="button" class="fe-stepper-btn" onclick="incPax()"><i class="fas fa-plus"></i></button>
+                            </div>
+                            @if(!$hasPackages && $trip->base_capacity && $trip->extra_passenger_price)
+                                <div class="fs-12 text-muted d-flex align-items-center gap-1 mb-2">
+                                    <i class="fas fa-info-circle text-primary"></i>
+                                    <span>
+                                        @if($locale == 'ar')
+                                            السعر الأساسي يشمل {{ $trip->base_capacity }} مسافرين. كل مسافر إضافي: +{{ number_format($trip->extra_passenger_price, 0) }} ر.س
+                                        @else
+                                            Base price covers {{ $trip->base_capacity }} travelers. Extra traveler: +{{ number_format($trip->extra_passenger_price, 0) }} SAR
+                                        @endif
+                                    </span>
+                                </div>
+                            @endif
+                        </div>
+
+                        {{-- Add-ons list --}}
+                        @if($trip->addons->count() > 0)
+                            <div class="mb-3">
+                                <label class="fe-form-group-label"><i class="fas fa-plus-circle text-primary"></i>{{ $locale == 'ar' ? 'خدمات وإضافات اختيارية' : 'Optional Extras' }}</label>
+                                @foreach($trip->addons as $addon)
+                                    <label class="fe-addon-item-box" for="addon_{{ $addon->id }}">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <input class="form-check-input addon-checkbox m-0" type="checkbox" name="addons[]" value="{{ $addon->id }}" id="addon_{{ $addon->id }}" data-cost="{{ $addon->extra_cost }}">
+                                            <span class="font-w700 text-dark small">{{ $locale == 'ar' ? $addon->name_ar : $addon->name_en }}</span>
+                                        </div>
+                                        <span class="badge bg-white text-primary font-w800 border">+{{ number_format($addon->extra_cost, 0) }} {{ $currency }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        @endif
+
+                        {{-- Total Calculation --}}
+                        <div class="fe-total-calc-box">
+                            <span class="label">{{ $locale == 'ar' ? 'إجمالي تكلفة الرحلة' : 'Total Investment' }}</span>
+                            <span class="amount" id="total-price">0</span>
+                        </div>
+
+                        @if(auth()->check() && !auth()->user()->canBookDirectly())
+                            <div class="alert alert-warning border-0 rounded-3 p-3 mb-3 d-flex align-items-start gap-2" style="font-size: 0.82rem; background: #fffbeb; color: #92400e;">
+                                <i class="fas fa-exclamation-triangle text-warning fs-5 flex-shrink-0 mt-1"></i>
+                                <div>
+                                    <strong>{{ $locale == 'ar' ? 'تنبيه الحساب الإداري:' : 'Management Account Notice:' }}</strong>
+                                    <p class="mb-0 mt-1">{{ $locale == 'ar' ? 'حسابك الحالي (وكيل / مسؤول) مخصص لإدارة العمليات ولا يمكنه إنشاء حجوزات استهلاكية مباشرة. يمكنك إدارة الرحلات من لوحة التحكم أو تسجيل الدخول بحساب عميل.' : 'Your account is an Agent/Admin account and cannot place consumer bookings.' }}</p>
+                                </div>
+                            </div>
+                            <a href="{{ auth()->user()->dashboard_url }}" class="fe-btn-book-cta" style="background: linear-gradient(135deg, #0f172a, #334155);">
+                                <i class="fas fa-tachometer-alt"></i> {{ $locale == 'ar' ? 'الانتقال إلى لوحة التحكم' : 'Go to Dashboard' }}
+                            </a>
+                        @else
+                            <button type="submit" class="fe-btn-book-cta">
+                                <i class="fas fa-check-circle"></i> {{ $locale == 'ar' ? 'متابعة الحجز الآن' : 'Book Experience' }}
+                            </button>
+                        @endif
+                    </form>
+
+                    {{-- WhatsApp 24/7 Support Box --}}
+                    <div class="fe-whatsapp-help-box m-3 mt-0">
+                        <i class="fab fa-whatsapp text-success fs-2 mb-2 d-block"></i>
+                        <h6 class="font-w800 mb-1">{{ $locale == 'ar' ? 'هل تحتاج إلى ترتيب مخصص؟' : 'Need Custom Booking?' }}</h6>
+                        <p class="text-muted fs-12 mb-3">{{ $locale == 'ar' ? 'فريقنا المتخصص جاهز لتخصيص برنامج الرحلة والإقامة بما يناسب رغبتك.' : 'Our travel specialists are ready to tailor this trip to your needs.' }}</p>
+                        <a href="https://wa.me/{{ \App\Models\Setting::get('whatsapp_number') }}" target="_blank" class="btn btn-sm btn-success rounded-pill w-100 font-w800 py-2">
+                            <i class="fab fa-whatsapp me-1"></i> {{ $locale == 'ar' ? 'تواصل معنا عبر واتساب' : 'Chat With Us on WhatsApp' }}
                         </a>
                     </div>
-                </aside>
-            </div>
-        </div>
-    </section>
+                </div>
+            </aside>
 
-    {{-- Bottom Carousel --}}
-    @if($relatedTrips->count() > 0)
-        <section class="mt-5 pb-5">
-            <div class="fe-container">
-                <h2 class="mb-4 font-w900">{{ __('You Might Also Love') }}</h2>
-                <div class="fe-trips-grid">
+        </div>
+
+        {{-- Related Trips --}}
+        @if($relatedTrips->count() > 0)
+            <div class="mt-5 pt-4">
+                <h3 class="font-w900 text-dark mb-4"><i class="fas fa-compass text-primary me-2"></i>{{ $locale == 'ar' ? 'رحلات وباقات قد تنال إعجابك' : 'You Might Also Like' }}</h3>
+                <div class="row g-4">
                     @foreach($relatedTrips as $rTrip)
-                        @include('frontend.components.trip-card', ['trip' => $rTrip])
+                        <div class="col-lg-4 col-md-6">
+                            @include('frontend.components.trip-card', ['trip' => $rTrip])
+                        </div>
                     @endforeach
                 </div>
             </div>
-        </section>
-    @endif
+        @endif
+
+    </div>
+</div>
 @endsection
 
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script src="{{ asset('vendor/lightgallery/js/lightgallery-all.min.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            const currencyLabel = "{{ $currency }}";
+
             // Tab switching
-            const tabs = document.querySelectorAll('.fe-tab-btn');
-            const panes = document.querySelectorAll('.fe-tab-pane');
-            tabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    const target = tab.dataset.tab;
-                    tabs.forEach(t => t.classList.remove('active'));
-                    panes.forEach(p => p.classList.remove('active'));
-                    tab.classList.add('active');
-                    document.getElementById('tab-' + target).classList.add('active');
+            const navTabs = document.querySelectorAll('.fe-tab-nav-btn');
+            const tabPanes = document.querySelectorAll('.fe-tab-pane');
+            navTabs.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const tabKey = this.dataset.tab;
+                    navTabs.forEach(b => b.classList.remove('active'));
+                    tabPanes.forEach(p => p.classList.remove('active'));
+                    this.classList.add('active');
+                    const targetPane = document.getElementById('tab-' + tabKey);
+                    if (targetPane) targetPane.classList.add('active');
                 });
             });
 
-            // Swiper
-            const sliderEl = document.querySelector('.main-trip-slider');
-            if (sliderEl && sliderEl.querySelectorAll('.swiper-slide').length > 1) {
-                new Swiper('.main-trip-slider', {
-                    loop: true,
-                    navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' },
-                    autoplay: { delay: 4000 },
-                    effect: 'fade'
+            // ── Initialize Synchronized Swiper (Main Showcase + Thumbs) ──
+            var thumbsSwiper = null;
+            if (document.getElementById('thumbsGallerySwiper')) {
+                thumbsSwiper = new Swiper('#thumbsGallerySwiper', {
+                    spaceBetween: 8,
+                    slidesPerView: 'auto',
+                    freeMode: true,
+                    watchSlidesProgress: true,
                 });
             }
 
-            const mobileSliderEl = document.querySelector('.fe-mobile-swiper');
-            if (mobileSliderEl && mobileSliderEl.querySelectorAll('.swiper-slide').length > 1) {
-                new Swiper('.fe-mobile-swiper', {
-                    loop: true,
-                    pagination: { el: '.swiper-pagination', clickable: true },
-                    autoplay: { delay: 4000 }
+            var mainSwiper = new Swiper('#mainGallerySwiper', {
+                spaceBetween: 10,
+                loop: false,
+                navigation: {
+                    nextEl: '.swiper-button-next',
+                    prevEl: '.swiper-button-prev',
+                },
+                thumbs: {
+                    swiper: thumbsSwiper,
+                },
+                on: {
+                    slideChange: function () {
+                        var idx = this.activeIndex + 1;
+                        var counter = document.getElementById('gallery-current-idx');
+                        if (counter) counter.innerText = idx;
+                        document.querySelectorAll('.fe-thumb-slide').forEach(function(thumb, i) {
+                            thumb.classList.toggle('active-thumb', i === mainSwiper.activeIndex);
+                        });
+                    }
+                }
+            });
+
+            // Thumbs click event
+            document.querySelectorAll('.fe-thumb-slide').forEach(function(thumb) {
+                thumb.addEventListener('click', function() {
+                    var idx = parseInt(this.dataset.index);
+                    if (mainSwiper && !isNaN(idx)) {
+                        mainSwiper.slideTo(idx);
+                    }
+                });
+            });
+
+            // Initialize LightGallery for high-res full screen modal
+            if ($('#trip-lightgallery').length && typeof $.fn.lightGallery !== 'undefined') {
+                $('#trip-lightgallery').lightGallery({
+                    selector: 'a.fe-main-slide-link',
+                    thumbnail: true,
+                    download: false,
+                    zoom: true,
+                    share: false,
+                    animateThumb: true,
+                    showThumbByDefault: true
                 });
             }
 
-            // --- Multi-tier Pricing Logic ---
+            window.triggerLightGallery = function() {
+                var activeIdx = mainSwiper ? mainSwiper.activeIndex : 0;
+                var links = $('#trip-lightgallery a.fe-main-slide-link');
+                if (links.eq(activeIdx).length) {
+                    links.eq(activeIdx).trigger('click');
+                } else if (links.first().length) {
+                    links.first().trigger('click');
+                }
+            };
+
+            // --- Multi-tier Pricing & Calculator Logic ---
             const pricingData = {!! $pricingJson !!};
             const hasPackages = {{ $hasPackages ? 'true' : 'false' }};
-            const basePriceLegacy = {{ $trip->price }};
+            const basePriceLegacy = {{ (float) $trip->price }};
+            const baseCapacity = {{ (int) ($trip->base_capacity ?? 1) }};
+            const maxCapacity = {{ (int) ($trip->personnel_capacity ?: 20) }};
+            const extraPassengerPrice = {{ (float) ($trip->extra_passenger_price ?? 0) }};
 
             function calculatePrice() {
                 let unitPrice = 0;
@@ -1577,13 +1610,23 @@
 
                 const tickets = parseInt(document.getElementById('tickets_count').value) || 1;
 
-                // Calculate Add-ons
+                // Add-ons
                 let addonsTotal = 0;
                 document.querySelectorAll('.addon-checkbox:checked').forEach(chk => {
                     addonsTotal += parseFloat(chk.dataset.cost) || 0;
                 });
 
-                const total = (unitPrice * tickets) + (addonsTotal * tickets);
+                let total = 0;
+                if (!hasPackages) {
+                    if (baseCapacity > 0 && tickets > baseCapacity && extraPassengerPrice > 0) {
+                        const extraPax = tickets - baseCapacity;
+                        total = basePriceLegacy + (extraPax * extraPassengerPrice) + (addonsTotal * tickets);
+                    } else {
+                        total = basePriceLegacy + (addonsTotal * tickets);
+                    }
+                } else {
+                    total = (unitPrice * tickets) + (addonsTotal * tickets);
+                }
 
                 // Update UI
                 const btnSubmit = document.querySelector('#booking-form button[type="submit"]');
@@ -1591,13 +1634,13 @@
                 const totalPriceEl = document.getElementById('total-price');
 
                 if (priceAvailable) {
-                    if (displayPriceEl) displayPriceEl.innerHTML = unitPrice.toLocaleString() + ' <span style="font-size: 1.2rem; font-weight: 600; margin-left: 5px; opacity: 0.9;">{{ __("SAR") }}</span>';
-                    if (totalPriceEl) totalPriceEl.innerHTML = total.toLocaleString() + ' <span style="font-size: 1.2rem; font-weight: 700;">{{ __("SAR") }}</span>';
-                    if(btnSubmit) btnSubmit.disabled = false;
+                    if (displayPriceEl) displayPriceEl.innerHTML = unitPrice.toLocaleString() + ' <span style="font-size: 1.1rem; font-weight: 700; margin-inline-start: 4px;">' + currencyLabel + '</span>';
+                    if (totalPriceEl) totalPriceEl.innerHTML = total.toLocaleString() + ' <span style="font-size: 1.1rem; font-weight: 800;">' + currencyLabel + '</span>';
+                    if (btnSubmit) btnSubmit.disabled = false;
                 } else {
-                    if (displayPriceEl) displayPriceEl.innerHTML = '<span style="font-size: 1.5rem; color: #cbd5e1;">{{ __("Not Available") }}</span>';
+                    if (displayPriceEl) displayPriceEl.innerHTML = '<span style="font-size: 1.4rem; color: #cbd5e1;">{{ $locale == "ar" ? "غير متاح" : "Not Available" }}</span>';
                     if (totalPriceEl) totalPriceEl.innerHTML = '-';
-                    if(btnSubmit) btnSubmit.disabled = true;
+                    if (btnSubmit) btnSubmit.disabled = true;
                 }
             }
 
@@ -1631,33 +1674,50 @@
                 document.getElementById('season-selector').addEventListener('change', calculatePrice);
             }
 
-            // Travelers count
-            document.getElementById('tickets_count').addEventListener('input', calculatePrice);
-            window.incPax = () => { document.getElementById('tickets_count').stepUp(); calculatePrice(); };
-            window.decPax = () => { document.getElementById('tickets_count').stepDown(); calculatePrice(); };
+            // Stepper
+            document.getElementById('tickets_count').addEventListener('input', function() {
+                const min = parseInt(this.getAttribute('min')) || 1;
+                const max = parseInt(this.getAttribute('max')) || maxCapacity;
+                let val = parseInt(this.value);
+                if (isNaN(val) || val < min) val = min;
+                if (val > max) val = max;
+                this.value = val;
+                calculatePrice();
+            });
 
-            // Packages selection buttons from comparison tab
-            document.querySelectorAll('.select-pkg-btn').forEach(btn => {
+            window.incPax = () => {
+                const input = document.getElementById('tickets_count');
+                const max = parseInt(input.getAttribute('max')) || maxCapacity;
+                const current = parseInt(input.value) || 1;
+                if (current < max) {
+                    input.value = current + 1;
+                    calculatePrice();
+                }
+            };
+
+            window.decPax = () => {
+                const input = document.getElementById('tickets_count');
+                const min = parseInt(input.getAttribute('min')) || 1;
+                const current = parseInt(input.value) || 1;
+                if (current > min) {
+                    input.value = current - 1;
+                    calculatePrice();
+                }
+            };
+
+            // Select package button from packages tab
+            document.querySelectorAll('.select-pkg-cta').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const pkgId = this.dataset.id;
-
-                    // 1. Find the corresponding package card in the sidebar and click it
-                    const sidebarCard = document.querySelector(`.package-option[data-id="${pkgId}"]`);
-                    if (sidebarCard) {
-                        sidebarCard.click();
-                    }
-
-                    // 2. Scroll to the booking sidebar on mobile / tablet
-                    const sidebar = document.querySelector('.fe-booking-sidebar');
-                    if (sidebar) {
-                        sidebar.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
+                    const card = document.querySelector(`.package-option[data-id="${pkgId}"]`);
+                    if (card) card.click();
+                    const sidebar = document.querySelector('.fe-sticky-sidebar');
+                    if (sidebar) sidebar.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 });
             });
 
-            // Initial Calculation
+            // Initial calculation
             calculatePrice();
         });
     </script>
 @endpush
-

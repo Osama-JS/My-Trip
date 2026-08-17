@@ -523,13 +523,18 @@
                 </div>
             @endif
 
-            <div class="text-center mt-4">
-                @if(!$maintenanceMode || $isBypassed)
-                    <div class="text-muted small">
-                        {{ __('Already have an account?') }}
-                        <a href="{{ route('login', request()->has('secret') ? ['secret' => request()->query('secret')] : []) }}" class="text-danger font-weight-bold ml-1">{{ __('Sign In') }}</a>
-                    </div>
-                @endif
+            @if(!$maintenanceMode || $isBypassed)
+                <div class="mt-4 mb-2 text-center">
+                    <p class="mb-0 text-muted" style="font-size: 0.95rem;">
+                        {{ $locale == 'ar' ? 'لديك حساب بالفعل؟' : __('Already have an account?') }}
+                        <a href="{{ route('login', request()->has('secret') ? ['secret' => request()->query('secret')] : (request()->has('return_url') ? ['return_url' => request()->query('return_url')] : [])) }}" class="text-primary font-weight-bold ms-1" style="font-weight: 700; text-decoration: none;">
+                            {{ $locale == 'ar' ? 'تسجيل الدخول' : __('Sign In') }}
+                        </a>
+                    </p>
+                </div>
+            @endif
+
+            <div class="text-center">
 
                     @if($locale == 'ar')
                         <a href="{{ route('lang.switch', 'en') }}" class="lang-switch-btn">

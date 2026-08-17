@@ -138,14 +138,6 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if user is admin
-     */
-    public function isAdmin(): bool
-    {
-        return $this->user_type === self::TYPE_ADMIN;
-    }
-
-    /**
      * Check if user is customer
      */
     /**
@@ -201,18 +193,51 @@ class User extends Authenticatable
         return $this->hasMany(Trip::class);
     }
 
-
-    public function isCustomer(): bool
-    {
-        return $this->user_type === self::TYPE_CUSTOMER;
-    }
-
     /**
      * Check if user is agent
      */
     public function isAgent(): bool
     {
-        return $this->user_type === self::TYPE_AGENT;
+        return $this->user_type === self::TYPE_AGENT || $this->hasRole('agent');
+    }
+
+    /**
+     * Check if user is admin
+     */
+    public function isAdmin(): bool
+    {
+        return $this->user_type === self::TYPE_ADMIN || $this->hasRole('admin') || $this->hasRole('super-admin');
+    }
+
+    /**
+     * Check if user is customer
+     */
+    public function isCustomer(): bool
+    {
+        return $this->user_type === self::TYPE_CUSTOMER || (!$this->isAdmin() && !$this->isAgent());
+    }
+
+    /**
+     * Get dynamic dashboard URL based on user role
+     */
+    public function getDashboardUrlAttribute(): string
+    {
+        if ($this->isAdmin()) {
+            return route('admin.dashboard');
+        }
+        if ($this->isAgent()) {
+            return route('agent.dashboard');
+        }
+        return route('customer.dashboard');
+    }
+
+    /**
+     * Check if the user is allowed to make consumer bookings
+     * (Agents and Admins are restricted from direct consumer bookings)
+     */
+    public function canBookDirectly(): bool
+    {
+        return !$this->isAdmin() && !$this->isAgent();
     }
 
     /**
