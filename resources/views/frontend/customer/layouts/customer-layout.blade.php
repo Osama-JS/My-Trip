@@ -979,6 +979,11 @@
                     <i class="fas fa-receipt"></i>
                     <span>{{ __('Payments') }}</span>
                 </a>
+
+                <a href="{{ route('home') }}" class="cdash-link" target="_blank" style="color: #0284c7;">
+                    <i class="fas fa-external-link-alt"></i>
+                    <span>{{ app()->getLocale() == 'ar' ? 'الموقع الرئيسي' : 'Main Website' }}</span>
+                </a>
             </nav>
 
             <div class="cdash-footer">
@@ -1014,6 +1019,10 @@
                 </div>
 
                 <div class="cdash-topbar-actions">
+                    {{-- Main Website Button --}}
+                    <a href="{{ route('home') }}" class="cdash-topbar-btn" title="{{ app()->getLocale() == 'ar' ? 'الذهاب إلى الموقع الرئيسي' : 'Go to Homepage' }}">
+                        <i class="fas fa-home"></i>
+                    </a>
                     
                     {{-- Spotlight Search Trigger --}}
                     <button onclick="openSearchModal()" class="cdash-topbar-btn d-flex align-items-center gap-2 px-3" style="width: auto; height: 40px;" title="{{ __('Search...') }}">

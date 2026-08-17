@@ -1,4 +1,6 @@
 {
+    "Extra Pax Price": "Extra Person Price for Duration",
+    "Extra Passenger Price": "Extra Person Price for Duration",
     "Dashboard": "Dashboard",
     "Main Menu": "Main Menu",
     "Security & Access": "Security & Access",
@@ -1475,7 +1477,7 @@
     "e.g. Economy Class": "e.g. Economy Class",
     "Max Capacity": "Max Capacity",
     "Base Capacity": "Base Capacity",
-    "Extra Pax Price": "Extra Pax Price",
+    "Extra Pax Price": "Extra Person Price for Duration",
     "e.g. 5 Days": "e.g. 5 Days",
     "Settings & Visibility": "Settings & Visibility",
     "Public Visibility": "Public Visibility",

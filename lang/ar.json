@@ -1,4 +1,6 @@
 {
+    "Extra Pax Price": "سعر الشخص الإضافي للمدة",
+    "Extra Passenger Price": "سعر الشخص الإضافي للمدة",
     "Tour Analytics": "إحصائيات الباقات",
     "Tour Profits": "عائدات الباقات",
     "Tour Packages Analytics": "إحصائيات الباقات السياحية",
@@ -1428,7 +1430,7 @@
     "Tickets Info": "معلومات التذاكر",
     "e.g. Economy Class": "مثال: الدرجة الاقتصادية",
     "Base Capacity": "السعة الأساسية",
-    "Extra Pax Price": "سعر الفرد الإضافي",
+    "Extra Pax Price": "سعر الشخص الإضافي للمدة",
     "e.g. 5 Days": "مثال: 5 أيام",
     "Settings & Visibility": "الإعدادات والظهور",
     "Public Visibility": "ظهور عام",

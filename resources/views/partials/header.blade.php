@@ -241,6 +241,12 @@
 
                 <ul class="navbar-nav header-right">
                     <li class="nav-item">
+                        <a class="nav-link lang-switcher-btn" href="{{ route('home') }}" target="_blank" title="{{ app()->getLocale() == 'ar' ? 'زيارة الموقع الرئيسي' : 'Visit Main Website' }}">
+                            <i class="fas fa-globe"></i>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
                         <a class="nav-link lang-switcher-btn" href="{{ route('admin.notifications.index') }}" title="{{ __('Send Notification') }}">
                             <i class="fas fa-paper-plane"></i>
                         </a>

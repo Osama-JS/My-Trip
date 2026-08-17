@@ -339,7 +339,9 @@
 
         <div class="register-content">
             <div class="brand-logo">
-                <img src="{{ asset(\App\Models\Setting::get('site_logo', 'images/logo-full.png')) }}" alt="Logo">
+                <a href="{{ route('home') }}" title="{{ config('app.name') }}">
+                    <img src="{{ asset(\App\Models\Setting::get('site_logo', 'images/logo-full.png')) }}" alt="Logo">
+                </a>
             </div>
 
             @php

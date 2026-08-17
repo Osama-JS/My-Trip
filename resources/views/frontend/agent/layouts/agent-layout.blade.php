@@ -936,6 +936,17 @@ body.dark-mode .cdash-flash-error {
 
             </a>
 
+            <a href="{{ route('home') }}"
+               class="cdash-link"
+               target="_blank"
+               style="color: #38bdf8;">
+
+                <span class="active-indicator"></span>
+                <i class="fas fa-external-link-alt"></i>
+                <span>{{ app()->getLocale() == 'ar' ? 'الموقع الرئيسي' : 'Main Website' }}</span>
+
+            </a>
+
         </div>
 
     </nav>
@@ -970,6 +981,11 @@ body.dark-mode .cdash-flash-error {
                 <span class="cdash-topbar-title">@yield('page-title', __('Dashboard'))</span>
             </div>
             <div class="cdash-topbar-actions">
+                {{-- Main Website Button --}}
+                <a href="{{ route('home') }}" class="topbar-control-btn" title="{{ app()->getLocale() == 'ar' ? 'الذهاب إلى الموقع الرئيسي' : 'Go to Homepage' }}">
+                    <i class="fas fa-home"></i>
+                </a>
+
                 {{-- Theme Toggle --}}
                 <button type="button" class="topbar-control-btn" onclick="toggleDark()" title="{{ __('Toggle Theme') }}">
                     <i class="fas fa-moon"></i>
