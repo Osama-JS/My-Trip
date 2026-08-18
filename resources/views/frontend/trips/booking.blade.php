@@ -1084,13 +1084,34 @@
                         Swal.fire({ icon: 'success', title: '{{ __("Success") }}', text: '{{ __("Passport data extracted successfully.") }}', toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
                     }
                 } else {
+                    let warnMsg = (response && response.message) ? response.message : '{{ __("Could not extract data perfectly. Please fill manually.") }}';
                     if(typeof toastr !== 'undefined') {
-                        toastr.warning('{{ __("Could not extract data perfectly. Please fill manually.") }}');
+                        toastr.warning(warnMsg);
+                    } else if(typeof Swal !== 'undefined') {
+                        Swal.fire({ icon: 'warning', title: '{{ __("Scan Notice") }}', text: warnMsg, confirmButtonColor: '#0ea5e9' });
                     }
                 }
             },
             error: function(xhr) {
-                Swal.fire({ icon: 'error', title: '{{ __("Scan Failed") }}', text: '{{ __("Error scanning passport. Please try again.") }}', confirmButtonColor: '#0ea5e9' });
+                let errorMsg = '{{ __("Could not extract passport data. Please upload a clear photo or enter details manually.") }}';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMsg = xhr.responseJSON.message;
+                } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    errorMsg = Object.values(xhr.responseJSON.errors).flat().join('<br>');
+                }
+
+                if(typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: '{{ __("Scan Notice") }}',
+                        html: errorMsg,
+                        confirmButtonColor: '#0ea5e9',
+                        confirmButtonText: '{{ __("OK") }}'
+                    });
+                } else if(typeof toastr !== 'undefined') {
+                    toastr.error(errorMsg);
+                }
+
                 $('#hidden_passport_input_' + index).val('');
                 const dropzone = $('#passport_dropzone_' + index);
                 dropzone.removeClass('has-file');
@@ -1099,10 +1120,10 @@
                 $('#scan_error_' + index).remove();
                 const errorHtml = `
                 <div id="scan_error_${index}" class="mt-3 d-flex align-items-center" style="border-radius: 12px; background-color: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 12px 16px; box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.1); animation: fadeIn 0.3s ease;">
-                    <i class="fas fa-exclamation-triangle fa-lg" style="color: #ef4444; margin-inline-end: 12px;"></i>
+                    <i class="fas fa-exclamation-triangle fa-lg" style="color: #ef4444; margin-inline-end: 12px; flex-shrink: 0;"></i>
                     <div style="text-align: start;">
-                        <div style="font-weight: 800; font-size: 0.95rem; margin-bottom: 2px;">{{ __("Scan Failed") }}</div>
-                        <div style="font-weight: 500; font-size: 0.85rem; opacity: 0.9;">{{ __("Please upload a clearer image of the passport data page.") }}</div>
+                        <div style="font-weight: 800; font-size: 0.95rem; margin-bottom: 2px;">{{ __("Scan Notice") }}</div>
+                        <div style="font-weight: 500; font-size: 0.85rem; opacity: 0.9;">${errorMsg}</div>
                     </div>
                 </div>`;
                 dropzone.after(errorHtml);

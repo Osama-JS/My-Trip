@@ -1103,14 +1103,19 @@ class FrontendController extends Controller
             }
         }
 
-        $ticketsCount = (int) $request->tickets_count;
-        $totalPrice = ($unitPrice + $addonsCostPerPax) * $ticketsCount;
+        $ticketsCount = max(1, (int) $request->tickets_count);
+        $baseCapacity = (int) ($trip->base_capacity ?? 1);
+        $extraPassengerPrice = (float) ($trip->extra_passenger_price ?? 0);
 
-        // Base Package extra passenger pricing (When not using tiered package pricing)
-        if (!$request->package_id && $trip->base_capacity && $ticketsCount > $trip->base_capacity && $trip->extra_passenger_price) {
-            $extraPassengers = $ticketsCount - $trip->base_capacity;
-            $baseTotal = $trip->price + ($trip->extra_passenger_price * $extraPassengers);
-            $totalPrice = $baseTotal + ($addonsCostPerPax * $ticketsCount);
+        if (!$request->package_id && $baseCapacity > 0) {
+            if ($ticketsCount > $baseCapacity && $extraPassengerPrice > 0) {
+                $extraPassengers = $ticketsCount - $baseCapacity;
+                $totalPrice = $trip->price + ($extraPassengerPrice * $extraPassengers) + ($addonsCostPerPax * $ticketsCount);
+            } else {
+                $totalPrice = $trip->price + ($addonsCostPerPax * $ticketsCount);
+            }
+        } else {
+            $totalPrice = ($unitPrice + $addonsCostPerPax) * $ticketsCount;
         }
 
         // Calculate Platform Commission & Company Earnings

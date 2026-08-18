@@ -24,20 +24,23 @@ class GeminiApiService
             throw new Exception('Gemini API key is missing.');
         }
 
-        $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' . $apiKey;
+        // Available models to try in order of preference
+        $models = [
+            'gemini-2.5-flash',
+            'gemini-1.5-flash',
+            'gemini-2.0-flash',
+            'gemini-1.5-pro'
+        ];
 
-        // Ensure we explicitly ask for JSON response format in the prompt
         $fullPrompt = $prompt . "\n\n" .
             "CRITICAL INSTRUCTIONS:\n" .
             "1. You MUST return ONLY a valid JSON object. Do NOT include markdown tags like ```json or any text outside the JSON.\n" .
-            "2. If you need to return an error message to the user (as requested in the prompt), you MUST return a JSON object with a single key 'error'. Example: {\"error\": \"Your error message here\"}\n" .
-            "3. Read ALL digits and characters with extreme precision - pay special attention to digits like 0,1,4,6,8,9 that may look similar.\n" .
-            "4. For numbers and IDs, read character by character and include EVERY digit without skipping any.\n" .
-            "5. If a field value is NOT found or unclear in the document, set it to null - do NOT guess.\n" .
-            "6. Return exact values as they appear in the document, without modification.";
+            "2. If you cannot read the passport data, return a JSON with key 'error': {\"error\": \"Image is too blurry, dark, or not a passport data page.\"}\n" .
+            "3. Read ALL digits and characters with extreme precision.\n" .
+            "4. Return exact values without modification.";
 
         $base64Image = base64_encode(file_get_contents($image->getRealPath()));
-        $mimeType = $image->getMimeType();
+        $mimeType = $image->getMimeType() ?: 'image/jpeg';
 
         $payload = [
             'contents' => [
@@ -58,35 +61,46 @@ class GeminiApiService
             ]
         ];
 
-        try {
-            $response = Http::timeout(30)->post($url, $payload);
+        foreach ($models as $model) {
+            $url = 'https://generativelanguage.googleapis.com/v1beta/models/' . $model . ':generateContent?key=' . $apiKey;
 
-            if ($response->successful()) {
-                $data = $response->json();
-                
-                if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
-                    $responseText = $data['candidates'][0]['content']['parts'][0]['text'];
+            try {
+                $response = Http::timeout(25)->post($url, $payload);
+
+                if ($response->successful()) {
+                    $data = $response->json();
                     
-                    // Clean up potential markdown formatting
-                    $responseText = str_replace(['```json', '```'], '', $responseText);
-                    $responseText = trim($responseText);
-                    
-                    $jsonResult = json_decode($responseText, true);
-                    
-                    if (json_last_error() === JSON_ERROR_NONE) {
-                        return $jsonResult;
-                    } else {
-                        Log::error('Gemini API returned invalid JSON', ['response' => $responseText]);
+                    if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
+                        $responseText = $data['candidates'][0]['content']['parts'][0]['text'];
+                        
+                        // Clean up potential markdown formatting
+                        $responseText = preg_replace('/```json\s*|```/i', '', $responseText);
+                        $responseText = trim($responseText);
+                        
+                        $jsonResult = json_decode($responseText, true);
+                        
+                        if (json_last_error() === JSON_ERROR_NONE && is_array($jsonResult)) {
+                            return $jsonResult;
+                        } else {
+                            // Try extracting JSON using regex if extra text exists
+                            if (preg_match('/\{[\s\S]*\}/', $responseText, $matches)) {
+                                $jsonMatch = json_decode($matches[0], true);
+                                if (json_last_error() === JSON_ERROR_NONE && is_array($jsonMatch)) {
+                                    return $jsonMatch;
+                                }
+                            }
+                            Log::error('Gemini API returned unparsable JSON', ['response' => $responseText, 'model' => $model]);
+                        }
                     }
+                } else {
+                    Log::warning("Gemini API model {$model} failed: status {$response->status()}", [
+                        'body' => $response->body()
+                    ]);
+                    // If model not found (404), continue to next model in loop
                 }
-            } else {
-                Log::error('Gemini API error', [
-                    'status' => $response->status(),
-                    'body' => $response->body()
-                ]);
+            } catch (Exception $e) {
+                Log::warning("Gemini API exception on model {$model}: " . $e->getMessage());
             }
-        } catch (Exception $e) {
-            Log::error('Gemini API exception', ['error' => $e->getMessage()]);
         }
 
         return null;

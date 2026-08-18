@@ -526,13 +526,18 @@ class TripController extends Controller
                 }
             }
 
-            $totalPrice = $unitPrice + $addonsCostTotal;
+            $baseCapacity = (int) ($trip->base_capacity ?? 1);
+            $extraPassengerPrice = (float) ($trip->extra_passenger_price ?? 0);
 
-            // Legacy Extra passenger pricing fallback
-            if (!$request->package_id && $trip->base_capacity && $passengersCount > $trip->base_capacity && $trip->extra_passenger_price) {
-                $extraPassengers = $passengersCount - $trip->base_capacity;
-                $baseTotal = ($trip->price * $trip->base_capacity) + ($trip->extra_passenger_price * $extraPassengers);
-                $totalPrice = $baseTotal + $addonsCostTotal;
+            if (!$request->package_id && $baseCapacity > 0) {
+                if ($passengersCount > $baseCapacity && $extraPassengerPrice > 0) {
+                    $extraPassengers = $passengersCount - $baseCapacity;
+                    $totalPrice = $trip->price + ($extraPassengerPrice * $extraPassengers) + $addonsCostTotal;
+                } else {
+                    $totalPrice = $trip->price + $addonsCostTotal;
+                }
+            } else {
+                $totalPrice = ($unitPrice * $passengersCount) + $addonsCostTotal;
             }
 
             $booking = TripBooking::create([
