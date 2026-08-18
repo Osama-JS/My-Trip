@@ -31,7 +31,7 @@ class ProfileController extends Controller
     /**
      * Update the user's profile information.
      */
-    public function update(ProfileUpdateRequest $request): RedirectResponse
+    public function update(ProfileUpdateRequest $request)
     {
         $user = $request->user();
         $user->fill($request->validated());
@@ -41,17 +41,28 @@ class ProfileController extends Controller
         }
 
         if ($request->hasFile('profile_photo')) {
+            if ($user->profile_photo && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->profile_photo)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->profile_photo);
+            }
             $path = $request->file('profile_photo')->store('profile-photos', 'public');
             $user->profile_photo = $path;
         }
 
         $user->save();
 
-        if ($request->ajax()) {
+        if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => __('Profile updated successfully'),
-                'user' => $user
+                'message' => __('Profile updated successfully.'),
+                'user' => [
+                    'first_name' => $user->first_name,
+                    'last_name' => $user->last_name,
+                    'full_name' => $user->full_name,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                    'address' => $user->address,
+                    'profile_photo_url' => $user->profile_photo_url,
+                ]
             ]);
         }
 
@@ -59,9 +70,41 @@ class ProfileController extends Controller
     }
 
     /**
+     * Update the user's profile photo.
+     */
+    public function updatePhoto(Request $request)
+    {
+        $request->validate([
+            'profile_photo' => ['required', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:5120'],
+        ]);
+
+        $user = $request->user();
+
+        if ($user->profile_photo && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->profile_photo)) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($user->profile_photo);
+        }
+
+        $path = $request->file('profile_photo')->store('profile-photos', 'public');
+        $user->profile_photo = $path;
+        $user->save();
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => __('Profile picture updated successfully.'),
+                'user' => [
+                    'profile_photo_url' => $user->profile_photo_url,
+                ]
+            ]);
+        }
+
+        return back()->with('status', 'profile-photo-updated');
+    }
+
+    /**
      * Update the user's password.
      */
-    public function updatePassword(Request $request): RedirectResponse
+    public function updatePassword(Request $request)
     {
         $validated = $request->validateWithBag('updatePassword', [
             'current_password' => ['required', 'current_password'],
@@ -72,10 +115,10 @@ class ProfileController extends Controller
             'password' => \Illuminate\Support\Facades\Hash::make($validated['password']),
         ]);
 
-        if ($request->ajax()) {
+        if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => __('Password updated successfully')
+                'message' => __('Password updated successfully.')
             ]);
         }
 
