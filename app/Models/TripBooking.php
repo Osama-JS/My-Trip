@@ -124,4 +124,50 @@ class TripBooking extends Model
     {
         return $this->hasMany(BookingHistory::class, 'trip_booking_id');
     }
+
+    /**
+     * Check if the booking can be deleted by admin (unconfirmed and unpaid).
+     */
+    public function canBeDeletedByAdmin(): bool
+    {
+        // Cannot delete if status is confirmed
+        if ($this->status === 'confirmed') {
+            return false;
+        }
+
+        // Cannot delete if in confirmed/issued states
+        $confirmedStates = [
+            self::STATE_CONFIRMED,
+            self::STATE_PREPARING,
+            self::STATE_ISSUING_TICKETS,
+            self::STATE_TICKETS_UPLOADED,
+            self::STATE_TICKETS_SENT,
+            self::STATE_COMPLETED,
+        ];
+        if (in_array($this->booking_state, $confirmedStates)) {
+            return false;
+        }
+
+        // Cannot delete if there is a successful/approved payment
+        $hasPaidPayment = $this->payments()
+            ->where(function ($q) {
+                $q->whereIn('status', ['paid', 'completed', 'success'])
+                  ->orWhereIn('payment_status', ['paid', 'completed', 'success']);
+            })
+            ->exists();
+
+        if ($hasPaidPayment) {
+            return false;
+        }
+
+        $hasApprovedTransfer = $this->bankTransfers()
+            ->where('status', 'approved')
+            ->exists();
+
+        if ($hasApprovedTransfer) {
+            return false;
+        }
+
+        return true;
+    }
 }

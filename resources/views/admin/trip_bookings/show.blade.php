@@ -102,8 +102,8 @@
                             <i class="fas fa-times"></i> {{ __('Cancel Booking') }}
                         </button>
                     @endif
-                    @if($booking->status == 'cancelled' || $booking->booking_state == \App\Models\TripBooking::STATE_CANCELLED)
-                        <button type="button" class="btn-action btn-action--red" onclick="deleteBooking({{ $booking->id }})">
+                    @if($booking->canBeDeletedByAdmin())
+                        <button type="button" class="btn-action btn-action--red" onclick="deleteBooking({{ $booking->id }})" title="{{ __('Delete Booking') }}">
                             <i class="fas fa-trash"></i> {{ __('Delete') }}
                         </button>
                     @endif
@@ -515,7 +515,7 @@
     function deleteBooking(id) {
         Swal.fire({
             title: '{{ __("Delete Booking?") }}',
-            text: '{{ __("Are you sure you want to delete this cancelled booking? This action cannot be undone.") }}',
+            text: '{{ __("Are you sure you want to delete this booking? This action cannot be undone.") }}',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#ef4444',

@@ -82,11 +82,10 @@ class TripBookingController extends Controller
         // Status Buttons / Delete
         $deleteBtn = '';
         if (auth()->user()->can('manage bookings')) {
-            $isCancelled = ($booking->status === 'cancelled' || $booking->booking_state === TripBooking::STATE_CANCELLED);
-            if ($isCancelled) {
+            if ($booking->canBeDeletedByAdmin()) {
                 $deleteBtn = '<button type="button" onclick="deleteBooking(' . $booking->id . ')" class="act-action-btn" style="color: #ef4444; background: rgba(239,68,68,0.1); border:none;" title="' . __('Delete') . '"><i class="fas fa-trash"></i></button>';
             } else {
-                $deleteBtn = '<button type="button" class="act-action-btn" style="color: #94a3b8; background: rgba(148,163,184,0.1); border:none; cursor:not-allowed; opacity:0.6;" title="' . __('Cannot delete active booking (must be cancelled first)') . '" onclick="toastr.warning(\'' . __('Cannot delete booking unless its status is cancelled.') . '\')"><i class="fas fa-trash"></i></button>';
+                $deleteBtn = '<button type="button" class="act-action-btn" style="color: #94a3b8; background: rgba(148,163,184,0.1); border:none; cursor:not-allowed; opacity:0.6;" title="' . __('Cannot delete confirmed or paid booking') . '" onclick="toastr.warning(\'' . __('Cannot delete booking because it is confirmed or paid.') . '\')"><i class="fas fa-trash"></i></button>';
             }
         }
 
@@ -94,7 +93,7 @@ class TripBookingController extends Controller
     }
 
     /**
-     * Delete a booking only if it is cancelled.
+     * Delete a booking only if it is unconfirmed and unpaid.
      */
     public function destroy($id)
     {
@@ -107,9 +106,8 @@ class TripBookingController extends Controller
 
         $booking = TripBooking::findOrFail($id);
 
-        $isCancelled = ($booking->status === 'cancelled' || $booking->booking_state === TripBooking::STATE_CANCELLED);
-        if (!$isCancelled) {
-            $msg = __('Cannot delete booking unless its status is cancelled.');
+        if (!$booking->canBeDeletedByAdmin()) {
+            $msg = __('Cannot delete booking because it is confirmed or paid.');
             if (request()->ajax() || request()->wantsJson()) {
                 return response()->json(['success' => false, 'message' => $msg], 422);
             }
@@ -123,6 +121,8 @@ class TripBookingController extends Controller
             }
             $booking->passengers()->delete();
             $booking->histories()->delete();
+            $booking->bankTransfers()->delete();
+            $booking->payments()->delete();
             $booking->delete();
 
             DB::commit();

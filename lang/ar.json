@@ -1,4 +1,7 @@
 {
+    "Cannot delete booking because it is confirmed or paid.": "لا يمكن حذف الحجز لأنه مؤكد أو تم سداد قيمته مسبقاً.",
+    "Cannot delete confirmed or paid booking": "لا يمكن حذف حجز مؤكد أو مدفوع",
+    "Are you sure you want to delete this booking? This action cannot be undone.": "هل أنت متأكد من رغبتك في حذف هذا الحجز؟ لا يمكن التراجع عن هذا الإجراء.",
     "Extra Pax Price": "سعر الشخص الإضافي للمدة",
     "Extra Passenger Price": "سعر الشخص الإضافي للمدة",
     "Tour Analytics": "إحصائيات الباقات",

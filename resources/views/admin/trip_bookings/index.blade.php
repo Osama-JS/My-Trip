@@ -224,7 +224,7 @@
 
         Swal.fire({
             title: '{{ __("Delete Booking?") }}',
-            text: '{{ __("Are you sure you want to delete this cancelled booking? This action cannot be undone.") }}',
+            text: '{{ __("Are you sure you want to delete this booking? This action cannot be undone.") }}',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#ef4444',
