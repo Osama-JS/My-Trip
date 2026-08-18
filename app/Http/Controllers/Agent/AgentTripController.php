@@ -384,19 +384,51 @@ class AgentTripController extends Controller
         }
     }
 
+    public function setPrimaryImage(Trip $trip, TripImage $image)
+    {
+        $this->authorizeAgent($trip);
+        try {
+            if ($image->trip_id !== $trip->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => __('Image does not belong to this trip.')
+                ], 403);
+            }
+
+            DB::transaction(function () use ($trip, $image) {
+                TripImage::where('trip_id', $trip->id)->update(['is_primary' => false]);
+                $image->update(['is_primary' => true]);
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => __('Image set as main cover successfully.'),
+                'image_id' => $image->id,
+                'url' => asset('storage/' . $image->image_path)
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Agent set primary image failed for trip {$trip->id}, image {$image->id}: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => __('An error occurred while updating the primary image.')
+            ], 500);
+        }
+    }
+
     public function getImages($trip_id)
     {
         $trip = Trip::findOrFail($trip_id);
         $this->authorizeAgent($trip);
 
-        $images = TripImage::where('trip_id', $trip_id)->get();
+        $images = TripImage::where('trip_id', $trip_id)->orderByDesc('is_primary')->orderBy('id')->get();
         $data = $images->map(function ($image) {
             $path = storage_path('app/public/' . $image->image_path);
             return [
-                'id'   => $image->id,
-                'name' => basename($image->image_path),
-                'size' => file_exists($path) ? filesize($path) : 0,
-                'url'  => asset('storage/' . $image->image_path),
+                'id'         => $image->id,
+                'name'       => basename($image->image_path),
+                'size'       => file_exists($path) ? filesize($path) : 0,
+                'url'        => asset('storage/' . $image->image_path),
+                'is_primary' => (bool)$image->is_primary,
             ];
         });
         return response()->json($data);

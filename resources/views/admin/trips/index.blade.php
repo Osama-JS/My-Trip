@@ -214,9 +214,56 @@
             opacity: 1;
             transform: scale(1);
         }
-        .img-thumb-wrap .del-btn:hover {
-            background: #dc2626;
-            transform: scale(1.1);
+        .img-thumb-wrap.is-primary {
+            border: 2.5px solid #f59e0b;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.25);
+        }
+        .primary-badge {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            background: #f59e0b;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            box-shadow: 0 2px 6px rgba(245, 158, 11, 0.4);
+            z-index: 10;
+        }
+        .set-primary-btn {
+            position: absolute;
+            bottom: 6px;
+            left: 6px;
+            right: 6px;
+            background: rgba(4, 23, 65, 0.88);
+            backdrop-filter: blur(4px);
+            color: #fff;
+            border: none;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 5px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            opacity: 0;
+            transform: translateY(4px);
+            transition: all 0.2s ease;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+        .img-thumb-wrap:hover .set-primary-btn {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .set-primary-btn:hover {
+            background: #f59e0b;
+            color: #fff;
         }
     </style>
     @endpush
@@ -487,14 +534,26 @@
     // Dropzone initialization
     Dropzone.autoDiscover = false;
     let myDropzone;
+    let currentAdminTripId = null;
 
-    function appendAdminImage(id, url) {
+    function appendAdminImage(id, url, isPrimary, tripId) {
         const grid = $('#admin-images-grid');
         $('#admin-images-empty').hide();
+        const activeTripId = tripId || currentAdminTripId;
         
+        const primaryBadge = isPrimary 
+            ? `<span class="primary-badge" id="primary-badge-${id}"><i class="fas fa-star text-white"></i> {{ __('Main Cover') }}</span>` 
+            : `<span class="primary-badge d-none" id="primary-badge-${id}"><i class="fas fa-star text-white"></i> {{ __('Main Cover') }}</span>`;
+
+        const setPrimaryBtn = !isPrimary 
+            ? `<button type="button" class="set-primary-btn" id="set-primary-btn-${id}" onclick="setAdminPrimaryImage(${activeTripId}, ${id})" title="{{ __('Set as Main Cover') }}"><i class="fas fa-star text-warning"></i> {{ __('Set as Main') }}</button>` 
+            : `<button type="button" class="set-primary-btn d-none" id="set-primary-btn-${id}" onclick="setAdminPrimaryImage(${activeTripId}, ${id})" title="{{ __('Set as Main Cover') }}"><i class="fas fa-star text-warning"></i> {{ __('Set as Main') }}</button>`;
+
         const imgHtml = `
-            <div class="img-thumb-wrap" id="admin-img-${id}">
+            <div class="img-thumb-wrap ${isPrimary ? 'is-primary' : ''}" id="admin-img-${id}">
+                ${primaryBadge}
                 <img src="${url}" alt="">
+                ${setPrimaryBtn}
                 <button type="button" class="del-btn" onclick="deleteAdminImage(${id})" title="{{ __('Delete') }}">
                     <i class="fas fa-trash"></i>
                 </button>
@@ -505,6 +564,41 @@
         // Update count
         const countEl = $('#admin-images-count');
         countEl.text(parseInt(countEl.text()) + 1);
+    }
+
+    function setAdminPrimaryImage(tripId, imageId) {
+        const url = "{{ url('admin/trips') }}/" + tripId + "/images/" + imageId + "/set-primary";
+        $.ajax({
+            url: url,
+            method: 'POST',
+            data: {
+                _token: $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Reset all other images styling
+                    $('.img-thumb-wrap').removeClass('is-primary');
+                    $('.primary-badge').addClass('d-none');
+                    $('.set-primary-btn').removeClass('d-none');
+
+                    // Set target image as primary
+                    $(`#admin-img-${imageId}`).addClass('is-primary');
+                    $(`#primary-badge-${imageId}`).removeClass('d-none');
+                    $(`#set-primary-btn-${imageId}`).addClass('d-none');
+
+                    toastr.success(response.message || "{{ __('Main cover image updated successfully!') }}");
+                    if (typeof tripsTable !== 'undefined') {
+                        tripsTable.ajax.reload(null, false);
+                    }
+                } else {
+                    toastr.error(response.message || "{{ __('Failed to update main image') }}");
+                }
+            },
+            error: function(xhr) {
+                const errMsg = xhr.responseJSON?.message || "{{ __('An error occurred') }}";
+                toastr.error(errMsg);
+            }
+        });
     }
 
     function deleteAdminImage(id) {
@@ -555,6 +649,7 @@
     }
 
     function openImageUpload(id, name) {
+        currentAdminTripId = id;
         $('#target-trip-name').text(name);
         
         // Clear previous images
@@ -570,7 +665,7 @@
             success: function(response) {
                 if (response && response.length > 0) {
                     response.forEach(function(img) {
-                        appendAdminImage(img.id, img.url);
+                        appendAdminImage(img.id, img.url, img.is_primary, id);
                     });
                 } else {
                     $('#admin-images-empty').show();
@@ -598,7 +693,7 @@
                 init: function() {
                     this.on("success", function(file, response) {
                         if (response.success) {
-                            appendAdminImage(response.id, response.url);
+                            appendAdminImage(response.id, response.url, false, currentAdminTripId);
                             toastr.success(response.message || "{{ __('Image uploaded successfully') }}");
                         } else {
                             toastr.error(response.message || "{{ __('Error while uploading the image') }}");

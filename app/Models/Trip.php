@@ -110,11 +110,19 @@ class Trip extends Model
     }
 
     /**
-     * Get the trip images.
+     * Get the trip images (primary image always first).
      */
     public function images(): HasMany
     {
-        return $this->hasMany(TripImage::class);
+        return $this->hasMany(TripImage::class)->orderByDesc('is_primary')->orderBy('id');
+    }
+
+    /**
+     * Get primary/cover image.
+     */
+    public function getPrimaryImageAttribute()
+    {
+        return $this->images->first();
     }
 
     public function banner(): HasMany
@@ -172,11 +180,11 @@ class Trip extends Model
     }
 
     /**
-     * Get image URL.
+     * Get image URL (primary cover image).
      */
     public function getImageUrlAttribute()
     {
-        $image = $this->images()->first();
+        $image = $this->images->first();
         if ($image && $image->image_path) {
             if (Str::startsWith($image->image_path, ['http://', 'https://'])) {
                 return $image->image_path;

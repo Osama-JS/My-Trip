@@ -285,11 +285,48 @@ html[dir="rtl"] .select2-container--default .select2-selection--single .select2-
     position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.7); color: #fff;
     font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 12px; backdrop-filter: blur(4px);
 }
-.preview-remove {
-    position: absolute; top: 6px; left: 6px; width: 24px; height: 24px; background: #ef4444; color: #fff;
-    border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.72rem;
-    border: none; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+.preview-card.is-primary {
+    border: 2.5px solid #f59e0b;
+    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.25);
 }
+.preview-badge-primary {
+    background: #f59e0b !important;
+    color: #fff !important;
+    font-weight: 800 !important;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+}
+.btn-set-primary {
+    position: absolute;
+    bottom: 6px;
+    left: 6px;
+    right: 6px;
+    background: rgba(4, 23, 65, 0.85);
+    backdrop-filter: blur(4px);
+    color: #fff;
+    border: none;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: all 0.2s ease;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+.preview-card:hover .btn-set-primary {
+    opacity: 1;
+    transform: translateY(0);
+}
+.btn-set-primary:hover {
+    background: #f59e0b;
+    color: #fff;
+}
+.d-none { display: none !important; }
 
 .atrip-switch-group { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: var(--bg-body); border-radius: var(--radius-md); border: 1.5px solid var(--border-soft); transition: var(--transition-fast); }
 .atrip-switch-group:hover { border-color: var(--border); background: var(--bg-card); }
@@ -472,14 +509,26 @@ html[dir="rtl"] .select2-container--default .select2-selection--single .select2-
             <div class="atrip-card-body">
                 {{-- Existing Images Preview --}}
                 @if($trip->images->count() > 0)
-                <label class="field-label" style="margin-bottom:12px;"><i class="fas fa-photo-video"></i>{{ __('Current Photos') }} ({{ $trip->images->count() }})</label>
-                <div class="preview-grid" style="margin-bottom:24px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <label class="field-label" style="margin-bottom:0;"><i class="fas fa-photo-video"></i>{{ __('Current Photos') }} (<span id="agent-current-photos-count">{{ $trip->images->count() }}</span>)</label>
+                    <small class="text-muted"><i class="fas fa-info-circle"></i> {{ __('Hover on any photo to set it as the main cover.') }}</small>
+                </div>
+                <div class="preview-grid" id="existing-photos-grid" style="margin-bottom:24px;">
                     @foreach($trip->images as $index => $img)
-                        <div class="preview-card">
+                        @php
+                            $isImgPrimary = $img->is_primary || ($index === 0 && !$trip->images->where('is_primary', true)->count());
+                        @endphp
+                        <div class="preview-card {{ $isImgPrimary ? 'is-primary' : '' }}" id="agent-card-{{ $img->id }}">
                             <img src="{{ Str::startsWith($img->image_path, ['http://', 'https://']) ? $img->image_path : asset('storage/' . $img->image_path) }}" alt="Trip Photo">
-                            @if($index === 0)
-                                <span class="preview-badge">{{ __('Main') }}</span>
-                            @endif
+                            <span class="preview-badge preview-badge-primary {{ $isImgPrimary ? '' : 'd-none' }}" id="agent-badge-{{ $img->id }}">
+                                <i class="fas fa-star text-white me-1"></i> {{ __('Main Cover') }}
+                            </span>
+                            <button type="button" class="btn-set-primary {{ $isImgPrimary ? 'd-none' : '' }}" id="agent-btn-set-primary-{{ $img->id }}" onclick="setPrimaryImageEdit({{ $img->id }})" title="{{ __('Set as Main Cover') }}">
+                                <i class="fas fa-star text-warning"></i> {{ __('Set as Main') }}
+                            </button>
+                            <button type="button" class="preview-remove" onclick="deleteExistingPhotoEdit({{ $img->id }})" title="{{ __('Delete') }}">
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </div>
                     @endforeach
                 </div>
@@ -668,6 +717,7 @@ html[dir="rtl"] .select2-container--default .select2-selection--single .select2-
 @endsection
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.ckeditor.com/ckeditor5/35.0.1/classic/ckeditor.js"></script>
 <script>
 $(document).ready(function () {
@@ -815,5 +865,91 @@ $(document).ready(function () {
         });
     }
 });
+
+function setPrimaryImageEdit(id) {
+    const url = "{{ parse_url(route('agent.trips.images.set-primary', ['trip' => $trip->id, 'image' => ':id']), PHP_URL_PATH) }}".replace(':id', id);
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
+        }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            // Reset all cards
+            document.querySelectorAll('#existing-photos-grid .preview-card').forEach(c => c.classList.remove('is-primary'));
+            document.querySelectorAll('#existing-photos-grid .preview-badge-primary').forEach(b => b.classList.add('d-none'));
+            document.querySelectorAll('#existing-photos-grid .btn-set-primary').forEach(b => b.classList.remove('d-none'));
+
+            // Highlight chosen
+            const card = document.getElementById('agent-card-' + id);
+            if (card) card.classList.add('is-primary');
+            document.getElementById('agent-badge-' + id)?.classList.remove('d-none');
+            document.getElementById('agent-btn-set-primary-' + id)?.classList.add('d-none');
+
+            Swal.fire({
+                icon: 'success',
+                title: data.message || '{{ __("Main cover updated successfully!") }}',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        } else {
+            Swal.fire({ icon: 'error', text: data.message });
+        }
+    })
+    .catch(err => {
+        Swal.fire({ icon: 'error', text: '{{ __("An error occurred") }}' });
+    });
+}
+
+function deleteExistingPhotoEdit(id) {
+    Swal.fire({
+        title: '{{ __("Delete Photo?") }}',
+        text: '{{ __("This photo will be permanently deleted.") }}',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: '{{ __("Yes, Delete") }}',
+        cancelButtonText: '{{ __("Cancel") }}',
+    }).then(result => {
+        if (!result.isConfirmed) return;
+        const url = "{{ parse_url(route('agent.trips.images.destroy', ':id'), PHP_URL_PATH) }}".replace(':id', id);
+        fetch(url, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json'
+            }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                const card = document.getElementById('agent-card-' + id);
+                if (card) {
+                    card.style.transition = 'all 0.3s ease';
+                    card.style.opacity = '0';
+                    card.style.transform = 'scale(0.8)';
+                    setTimeout(() => {
+                        card.remove();
+                        const countEl = document.getElementById('agent-current-photos-count');
+                        if (countEl) {
+                            const newCount = Math.max(0, parseInt(countEl.textContent) - 1);
+                            countEl.textContent = newCount;
+                        }
+                    }, 300);
+                }
+                Swal.fire({ icon: 'success', title: '{{ __("Deleted!") }}', timer: 1500, showConfirmButton: false });
+            } else {
+                Swal.fire({ icon: 'error', text: data.message });
+            }
+        })
+        .catch(err => {
+            Swal.fire({ icon: 'error', text: '{{ __("An error occurred") }}' });
+        });
+    });
+}
 </script>
 @endpush

@@ -283,6 +283,7 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     Route::post('/trips/{trip}/images', [App\Http\Controllers\Admin\TripsController::class, 'imagestore'])->name('trips.images-store');
     Route::get('/trips/{id}/get-images', [App\Http\Controllers\Admin\TripsController::class, 'getImages'])->name('trips.get-images');
     Route::delete('/trips/{image}/destroyimages', [App\Http\Controllers\Admin\TripsController::class, 'imagedestroy'])->name('trips.images-destroy');
+    Route::post('/trips/{trip}/images/{image}/set-primary', [App\Http\Controllers\Admin\TripsController::class, 'setPrimaryImage'])->name('trips.images-set-primary');
 
     // Trip Itinerary
     Route::get('/trips/{trip}/itinerary', [TripsController::class, 'itinerary'])->name('trips.itinerary');
@@ -402,6 +403,7 @@ Route::middleware(['auth', 'isAgent'])->prefix('agent')->name('agent.')->group(f
     Route::post('/trips/{trip_id}/images', [\App\Http\Controllers\Agent\AgentTripController::class, 'imageStore'])->name('trips.images.store');
     Route::delete('/trips/images/{image}', [\App\Http\Controllers\Agent\AgentTripController::class, 'imageDestroy'])->name('trips.images.destroy');
     Route::get('/trips/{trip_id}/images', [\App\Http\Controllers\Agent\AgentTripController::class, 'getImages'])->name('trips.images.get');
+    Route::post('/trips/{trip}/images/{image}/set-primary', [\App\Http\Controllers\Agent\AgentTripController::class, 'setPrimaryImage'])->name('trips.images.set-primary');
 
     // Trip Itinerary
     Route::post('/trips/{trip}/itinerary', [\App\Http\Controllers\Agent\AgentTripController::class, 'storeItinerary'])->name('trips.itinerary.store');

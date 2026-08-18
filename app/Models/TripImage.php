@@ -9,6 +9,11 @@ class TripImage extends Model
     protected $fillable = [
         'trip_id',
         'image_path',
+        'is_primary',
+    ];
+
+    protected $casts = [
+        'is_primary' => 'boolean',
     ];
 
     /**

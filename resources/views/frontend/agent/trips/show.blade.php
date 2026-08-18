@@ -377,6 +377,58 @@
     transform: scale(1);
 }
 .ashow-photo-del:hover { background: #dc2626; transform: scale(1.1) !important; }
+.ashow-photo-card.is-primary {
+    border: 2.5px solid #f59e0b;
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.25);
+}
+.ashow-primary-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: #f59e0b;
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.4);
+    z-index: 5;
+}
+.ashow-set-primary-btn {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    right: 8px;
+    background: rgba(4, 23, 65, 0.88);
+    backdrop-filter: blur(4px);
+    color: #fff;
+    border: none;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 5px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: all 0.2s ease;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+.ashow-photo-card:hover .ashow-set-primary-btn {
+    opacity: 1;
+    transform: translateY(0);
+}
+.ashow-set-primary-btn:hover {
+    background: #f59e0b;
+    color: #fff;
+}
+.d-none { display: none !important; }
 
 /* ─── Itinerary & Add-ons 2-Column Layout ─── */
 .ashow-split-layout {
@@ -755,9 +807,15 @@
             {{-- Photos Grid --}}
             <div class="ashow-gallery-grid" id="images-grid">
                 @foreach($trip->images as $image)
-                    <div class="ashow-photo-card" id="img-{{ $image->id }}">
+                    <div class="ashow-photo-card {{ $image->is_primary ? 'is-primary' : '' }}" id="img-{{ $image->id }}">
+                        <span class="ashow-primary-badge {{ $image->is_primary ? '' : 'd-none' }}" id="agent-primary-badge-{{ $image->id }}">
+                            <i class="fas fa-star"></i> {{ __('Main Cover') }}
+                        </span>
                         <img src="{{ Str::startsWith($image->image_path, ['http://', 'https://']) ? $image->image_path : asset('storage/' . $image->image_path) }}" alt="Photo">
-                        <button class="ashow-photo-del" onclick="deleteImage({{ $image->id }}, this)" title="{{ __('Delete') }}">
+                        <button type="button" class="ashow-set-primary-btn {{ $image->is_primary ? 'd-none' : '' }}" id="agent-set-primary-btn-{{ $image->id }}" onclick="setPrimaryImage({{ $image->id }})" title="{{ __('Set as Main Cover') }}">
+                            <i class="fas fa-star text-warning"></i> {{ __('Set as Main') }}
+                        </button>
+                        <button type="button" class="ashow-photo-del" onclick="deleteImage({{ $image->id }}, this)" title="{{ __('Delete') }}">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -1143,13 +1201,59 @@ const myDropzone = new Dropzone('#trip-images-upload', {
     }
 });
 
-function appendImage(id, url) {
+function appendImage(id, url, isPrimary) {
     const grid = document.getElementById('images-grid');
     const wrap = document.createElement('div');
-    wrap.className = 'ashow-photo-card';
+    wrap.className = 'ashow-photo-card' + (isPrimary ? ' is-primary' : '');
     wrap.id = 'img-' + id;
-    wrap.innerHTML = `<img src="${url}" alt=""><button class="ashow-photo-del" onclick="deleteImage(${id}, this)" title="{{ __('Delete') }}"><i class="fas fa-trash"></i></button>`;
+    wrap.innerHTML = `
+        <span class="ashow-primary-badge ${isPrimary ? '' : 'd-none'}" id="agent-primary-badge-${id}">
+            <i class="fas fa-star"></i> {{ __('Main Cover') }}
+        </span>
+        <img src="${url}" alt="">
+        <button type="button" class="ashow-set-primary-btn ${isPrimary ? 'd-none' : ''}" id="agent-set-primary-btn-${id}" onclick="setPrimaryImage(${id})" title="{{ __('Set as Main Cover') }}">
+            <i class="fas fa-star text-warning"></i> {{ __('Set as Main') }}
+        </button>
+        <button type="button" class="ashow-photo-del" onclick="deleteImage(${id}, this)" title="{{ __('Delete') }}">
+            <i class="fas fa-trash"></i>
+        </button>
+    `;
     grid.append(wrap);
+}
+
+function setPrimaryImage(id) {
+    const url = "{{ parse_url(route('agent.trips.images.set-primary', ['trip' => $trip->id, 'image' => ':id']), PHP_URL_PATH) }}".replace(':id', id);
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
+        }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            // Reset all other photo cards
+            document.querySelectorAll('.ashow-photo-card').forEach(card => card.classList.remove('is-primary'));
+            document.querySelectorAll('.ashow-primary-badge').forEach(badge => badge.classList.add('d-none'));
+            document.querySelectorAll('.ashow-set-primary-btn').forEach(btn => btn.classList.remove('d-none'));
+
+            // Set target photo card as primary
+            const targetCard = document.getElementById('img-' + id);
+            if (targetCard) {
+                targetCard.classList.add('is-primary');
+            }
+            document.getElementById('agent-primary-badge-' + id)?.classList.remove('d-none');
+            document.getElementById('agent-set-primary-btn-' + id)?.classList.add('d-none');
+
+            Swal.fire({ icon: 'success', title: data.message || '{{ __("Main cover updated successfully!") }}', timer: 1500, showConfirmButton: false });
+        } else {
+            Swal.fire({ icon: 'error', text: data.message });
+        }
+    })
+    .catch(err => {
+        Swal.fire({ icon: 'error', text: '{{ __("An error occurred") }}' });
+    });
 }
 
 function deleteImage(id, btn) {
