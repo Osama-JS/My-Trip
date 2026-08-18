@@ -51,11 +51,28 @@ class Trip extends Model
        'is_featured',
     ];
 
+    protected $attributes = [
+        'base_capacity' => 1,
+        'extra_passenger_price' => 0.00,
+    ];
+
     protected $casts = [
         'active' => 'boolean',
         'expiry_date' => 'date',
         'price' => 'decimal:2',
+        'extra_passenger_price' => 'decimal:2',
+        'base_capacity' => 'integer',
     ];
+
+    public function setExtraPassengerPriceAttribute($value)
+    {
+        $this->attributes['extra_passenger_price'] = ($value !== null && $value !== '') ? (float) $value : 0.00;
+    }
+
+    public function setBaseCapacityAttribute($value)
+    {
+        $this->attributes['base_capacity'] = ($value !== null && $value !== '') ? (int) $value : 1;
+    }
 
     public function company(): BelongsTo {
         return $this->belongsTo(Company::class);

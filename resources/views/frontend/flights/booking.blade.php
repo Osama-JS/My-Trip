@@ -11,6 +11,65 @@
 </div>
 
 <div class="fe-container" style="margin-top: -40px; margin-bottom: 80px;">
+    {{-- ═══ LUXURY GUEST AUTHENTICATION BANNER ═══ --}}
+    @guest
+        @php $currLocale = app()->getLocale(); @endphp
+        <div class="fe-guest-auth-banner" style="margin-bottom: 25px;">
+            <div class="fe-guest-auth-card">
+                <div class="fe-guest-auth-glow"></div>
+                <div class="fe-guest-auth-inner">
+                    <div class="fe-guest-auth-icon-wrap">
+                        <div class="fe-guest-auth-icon">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                        <div class="fe-guest-pulse"></div>
+                    </div>
+
+                    <div class="fe-guest-auth-content">
+                        <div class="fe-guest-auth-badge">
+                            <i class="fas fa-lock"></i>
+                            <span>{{ $currLocale == 'ar' ? 'خطوة التحقق والأمان' : 'Security & Verification Step' }}</span>
+                        </div>
+                        <h4 class="fe-guest-auth-title">
+                            {{ $currLocale == 'ar' ? 'تسجيل الدخول مطلوب لتأكيد وحفظ بيانات الحجز' : 'Sign in required to complete and secure your booking' }}
+                        </h4>
+                        <p class="fe-guest-auth-desc">
+                            {{ $currLocale == 'ar' 
+                                ? 'يمكنك مراجعة وتعبئة بيانات المسافرين الآن بكل حرية وسهولة، وسيتعين عليك تسجيل الدخول أو إنشاء حساب سريع عند الخطوة الأخيرة لحفظ التذاكر ومتابعة الدفع.' 
+                                : 'You can freely fill and review traveler details now. You will need to sign in or create a quick account at the final step to save your vouchers and complete payment.' }}
+                        </p>
+                        
+                        <div class="fe-guest-auth-perks">
+                            <div class="fe-perk-item">
+                                <i class="fas fa-bolt text-warning"></i>
+                                <span>{{ $currLocale == 'ar' ? 'حفظ تلقائي لبيانات التذكرة' : 'Auto-save booking details' }}</span>
+                            </div>
+                            <div class="fe-perk-item">
+                                <i class="fas fa-shield-alt text-success"></i>
+                                <span>{{ $currLocale == 'ar' ? 'تأكيد ودفع مشفر 100%' : '100% Encrypted Checkout' }}</span>
+                            </div>
+                            <div class="fe-perk-item">
+                                <i class="fas fa-receipt text-primary"></i>
+                                <span>{{ $currLocale == 'ar' ? 'إصدار فوري للتذاكر' : 'Instant Voucher Issuance' }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="fe-guest-auth-cta-box">
+                        <a href="{{ route('login', ['return_url' => url()->full()]) }}" class="fe-btn-guest-login">
+                            <span class="fe-btn-text">{{ $currLocale == 'ar' ? 'تسجيل الدخول / إنشاء حساب' : 'Sign In / Create Account' }}</span>
+                            <i class="fas fa-arrow-left fe-arrow-icon"></i>
+                        </a>
+                        <span class="fe-guest-cta-hint">
+                            <i class="fas fa-check-circle text-success me-1"></i>
+                            {{ $currLocale == 'ar' ? 'لن تفقد أي بيانات قمت بإدخالها' : 'Your input data will be retained' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endguest
+
     <form action="{{ route('flights.book.process') }}" method="POST" id="flightBookingForm" enctype="multipart/form-data">
         @csrf
         <input type="hidden" name="flight_session_id" value="{{ $details['session_id'] ?? '' }}">
@@ -105,9 +164,22 @@
                 </div>
 
                 <div class="fe-booking-action">
-                    <button type="submit" class="fe-btn fe-btn-primary fe-btn-lg fe-btn-block">
-                        <i class="fas fa-check-circle"></i> {{ __('Complete Reservation') }}
-                    </button>
+                    @auth
+                        @if(!auth()->user()->canBookDirectly())
+                            <div class="alert alert-warning border-0 rounded-4 p-3 text-start mb-3 shadow-sm" style="font-size: 0.88rem; background: #fffbeb; color: #92400e;">
+                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                {{ app()->getLocale() == 'ar' ? 'حسابك الحالي (وكيل / مسؤول) مخصص لإدارة العمليات ولا يمكنه إنشاء حجوزات استهلاكية مباشرة. يرجى استخدام حساب عميل.' : 'Your account is an Agent/Admin management account and cannot place consumer bookings.' }}
+                            </div>
+                        @else
+                            <button type="submit" class="fe-btn fe-btn-primary fe-btn-lg fe-btn-block" id="flightSubmitBtn">
+                                <i class="fas fa-check-circle"></i> {{ __('Complete Reservation') }}
+                            </button>
+                        @endif
+                    @else
+                        <a href="{{ route('login', ['return_url' => url()->full()]) }}" class="fe-btn fe-btn-primary fe-btn-lg fe-btn-block" style="background: linear-gradient(135deg, #f59e0b, #d97706); text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: none;">
+                            <i class="fas fa-sign-in-alt"></i> {{ __('Sign in to complete booking') }}
+                        </a>
+                    @endauth
                     <p class="fe-terms-fine">
                         {{ __('By clicking "Complete Reservation", you agree to our') }} 
                         <a href="#">{{ __('Terms and Conditions') }}</a> {{ __('and') }} 
@@ -296,6 +368,198 @@
 @push('styles')
 <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.css" rel="stylesheet">
 <style>
+    /* ─── Premium Guest Authentication Banner ─── */
+    .fe-guest-auth-card {
+        position: relative;
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #0f2444 100%);
+        border-radius: 20px;
+        padding: 24px 28px;
+        box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1);
+        overflow: hidden;
+        color: #ffffff;
+        transition: all 0.3s ease;
+    }
+
+    .fe-guest-auth-card:hover {
+        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35), 0 0 0 1px rgba(251, 191, 36, 0.3);
+    }
+
+    .fe-guest-auth-glow {
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 350px;
+        height: 350px;
+        background: radial-gradient(circle, rgba(245, 158, 11, 0.18) 0%, rgba(14, 165, 233, 0.1) 50%, transparent 70%);
+        pointer-events: none;
+        filter: blur(40px);
+    }
+
+    .fe-guest-auth-inner {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        flex-wrap: wrap;
+    }
+
+    .fe-guest-auth-icon-wrap {
+        position: relative;
+        flex-shrink: 0;
+    }
+
+    .fe-guest-auth-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 18px;
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.35));
+        border: 1.5px solid rgba(251, 191, 36, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.7rem;
+        color: #fbbf24;
+        box-shadow: 0 8px 20px rgba(245, 158, 11, 0.25);
+    }
+
+    .fe-guest-pulse {
+        position: absolute;
+        top: -3px;
+        right: -3px;
+        width: 14px;
+        height: 14px;
+        background: #10b981;
+        border-radius: 50%;
+        border: 2px solid #0f172a;
+        animation: pulseBadge 2s infinite;
+    }
+
+    @keyframes pulseBadge {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    .fe-guest-auth-content {
+        flex: 1;
+        min-width: 280px;
+    }
+
+    .fe-guest-auth-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(251, 191, 36, 0.12);
+        border: 1px solid rgba(251, 191, 36, 0.25);
+        padding: 3px 10px;
+        border-radius: 30px;
+        font-size: 0.75rem;
+        font-weight: 800;
+        color: #fbbf24;
+        margin-bottom: 8px;
+        letter-spacing: 0.3px;
+    }
+
+    .fe-guest-auth-title {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #ffffff;
+        margin: 0 0 6px;
+        line-height: 1.4;
+    }
+
+    .fe-guest-auth-desc {
+        font-size: 0.86rem;
+        color: #cbd5e1;
+        margin: 0 0 12px;
+        line-height: 1.6;
+    }
+
+    .fe-guest-auth-perks {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .fe-perk-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #e2e8f0;
+        background: rgba(255, 255, 255, 0.07);
+        padding: 4px 12px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .fe-guest-auth-cta-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    .fe-btn-guest-login {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: #ffffff !important;
+        font-weight: 800;
+        font-size: 0.95rem;
+        padding: 13px 26px;
+        border-radius: 50px;
+        text-decoration: none;
+        box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.4);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        white-space: nowrap;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .fe-btn-guest-login:hover {
+        background: linear-gradient(135deg, #fbbf24 0%, #b45309 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 14px 30px -5px rgba(245, 158, 11, 0.5);
+        color: #ffffff !important;
+    }
+
+    .fe-arrow-icon {
+        transition: transform 0.3s ease;
+    }
+
+    html[dir="rtl"] .fe-btn-guest-login:hover .fe-arrow-icon {
+        transform: translateX(-4px);
+    }
+
+    html[dir="ltr"] .fe-btn-guest-login .fe-arrow-icon {
+        transform: rotate(180deg);
+    }
+
+    html[dir="ltr"] .fe-btn-guest-login:hover .fe-arrow-icon {
+        transform: rotate(180deg) translateX(-4px);
+    }
+
+    @media (max-width: 991px) {
+        .fe-guest-auth-inner {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .fe-guest-auth-cta-box {
+            width: 100%;
+            align-items: stretch;
+            margin-top: 10px;
+        }
+        .fe-btn-guest-login {
+            width: 100%;
+        }
+    }
+
     .fe-booking-header { background: linear-gradient(135deg, var(--primary) 0%, #1a3a5a 100%); padding: 80px 0 100px; color: white; text-align: center; }
     .fe-booking-header h1 { color: white; margin-bottom: 10px; font-weight: 900; font-size: 2.5rem; }
     .fe-booking-header p { opacity: 0.9; font-size: 1.1rem; color: white; }

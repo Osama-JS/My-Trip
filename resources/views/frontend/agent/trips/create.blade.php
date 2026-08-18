@@ -901,8 +901,8 @@ html[dir="rtl"] .select2-container--default .select2-selection--single .select2-
                         <input type="number" name="base_capacity" class="atrip-input" value="{{ old('base_capacity', 1) }}" placeholder="e.g. 1">
                     </div>
                     <div class="atrip-field">
-                        <label class="field-label"><i class="fas fa-user-plus"></i>{{ __('Extra Pax Price') }} (SAR)</label>
-                        <input type="number" step="0.01" name="extra_passenger_price" class="atrip-input" value="{{ old('extra_passenger_price', 0) }}" placeholder="0.00">
+                        <label class="field-label"><i class="fas fa-user-plus"></i>{{ __('Extra Pax Price') }} (SAR) <span class="text-danger">*</span></label>
+                        <input type="number" step="0.01" min="0" name="extra_passenger_price" class="atrip-input" value="{{ old('extra_passenger_price', 0) }}" placeholder="0.00" required>
                     </div>
                 </div>
 

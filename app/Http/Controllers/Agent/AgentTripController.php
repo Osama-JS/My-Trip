@@ -93,7 +93,7 @@ class AgentTripController extends Controller
             'personnel_capacity'    => 'nullable|integer|min:1',
             'tickets'               => 'nullable|string',
             'base_capacity'         => 'nullable|integer|min:0',
-            'extra_passenger_price' => 'nullable|numeric|min:0',
+            'extra_passenger_price' => 'required|numeric|min:0',
             'is_public'             => 'nullable|boolean',
             'active'                => 'nullable|boolean',
             'category_ids'          => 'nullable|array',
@@ -121,6 +121,9 @@ class AgentTripController extends Controller
         $data['title_en'] = $titleEn ?? $titleAr;
         $data['description_ar'] = $descAr;
         $data['description_en'] = $descEn ?? $descAr;
+
+        $data['extra_passenger_price'] = $request->filled('extra_passenger_price') ? (float) $request->extra_passenger_price : 0.00;
+        $data['base_capacity'] = $request->filled('base_capacity') ? (int) $request->base_capacity : 1;
 
         $data['company_id'] = $user->company_id;
         $data['user_id']    = $user->id;
@@ -211,7 +214,7 @@ class AgentTripController extends Controller
             'personnel_capacity'    => 'nullable|integer|min:1',
             'tickets'               => 'nullable|string',
             'base_capacity'         => 'nullable|integer|min:0',
-            'extra_passenger_price' => 'nullable|numeric|min:0',
+            'extra_passenger_price' => 'required|numeric|min:0',
             'is_public'             => 'nullable|boolean',
             'active'                => 'nullable|boolean',
             'category_ids'          => 'nullable|array',
@@ -231,6 +234,9 @@ class AgentTripController extends Controller
         $data['title_en'] = $titleEn ?? $titleAr;
         $data['description_ar'] = $descAr;
         $data['description_en'] = $descEn ?? $descAr;
+
+        $data['extra_passenger_price'] = $request->filled('extra_passenger_price') ? (float) $request->extra_passenger_price : 0.00;
+        $data['base_capacity'] = $request->filled('base_capacity') ? (int) $request->base_capacity : 1;
 
         // Checkbox handling
         $data['is_public']   = $request->boolean('is_public');
