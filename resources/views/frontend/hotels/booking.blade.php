@@ -32,6 +32,64 @@
             </ul>
         </div>
     @endif
+    @php
+        $currLocale = app()->getLocale();
+    @endphp
+
+    @guest
+        <div class="fe-guest-auth-card mb-4">
+            <div class="fe-guest-auth-glow"></div>
+            <div class="fe-guest-auth-inner">
+                <div class="fe-guest-auth-icon-wrap">
+                    <div class="fe-guest-auth-icon">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <span class="fe-guest-pulse"></span>
+                </div>
+
+                <div class="fe-guest-auth-content">
+                    <div class="fe-guest-auth-badge">
+                        <i class="fas fa-lock"></i>
+                        <span>{{ $currLocale == 'ar' ? 'خطوة التحقق والأمان' : 'Security & Verification Step' }}</span>
+                    </div>
+                    <h4 class="fe-guest-auth-title">
+                        {{ $currLocale == 'ar' ? 'تسجيل الدخول مطلوب لتأكيد وحفظ بيانات الحجز الفندقي' : 'Sign in required to complete and secure your hotel booking' }}
+                    </h4>
+                    <p class="fe-guest-auth-desc">
+                        {{ $currLocale == 'ar' 
+                            ? 'يمكنك تعبئة ومراجعة بيانات النزلاء الآن بكل حرية، وسيتعين عليك تسجيل الدخول أو إنشاء حساب سريع عند الخطوة الأخيرة لحفظ التذاكر ومتابعة الدفع.' 
+                            : 'You can freely fill and review guest details now. You will need to sign in or create a quick account at the final step to save your vouchers and complete payment.' }}
+                    </p>
+                    
+                    <div class="fe-guest-auth-perks">
+                        <div class="fe-perk-item">
+                            <i class="fas fa-bolt text-warning"></i>
+                            <span>{{ $currLocale == 'ar' ? 'حفظ تلقائي لبيانات النزلاء' : 'Auto-save booking details' }}</span>
+                        </div>
+                        <div class="fe-perk-item">
+                            <i class="fas fa-shield-alt text-success"></i>
+                            <span>{{ $currLocale == 'ar' ? 'تأكيد ودفع مشفر 100%' : '100% Encrypted Checkout' }}</span>
+                        </div>
+                        <div class="fe-perk-item">
+                            <i class="fas fa-receipt text-primary"></i>
+                            <span>{{ $currLocale == 'ar' ? 'إصدار فوري لقسيمة الفندق' : 'Instant Hotel Voucher' }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="fe-guest-auth-cta-box">
+                    <a href="{{ route('login', ['return_url' => url()->full()]) }}" class="fe-btn-guest-login btn-save-draft-and-login" onclick="if(window.hotelDraftManager) window.hotelDraftManager.saveDraft();">
+                        <span class="fe-btn-text">{{ $currLocale == 'ar' ? 'تسجيل الدخول / إنشاء حساب' : 'Sign In / Create Account' }}</span>
+                        <i class="fas fa-arrow-left fe-arrow-icon"></i>
+                    </a>
+                    <span class="fe-guest-cta-hint">
+                        <i class="fas fa-check-circle text-success me-1"></i>
+                        {{ $currLocale == 'ar' ? 'لن تفقد أي بيانات قمت بإدخالها' : 'Your input data will be retained' }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    @endguest
 
     <form action="{{ route('hotels.book.process') }}" method="POST" id="hotelBookingForm">
         @csrf
@@ -202,9 +260,22 @@
                 </div>
 
                 <div class="fe-booking-action">
-                    <button type="submit" class="fe-btn fe-btn-primary fe-btn-lg fe-btn-block">
-                        <i class="fas fa-check-circle"></i> {{ __('Proceed to Payment') }}
-                    </button>
+                    @auth
+                        @if(!auth()->user()->canBookDirectly())
+                            <div class="alert alert-warning border-0 rounded-4 p-3 text-start mb-3 shadow-sm" style="font-size: 0.88rem; background: #fffbeb; color: #92400e;">
+                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                {{ app()->getLocale() == 'ar' ? 'حسابك الحالي (وكيل / مسؤول) مخصص لإدارة العمليات ولا يمكنه إنشاء حجوزات استهلاكية مباشرة. يرجى استخدام حساب عميل.' : 'Your account is an Agent/Admin management account and cannot place consumer bookings.' }}
+                            </div>
+                        @else
+                            <button type="submit" class="fe-btn fe-btn-primary fe-btn-lg fe-btn-block">
+                                <i class="fas fa-check-circle"></i> {{ __('Proceed to Payment') }}
+                            </button>
+                        @endif
+                    @else
+                        <a href="{{ route('login', ['return_url' => url()->full()]) }}" class="fe-btn fe-btn-primary fe-btn-lg fe-btn-block btn-save-draft-and-login" onclick="if(window.hotelDraftManager) window.hotelDraftManager.saveDraft();" style="background: linear-gradient(135deg, #f59e0b, #d97706); text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: none;">
+                            <i class="fas fa-sign-in-alt"></i> {{ __('Sign in to complete booking') }}
+                        </a>
+                    @endauth
                     <p class="fe-terms-fine">{{ __('By clicking "Proceed to Payment", you agree to the') }} <a href="#">{{ __('Terms & Conditions') }}</a> {{ __('and') }} <a href="#">{{ __('Booking Policy') }}</a>.</p>
                 </div>
             </div>
@@ -346,4 +417,14 @@
         .fe-booking-header { padding: 60px 0 80px; }
     }
 </style>
+@endpush
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof BookingDraftManager !== 'undefined') {
+            window.hotelDraftManager = new BookingDraftManager('#hotelBookingForm', 'hotel_{{ md5(url()->full()) }}');
+        }
+    });
+</script>
 @endpush

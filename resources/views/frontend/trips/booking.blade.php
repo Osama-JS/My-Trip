@@ -78,7 +78,7 @@
                 </div>
 
                 <div class="fe-guest-auth-cta-box">
-                    <a href="{{ route('login', ['return_url' => url()->full()]) }}" class="fe-btn-guest-login">
+                    <a href="{{ route('login', ['return_url' => url()->full()]) }}" class="fe-btn-guest-login btn-save-draft-and-login" onclick="if(window.tripDraftManager) window.tripDraftManager.saveDraft();">
                         <span class="fe-btn-text">{{ $currLocale == 'ar' ? 'تسجيل الدخول / إنشاء حساب' : 'Sign In / Create Account' }}</span>
                         <i class="fas fa-arrow-left fe-arrow-icon"></i>
                     </a>
@@ -333,7 +333,7 @@
                             </button>
                         @endif
                     @else
-                        <a href="{{ route('login', ['return_url' => url()->full()]) }}" class="fe-btn-confirm" style="background: linear-gradient(135deg, #f59e0b, #d97706); text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+                        <a href="{{ route('login', ['return_url' => url()->full()]) }}" class="fe-btn-confirm btn-save-draft-and-login" onclick="if(window.tripDraftManager) window.tripDraftManager.saveDraft();" style="background: linear-gradient(135deg, #f59e0b, #d97706); text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
                             <i class="fas fa-sign-in-alt"></i> {{ __('Sign in to complete booking') }}
                         </a>
                     @endauth
@@ -1189,6 +1189,11 @@
     $(document).ready(function() {
         if($.fn.select2) {
             $('.fe-select2').select2({ width: '100%' });
+        }
+
+        // Initialize Auto-Save & Auto-Restore for Tour Package Draft
+        if (typeof BookingDraftManager !== 'undefined') {
+            window.tripDraftManager = new BookingDraftManager('#tripBookingForm', 'trip_{{ $trip->id }}_{{ $tickets_count }}');
         }
     });
 

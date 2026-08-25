@@ -805,6 +805,7 @@ $(document).ready(function() {
         const btn = $(this);
         btn.html('<i class="fa fa-spinner fa-spin"></i>').prop('disabled', true);
 
+        const returnUrl = "{{ request('return_url') ?? session('url.intended') ?? '' }}";
         $.ajax({
             url: '{{ route("web.register.verify.otp") }}',
             method: 'POST',
@@ -812,6 +813,7 @@ $(document).ready(function() {
                 phone: fullPhone, 
                 country_code: fullCountryCode, 
                 otp_code: otp,
+                return_url: returnUrl,
                 _token: '{{ csrf_token() }}'
             },
             success: function(res) {

@@ -19,8 +19,12 @@ class AuthenticatedSessionController extends Controller
     /**
      * Display the login view.:
      */
-    public function create()
+    public function create(Request $request)
     {
+        if ($request->filled('return_url')) {
+            session(['url.intended' => $request->query('return_url')]);
+        }
+
         if (\App\Models\Setting::get('auth_maintenance_mode') == '1') {
             $secret = \App\Models\Setting::get('auth_maintenance_secret');
             // We no longer store it in the session
@@ -34,6 +38,10 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
+        if ($request->filled('return_url')) {
+            session(['url.intended' => $request->return_url]);
+        }
+
         $request->authenticate();
 
         $request->session()->regenerate();
@@ -46,7 +54,8 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('agent.dashboard');
         }
 
-         return redirect()->intended(route('customer.dashboard', absolute: false));
+        $redirectUrl = session()->pull('url.intended', route('customer.dashboard'));
+        return redirect()->to($redirectUrl);
     }
 
     /**
@@ -208,6 +217,10 @@ class AuthenticatedSessionController extends Controller
         app(\App\Services\WalletService::class)->getOrCreateWallet($user->id);
 
         Auth::login($user, true); // Login and remember
+
+        if ($request->filled('return_url')) {
+            session(['url.intended' => $request->return_url]);
+        }
 
         $redirectUrl = session()->pull('url.intended', route('customer.dashboard'));
         return response()->json(['success' => true, 'redirect' => $redirectUrl]);

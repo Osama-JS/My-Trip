@@ -18,8 +18,12 @@ class RegisteredUserController extends Controller
     /**
      * Display the registration view.
      */
-    public function create()
+    public function create(Request $request)
     {
+        if ($request->filled('return_url')) {
+            session(['url.intended' => $request->query('return_url')]);
+        }
+
         if (\App\Models\Setting::get('auth_maintenance_mode') == '1') {
             $secret = \App\Models\Setting::get('auth_maintenance_secret');
             
@@ -170,6 +174,10 @@ class RegisteredUserController extends Controller
         app(\App\Services\WalletService::class)->getOrCreateWallet($user->id);
 
         Auth::login($user, true);
+
+        if ($request->filled('return_url')) {
+            session(['url.intended' => $request->return_url]);
+        }
 
         $redirectUrl = session()->pull('url.intended', route('customer.dashboard'));
         return response()->json(['success' => true, 'redirect' => $redirectUrl]);

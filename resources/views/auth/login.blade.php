@@ -409,6 +409,9 @@
                 <div class="tab-pane fade" id="email-login" role="tabpanel">
                     <form method="POST" action="{{ route('login', request()->has('secret') ? ['secret' => request()->query('secret')] : []) }}">
                         @csrf
+                        @if(request('return_url') || session('url.intended'))
+                            <input type="hidden" name="return_url" value="{{ request('return_url') ?? session('url.intended') }}">
+                        @endif
                         <div class="mb-4">
                             <label class="mb-2 font-weight-bold text-muted">{{ __('Email Address') }}</label>
                             <div class="position-relative">
@@ -659,10 +662,11 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.html('<i class="fa fa-spinner fa-spin"></i>').prop('disabled', true);
 
             let data = {};
+            const returnUrl = "{{ request('return_url') ?? session('url.intended') ?? '' }}";
             @if($otpMethod === 'email')
-                data = { email: currentEmail, otp_code: otp, _token: '{{ csrf_token() }}' };
+                data = { email: currentEmail, otp_code: otp, return_url: returnUrl, _token: '{{ csrf_token() }}' };
             @else
-                data = { phone: currentPhone, country_code: currentCountryCode, otp_code: otp, _token: '{{ csrf_token() }}' };
+                data = { phone: currentPhone, country_code: currentCountryCode, otp_code: otp, return_url: returnUrl, _token: '{{ csrf_token() }}' };
             @endif
 
             $.ajax({
