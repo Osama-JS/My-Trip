@@ -55,7 +55,7 @@
         <div class="fe-form-row mt-3">
             <div class="fe-form-group" style="max-width: 200px;">
                 <label class="fe-label">{{ __('Title') }}</label>
-                <select name="passengers[{{ $index }}][title]" class="fe-input" onchange="document.getElementById('hidden_title_{{ $index }}').value = this.value">
+                <select name="passengers[{{ $index }}][title]" class="fe-input" onchange="const hEl = document.getElementById('hidden_title_{{ $index }}'); if(hEl) hEl.value = this.value;">
                     @if($type == 'adult')
                         <option value="Mr">{{ __('Mr') }}</option>
                         <option value="Mrs">{{ __('Mrs') }}</option>
