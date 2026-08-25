@@ -451,6 +451,12 @@ class FrontendController extends Controller
      */
     public function processHotelBooking(Request $request)
     {
+        if (!auth()->check()) {
+            session()->put('pending_hotel_booking', $request->all());
+            session()->put('url.intended', route('hotels.book.process.resume'));
+            return redirect()->route('login');
+        }
+
         if (auth()->check() && !auth()->user()->canBookDirectly()) {
             return redirect()->route('hotels')->with('error', app()->getLocale() == 'ar' 
                 ? 'عذراً، حسابات الوكلاء والمسؤولين مخصصة لإدارة العمليات ولا يمكنها إجراء حجوزات استهلاكية مباشرة. يرجى استخدام حساب عميل.' 
@@ -593,6 +599,19 @@ class FrontendController extends Controller
             \Illuminate\Support\Facades\Log::error('Local Hotel Save Error: ' . $e->getMessage());
             return back()->with('error', __('Local save failed: :msg', ['msg' => $e->getMessage()]))->withInput();
         }
+    }
+
+    /**
+     * Resume Hotel Booking after Login
+     */
+    public function resumeHotelBooking(Request $request)
+    {
+        if (session()->has('pending_hotel_booking')) {
+            $pendingData = session()->pull('pending_hotel_booking');
+            $request->replace($pendingData);
+            return $this->processHotelBooking($request);
+        }
+        return redirect()->route('hotels');
     }
 
     /**
@@ -755,6 +774,12 @@ class FrontendController extends Controller
      */
     public function processFlightBooking(Request $request)
     {
+        if (!auth()->check()) {
+            session()->put('pending_flight_booking', $request->all());
+            session()->put('url.intended', route('flights.book.process.resume'));
+            return redirect()->route('login');
+        }
+
         if (auth()->check() && !auth()->user()->canBookDirectly()) {
             return redirect()->route('flights')->with('error', app()->getLocale() == 'ar' 
                 ? 'عذراً، حسابات الوكلاء والمسؤولين مخصصة لإدارة العمليات ولا يمكنها إجراء حجوزات استهلاكية مباشرة. يرجى استخدام حساب عميل.' 
@@ -868,6 +893,19 @@ class FrontendController extends Controller
             \Illuminate\Support\Facades\Log::error('Local Flight Save Error: ' . $e->getMessage());
             return back()->with('error', __('Booking saved on provider but failed locally. Contact support. Reference: ') . ($result['AirBookingResponse']['AirBookingResult']['Pnrs']['Pnr'] ?? 'N/A'));
         }
+    }
+
+    /**
+     * Resume Flight Booking after Login
+     */
+    public function resumeFlightBooking(Request $request)
+    {
+        if (session()->has('pending_flight_booking')) {
+            $pendingData = session()->pull('pending_flight_booking');
+            $request->replace($pendingData);
+            return $this->processFlightBooking($request);
+        }
+        return redirect()->route('flights');
     }
 
     /**
@@ -1043,6 +1081,12 @@ class FrontendController extends Controller
      */
     public function bookTrip(Request $request)
     {
+        if (!auth()->check()) {
+            session()->put('pending_trip_booking', $request->all());
+            session()->put('url.intended', route('trips.book.process.resume'));
+            return redirect()->route('login');
+        }
+
         if (auth()->check() && !auth()->user()->canBookDirectly()) {
             return redirect()->route('trips.index')->with('error', app()->getLocale() == 'ar' 
                 ? 'عذراً، حسابات الوكلاء والمسؤولين مخصصة لإدارة العمليات ولا يمكنها إجراء حجوزات استهلاكية مباشرة. يرجى استخدام حساب عميل.' 
@@ -1196,6 +1240,19 @@ class FrontendController extends Controller
         // Redirect to the trip-specific payment selection page
         return redirect()->route('trips.payment.select', ['booking_id' => $booking->id])
             ->with('success', __('Booking created successfully! Please proceed with payment.'));
+    }
+
+    /**
+     * Resume Trip Booking after Login
+     */
+    public function resumeTripBooking(Request $request)
+    {
+        if (session()->has('pending_trip_booking')) {
+            $pendingData = session()->pull('pending_trip_booking');
+            $request->replace($pendingData);
+            return $this->bookTrip($request);
+        }
+        return redirect()->route('trips.index');
     }
         /**
      * Search Airports locally (for Select2)

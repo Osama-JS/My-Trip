@@ -443,7 +443,10 @@
                         <button type="button" id="btn-guest-verify-otp" class="btn btn-primary">
                             {{ __('Verify & Register') }} <i class="fa fa-check ms-2"></i>
                         </button>
-                        <div class="text-center mt-3">
+                        <div class="text-center mt-3 d-flex flex-column align-items-center gap-2">
+                            <button type="button" id="btn-guest-resend-otp" class="btn btn-outline-secondary btn-sm" disabled>
+                                {{ __('Resend OTP') }} <span id="guest-resend-timer">(40s)</span>
+                            </button>
                             <a href="#" id="btn-guest-back" class="text-muted small"><i class="fa fa-arrow-left"></i> {{ $otpMethod === 'email' ? __('Change Email Address') : __('Change Phone Number') }}</a>
                         </div>
                     </div>
@@ -517,7 +520,10 @@
                         <button type="button" id="btn-full-verify-otp" class="btn btn-primary">
                             {{ __('Verify & Complete Registration') }} <i class="fa fa-check ms-2"></i>
                         </button>
-                        <div class="text-center mt-3">
+                        <div class="text-center mt-3 d-flex flex-column align-items-center gap-2">
+                            <button type="button" id="btn-full-resend-otp" class="btn btn-outline-secondary btn-sm" disabled>
+                                {{ __('Resend OTP') }} <span id="full-resend-timer">(40s)</span>
+                            </button>
                             <a href="#" id="btn-full-back" class="text-muted small"><i class="fa fa-arrow-left"></i> {{ __('Edit Details') }}</a>
                         </div>
                     </div>
@@ -586,6 +592,7 @@ const COUNTRIES = [
 
 function renderCountryList(filter, prefix) {
     const list = document.getElementById(prefix + 'CountryList');
+    if (!list) return;
     list.innerHTML = '';
     const lower = (filter || '').toLowerCase();
     COUNTRIES.filter(c => !lower || c.name.toLowerCase().includes(lower) || c.dial.includes(lower))
@@ -631,8 +638,10 @@ document.addEventListener('DOMContentLoaded', function() {
     ['guest', 'full'].forEach(prefix => {
         const input = document.getElementById(prefix + '_phone_input');
         const wrapper = document.getElementById(prefix + '_phone_wrapper');
-        input.addEventListener('focus', () => wrapper.classList.add('focused'));
-        input.addEventListener('blur', () => wrapper.classList.remove('focused'));
+        if (input && wrapper) {
+            input.addEventListener('focus', () => wrapper.classList.add('focused'));
+            input.addEventListener('blur', () => wrapper.classList.remove('focused'));
+        }
     });
 });
 
@@ -681,6 +690,7 @@ $(document).ready(function() {
                 $('#guest-otp-request-section').slideUp();
                 $('#guest-otp-verify-section').slideDown();
                 btn.html(originalBtnText).prop('disabled', false);
+                if (typeof window.startGuestResendTimer === 'function') window.startGuestResendTimer();
             },
             error: function(err) {
                 let msg = err.responseJSON?.message || "{{ __('Failed to send OTP') }}";
@@ -774,6 +784,7 @@ $(document).ready(function() {
                 $('#full-otp-request-section').slideUp();
                 $('#full-otp-verify-section').slideDown();
                 btn.html('{{ __("Register") }} <i class="fas fa-arrow-{{ app()->isLocale("ar") ? "left" : "right" }} ms-2"></i>').prop('disabled', false);
+                if (typeof window.startFullResendTimer === 'function') window.startFullResendTimer();
             },
             error: function(err) {
                 let msg = err.responseJSON?.message || "{{ __('Failed to send OTP') }}";
@@ -820,6 +831,57 @@ $(document).ready(function() {
         e.preventDefault();
         $('#full-otp-verify-section').slideUp();
         $('#full-otp-request-section').slideDown();
+    });
+
+    // ---- Resend OTP Logic ----
+    let guestTimerInterval;
+    window.startGuestResendTimer = function() {
+        let seconds = 40;
+        const btn = $('#btn-guest-resend-otp');
+        const timerSpan = $('#guest-resend-timer');
+        btn.prop('disabled', true);
+        timerSpan.text('(40s)');
+        clearInterval(guestTimerInterval);
+        
+        guestTimerInterval = setInterval(function() {
+            seconds--;
+            if(seconds > 0) {
+                timerSpan.text('(' + seconds + 's)');
+            } else {
+                clearInterval(guestTimerInterval);
+                timerSpan.text('');
+                btn.prop('disabled', false);
+            }
+        }, 1000);
+    }
+
+    $('#btn-guest-resend-otp').click(function() {
+        $('#btn-guest-request-otp').trigger('click');
+    });
+
+    let fullTimerInterval;
+    window.startFullResendTimer = function() {
+        let seconds = 40;
+        const btn = $('#btn-full-resend-otp');
+        const timerSpan = $('#full-resend-timer');
+        btn.prop('disabled', true);
+        timerSpan.text('(40s)');
+        clearInterval(fullTimerInterval);
+        
+        fullTimerInterval = setInterval(function() {
+            seconds--;
+            if(seconds > 0) {
+                timerSpan.text('(' + seconds + 's)');
+            } else {
+                clearInterval(fullTimerInterval);
+                timerSpan.text('');
+                btn.prop('disabled', false);
+            }
+        }, 1000);
+    }
+
+    $('#btn-full-resend-otp').click(function() {
+        $('#btn-full-request-otp').trigger('click');
     });
 });
 </script>

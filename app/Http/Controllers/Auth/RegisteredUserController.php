@@ -171,6 +171,7 @@ class RegisteredUserController extends Controller
 
         Auth::login($user, true);
 
-        return response()->json(['success' => true, 'redirect' => route('customer.dashboard')]);
+        $redirectUrl = session()->pull('url.intended', route('customer.dashboard'));
+        return response()->json(['success' => true, 'redirect' => $redirectUrl]);
     }
 }
