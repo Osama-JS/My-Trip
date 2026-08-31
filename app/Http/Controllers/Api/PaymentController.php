@@ -162,6 +162,32 @@ class PaymentController extends Controller
                 return $this->apiResponse(true, __('Booking not found.'), null, null, 404);
             }
 
+            if ($booking->status === 'confirmed') {
+                return $this->apiResponse(true, __('This booking is already paid and confirmed.'), null, null, 400);
+            }
+
+            if ($booking->status === 'cancelled') {
+                return $this->apiResponse(true, app()->getLocale() == 'ar'
+                    ? 'عذراً، هذا الحجز ملغي أو انتهت صلاحيته. يرجى إعادة البحث والحجز من جديد.'
+                    : 'This booking has been cancelled or has expired. Please make a new reservation.', null, null, 400);
+            }
+
+            // Expiry Guard for Flights: TicketingTimeLimit
+            if ($bookingType === 'flight' && $booking->status === 'pending' && $booking->ticketing_time_limit && now()->greaterThan($booking->ticketing_time_limit)) {
+                $booking->update(['status' => 'cancelled']);
+                return $this->apiResponse(true, app()->getLocale() == 'ar'
+                    ? 'عذراً، انتهت المهلة المحددة لتأكيد ودفع هذا الحجز من قبل شركة الطيران. يرجى البحث والحجز مجدداً لضمان توفر المقاعد والسعر.'
+                    : 'Sorry, the payment time limit for this flight has expired. Please search and book again.', null, null, 400);
+            }
+
+            // Expiry Guard for Hotels: 10-minute lock rule
+            if ($bookingType === 'hotel' && $booking->status === 'pending' && $booking->created_at && $booking->created_at->diffInMinutes(now()) >= 10) {
+                $booking->update(['status' => 'cancelled']);
+                return $this->apiResponse(true, app()->getLocale() == 'ar'
+                    ? 'عذراً، انتهت صلاحية هذا الحجز نظراً لتجاوز مهلة الـ 10 دقائق المحددة للدفع. يرجى إعادة البحث واختيار الغرفة مجدداً.'
+                    : 'Sorry, this hotel booking has expired (10-minute payment limit). Please search and book again.', null, null, 400);
+            }
+
             // Fallback Amount Logic
             if (!$request->amount) {
                 $amount = $bookingType === 'flight' ? $booking->total_amount : ($booking->total_price ?? $booking->total_amount ?? 0);

@@ -242,7 +242,7 @@
                 <ul class="navbar-nav header-right">
                     <li class="nav-item">
                         <a class="nav-link lang-switcher-btn" href="{{ route('home') }}" target="_blank" title="{{ app()->getLocale() == 'ar' ? 'زيارة الموقع الرئيسي' : 'Visit Main Website' }}">
-                            <i class="fas fa-globe"></i>
+                            <i class="fas fa-external-link-alt"></i>
                         </a>
                     </li>
 
@@ -365,6 +365,269 @@
 .footer,
 .nav-header {
     transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* ═══════════════════════════════════════════
+   NAVBAR (HORIZONTAL) MODE — Desktop only (≥ 992px)
+   ═══════════════════════════════════════════ */
+@media (min-width: 992px) {
+
+    /* ── 1. Top Bar: Nav Header (Logo) ── */
+    body:not(.sidebar-mode) .nav-header {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: auto !important;
+        width: 260px !important;
+        height: 70px !important;
+        z-index: 100 !important;
+        display: flex !important;
+        align-items: center !important;
+        padding: 0 20px !important;
+        margin: 0 !important;
+        background: #ffffff !important;
+        border-bottom: 1px solid #f1f5f9 !important;
+    }
+    [dir="rtl"] body:not(.sidebar-mode) .nav-header {
+        left: auto !important;
+        right: 0 !important;
+        border-left: 1px solid #f1f5f9 !important;
+    }
+
+    /* ── 2. Top Bar: Header (Search, Profile, Actions) ── */
+    body:not(.sidebar-mode) .header {
+        position: fixed !important;
+        top: 0 !important;
+        left: 260px !important;
+        right: 0 !important;
+        width: auto !important;
+        height: 70px !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        z-index: 98 !important;
+        background: #ffffff !important;
+        border-bottom: 1px solid #f1f5f9 !important;
+    }
+    [dir="rtl"] body:not(.sidebar-mode) .header {
+        left: 0 !important;
+        right: 260px !important;
+    }
+
+    body:not(.sidebar-mode) .header .header-content {
+        width: 100% !important;
+        height: 70px !important;
+        padding: 0 20px !important;
+    }
+
+    body:not(.sidebar-mode) .header .navbar {
+        width: 100% !important;
+        flex-wrap: nowrap !important;
+    }
+
+    body:not(.sidebar-mode) .header .collapse.navbar-collapse {
+        display: flex !important;
+        width: 100% !important;
+        justify-content: space-between !important;
+        flex-wrap: nowrap !important;
+        overflow: visible !important;
+    }
+
+    /* ── 3. Navbar Bar: Dlabnav (Placed Directly Under Header Across Full Width) ── */
+    body:not(.sidebar-mode) .dlabnav {
+        position: fixed !important;
+        top: 70px !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        height: 56px !important;
+        z-index: 97 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: #ffffff !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04) !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+        display: flex !important;
+        align-items: center !important;
+        overflow: visible !important;
+    }
+
+    body:not(.sidebar-mode) .dlabnav .dlabnav-scroll {
+        position: relative !important;
+        display: flex !important;
+        align-items: center !important;
+        width: 100% !important;
+        height: 100% !important;
+        padding: 0 45px !important;
+        overflow: visible !important;
+        box-shadow: none !important;
+        background: transparent !important;
+        transform: none !important;
+    }
+
+    body:not(.sidebar-mode) .dlabnav .nav-scroll-wrapper {
+        width: 100% !important;
+        overflow: visible !important;
+        position: relative !important;
+        height: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+
+    /* ── Hide all native and PerfectScrollbar scrollbars in Navbar mode ── */
+    body:not(.sidebar-mode) .dlabnav .ps__rail-x,
+    body:not(.sidebar-mode) .dlabnav .ps__rail-y,
+    body:not(.sidebar-mode) .dlabnav .ps__thumb-x,
+    body:not(.sidebar-mode) .dlabnav .ps__thumb-y,
+    body:not(.sidebar-mode) .dlabnav-scroll .ps__rail-x,
+    body:not(.sidebar-mode) .dlabnav-scroll .ps__rail-y,
+    body:not(.sidebar-mode) .ps__rail-x,
+    body:not(.sidebar-mode) .ps__rail-y {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
+
+    body:not(.sidebar-mode) .dlabnav,
+    body:not(.sidebar-mode) .dlabnav-scroll,
+    body:not(.sidebar-mode) .nav-scroll-wrapper,
+    body:not(.sidebar-mode) .metismenu {
+        -ms-overflow-style: none !important;
+        scrollbar-width: none !important;
+    }
+
+    body:not(.sidebar-mode) .dlabnav::-webkit-scrollbar,
+    body:not(.sidebar-mode) .dlabnav-scroll::-webkit-scrollbar,
+    body:not(.sidebar-mode) .nav-scroll-wrapper::-webkit-scrollbar,
+    body:not(.sidebar-mode) .metismenu::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+    }
+
+    body:not(.sidebar-mode) .dlabnav .metismenu {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        height: 56px !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        list-style: none !important;
+        width: max-content !important;
+        overflow: visible !important;
+    }
+
+    body:not(.sidebar-mode) .dlabnav .metismenu > li {
+        display: inline-block !important;
+        position: relative !important;
+        flex-shrink: 0 !important;
+        margin: 0 3px !important;
+    }
+
+    body:not(.sidebar-mode) .dlabnav .metismenu > li > a {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        padding: 8px 14px !important;
+        white-space: nowrap !important;
+        font-size: 13.5px !important;
+        font-weight: 600 !important;
+        border-radius: 8px !important;
+        color: #334155 !important;
+        transition: all 0.2s ease !important;
+    }
+
+    body:not(.sidebar-mode) .dlabnav .metismenu > li:hover > a,
+    body:not(.sidebar-mode) .dlabnav .metismenu > li.mm-active > a {
+        background: rgba(4, 23, 65, 0.08) !important;
+        color: #041741 !important;
+    }
+
+    /* Submenu dropdown floating seamlessly under top item in navbar mode */
+    body:not(.sidebar-mode) .dlabnav .metismenu ul,
+    body:not(.sidebar-mode) .dlabnav .metismenu .mm-collapse {
+        position: absolute !important;
+        top: 100% !important;
+        left: 0 !important;
+        right: auto !important;
+        min-width: 230px !important;
+        height: auto !important;
+        max-height: none !important;
+        background: #ffffff !important;
+        box-shadow: 0 16px 36px rgba(4, 23, 65, 0.12), 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 12px !important;
+        padding: 8px 0 !important;
+        z-index: 999999 !important;
+        display: none !important;
+        margin: 0 !important;
+    }
+    [dir="rtl"] body:not(.sidebar-mode) .dlabnav .metismenu ul,
+    [dir="rtl"] body:not(.sidebar-mode) .dlabnav .metismenu .mm-collapse {
+        left: auto !important;
+        right: 0 !important;
+    }
+
+    /* Pop out submenus ONLY on hover (never stay permanently open in navbar mode) */
+    body:not(.sidebar-mode) .dlabnav .metismenu > li:hover > ul,
+    body:not(.sidebar-mode) .dlabnav .metismenu > li:hover > .mm-collapse {
+        display: block !important;
+        visibility: visible !important;
+    }
+
+    /* Nested 2nd-level submenus */
+    body:not(.sidebar-mode) .dlabnav .metismenu ul ul {
+        top: 0 !important;
+        left: 100% !important;
+        right: auto !important;
+    }
+    [dir="rtl"] body:not(.sidebar-mode) .dlabnav .metismenu ul ul {
+        left: auto !important;
+        right: 100% !important;
+    }
+    body:not(.sidebar-mode) .dlabnav .metismenu ul li:hover > ul {
+        display: block !important;
+        visibility: visible !important;
+    }
+
+    body:not(.sidebar-mode) .dlabnav .metismenu ul li a {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        padding: 8px 16px !important;
+        font-size: 13px !important;
+        color: #475569 !important;
+        white-space: nowrap !important;
+        transition: all 0.2s ease !important;
+    }
+
+    body:not(.sidebar-mode) .dlabnav .metismenu ul li a:hover {
+        background: #f8fafc !important;
+        color: #041741 !important;
+        padding-left: 20px !important;
+    }
+    [dir="rtl"] body:not(.sidebar-mode) .dlabnav .metismenu ul li a:hover {
+        padding-left: 16px !important;
+        padding-right: 20px !important;
+    }
+
+    /* ── 4. Main Content: Start Below Header (70px) + Navbar (56px) = 126px + spacing ── */
+    body:not(.sidebar-mode) .content-body {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding-top: 138px !important;
+        width: 100% !important;
+    }
+
+    /* ── 5. Footer: Full Width ── */
+    body:not(.sidebar-mode) .footer {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        width: 100% !important;
+    }
 }
 
 /* ═══════════════════════════════════════════
@@ -638,6 +901,16 @@
             body.classList.remove('sidebar-mode');
             if (icon) icon.className = 'fas fa-columns';
             if (btn) btn.setAttribute('data-tooltip', '{{ __("Switch to Sidebar") }}');
+
+            // Reset any accordion open states when returning to horizontal navbar
+            if (typeof $ !== 'undefined') {
+                $('#menu ul').removeAttr('style').removeClass('mm-show');
+                $('#menu li').removeClass('mm-active');
+            }
+
+            setTimeout(function() {
+                window.dispatchEvent(new Event('resize'));
+            }, 100);
         }
     }
 

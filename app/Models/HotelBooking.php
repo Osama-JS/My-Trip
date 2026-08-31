@@ -40,6 +40,8 @@ class HotelBooking extends Model
         'rate_basis_id',
         'payment_method',
         'invoice_path',
+        'insurance_policy_id',
+        'insurance_amount',
     ];
 
     protected $casts = [
@@ -62,6 +64,11 @@ class HotelBooking extends Model
     public function passengers(): HasMany
     {
         return $this->hasMany(BookingPassenger::class, 'hotel_booking_id');
+    }
+
+    public function insurancePolicy()
+    {
+        return $this->hasOne(InsurancePolicy::class, 'hotel_booking_id');
     }
 }
 

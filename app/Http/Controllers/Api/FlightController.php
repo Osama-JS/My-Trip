@@ -613,6 +613,14 @@ class FlightController extends Controller
             ->first();
 
         if ($existingBooking) {
+            // Check if existing booking has expired
+            if ($existingBooking->status === 'cancelled' || ($existingBooking->ticketing_time_limit && now()->greaterThan($existingBooking->ticketing_time_limit))) {
+                $existingBooking->update(['status' => 'cancelled']);
+                return $this->apiResponse(true, app()->getLocale() == 'ar'
+                    ? 'عذراً، انتهت المهلة المحددة لتأكيد ودفع هذا الحجز من قبل شركة الطيران. يرجى البحث والحجز مجدداً.'
+                    : 'Sorry, the payment time limit for this flight has expired. Please search and book again.', null, null, 400);
+            }
+
             Log::info('Duplicate Booking Request Prevented', ['booking_id' => $existingBooking->id]);
             
             $payment_info = [
@@ -635,7 +643,10 @@ class FlightController extends Controller
 
         if (isset($result['status']) && $result['status'] === 'error') {
             Log::error('Travelopro Booking Service Error', ['error' => $result]);
-            return $this->apiResponse(true, $result['message'] ?? 'Error', $result['details'] ?? ($result['error'] ?? null), null, 500);
+            $msg = app()->getLocale() == 'ar'
+                ? 'عذراً، لم يعد هذا الحجز أو المقاعد متاحة لدى شركة الطيران نظراً لانتهاء صلاحية جلسة الحجز. يرجى إعادة البحث واختيار الرحلة مجدداً.'
+                : ($result['message'] ?? 'Flight booking session expired or unavailable.');
+            return $this->apiResponse(true, $msg, $result['details'] ?? ($result['error'] ?? null), null, 400);
         }
 
         // Persist booking to local database
@@ -651,14 +662,23 @@ class FlightController extends Controller
 
             $bookingResult = $bookingData['BookFlightResult'] ?? $bookingData['CreateBookingResult'] ?? null;
             if ($bookingResult) {
-                $isSuccess = $bookingResult['Success'] ?? false;
-                if (is_string($isSuccess)) {
-                    $isSuccess = (strtolower($isSuccess) === 'true');
+                $isSuccess = is_bool($bookingResult['Success'] ?? true) 
+                    ? ($bookingResult['Success'] ?? true) 
+                    : (strtolower(strval($bookingResult['Success'])) === 'true');
+
+                // Check for non-empty errors
+                $hasApiErrors = false;
+                if (!empty($bookingResult['Errors'])) {
+                    if (is_array($bookingResult['Errors']) && count($bookingResult['Errors']) > 0) {
+                        $hasApiErrors = true;
+                    } elseif (is_string($bookingResult['Errors']) && trim($bookingResult['Errors']) !== '') {
+                        $hasApiErrors = true;
+                    }
                 }
 
-                if (!$isSuccess) {
-                    $errorMessage = $bookingResult['Errors']['Error']['ErrorMessage'] ?? $bookingResult['Errors']['ErrorMessage'] ?? __('Booking failed at provider.');
-                    Log::warning('Travelopro API returned success=false', ['message' => $errorMessage]);
+                if (!$isSuccess || $hasApiErrors) {
+                    $errorMessage = $bookingResult['Errors']['Error']['ErrorMessage'] ?? $bookingResult['Errors']['ErrorMessage'] ?? (app()->getLocale() == 'ar' ? 'عذراً، لم يعد هذا الحجز متاحاً لدى شركة الطيران نظراً لانتهاء صلاحية جلسة الحجز.' : __('Booking failed at provider.'));
+                    Log::warning('Travelopro API returned error/failure', ['message' => $errorMessage]);
                     return $this->apiResponse(true, $errorMessage, $result, null, 400);
                 }
             }
@@ -688,6 +708,10 @@ class FlightController extends Controller
 
             if ($uniqueId) {
                 $itinerary = $bookingResult['Itineraries']['Itinerary'][0] ?? null;
+                $insuranceAmount = ($request->get('include_insurance') == '1' || $request->filled('insurance_amount')) 
+                    ? floatval($request->get('insurance_amount', 0)) 
+                    : 0;
+
                 $booking = Booking::create([
                     'user_id' => Auth::id(),
                     'booking_reference' => $uniqueId,
@@ -697,6 +721,7 @@ class FlightController extends Controller
                     'total_amount' => $totalAmount,
                     'provider_price' => $providerPrice,
                     'platform_profit' => $profit,
+                    'insurance_amount' => $insuranceAmount,
                     'currency' => 'SAR',
                     'contact_email' => $request->customerEmail,
                     'contact_phone' => $request->customerPhone,
@@ -1104,6 +1129,17 @@ class FlightController extends Controller
         
         $result['airport_names'] = empty($airportNames) ? new \stdClass() : $airportNames;
         $result['invoice_url'] = route('customer.bookings.invoice', ['id' => $booking->id, 'type' => 'flight']);
+        
+        $policy = $booking->insurancePolicy;
+        $result['insurance_amount'] = (float)($booking->insurance_amount ?? 0);
+        $result['has_insurance'] = ($booking->insurance_amount ?? 0) > 0 || !empty($booking->insurance_policy_id) || (bool)$policy;
+        $result['insurance_policy'] = $policy ? [
+            'id' => $policy->id,
+            'policy_number' => $policy->policy_number,
+            'status' => $policy->status,
+            'coverage_amount' => $policy->coverage_amount ?? 500000,
+            'certificate_url' => route('customer.insurances.certificate', $policy->id),
+        ] : null;
 
         return $this->apiResponse(false, __('Trip details retrieved successfully.'), $result, null, 200);
     }

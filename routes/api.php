@@ -123,11 +123,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user/hotel-bookings', [App\Http\Controllers\Api\UserBookingController::class, 'hotelBookings']);
     Route::get('/user/hotel-bookings/{id}', [App\Http\Controllers\Api\UserBookingController::class, 'hotelBookingDetails']);
     Route::get('/user/hotel-bookings/{id}/voucher', [App\Http\Controllers\Api\UserBookingController::class, 'downloadHotelVoucher']);
+    Route::get('/user/hotel-bookings/{id}/insurance-certificate', [App\Http\Controllers\Api\UserBookingController::class, 'downloadHotelInsuranceCertificate']);
 
     Route::get('/user/trip-bookings', [App\Http\Controllers\Api\UserBookingController::class, 'tripBookings']);
     Route::get('/user/trip-bookings/{id}', [App\Http\Controllers\Api\UserBookingController::class, 'tripBookingDetails']);
 
     Route::get('/user/bookings/{id}/invoice', [App\Http\Controllers\Api\UserBookingController::class, 'downloadFlightInvoice']);
+    Route::get('/user/bookings/{id}/insurance-certificate', [App\Http\Controllers\Api\UserBookingController::class, 'downloadFlightInsuranceCertificate']);
 
     // Wallet Routes
     Route::get('/user/wallet', [App\Http\Controllers\Api\WalletController::class, 'getWallet']);
@@ -140,8 +142,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/user/tickets/{id}/reply', [App\Http\Controllers\Api\SupportTicketController::class, 'reply']);
     Route::post('/user/tickets/{id}/rate', [App\Http\Controllers\Api\SupportTicketController::class, 'rate']);
 
+    // Travel Insurance API Routes
+    Route::get('/user/insurance-policies', [\App\Http\Controllers\Api\InsuranceApiController::class, 'myPolicies']);
+    Route::get('/user/insurance-policies/{id}', [\App\Http\Controllers\Api\InsuranceApiController::class, 'show']);
+
     // OCR
     Route::post('/ocr/passport', [\App\Http\Controllers\OcrController::class, 'scanPassport']);
 
     Route::post('/logout', [AuthController::class, 'logout']);
 });
+
+// Public Insurance Quote API
+Route::post('/insurance/quote', [\App\Http\Controllers\Api\InsuranceApiController::class, 'getQuote']);
+

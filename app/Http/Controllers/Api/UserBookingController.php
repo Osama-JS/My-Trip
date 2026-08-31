@@ -233,6 +233,15 @@ class UserBookingController extends Controller
                     'nationality' => $p->nationality,
                 ];
             }),
+
+            'insurance' => [
+                'has_insurance' => ($booking->insurance_amount ?? 0) > 0 || !empty($booking->insurance_policy_id) || (bool)$booking->insurancePolicy,
+                'amount' => (float)($booking->insurance_amount ?? 0),
+                'policy_number' => $booking->insurancePolicy?->policy_number,
+                'status' => $booking->insurancePolicy?->status ?? 'active',
+                'coverage_amount' => $booking->insurancePolicy?->coverage_amount ?? 500000,
+                'certificate_url' => $booking->insurancePolicy ? route('customer.insurances.certificate', $booking->insurancePolicy->id) : null,
+            ],
             
             'invoice_url' => $booking->status === 'confirmed' ? route('customer.bookings.invoice', $booking->id) : null,
         ];
@@ -295,6 +304,15 @@ class UserBookingController extends Controller
                     'passport' => $p->passport_number,
                 ];
             }),
+
+            'insurance' => [
+                'has_insurance' => ($booking->insurance_amount ?? 0) > 0 || !empty($booking->insurance_policy_id) || (bool)$booking->insurancePolicy,
+                'amount' => (float)($booking->insurance_amount ?? 0),
+                'policy_number' => $booking->insurancePolicy?->policy_number,
+                'status' => $booking->insurancePolicy?->status ?? 'active',
+                'coverage_amount' => $booking->insurancePolicy?->coverage_amount ?? 500000,
+                'certificate_url' => $booking->insurancePolicy ? route('customer.insurances.certificate', $booking->insurancePolicy->id) : null,
+            ],
 
             'invoice_url' => $booking->status === 'confirmed' ? route('customer.bookings.invoice', $booking->id) : null,
             'ticket_url' => $booking->ticket_url,
@@ -406,7 +424,8 @@ class UserBookingController extends Controller
     )]
     public function hotelBookingDetails(Request $request, $id)
     {
-        $booking = HotelBooking::where('user_id', $request->user()->id)
+        $booking = HotelBooking::with(['passengers', 'payments'])
+            ->where('user_id', $request->user()->id)
             ->where('id', $id)
             ->firstOrFail();
 
@@ -444,6 +463,14 @@ class UserBookingController extends Controller
                 'total_price' => $booking->total_price,
                 'currency' => $booking->currency,
                 'method' => $booking->payment_method ?? 'N/A',
+            ],
+            'insurance' => [
+                'has_insurance' => ($booking->insurance_amount ?? 0) > 0 || !empty($booking->insurance_policy_id) || (bool)$booking->insurancePolicy,
+                'amount' => (float)($booking->insurance_amount ?? 0),
+                'policy_number' => $booking->insurancePolicy?->policy_number,
+                'status' => $booking->insurancePolicy?->status ?? 'active',
+                'coverage_amount' => $booking->insurancePolicy?->coverage_amount ?? 500000,
+                'certificate_url' => $booking->insurancePolicy ? route('customer.insurances.certificate', $booking->insurancePolicy->id) : null,
             ],
             'timeline' => [
                 'created_at' => $booking->created_at->format('d M Y, H:i'),
@@ -522,5 +549,95 @@ class UserBookingController extends Controller
 
         $fileUrl = asset('storage/' . $filePath);
         return $this->apiResponse(false, __('Invoice retrieved successfully'), ['invoice_url' => $fileUrl]);
+    }
+
+    #[OA\Get(
+        path: "/api/user/bookings/{id}/insurance-certificate",
+        summary: "تحميل وثيقة/شهادة التأمين لحجز الطيران",
+        operationId: "downloadFlightInsuranceCertificate",
+        description: "يقوم بتوليد وإرجاع رابط لشهادة التأمين الرسمية.",
+        tags: ["User Bookings"],
+        security: [["bearerAuth" => []]],
+        parameters: [
+            new OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "integer"))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: "Returns URL")
+        ]
+    )]
+    public function downloadFlightInsuranceCertificate(Request $request, $id, \App\Services\InvoiceService $invoiceService)
+    {
+        $booking = Booking::where('user_id', $request->user()->id)
+            ->where('id', $id)
+            ->firstOrFail();
+
+        $policy = $booking->insurancePolicy ?? \App\Models\InsurancePolicy::where('booking_id', $booking->id)->first();
+        if (!$policy) {
+            return $this->apiResponse(true, __('No insurance policy found for this booking.'), null, null, 404);
+        }
+
+        $filePath = $policy->pdf_path;
+        if (!$filePath || !\Illuminate\Support\Facades\Storage::disk('public')->exists($filePath)) {
+            $filePath = $invoiceService->generateInsurancePolicyPdf($policy);
+            if ($filePath) {
+                $policy->update(['pdf_path' => $filePath]);
+            }
+        }
+
+        if (!$filePath || !\Illuminate\Support\Facades\Storage::disk('public')->exists($filePath)) {
+            return $this->apiResponse(true, __('Failed to generate insurance certificate.'), null, null, 500);
+        }
+
+        $fileUrl = asset('storage/' . $filePath);
+        return $this->apiResponse(false, __('Insurance certificate retrieved successfully'), [
+            'certificate_url' => $fileUrl,
+            'pdf_url' => $fileUrl,
+            'policy_number' => $policy->policy_number,
+        ]);
+    }
+
+    #[OA\Get(
+        path: "/api/user/hotel-bookings/{id}/insurance-certificate",
+        summary: "تحميل وثيقة/شهادة التأمين لحجز الفندق",
+        operationId: "downloadHotelInsuranceCertificate",
+        description: "يقوم بتوليد وإرجاع رابط لشهادة التأمين الرسمية للفندق.",
+        tags: ["User Bookings"],
+        security: [["bearerAuth" => []]],
+        parameters: [
+            new OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "integer"))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: "Returns URL")
+        ]
+    )]
+    public function downloadHotelInsuranceCertificate(Request $request, $id, \App\Services\InvoiceService $invoiceService)
+    {
+        $booking = HotelBooking::where('user_id', $request->user()->id)
+            ->where('id', $id)
+            ->firstOrFail();
+
+        $policy = $booking->insurancePolicy ?? \App\Models\InsurancePolicy::where('hotel_booking_id', $booking->id)->first();
+        if (!$policy) {
+            return $this->apiResponse(true, __('No insurance policy found for this booking.'), null, null, 404);
+        }
+
+        $filePath = $policy->pdf_path;
+        if (!$filePath || !\Illuminate\Support\Facades\Storage::disk('public')->exists($filePath)) {
+            $filePath = $invoiceService->generateInsurancePolicyPdf($policy);
+            if ($filePath) {
+                $policy->update(['pdf_path' => $filePath]);
+            }
+        }
+
+        if (!$filePath || !\Illuminate\Support\Facades\Storage::disk('public')->exists($filePath)) {
+            return $this->apiResponse(true, __('Failed to generate insurance certificate.'), null, null, 500);
+        }
+
+        $fileUrl = asset('storage/' . $filePath);
+        return $this->apiResponse(false, __('Insurance certificate retrieved successfully'), [
+            'certificate_url' => $fileUrl,
+            'pdf_url' => $fileUrl,
+            'policy_number' => $policy->policy_number,
+        ]);
     }
 }

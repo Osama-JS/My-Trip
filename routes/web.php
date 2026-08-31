@@ -61,6 +61,9 @@ Route::get('/book-trip/form', [FrontendController::class, 'tripBookingForm'])->n
 Route::post('/book-trip', [FrontendController::class, 'bookTrip'])->name('book.trip');
 Route::get('/book-trip/resume', [FrontendController::class, 'resumeTripBooking'])->name('trips.book.process.resume')->middleware('auth');
 
+// Public Insurance Quote API
+Route::post('/insurance/quote', [\App\Http\Controllers\InsuranceController::class, 'getQuote'])->name('insurance.quote');
+
 // Guest Profile Completion
 Route::middleware('auth')->group(function () {
     Route::get('/profile/complete', [CustomerProfileController::class, 'completeProfileForm'])->name('profile.complete.form');
@@ -207,6 +210,18 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     // Settings
     Route::get('settings', [App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
     Route::post('settings', [App\Http\Controllers\Admin\SettingController::class, 'update'])->name('settings.update');
+
+    // Travel Insurance Operations & Margins
+    Route::prefix('insurance')->name('insurance.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\InsurancePolicyController::class, 'index'])->name('index');
+        Route::get('/profits', [App\Http\Controllers\Admin\InsurancePolicyController::class, 'profits'])->name('profits');
+        Route::get('/settings', [App\Http\Controllers\Admin\InsurancePolicyController::class, 'settings'])->name('settings');
+        Route::post('/settings', [App\Http\Controllers\Admin\InsurancePolicyController::class, 'updateSettings'])->name('settings.update');
+        Route::post('/settings/test-connection', [App\Http\Controllers\Admin\InsurancePolicyController::class, 'testConnection'])->name('settings.test');
+        Route::get('/{id}/show', [App\Http\Controllers\Admin\InsurancePolicyController::class, 'show'])->name('show');
+        Route::get('/{id}/pdf', [App\Http\Controllers\Admin\InsurancePolicyController::class, 'downloadPdf'])->name('pdf');
+        Route::post('/{id}/cancel', [App\Http\Controllers\Admin\InsurancePolicyController::class, 'cancel'])->name('cancel');
+    });
 
     // Wallets Management
     Route::get('wallets', [App\Http\Controllers\Admin\WalletController::class, 'index'])->name('wallets.index');
@@ -488,6 +503,11 @@ Route::middleware(['auth', 'isCustomer'])->prefix('customer')->name('customer.')
     Route::get('/notifications', [CustomerNotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/{id}/read', [CustomerNotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/notifications/read-all', [CustomerNotificationController::class, 'markAllRead'])->name('notifications.read-all');
+
+    // Travel Insurances
+    Route::get('/insurances', [\App\Http\Controllers\InsuranceController::class, 'customerPolicies'])->name('insurances.index');
+    Route::get('/insurances/{id}/pdf', [\App\Http\Controllers\InsuranceController::class, 'downloadPdf'])->name('insurances.pdf');
+    Route::get('/insurances/{id}/certificate', [\App\Http\Controllers\InsuranceController::class, 'downloadPdf'])->name('insurances.certificate');
 
     // Support Tickets
     Route::prefix('support')->name('support.')->group(function() {

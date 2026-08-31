@@ -931,6 +931,29 @@ body.dark-mode .callout-danger {
                 </div>
             </div>
 
+            {{-- Travel Insurance Card --}}
+            @if(($booking->insurance_amount ?? 0) > 0 || $booking->insurancePolicy)
+            @php $policy = $booking->insurancePolicy; @endphp
+            <div class="detail-card" style="border: 1.5px solid #10b981; background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%); margin-bottom: 20px;">
+                <div class="detail-card-header" style="background: transparent; border-bottom: 1px solid #dcfce7; padding: 14px 18px;">
+                    <h5 style="color: #15803d; font-size: 0.95rem; margin:0;"><i class="fas fa-shield-alt text-success me-2"></i> {{ __('Travel Insurance Protected') }}</h5>
+                    <span class="badge bg-success" style="font-size: 0.75rem;">{{ __('Active') }}</span>
+                </div>
+                <div class="detail-card-body" style="padding: 16px;">
+                    <div style="font-size: 0.83rem; color: #334155; margin-bottom: 12px;">
+                        <div><strong style="color:#0f172a;">{{ __('Policy Number:') }}</strong> <span class="font-monospace text-primary fw-bold">{{ $policy->policy_number ?? ('POL-'.strtoupper(substr(md5($booking->id), 0, 8))) }}</span></div>
+                        <div class="mt-1"><strong style="color:#0f172a;">{{ __('Coverage Limit:') }}</strong> <span class="text-success fw-bold">$500,000 USD</span></div>
+                        <div class="mt-1 text-muted" style="font-size: 0.76rem;">{{ __('Emergency Medical & Travel Protection') }}</div>
+                    </div>
+                    @if($policy)
+                    <a href="{{ route('customer.insurances.certificate', $policy->id) }}" class="btn btn-sm btn-outline-success w-100 fw-bold" target="_blank" style="border-radius: 8px;">
+                        <i class="fas fa-file-pdf me-1"></i> {{ __('Download Insurance Certificate') }}
+                    </a>
+                    @endif
+                </div>
+            </div>
+            @endif
+
             {{-- Actions stack --}}
             <div class="detail-card">
                 <div class="detail-card-body" style="padding: 20px;">

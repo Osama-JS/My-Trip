@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 use App\Models\Trip;
 use App\Models\Country;
 use App\Models\City;
@@ -545,6 +548,29 @@ class FrontendController extends Controller
             'paxDetails'   => $paxDetails,
         ];
 
+        // ── PRE-PAYMENT AVAILABILITY CHECK ──
+        // Verify that the selected room and rate are still available before redirecting to payment
+        if ($request->filled('rateBasisId') && $request->filled('sessionId') && $request->filled('productId') && $request->filled('tokenId')) {
+            try {
+                $checkRate = $this->traveloproHotelService->checkRoomRates([
+                    'sessionId'   => $request->get('sessionId'),
+                    'productId'   => $request->get('productId'),
+                    'tokenId'     => $request->get('tokenId'),
+                    'rateBasisId' => $request->get('rateBasisId'),
+                ]);
+
+                if (isset($checkRate['status']) && $checkRate['status'] === 'error') {
+                    Log::warning('Hotel room check before payment returned error: ' . json_encode($checkRate));
+                    $errMsg = app()->getLocale() == 'ar'
+                        ? 'عذراً، لم تعد هذه الغرفة أو هذا السعر متاحاً لدى الفندق نظراً لانتهاء صلاحية جلسة البحث. يرجى إعادة البحث واختيار غرفة متاحة.'
+                        : 'Sorry, this room or rate is no longer available from the hotel due to session expiration. Please search again.';
+                    return back()->with('error', $errMsg)->withInput();
+                }
+            } catch (\Exception $e) {
+                Log::warning('Hotel room check exception: ' . $e->getMessage());
+            }
+        }
+
         // ── ACTUAL FIX: DO NOT call hotel_book before payment ──
         // This avoids financial liability for abandoned or failed payments.
         // Confirmation will happen in HotelBookingFinalizer after successful payment.
@@ -622,6 +648,21 @@ class FrontendController extends Controller
         $booking = \App\Models\HotelBooking::where('id', $booking_id)
             ->where('user_id', auth()->id())
             ->firstOrFail();
+
+        if ($booking->status === 'confirmed') {
+            return redirect()->route('customer.bookings.hotels.show', $booking_id)
+                ->with('info', __('This hotel booking is already paid and confirmed.'));
+        }
+
+        if ($booking->status === 'cancelled' || ($booking->status === 'pending' && $booking->created_at->diffInMinutes(now()) >= 10)) {
+            if ($booking->status !== 'cancelled') {
+                $booking->update(['status' => 'cancelled']);
+            }
+            return redirect()->route('hotels')
+                ->with('error', app()->getLocale() == 'ar'
+                    ? 'عذراً، انتهت صلاحية هذا الحجز نظراً لتجاوز مهلة الـ 10 دقائق المحددة للدفع. يرجى إعادة البحث واختيار الغرفة مجدداً.'
+                    : 'Sorry, this hotel booking has expired (10-minute payment limit). Please search and book again.');
+        }
 
         return view('frontend.hotels.payment_select', compact('booking'));
     }
@@ -789,8 +830,46 @@ class FrontendController extends Controller
         // 1. Call Travelopro Create Booking
         $result = $this->traveloproService->createBooking($request->all());
 
+        $hasError = false;
+        $errorMsg = null;
+
         if (isset($result['status']) && $result['status'] === 'error') {
-            return back()->with('error', $result['message'])->withInput();
+            $hasError = true;
+            $errorMsg = $result['message'] ?? null;
+        }
+
+        $bookingData = $result['BookFlightResponse'] ?? $result['CreateBookingResponse'] ?? $result['AirBookingResponse'] ?? null;
+        $bookingResult = $bookingData['BookFlightResult'] ?? $bookingData['CreateBookingResult'] ?? $bookingData['AirBookingResult'] ?? ($result['AirBookingResult'] ?? []);
+
+        // Validate Success flag (handles boolean true/false or string "true"/"false")
+        $isSuccess = true;
+        if (isset($bookingResult['Success'])) {
+            $isSuccess = is_bool($bookingResult['Success']) 
+                ? $bookingResult['Success'] 
+                : (strtolower(strval($bookingResult['Success'])) === 'true');
+        }
+
+        // Validate non-empty Errors
+        $hasErrors = false;
+        if (!empty($bookingResult['Errors'])) {
+            if (is_array($bookingResult['Errors']) && count($bookingResult['Errors']) > 0) {
+                $hasErrors = true;
+                $errorMsg = $bookingResult['Errors']['Error']['ErrorMessage'] ?? $bookingResult['Errors']['ErrorMessage'] ?? json_encode($bookingResult['Errors']);
+            } elseif (is_string($bookingResult['Errors']) && trim($bookingResult['Errors']) !== '') {
+                $hasErrors = true;
+                $errorMsg = $bookingResult['Errors'];
+            }
+        }
+
+        $uniqueId = $bookingResult['UniqueID'] ?? $bookingResult['uniqueID'] ?? null;
+
+        if ($hasError || !$isSuccess || $hasErrors || empty($uniqueId)) {
+            Log::warning('Flight Booking Rejected / Expired before payment: ' . json_encode($result));
+            $userFriendlyMsg = app()->getLocale() == 'ar'
+                ? 'عذراً، لم يعد هذا الحجز أو المقاعد متاحة لدى شركة الطيران نظراً لانتهاء صلاحية جلسة الحجز. يرجى إعادة البحث واختيار الرحلة مجدداً.'
+                : 'Sorry, this flight fare or seat availability has expired with the airline due to session timeout. Please search again.';
+
+            return back()->with('error', $userFriendlyMsg)->withInput();
         }
 
         // Calculate Profit Margin
@@ -813,11 +892,10 @@ class FrontendController extends Controller
 
         // 2. Persist in local DB (Booking model)
         try {
-            $bookingResult = $result['BookFlightResponse']['BookFlightResult'] ?? 
-                             $result['CreateBookingResponse']['CreateBookingResult'] ?? 
-                             $result['AirBookingResponse']['AirBookingResult'] ?? [];
-
             $uniqueId = $bookingResult['UniqueID'] ?? $bookingResult['uniqueID'] ?? ('FLIGHT-' . strtoupper(uniqid()));
+            $includeInsurance = ($request->get('include_insurance') == '1');
+            $insuranceAmount = $includeInsurance ? floatval($request->get('insurance_amount', 0)) : 0;
+
             $booking = \App\Models\Booking::create([
                 'user_id' => auth()->id(),
                 'booking_reference' => $uniqueId,
@@ -826,6 +904,7 @@ class FrontendController extends Controller
                 'total_amount' => $totalAmount,
                 'provider_price' => $providerPrice,
                 'platform_profit' => $profit,
+                'insurance_amount' => $insuranceAmount,
                 'currency' => 'SAR',
                 'contact_email' => $request->get('customerEmail'),
                 'contact_phone' => $request->get('customerPhone'),
@@ -913,11 +992,37 @@ class FrontendController extends Controller
      */
     public function flightSelectPayment(Request $request, $booking_id)
     {
-        $booking = \App\Models\FlightBooking::with('user')->where('booking_id', $booking_id)
+        $flightBooking = \App\Models\FlightBooking::with('user')->where('booking_id', $booking_id)
             ->where('user_id', auth()->id())
             ->firstOrFail();
 
-        return view('frontend.flights.payment_select', compact('booking'));
+        $booking = \App\Models\Booking::where('id', $booking_id)
+            ->where('user_id', auth()->id())
+            ->first();
+
+        if ($booking) {
+            if ($booking->status === 'confirmed') {
+                return redirect()->route('customer.bookings.flights.show', $booking_id)
+                    ->with('info', __('This flight booking is already paid and confirmed.'));
+            }
+
+            if ($booking->status === 'cancelled') {
+                return redirect()->route('flights')
+                    ->with('error', app()->getLocale() == 'ar'
+                        ? 'عذراً، تم إلغاء هذا الحجز نظراً لانتهاء المهلة الزمنية المحددة من قبل مزود الخدمة. يرجى البحث والحجز مجدداً.'
+                        : 'Sorry, this booking has been cancelled due to expiration. Please search and book again.');
+            }
+
+            if ($booking->ticketing_time_limit && now()->greaterThan($booking->ticketing_time_limit)) {
+                $booking->update(['status' => 'cancelled']);
+                return redirect()->route('flights')
+                    ->with('error', app()->getLocale() == 'ar'
+                        ? 'عذراً، انتهت المهلة المحددة لتأكيد ودفع هذا الحجز من قبل شركة الطيران. يرجى البحث والحجز مجدداً لضمان توفر المقاعد والسعر.'
+                        : 'Sorry, the payment time limit for this flight has expired. Please search and book again.');
+            }
+        }
+
+        return view('frontend.flights.payment_select', ['booking' => $flightBooking]);
     }
 
     /**

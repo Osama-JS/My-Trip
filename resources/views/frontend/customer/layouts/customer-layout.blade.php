@@ -945,6 +945,11 @@
                     <span>{{ __('Hotel Bookings') }}</span>
                 </a>
 
+                <a href="{{ route('customer.insurances.index') }}" class="cdash-link {{ request()->routeIs('customer.insurances.*') ? 'active' : '' }}">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>{{ __('Travel Insurances') }}</span>
+                </a>
+
                 <a href="{{ route('customer.favorites.index') }}" class="cdash-link {{ request()->routeIs('customer.favorites.*') ? 'active' : '' }}">
                     <i class="fas fa-heart"></i>
                     <span>{{ __('Favorites') }}</span>

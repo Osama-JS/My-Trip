@@ -70,6 +70,19 @@
                 </ul>
             </li>
 
+            {{-- Travel Insurance --}}
+            <li>
+                <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
+                    <i class="fa fa-shield-alt text-primary"></i>
+                    <span class="nav-text">{{ __('Travel Insurance') }}</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{{ route('admin.insurance.index') }}"><i class="fa fa-list"></i>{{ __('Insurance Policies') }}</a></li>
+                    <li><a href="{{ route('admin.insurance.profits') }}"><i class="fa fa-dollar-sign text-success"></i>{{ __('Insurance Profits') }}</a></li>
+                    <li><a href="{{ route('admin.insurance.settings') }}"><i class="fa fa-cog"></i>{{ __('Insurance Settings') }}</a></li>
+                </ul>
+            </li>
+
             {{-- Companies --}}
             <li>
                 <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">

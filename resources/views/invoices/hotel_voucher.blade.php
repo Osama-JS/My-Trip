@@ -502,6 +502,38 @@
             </tbody>
         </table>
 
+        @php
+            $insAmount = (float)($booking->insurance_amount ?? 0);
+            $policy = $booking->insurancePolicy;
+        @endphp
+        @if($insAmount > 0 || $policy)
+        <!-- ─── TRAVEL INSURANCE BADGE ─── -->
+        <div style="margin-top: 15px; background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 8px; padding: 10px 14px;">
+            <table width="100%">
+                <tr>
+                    <td width="72%">
+                        <div style="font-weight: 800; color: #166534; font-size: 11.5px;">
+                            🛡️ {{ __('Comprehensive Travel & Medical Insurance Included') }}
+                        </div>
+                        <div style="font-size: 9.5px; color: #15803d; margin-top: 2px;">
+                            {{ __('Policy No:') }} <strong>{{ $policy->policy_number ?? ('POL-'.strtoupper(substr(md5($booking->id), 0, 8))) }}</strong> · 
+                            {{ __('Coverage Limit:') }} <strong>$500,000 USD</strong> · 
+                            {{ __('Status:') }} <strong style="color:#059669;">{{ __('Active / Insured') }}</strong>
+                        </div>
+                        <div style="font-size: 9px; color: #16a34a; margin-top: 1px;">
+                            {{ __('Emergency Medical, Trip Delay, Baggage Protection & 24/7 Telehealth') }}
+                        </div>
+                    </td>
+                    <td width="28%" style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }}; vertical-align: middle;">
+                        <span style="background: #16a34a; color: #fff; font-size: 9.5px; font-weight: 800; padding: 4px 8px; border-radius: 12px; text-transform: uppercase;">
+                            ✓ {{ __('INSURED') }}
+                        </span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        @endif
+
         <!-- ─── IMPORTANT NOTES ─── -->
         <div class="notes-section">
             <div class="notes-title">

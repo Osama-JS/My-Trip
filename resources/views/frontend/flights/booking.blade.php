@@ -11,6 +11,22 @@
 </div>
 
 <div class="fe-container" style="margin-top: -40px; margin-bottom: 80px;">
+    {{-- ═══ SESSION ERROR ALERT ═══ --}}
+    @if(session('error'))
+        <div class="fe-alert fe-alert-danger" style="margin-bottom: 25px; background: #fff1f2; color: #9f1239; padding: 18px 24px; border-radius: 16px; border: 1.5px solid #fda4af; display: flex; align-items: center; gap: 15px; font-weight: 700; box-shadow: 0 10px 25px -5px rgba(225, 29, 72, 0.1);">
+            <div style="width: 44px; height: 44px; border-radius: 12px; background: #ffe4e6; color: #e11d48; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div style="flex: 1;">
+                <div style="font-size: 15px; font-weight: 800; margin-bottom: 3px;">{{ app()->getLocale() == 'ar' ? 'تنبيه بشأن الحجز' : 'Booking Alert' }}</div>
+                <div style="font-size: 13.5px; font-weight: 500; opacity: 0.95; line-height: 1.5;">{{ session('error') }}</div>
+            </div>
+            <a href="{{ route('flights') }}" class="btn btn-sm btn-danger text-white px-3 py-2" style="border-radius: 10px; font-size: 13px; font-weight: 700; text-decoration: none; white-space: nowrap;">
+                <i class="fas fa-search me-1"></i> {{ app()->getLocale() == 'ar' ? 'إعادة البحث' : 'Search Again' }}
+            </a>
+        </div>
+    @endif
+
     {{-- ═══ LUXURY GUEST AUTHENTICATION BANNER ═══ --}}
     @guest
         @php $currLocale = app()->getLocale(); @endphp
@@ -163,6 +179,84 @@
                     </div>
                 </div>
 
+                {{-- ═══ TRAVEL INSURANCE CROSS-SELL COMPONENT ═══ --}}
+                <div class="fe-insurance-component" id="insuranceSection">
+                    <div class="fe-insurance-card">
+                        {{-- Header --}}
+                        <div class="fe-ins-header">
+                            <div class="fe-ins-header-main">
+                                <div class="fe-ins-shield-icon">
+                                    <i class="fas fa-shield-alt"></i>
+                                </div>
+                                <div class="fe-ins-titles">
+                                    <div class="fe-ins-title-row">
+                                        <h4 class="fe-ins-title">{{ __('Comprehensive Travel & Medical Protection') }}</h4>
+                                        <span class="fe-ins-badge">✓ {{ __('Schengen & Worldwide Approved') }}</span>
+                                    </div>
+                                    <p class="fe-ins-subtitle">{{ __('Global coverage for medical emergencies, trip delays, and lost luggage.') }}</p>
+                                </div>
+                            </div>
+                            <div class="fe-ins-price-pill">
+                                <span class="fe-ins-price-label">{{ __('Starting from') }}</span>
+                                <span class="fe-ins-price-val" id="insurancePriceDisplay">
+                                    <span class="spinner-border spinner-border-sm text-primary" role="status" style="width: 12px; height: 12px; border-width: 2px;"></span>
+                                    <span class="fs-12 text-muted ms-1">{{ __('Calculating...') }}</span>
+                                </span>
+                                <span class="fe-ins-price-unit">/ {{ __('person') }}</span>
+                            </div>
+                        </div>
+
+                        {{-- Benefits Grid --}}
+                        <div class="fe-ins-benefits-grid">
+                            <div class="fe-ins-benefit-item">
+                                <div class="fe-ins-benefit-icon"><i class="fas fa-check-circle"></i></div>
+                                <div class="fe-ins-benefit-text">{{ __('Emergency medical & hospitalization up to $100,000') }}</div>
+                            </div>
+                            <div class="fe-ins-benefit-item">
+                                <div class="fe-ins-benefit-icon"><i class="fas fa-check-circle"></i></div>
+                                <div class="fe-ins-benefit-text">{{ __('Trip cancellation & lost luggage compensation') }}</div>
+                            </div>
+                            <div class="fe-ins-benefit-item">
+                                <div class="fe-ins-benefit-icon"><i class="fas fa-check-circle"></i></div>
+                                <div class="fe-ins-benefit-text">{{ __('24/7 global telemedicine doctor access') }}</div>
+                            </div>
+                            <div class="fe-ins-benefit-item">
+                                <div class="fe-ins-benefit-icon"><i class="fas fa-check-circle"></i></div>
+                                <div class="fe-ins-benefit-text">{{ __('Official certificate for Embassy visa applications') }}</div>
+                            </div>
+                        </div>
+
+                        {{-- Selectable Choices --}}
+                        <div class="fe-ins-options">
+                            <label class="fe-ins-option-card" id="optAddInsuranceWrapper">
+                                <div class="fe-ins-opt-left">
+                                    <input type="radio" name="include_insurance" value="1" id="optAddInsurance" class="fe-ins-radio">
+                                    <div class="fe-ins-opt-info">
+                                        <span class="fe-ins-opt-title">{{ __('Yes, add comprehensive travel insurance for all travelers') }}</span>
+                                        <span class="fe-ins-opt-desc">{{ __('Highly recommended by 94% of international travelers') }}</span>
+                                    </div>
+                                </div>
+                                <div class="fe-ins-opt-price" id="insuranceTotalOptionPrice">
+                                    <span class="spinner-border spinner-border-sm text-primary me-1" role="status" style="width: 12px; height: 12px; border-width: 2px;"></span>
+                                    <span class="fs-12 text-muted">{{ __('Calculating...') }}</span>
+                                </div>
+                            </label>
+
+                            <label class="fe-ins-option-card selected" id="optNoInsuranceWrapper">
+                                <div class="fe-ins-opt-left">
+                                    <input type="radio" name="include_insurance" value="0" id="optNoInsurance" checked class="fe-ins-radio">
+                                    <div class="fe-ins-opt-info">
+                                        <span class="fe-ins-opt-title" style="color: #64748b; font-weight: 700;">{{ __('No, I decline travel protection (I assume all cancellation & medical risks)') }}</span>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+
+                        <input type="hidden" name="insurance_quote_id" id="hiddenInsuranceQuoteId" value="">
+                        <input type="hidden" name="insurance_amount" id="hiddenInsuranceAmount" value="0">
+                    </div>
+                </div>
+
                 <div class="fe-booking-action">
                     @auth
                         @if(!auth()->user()->canBookDirectly())
@@ -262,6 +356,10 @@
                                 <div class="fe-summary-item">
                                     <span class="label"><i class="fas fa-couch"></i> {{ __('Class') }}</span>
                                     <span class="value">{{ $details['class'] ?? 'Economy' }}</span>
+                                </div>
+                                <div class="fe-summary-item" id="sidebarInsuranceRow" style="display:none; background:#f0fdf4; border-radius:8px; padding:8px 12px; margin-top:10px; border:1px solid #bbf7d0;">
+                                    <span class="label" style="color:#15803d; font-weight:700;"><i class="fas fa-shield-alt text-success me-1"></i> {{ __('Travel Insurance') }}</span>
+                                    <span class="value" style="color:#15803d; font-weight:800;" id="sidebarInsuranceAmount">+ 0.00 SAR</span>
                                 </div>
                             </div>
                         </div>
@@ -368,6 +466,229 @@
 @push('styles')
 <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.css" rel="stylesheet">
 <style>
+    /* ─── Travel Insurance Cross-Sell Component ─────────────────────────── */
+    .fe-insurance-component {
+        margin-bottom: 28px;
+        width: 100%;
+    }
+    .fe-insurance-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+        border: 2px solid #bae6fd;
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 8px 24px rgba(2, 132, 199, 0.06);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    .fe-insurance-card:hover {
+        border-color: #7dd3fc;
+        box-shadow: 0 12px 30px rgba(2, 132, 199, 0.1);
+    }
+    .fe-ins-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+        padding-bottom: 18px;
+        border-bottom: 1px solid #e0f2fe;
+    }
+    .fe-ins-header-main {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex: 1 1 300px;
+    }
+    .fe-ins-shield-icon {
+        width: 48px;
+        height: 48px;
+        min-width: 48px;
+        background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+        color: #ffffff;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.35rem;
+        box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+    }
+    .fe-ins-titles {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    .fe-ins-title-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .fe-ins-title {
+        margin: 0;
+        font-size: 1.12rem;
+        font-weight: 800;
+        color: #0f172a;
+        line-height: 1.3;
+    }
+    .fe-ins-badge {
+        background: #dcfce7;
+        color: #15803d;
+        border: 1px solid #86efac;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+    .fe-ins-subtitle {
+        margin: 0;
+        font-size: 0.84rem;
+        color: #64748b;
+        font-weight: 500;
+    }
+    .fe-ins-price-pill {
+        background: #ffffff;
+        border: 1.5px solid #e0f2fe;
+        border-radius: 14px;
+        padding: 8px 16px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(2, 132, 199, 0.05);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    .fe-ins-price-label {
+        font-size: 0.72rem;
+        color: #64748b;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .fe-ins-price-val {
+        font-size: 1.25rem;
+        font-weight: 900;
+        color: #0284c7;
+        line-height: 1.2;
+    }
+    .fe-ins-price-unit {
+        font-size: 0.72rem;
+        color: #94a3b8;
+    }
+
+    /* Benefits */
+    .fe-ins-benefits-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 10px;
+        margin: 18px 0;
+    }
+    .fe-ins-benefit-item {
+        background: rgba(255, 255, 255, 0.85);
+        border: 1px solid #e0f2fe;
+        border-radius: 10px;
+        padding: 10px 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .fe-ins-benefit-icon {
+        color: #10b981;
+        font-size: 0.95rem;
+        flex-shrink: 0;
+    }
+    .fe-ins-benefit-text {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #334155;
+        line-height: 1.3;
+    }
+
+    /* Options */
+    .fe-ins-options {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 14px;
+    }
+    .fe-ins-option-card {
+        background: #ffffff;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 14px 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin: 0;
+    }
+    .fe-ins-option-card:hover {
+        border-color: #93c5fd;
+        background: #f8fafc;
+    }
+    .fe-ins-option-card.selected {
+        border-color: #0284c7;
+        background: #ffffff;
+        box-shadow: 0 4px 16px rgba(2, 132, 199, 0.12);
+    }
+    .fe-ins-opt-left {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+    .fe-ins-radio {
+        width: 20px;
+        height: 20px;
+        min-width: 20px;
+        accent-color: #0284c7;
+        cursor: pointer;
+        margin: 0;
+    }
+    .fe-ins-opt-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    .fe-ins-opt-title {
+        font-size: 0.95rem;
+        font-weight: 800;
+        color: #0f172a;
+        line-height: 1.3;
+    }
+    .fe-ins-opt-desc {
+        font-size: 0.8rem;
+        color: #64748b;
+        font-weight: 500;
+    }
+    .fe-ins-opt-price {
+        font-size: 1.05rem;
+        font-weight: 900;
+        color: #0284c7;
+        white-space: nowrap;
+        margin-inline-start: auto;
+    }
+    @media (max-width: 768px) {
+        .fe-ins-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .fe-ins-price-pill {
+            width: 100%;
+            flex-direction: row;
+            gap: 8px;
+            padding: 6px 12px;
+        }
+        .fe-ins-option-card {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .fe-ins-opt-price {
+            margin-inline-start: 34px;
+        }
+    }
+
     /* ─── Premium Guest Authentication Banner ─── */
     .fe-guest-auth-card {
         position: relative;
@@ -1005,9 +1326,77 @@ $(document).ready(function() {
         updateMainTotal();
     };
 
+    window.insuranceQuoteData = null;
+
+    function fetchInsuranceQuote() {
+        $('#insurancePriceDisplay').html('<span class="spinner-border spinner-border-sm text-primary" role="status" style="width: 12px; height: 12px; border-width: 2px;"></span> <span class="fs-12 text-muted ms-1">{{ __("Calculating...") }}</span>');
+        $('#insuranceTotalOptionPrice').html('<span class="spinner-border spinner-border-sm text-primary me-1" role="status" style="width: 12px; height: 12px; border-width: 2px;"></span> <span class="fs-12 text-muted">{{ __("Calculating...") }}</span>');
+
+        $.ajax({
+            url: '{{ route("insurance.quote") }}',
+            type: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                origin_country: '{{ $details["from"] ?? "SA" }}',
+                destination_country: '{{ $details["to"] ?? "GLOBAL" }}',
+                departure_date: '{{ $details["departDate"] ?? date("Y-m-d") }}',
+                return_date: '{{ $details["returnDate"] ?? date("Y-m-d", strtotime("+7 days")) }}',
+                trip_cost: {{ floatval($details["total_amount"] ?? 0) }},
+                passengers_count: {{ $totalPax ?? 1 }},
+                booking_type: 'flight'
+            },
+            success: function(res) {
+                if (res && res.success) {
+                    window.insuranceQuoteData = res;
+                    $('#insurancePriceDisplay').text(res.unit_price.toFixed(2) + ' SAR');
+                    $('#insuranceTotalOptionPrice').text('+ ' + res.selling_price.toFixed(2) + ' SAR');
+                    $('#hiddenInsuranceQuoteId').val(res.quote_id);
+                    if ($('input[name="include_insurance"]:checked').val() == '1') {
+                        updateMainTotal();
+                    }
+                } else {
+                    $('#insurancePriceDisplay').text('-- SAR');
+                    $('#insuranceTotalOptionPrice').text('-- SAR');
+                }
+            },
+            error: function(err) {
+                console.warn('Could not load insurance quote', err);
+                $('#insurancePriceDisplay').text('-- SAR');
+                $('#insuranceTotalOptionPrice').text('-- SAR');
+            }
+        });
+    }
+
+    $(document).on('change', 'input[name="include_insurance"]', function() {
+        if ($(this).val() == '1') {
+            $('#optAddInsuranceWrapper').addClass('selected');
+            $('#optNoInsuranceWrapper').removeClass('selected');
+        } else {
+            $('#optNoInsuranceWrapper').addClass('selected');
+            $('#optAddInsuranceWrapper').removeClass('selected');
+        }
+        updateMainTotal();
+    });
+
+    // Fetch insurance quote automatically on page load
+    $(function() {
+        fetchInsuranceQuote();
+    });
+
     function updateMainTotal() {
         let baseTotal = parseFloat($('#grandTotalAmount').data('base')) || 0;
-        let finalTotal = baseTotal + extraServicesTotal;
+        let insuranceTotal = ($('input[name="include_insurance"]:checked').val() == '1') ? (window.insuranceQuoteData?.selling_price || 0) : 0;
+
+        $('#hiddenInsuranceAmount').val(insuranceTotal.toFixed(2));
+
+        if (insuranceTotal > 0) {
+            $('#sidebarInsuranceRow').slideDown(200);
+            $('#sidebarInsuranceAmount').text('+ ' + insuranceTotal.toFixed(2) + ' SAR');
+        } else {
+            $('#sidebarInsuranceRow').slideUp(200);
+        }
+
+        let finalTotal = baseTotal + extraServicesTotal + insuranceTotal;
         $('.total-value .amount').text(finalTotal.toFixed(2));
         $('input[name="total_amount"]').val(finalTotal.toFixed(2));
     }

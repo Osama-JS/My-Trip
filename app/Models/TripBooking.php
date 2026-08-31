@@ -44,6 +44,8 @@ class TripBooking extends Model
         'ticket_file_path',
         'booking_state',
         'addons',
+        'insurance_policy_id',
+        'insurance_amount',
     ];
 
     /**
@@ -169,5 +171,10 @@ class TripBooking extends Model
         }
 
         return true;
+    }
+
+    public function insurancePolicy()
+    {
+        return $this->hasOne(InsurancePolicy::class, 'trip_booking_id');
     }
 }

@@ -507,11 +507,99 @@ class PaymentWebController extends Controller
                 Log::info("Trip Booking #{$booking->id}: Payment received; booking state set to preparing.");
             }
 
+            // ── TRAVEL INSURANCE: Auto-issue insurance policy if purchased ─
+            if (($booking->insurance_amount ?? 0) > 0 || !empty($booking->insurance_policy_id)) {
+                $this->autoIssueInsurancePolicy($booking, $type);
+            }
+
             // ── NOTIFICATION: Send push + email to user ────────────────────
             $this->sendPaymentSuccessNotification($booking, $type, $gateway);
 
         } catch (\Exception $e) {
             Log::error("finalizeAfterPayment failed for {$type} Booking #{$booking->id}: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Automatically issue Sitata insurance policy after payment.
+     */
+    protected function autoIssueInsurancePolicy($booking, string $type): void
+    {
+        try {
+            Log::info("Auto-issuing insurance policy for {$type} Booking #{$booking->id}");
+
+            $insuranceService = app(\App\Services\SitataInsuranceService::class);
+            $insurancePolicy = \App\Models\InsurancePolicy::where('booking_id', $type === 'flight' ? $booking->id : null)
+                ->where('trip_booking_id', $type === 'trip' ? $booking->id : null)
+                ->where('hotel_booking_id', $type === 'hotel' ? $booking->id : null)
+                ->where('status', 'active')
+                ->first();
+
+            if ($insurancePolicy) {
+                Log::info("Insurance Policy already issued: {$insurancePolicy->policy_number}");
+                return;
+            }
+
+            // Extract travelers
+            $passengers = [];
+            if (method_exists($booking, 'passengers') && $booking->passengers()->exists()) {
+                foreach ($booking->passengers as $p) {
+                    $passengers[] = [
+                        'first_name' => $p->first_name ?? $p->passenger_name ?? 'Traveler',
+                        'last_name'  => $p->last_name ?? '',
+                        'passport_no'=> $p->passport_no ?? $p->passport_number ?? 'REG',
+                        'nationality'=> $p->nationality ?? 'SA',
+                        'dob'        => $p->dob ?? null,
+                        'type'       => $p->type ?? 'adult',
+                    ];
+                }
+            } else {
+                $user = $booking->user;
+                $passengers[] = [
+                    'first_name' => $user->name ?? 'Traveler',
+                    'last_name'  => '',
+                    'passport_no'=> $user->passport_number ?? 'REG',
+                    'nationality'=> $user->nationality ?? 'SA',
+                    'dob'        => null,
+                    'type'       => 'adult',
+                ];
+            }
+
+            // Determine destination and dates
+            $dest = 'GLOBAL';
+            $departureDate = now()->addDays(1);
+            $returnDate = now()->addDays(8);
+
+            if ($type === 'flight' && $booking->flightBooking) {
+                $dest = $booking->flightBooking->destination ?? 'GLOBAL';
+            } elseif ($type === 'trip' && $booking->trip) {
+                $dest = $booking->trip->country?->iso ?? 'GLOBAL';
+                $departureDate = $booking->booking_date ?? now()->addDays(1);
+                $returnDate = $departureDate->copy()->addDays($booking->trip->duration_days ?: 7);
+            } elseif ($type === 'hotel') {
+                $dest = $booking->country_name ?? $booking->city_name ?? 'GLOBAL';
+                $departureDate = $booking->check_in ? \Carbon\Carbon::parse($booking->check_in) : now()->addDays(1);
+                $returnDate = $booking->check_out ? \Carbon\Carbon::parse($booking->check_out) : $departureDate->copy()->addDays(5);
+            }
+
+            $quoteResult = $insuranceService->getQuote([
+                'destination_country' => $dest,
+                'departure_date'      => $departureDate->format('Y-m-d'),
+                'return_date'         => $returnDate->format('Y-m-d'),
+                'trip_cost'           => $booking->total_amount ?? $booking->total_price ?? 0,
+                'passengers_count'    => max(1, count($passengers)),
+                'coverage_type'       => 'comprehensive',
+                'booking_type'        => $type,
+                'user_id'             => $booking->user_id ?? null,
+            ]);
+
+            $quote = \App\Models\InsuranceQuote::find($quoteResult['quote_id']);
+            if ($quote) {
+                $policy = $insuranceService->issuePolicy($quote, $passengers, $booking, $type);
+                Log::info("Insurance Policy #{$policy->policy_number} issued successfully for {$type} Booking #{$booking->id}");
+            }
+        } catch (\Exception $e) {
+            Log::error("autoIssueInsurancePolicy failed for Booking #{$booking->id}: " . $e->getMessage());
         }
     }
 

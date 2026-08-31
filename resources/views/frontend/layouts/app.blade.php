@@ -348,6 +348,53 @@
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="{{ asset('js/booking-draft-manager.js') }}"></script>
+
+    {{-- Global Flash Messages --}}
+    @if(session('error'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: '{{ app()->getLocale() == "ar" ? "تنبيه" : "Alert" }}',
+                    text: {!! json_encode(session('error')) !!},
+                    confirmButtonText: '{{ app()->getLocale() == "ar" ? "حسناً" : "OK" }}',
+                    confirmButtonColor: '#041741',
+                    customClass: {
+                        popup: 'fe-swal-popup'
+                    }
+                });
+            });
+        </script>
+    @endif
+    @if(session('success'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    icon: 'success',
+                    title: '{{ app()->getLocale() == "ar" ? "تم بنجاح" : "Success" }}',
+                    text: {!! json_encode(session('success')) !!},
+                    confirmButtonText: '{{ app()->getLocale() == "ar" ? "حسناً" : "OK" }}',
+                    confirmButtonColor: '#041741',
+                    timer: 4000,
+                    timerProgressBar: true
+                });
+            });
+        </script>
+    @endif
+    @if(session('info'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    icon: 'info',
+                    title: '{{ app()->getLocale() == "ar" ? "معلومة" : "Notice" }}',
+                    text: {!! json_encode(session('info')) !!},
+                    confirmButtonText: '{{ app()->getLocale() == "ar" ? "حسناً" : "OK" }}',
+                    confirmButtonColor: '#041741'
+                });
+            });
+        </script>
+    @endif
+
     @stack('scripts')
 </body>
 

@@ -27,6 +27,8 @@ class Booking extends Model
         'pnr_created_at',
         'provider_price',
         'platform_profit',
+        'insurance_policy_id',
+        'insurance_amount',
     ];
 
     protected $casts = [
@@ -63,6 +65,11 @@ class Booking extends Model
     public function payments(): MorphMany
     {
         return $this->morphMany(Payment::class, 'payable');
+    }
+
+    public function insurancePolicy(): HasOne
+    {
+        return $this->hasOne(InsurancePolicy::class, 'booking_id');
     }
 }
 

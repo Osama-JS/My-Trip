@@ -297,10 +297,34 @@ class HotelController extends Controller
             }
         }
 
+        // Pre-payment availability verification for Mobile App
+        if ($request->filled('rateBasisId') && $request->filled('sessionId') && $request->filled('productId') && $request->filled('tokenId')) {
+            try {
+                $checkRate = $this->traveloproHotelService->checkRoomRates([
+                    'sessionId'   => $request->sessionId,
+                    'productId'   => $request->productId,
+                    'tokenId'     => $request->tokenId,
+                    'rateBasisId' => $request->rateBasisId,
+                ]);
+
+                if (isset($checkRate['status']) && $checkRate['status'] === 'error') {
+                    return $this->apiResponse(true, app()->getLocale() == 'ar'
+                        ? 'عذراً، لم تعد هذه الغرفة أو هذا السعر متاحاً لدى الفندق نظراً لانتهاء صلاحية جلسة البحث. يرجى إعادة البحث واختيار غرفة متاحة.'
+                        : 'Sorry, this room or rate is no longer available from the hotel due to session expiration. Please search again.', null, null, 400);
+                }
+            } catch (\Exception $e) {
+                Log::warning('Hotel room check exception in API: ' . $e->getMessage());
+            }
+        }
+
         // Skip early supplier booking to avoid liability for failed payments.
         // The actual booking with Travelopro will happen in the post-payment finalization.
         $result = [];
         try {
+            $insuranceAmount = ($request->get('include_insurance') == '1' || $request->filled('insurance_amount')) 
+                ? floatval($request->get('insurance_amount', 0)) 
+                : 0;
+
             $hotelBooking = HotelBooking::create([
                 'user_id' => Auth::id(),
                 'hotel_name' => $request->hotelName ?? 'Hotel Reservation',
@@ -315,6 +339,7 @@ class HotelController extends Controller
                 'total_price' => $totalPrice,
                 'provider_price' => $providerPrice,
                 'platform_profit' => $profit,
+                'insurance_amount' => $insuranceAmount,
                 'currency' => $request->currency ?? 'SAR',
                 'status' => 'pending',
                 'reference_num' => $referenceNum,

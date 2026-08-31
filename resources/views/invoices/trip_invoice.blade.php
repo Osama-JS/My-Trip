@@ -135,6 +135,20 @@
                             </tr>
                             @endforeach
                         @endif
+                        @if(($booking->insurance_amount ?? 0) > 0 || $booking->insurancePolicy)
+                        @php $policy = $booking->insurancePolicy; @endphp
+                        <tr style="background-color: #f0fdf4;">
+                            <td>
+                                <span style="color: #15803d; font-weight: bold;">🛡️</span> {{ __('Comprehensive Travel & Medical Insurance') }}
+                                <div style="font-size: 11px; color: #16a34a; margin-top: 2px;">
+                                    {{ __('Policy No:') }} {{ $policy->policy_number ?? ('POL-'.strtoupper(substr(md5($booking->id), 0, 8))) }} · {{ __('Coverage Limit: $500,000 USD') }}
+                                </div>
+                            </td>
+                            <td>{{ $booking->tickets_count }}</td>
+                            <td>{{ number_format(($booking->insurance_amount ?? 0) / ($booking->tickets_count ?: 1), 2) }} {{ $booking->currency ?? 'USD' }}</td>
+                            <td style="font-weight: bold; color: #15803d;">{{ number_format($booking->insurance_amount ?? 0, 2) }} {{ $booking->currency ?? 'USD' }}</td>
+                        </tr>
+                        @endif
                     </tbody>
                     <tfoot>
                         <tr class="total-row">

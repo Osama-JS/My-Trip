@@ -247,4 +247,63 @@ class InvoiceService
             return false;
         }
     }
+
+    /**
+     * Generate Official Travel Insurance Certificate PDF
+     *
+     * @param \App\Models\InsurancePolicy $policy
+     * @return string|false Path to the generated PDF
+     */
+    public function generateInsurancePolicyPdf(\App\Models\InsurancePolicy $policy)
+    {
+        try {
+            $policy->load(['user', 'flightBooking', 'tripBooking', 'hotelBooking']);
+
+            $defaultConfig = (new \Mpdf\Config\ConfigVariables())->getDefaults();
+            $fontDirs = $defaultConfig['fontDir'];
+
+            $defaultFontConfig = (new \Mpdf\Config\FontVariables())->getDefaults();
+            $fontData = $defaultFontConfig['fontdata'];
+
+            $mpdf = new Mpdf([
+                'mode' => 'utf-8',
+                'format' => 'A4',
+                'margin_left' => 10,
+                'margin_right' => 10,
+                'margin_top' => 10,
+                'margin_bottom' => 10,
+                'fontDir' => array_merge($fontDirs, [
+                    public_path('fonts'),
+                ]),
+                'fontdata' => $fontData + [
+                    'tajawal' => [
+                        'R' => 'tajawal.ttf',
+                        'B' => 'tajawal.ttf',
+                        'useOTL' => 0xFF,
+                        'useKashida' => 75,
+                    ]
+                ],
+                'default_font' => 'tajawal',
+                'tempDir' => storage_path('app/temp')
+            ]);
+
+            $dir = app()->getLocale() == 'ar' ? 'rtl' : 'ltr';
+            $mpdf->SetDirectionality($dir);
+            $mpdf->showWatermarkText = true;
+            $mpdf->watermark_font = 'tajawal';
+
+            $html = view('invoices.insurance_policy', compact('policy'))->render();
+            $mpdf->WriteHTML($html);
+
+            $fileName = 'insurance_policy_' . $policy->policy_number . '_' . time() . '.pdf';
+            $filePath = 'invoices/insurance/' . $fileName;
+
+            Storage::disk('public')->put($filePath, $mpdf->Output('', 'S'));
+
+            return $filePath;
+        } catch (\Exception $e) {
+            Log::error('Insurance Policy PDF Generation Failed: ' . $e->getMessage());
+            return false;
+        }
+    }
 }

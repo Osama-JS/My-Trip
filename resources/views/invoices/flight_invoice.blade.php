@@ -765,8 +765,37 @@
                     }
                 }
             }
-            $baseFare = max(0, $booking->total_amount - $totalExtraPrice);
+            $insAmount = (float)($booking->insurance_amount ?? 0);
+            $baseFare = max(0, $booking->total_amount - $totalExtraPrice - $insAmount);
         @endphp
+
+        @if($insAmount > 0 || $booking->insurancePolicy)
+        @php
+            $policy = $booking->insurancePolicy;
+        @endphp
+        <!-- ─── TRAVEL INSURANCE BADGE ─── -->
+        <div style="margin-top: 12px; margin-bottom: 12px; background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 8px; padding: 10px 14px;">
+            <table width="100%">
+                <tr>
+                    <td width="72%">
+                        <div style="font-weight: 800; color: #166534; font-size: 11.5px;">
+                            🛡️ {{ __('Comprehensive Travel & Medical Insurance Included') }}
+                        </div>
+                        <div style="font-size: 9.5px; color: #15803d; margin-top: 2px;">
+                            {{ __('Policy No:') }} <strong>{{ $policy->policy_number ?? ('POL-'.strtoupper(substr(md5($booking->id), 0, 8))) }}</strong> · 
+                            {{ __('Coverage Limit:') }} <strong>$500,000 USD</strong> · 
+                            {{ __('Status:') }} <strong style="color:#059669;">{{ __('Active / Insured') }}</strong>
+                        </div>
+                    </td>
+                    <td width="28%" style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }}; vertical-align: middle;">
+                        <span style="background: #16a34a; color: #fff; font-size: 9.5px; font-weight: 800; padding: 4px 8px; border-radius: 12px; text-transform: uppercase;">
+                            ✓ {{ __('INSURED') }}
+                        </span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        @endif
 
         <table class="p-table">
             <thead>
@@ -798,6 +827,17 @@
                     </td>
                     <td style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }}; font-weight: 800; color: #1a1f36; font-size: 14px; vertical-align: middle;">
                         {{ number_format($totalExtraPrice, 2) }} {{ $booking->currency }}
+                    </td>
+                </tr>
+                @endif
+                @if($insAmount > 0)
+                <tr>
+                    <td>
+                        <div style="font-weight: 700; color: #1a1f36;">🛡️ {{ __('Comprehensive Travel & Medical Insurance') }}</div>
+                        <div style="font-size:10px; color:#9ca3af; margin-top:2px;">{{ __('Emergency Medical ($500k), Trip Delay, Baggage Protection') }}</div>
+                    </td>
+                    <td style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }}; font-weight: 800; color: #1a1f36; font-size: 14px; vertical-align: middle;">
+                        {{ number_format($insAmount, 2) }} {{ $booking->currency }}
                     </td>
                 </tr>
                 @endif
