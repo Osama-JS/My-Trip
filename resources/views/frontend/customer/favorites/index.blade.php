@@ -234,95 +234,155 @@
 @endpush
 
 <div class="dash-header-row mb-4">
-    <h4 style="margin:0;font-weight:900;color: var(--text-main);font-size:1.4rem;">{{ __('My Favorite Trips') }}</h4>
-    <p class="text-muted" style="font-size: 0.9rem; margin-top: 4px;">{{ __('Trips you have saved to visit later.') }}</p>
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 15px;">
+        <div>
+            <h4 style="margin:0;font-weight:900;color: var(--text-main);font-size:1.4rem;">{{ __('My Favorites & Wishlist') }}</h4>
+            <p class="text-muted" style="font-size: 0.9rem; margin-top: 4px;">{{ __('Items you have saved to view and book later.') }}</p>
+        </div>
+        
+        {{-- Tabs --}}
+        <div style="display: flex; gap: 8px; background: var(--bg-main); padding: 4px; border-radius: 12px; border: 1px solid var(--border-color);">
+            <button onclick="switchFavTab('trips')" id="tabBtnTrips" class="fav-tab-btn active-tab" style="padding: 8px 16px; border-radius: 8px; font-weight: 800; font-size: 0.85rem; border: none; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;">
+                <i class="fas fa-suitcase-rolling"></i> {{ __('Tour Packages') }} ({{ $favorites->total() }})
+            </button>
+            <button onclick="switchFavTab('hotels')" id="tabBtnHotels" class="fav-tab-btn" style="padding: 8px 16px; border-radius: 8px; font-weight: 800; font-size: 0.85rem; border: none; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;">
+                <i class="fas fa-hotel"></i> {{ __('Hotels') }} <span id="hotelFavCountBadge" style="background: #ef4444; color: white; border-radius: 20px; padding: 2px 7px; font-size: 0.75rem; display: none;">0</span>
+            </button>
+        </div>
+    </div>
 </div>
 
-@if($favorites->count() > 0)
-    <div class="favorites-grid" id="favoritesGrid">
-        @foreach($favorites as $favorite)
-            @php
-                $trip = $favorite->trip;
-                $image = $trip?->images?->first();
-            @endphp
-            @if($trip)
-                <div class="favorite-card" id="fav-card-{{ $trip->id }}">
-                    <div class="favorite-image">
-                        @if($image)
-                            <img src="{{ asset('storage/' . $image->image_path) }}" alt="{{ $trip->title }}">
-                        @else
-                            <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color: var(--text-muted); font-size:3rem;">
-                                <i class="fas fa-map-marked-alt"></i>
-                            </div>
-                        @endif
-
-                        <button class="remove-fav-btn" onclick="removeFavorite({{ $trip->id }})" title="{{ __('Remove from favorites') }}">
-                            <i class="fas fa-heart"></i>
-                        </button>
-                    </div>
-
-                    <div class="favorite-body">
-                        <a href="{{ route('trips.show', $trip->id) }}" class="fav-trip-title">
-                            {{ $trip->title }}
-                        </a>
-
-                        <div class="fav-meta">
-                            @if($trip->toCountry)
-                                <div class="fav-meta-item">
-                                    <i class="fas fa-map-marker-alt"></i>
-                                    {{ $trip->toCountry->name }}
+{{-- SECTION 1: TRIPS FAVORITES --}}
+<div id="tripsFavSection">
+    @if($favorites->count() > 0)
+        <div class="favorites-grid" id="favoritesGrid">
+            @foreach($favorites as $favorite)
+                @php
+                    $trip = $favorite->trip;
+                    $image = $trip?->images?->first();
+                @endphp
+                @if($trip)
+                    <div class="favorite-card" id="fav-card-{{ $trip->id }}">
+                        <div class="favorite-image">
+                            @if($image)
+                                <img src="{{ asset('storage/' . $image->image_path) }}" alt="{{ $trip->title }}">
+                            @else
+                                <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color: var(--text-muted); font-size:3rem;">
+                                    <i class="fas fa-map-marked-alt"></i>
                                 </div>
                             @endif
-                            @if($trip->duration)
-                                <div class="fav-meta-item">
-                                    <i class="fas fa-clock"></i>
-                                    {{ $trip->duration }} {{ __('Days') }}
-                                </div>
-                            @endif
-                            @if($trip->company)
-                                <div class="fav-meta-item">
-                                    <i class="fas fa-building"></i>
-                                    {{ $trip->company->name }}
-                                </div>
-                            @endif
+
+                            <button class="remove-fav-btn" onclick="removeFavorite({{ $trip->id }})" title="{{ __('Remove from favorites') }}">
+                                <i class="fas fa-heart"></i>
+                            </button>
                         </div>
 
-                        <div class="fav-footer">
-                            <div class="fav-price-box">
-                                <span class="p-label">{{ __('Price') }}</span>
-                                <span class="p-value">{{ number_format($trip->price, 0) }} <small style="font-size:0.6em; font-weight: 800;">{{ __('SAR') }}</small></span>
-                            </div>
-                            <a href="{{ route('trips.show', $trip->id) }}" class="btn-view-trip">
-                                {{ __('View Details') }} <i class="fas fa-chevron-{{ app()->isLocale('ar') ? 'left' : 'right' }} ms-1" style="font-size:0.75rem;"></i>
+                        <div class="favorite-body">
+                            <a href="{{ route('trips.show', $trip->id) }}" class="fav-trip-title">
+                                {{ $trip->title }}
                             </a>
+
+                            <div class="fav-meta">
+                                @if($trip->toCountry)
+                                    <div class="fav-meta-item">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        {{ $trip->toCountry->name }}
+                                    </div>
+                                @endif
+                                @if($trip->duration)
+                                    <div class="fav-meta-item">
+                                        <i class="fas fa-clock"></i>
+                                        {{ $trip->duration }} {{ __('Days') }}
+                                    </div>
+                                @endif
+                                @if($trip->company)
+                                    <div class="fav-meta-item">
+                                        <i class="fas fa-building"></i>
+                                        {{ $trip->company->name }}
+                                    </div>
+                                @endif
+                            </div>
+
+                            <div class="fav-footer">
+                                <div class="fav-price-box">
+                                    <span class="p-label">{{ __('Price') }}</span>
+                                    <span class="p-value">{{ number_format($trip->price, 0) }} <small style="font-size:0.6em; font-weight: 800;">{{ __('SAR') }}</small></span>
+                                </div>
+                                <a href="{{ route('trips.show', $trip->id) }}" class="btn-view-trip">
+                                    {{ __('View Details') }} <i class="fas fa-chevron-{{ app()->isLocale('ar') ? 'left' : 'right' }} ms-1" style="font-size:0.75rem;"></i>
+                                </a>
+                            </div>
                         </div>
                     </div>
-                </div>
-            @endif
-        @endforeach
-    </div>
+                @endif
+            @endforeach
+        </div>
 
-    @if($favorites->hasPages())
-        <div class="mt-5 d-flex justify-content-center">
-            {{ $favorites->links() }}
+        @if($favorites->hasPages())
+            <div class="mt-5 d-flex justify-content-center">
+                {{ $favorites->links() }}
+            </div>
+        @endif
+    @else
+        <div class="fav-empty">
+            <div class="fav-empty-icon">
+                <i class="fas fa-heart"></i>
+            </div>
+            <h3 style="font-weight:900; color: var(--text-main); margin-bottom:10px;">{{ __('Your wishlist is empty') }}</h3>
+            <p style="color: var(--text-muted); margin-bottom:30px; max-width:400px; margin-inline:auto;">{{ __("You haven't added any trips to your favorites yet. Start exploring and save the ones you love!") }}</p>
+            <a href="{{ url('/') }}" class="btn-accent-main">
+                <i class="fas fa-compass"></i> {{ __('Explore Trips') }}
+            </a>
         </div>
     @endif
-@else
-    <div class="fav-empty">
+</div>
+
+{{-- SECTION 2: HOTELS FAVORITES (RENDERED CLIENT-SIDE & STORED IN LOCALSTORAGE) --}}
+<div id="hotelsFavSection" style="display: none;">
+    <div class="favorites-grid" id="hotelFavoritesGrid"></div>
+
+    <div class="fav-empty" id="hotelFavEmpty" style="display: none;">
         <div class="fav-empty-icon">
-            <i class="fas fa-heart"></i>
+            <i class="fas fa-hotel"></i>
         </div>
-        <h3 style="font-weight:900; color: var(--text-main); margin-bottom:10px;">{{ __('Your wishlist is empty') }}</h3>
-        <p style="color: var(--text-muted); margin-bottom:30px; max-width:400px; margin-inline:auto;">{{ __("You haven't added any trips to your favorites yet. Start exploring and save the ones you love!") }}</p>
-        <a href="{{ url('/') }}" class="btn-accent-main">
-            <i class="fas fa-compass"></i> {{ __('Explore Trips') }}
+        <h3 style="font-weight:900; color: var(--text-main); margin-bottom:10px;">{{ __('No Saved Hotels') }}</h3>
+        <p style="color: var(--text-muted); margin-bottom:30px; max-width:400px; margin-inline:auto;">{{ __("You haven't added any hotels to your wishlist yet. Search and save your favorite stays!") }}</p>
+        <a href="{{ route('hotels') }}" class="btn-accent-main">
+            <i class="fas fa-search"></i> {{ __('Explore Hotels') }}
         </a>
     </div>
-@endif
+</div>
+
+@push('styles')
+<style>
+    .fav-tab-btn { background: transparent; color: var(--text-muted); }
+    .fav-tab-btn.active-tab { background: var(--bg-card) !important; color: var(--primary-blue) !important; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+</style>
+@endpush
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+function switchFavTab(tab) {
+    const tripsSec = document.getElementById('tripsFavSection');
+    const hotelsSec = document.getElementById('hotelsFavSection');
+    const btnTrips = document.getElementById('tabBtnTrips');
+    const btnHotels = document.getElementById('tabBtnHotels');
+
+    if (tab === 'hotels') {
+        tripsSec.style.display = 'none';
+        hotelsSec.style.display = 'block';
+        btnTrips.classList.remove('active-tab');
+        btnHotels.classList.add('active-tab');
+        renderHotelFavorites();
+    } else {
+        tripsSec.style.display = 'block';
+        hotelsSec.style.display = 'none';
+        btnTrips.classList.add('active-tab');
+        btnHotels.classList.remove('active-tab');
+    }
+}
+
 function removeFavorite(tripId) {
     const url = '{{ route("customer.favorites.toggle", ":id") }}'.replace(':id', tripId);
 
@@ -337,16 +397,18 @@ function removeFavorite(tripId) {
     .then(data => {
         if (!data.error && !data.is_favorite) {
             const card = document.getElementById(`fav-card-${tripId}`);
-            card.style.transition = 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
-            card.style.opacity = '0';
-            card.style.transform = 'scale(0.9) translateY(10px)';
+            if (card) {
+                card.style.transition = 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
+                card.style.opacity = '0';
+                card.style.transform = 'scale(0.9) translateY(10px)';
 
-            setTimeout(() => {
-                card.remove();
-                if (document.querySelectorAll('.favorite-card').length === 0) {
-                    location.reload();
-                }
-            }, 300);
+                setTimeout(() => {
+                    card.remove();
+                    if (document.querySelectorAll('#favoritesGrid .favorite-card').length === 0) {
+                        location.reload();
+                    }
+                }, 300);
+            }
 
             const Toast = Swal.mixin({
                 toast: true,
@@ -362,7 +424,116 @@ function removeFavorite(tripId) {
         }
     });
 }
+
+function getStoredHotelFavorites() {
+    try {
+        return JSON.parse(localStorage.getItem('flyvio_hotel_favorites') || '[]');
+    } catch(e) {
+        return [];
+    }
+}
+
+function removeHotelFavorite(hotelId) {
+    let favs = getStoredHotelFavorites();
+    favs = favs.filter(h => h.id !== hotelId);
+    localStorage.setItem('flyvio_hotel_favorites', JSON.stringify(favs));
+    renderHotelFavorites();
+
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true
+    });
+    Toast.fire({
+        icon: 'success',
+        title: @json(__('Removed from favorites'))
+    });
+}
+
+function renderHotelFavorites() {
+    const favs = getStoredHotelFavorites();
+    const grid = document.getElementById('hotelFavoritesGrid');
+    const emptyState = document.getElementById('hotelFavEmpty');
+    const badge = document.getElementById('hotelFavCountBadge');
+
+    if (badge) {
+        if (favs.length > 0) {
+            badge.innerText = favs.length;
+            badge.style.display = 'inline-block';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    if (!grid || !emptyState) return;
+
+    if (favs.length === 0) {
+        grid.innerHTML = '';
+        emptyState.style.display = 'block';
+        return;
+    }
+
+    emptyState.style.display = 'none';
+    let html = '';
+
+    favs.forEach(hotel => {
+        let starsHtml = '';
+        const rating = parseInt(hotel.rating || 0);
+        for (let i = 1; i <= 5; i++) {
+            starsHtml += `<i class="${i <= rating ? 'fas' : 'far'} fa-star" style="color: #ffc107; font-size: 0.8rem; margin-inline-end: 2px;"></i>`;
+        }
+
+        html += `
+            <div class="favorite-card" id="hotel-card-${hotel.id}">
+                <div class="favorite-image">
+                    <img src="${hotel.image || '/images/trip-placeholder.png'}" alt="${hotel.name || 'Hotel'}">
+                    <button class="remove-fav-btn" onclick="removeHotelFavorite('${hotel.id}')" title="{{ __('Remove from favorites') }}">
+                        <i class="fas fa-heart"></i>
+                    </button>
+                </div>
+                <div class="favorite-body">
+                    <div style="margin-bottom: 6px;">${starsHtml}</div>
+                    <a href="${hotel.url}" class="fav-trip-title">
+                        ${hotel.name || 'Hotel'}
+                    </a>
+                    <div class="fav-meta">
+                        <div class="fav-meta-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>${hotel.address || ''}</span>
+                        </div>
+                    </div>
+                    <div class="fav-footer">
+                        <div>
+                            <span class="p-label">{{ __('Status') }}</span>
+                            <span style="font-size: 0.9rem; font-weight: 800; color: #16a34a;">
+                                <i class="fas fa-check-circle me-1"></i> {{ __('Available for Booking') }}
+                            </span>
+                        </div>
+                        <a href="${hotel.url}" class="btn-view-trip">
+                            {{ __('View Rooms') }} <i class="fas fa-chevron-${@json(app()->isLocale('ar') ? 'left' : 'right')} ms-1" style="font-size:0.75rem;"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    grid.innerHTML = html;
+}
+
+// Initial badge check on load
+document.addEventListener('DOMContentLoaded', () => {
+    const favs = getStoredHotelFavorites();
+    const badge = document.getElementById('hotelFavCountBadge');
+    if (badge && favs.length > 0) {
+        badge.innerText = favs.length;
+        badge.style.display = 'inline-block';
+    }
+});
 </script>
 @endpush
 
 @endsection
+

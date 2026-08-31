@@ -333,14 +333,36 @@
                                     <div class="fe-summary-segments" style="margin: 10px 0 15px; background: var(--gray-50); border-radius: 8px; padding: 12px; font-size: 0.85rem; border: 1px dashed var(--gray-200);">
                                         <div style="font-weight: 700; color: var(--dark); margin-bottom: 8px; font-size: 0.8rem; text-transform: uppercase;">{{ __('Flight Route Details') }}</div>
                                         @foreach($details['segments'] as $index => $seg)
-                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: {{ $loop->last ? '0' : '8px' }};">
+                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                                                 <span style="font-weight: 700; color: var(--primary);">
                                                     {{ $seg['from'] ?? '' }} 
                                                     <i class="fas fa-arrow-right" style="font-size:0.7rem; margin:0 6px; color: var(--gray-400);"></i> 
                                                     {{ $seg['to'] ?? '' }}
+                                                    @if(!empty($seg['flight_no']))
+                                                        <span style="font-size:0.7rem; font-weight:600; color:var(--gray-500); margin-inline-start:3px;">({{ $seg['flight_no'] }})</span>
+                                                    @endif
                                                 </span>
                                                 <span style="color: var(--dark-600); font-weight: 600;">{{ $seg['dep'] ?? '' }} - {{ $seg['arr'] ?? '' }}</span>
                                             </div>
+
+                                            {{-- Layover Info between segments --}}
+                                            @php
+                                                $layoverTime = $seg['layover'] ?? null;
+                                                if (!$layoverTime && !empty($seg['arr_datetime']) && !empty($details['segments'][$index+1]['dep_datetime'])) {
+                                                    $t1 = \Carbon\Carbon::parse($seg['arr_datetime']);
+                                                    $t2 = \Carbon\Carbon::parse($details['segments'][$index+1]['dep_datetime']);
+                                                    $diffM = $t1->diffInMinutes($t2);
+                                                    $lh = floor($diffM / 60);
+                                                    $lm = $diffM % 60;
+                                                    $layoverTime = ($lh > 0 ? "{$lh}h " : '') . "{$lm}m";
+                                                }
+                                            @endphp
+                                            @if($layoverTime && !$loop->last)
+                                                <div style="margin: 4px 0 6px; padding: 4px 8px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; font-size: 0.75rem; color: #92400e; display: flex; align-items: center; justify-content: space-between;">
+                                                    <span><i class="far fa-clock me-1"></i> <strong>{{ __('Layover') }}:</strong> {{ $seg['to'] ?? ($seg['layover_airport'] ?? '') }}</span>
+                                                    <span style="font-weight: 700;">{{ $layoverTime }}</span>
+                                                </div>
+                                            @endif
                                         @endforeach
                                     </div>
                                 @endif
@@ -351,6 +373,13 @@
                                     <span class="value">{{ $details['duration'] }}</span>
                                 </div>
                                 @endif
+                                <div class="fe-summary-item">
+                                    <span class="label"><i class="fas fa-suitcase-rolling"></i> {{ __('Baggage') }}</span>
+                                    <span class="value" style="font-weight: 700; color: #0f766e;">
+                                        <i class="fas fa-check-circle me-1" style="color: #0d9488;"></i>
+                                        {{ $details['baggage'] ?? ($details['segments'][0]['baggage'] ?? '1 Piece (23 KG)') }}
+                                    </span>
+                                </div>
                                 <div class="fe-summary-item">
                                     <span class="label"><i class="fas fa-users"></i> {{ __('Travelers') }}</span>
                                     <span class="value">{{ $totalPax }} {{ __('Person(s)') }}</span>

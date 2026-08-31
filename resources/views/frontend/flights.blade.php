@@ -278,9 +278,20 @@
         }
 
         // 4. Passenger Popover
-        paxTrigger.addEventListener('click', e => { e.stopPropagation(); paxPopover.classList.toggle('active'); });
+        paxTrigger.addEventListener('click', e => {
+            if (paxPopover.contains(e.target)) return;
+            e.stopPropagation();
+            paxPopover.classList.toggle('active');
+        });
+
+        paxPopover.addEventListener('click', e => {
+            e.stopPropagation();
+        });
+
         document.addEventListener('click', e => {
-            if (!paxPopover.contains(e.target) && !paxTrigger.contains(e.target)) paxPopover.classList.remove('active');
+            if (!paxPopover.contains(e.target) && !paxTrigger.contains(e.target)) {
+                paxPopover.classList.remove('active');
+            }
         });
 
         const paxCounts = { adult: 1, child: 0, infant: 0 };
@@ -297,7 +308,9 @@
             document.getElementById('paxSummary').textContent = `${total} ${total > 1 ? '{{ __("Travelers") }}' : '{{ __("Traveler") }}'}, ${selectedClass}`;
         }
         document.querySelectorAll('.pax-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
                 const type = this.dataset.type;
                 const isPlus = this.classList.contains('plus');
                 if (isPlus) { if (paxCounts.adult + paxCounts.child + paxCounts.infant < 9) paxCounts[type]++; }
@@ -306,14 +319,20 @@
             });
         });
         document.querySelectorAll('.class-opt').forEach(opt => {
-            opt.addEventListener('click', function() {
+            opt.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
                 document.querySelectorAll('.class-opt').forEach(o => o.classList.remove('active'));
                 this.classList.add('active');
                 selectedClass = this.dataset.class;
                 updatePaxUI();
             });
         });
-        document.getElementById('paxApply').addEventListener('click', () => paxPopover.classList.remove('active'));
+        document.getElementById('paxApply').addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            paxPopover.classList.remove('active');
+        });
 
         // 5. Swap Airports
         document.getElementById('swapAirports').addEventListener('click', function() {
@@ -516,25 +535,71 @@
         }
 
         // ─── Sort ───
+        let currentSortKey = 'price';
+        let currentSortOrder = 'asc'; // 'asc' or 'desc'
+
         function initSortButtons() {
             document.querySelectorAll('.fr-sort-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
-                    document.querySelectorAll('.fr-sort-btn').forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                    sortFlights(this.dataset.sort);
+                    const sortKey = this.dataset.sort;
+                    if (currentSortKey === sortKey) {
+                        // Toggle order if clicking the same active button
+                        currentSortOrder = (currentSortOrder === 'asc') ? 'desc' : 'asc';
+                    } else {
+                        currentSortKey = sortKey;
+                        currentSortOrder = 'asc'; // Default to ascending for new field
+                    }
+                    updateSortUI();
+                    sortFlights(currentSortKey, currentSortOrder);
                 });
             });
+
+            const toggleBtn = document.getElementById('sortOrderToggleBtn');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', function() {
+                    currentSortOrder = (currentSortOrder === 'asc') ? 'desc' : 'asc';
+                    updateSortUI();
+                    sortFlights(currentSortKey, currentSortOrder);
+                });
+            }
+            updateSortUI();
         }
 
-        function sortFlights(by) {
+        function updateSortUI() {
+            document.querySelectorAll('.fr-sort-btn').forEach(b => {
+                const isActive = b.dataset.sort === currentSortKey;
+                b.classList.toggle('active', isActive);
+                const icon = b.querySelector('.sort-dir-icon');
+                if (icon) {
+                    icon.style.display = isActive ? 'inline-block' : 'none';
+                    if (currentSortOrder === 'asc') {
+                        icon.className = 'fas fa-arrow-up-long ms-1 sort-dir-icon';
+                    } else {
+                        icon.className = 'fas fa-arrow-down-long ms-1 sort-dir-icon';
+                    }
+                }
+            });
+
+            const mainIcon = document.getElementById('mainSortOrderIcon');
+            const orderText = document.getElementById('sortOrderText');
+            if (orderText) {
+                orderText.textContent = (currentSortOrder === 'asc') ? '{{ __("Ascending") }}' : '{{ __("Descending") }}';
+            }
+            if (mainIcon) {
+                mainIcon.className = (currentSortOrder === 'asc') ? 'fas fa-sort-amount-up-alt' : 'fas fa-sort-amount-down-alt';
+            }
+        }
+
+        function sortFlights(by, order) {
             const list = document.getElementById('flightResultsList');
             if (!list) return;
             const items = Array.from(list.querySelectorAll('.flight-item'));
             items.sort((a, b) => {
-                if (by === 'price') return +a.dataset.price - +b.dataset.price;
-                if (by === 'duration') return +a.dataset.durationMin - +b.dataset.durationMin;
-                if (by === 'departure') return a.dataset.depTime.localeCompare(b.dataset.depTime);
-                return 0;
+                let diff = 0;
+                if (by === 'price') diff = +a.dataset.price - +b.dataset.price;
+                else if (by === 'duration') diff = +a.dataset.durationMin - +b.dataset.durationMin;
+                else if (by === 'departure') diff = (a.dataset.depTime || '').localeCompare(b.dataset.depTime || '');
+                return (order === 'asc') ? diff : -diff;
             });
             items.forEach(i => list.appendChild(i));
         }
@@ -991,9 +1056,12 @@
     .fr-count-badge { background: var(--primary); color: white; padding: 2px 10px; border-radius: var(--radius-full); font-size: 0.8rem; }
     .fr-route { margin-inline-start: 12px; padding-inline-start: 12px; border-inline-start: 1px solid var(--gray-200); color: var(--dark); }
 
-    .fr-sort-bar { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; font-weight: 600; }
-    .fr-sort-btn { background: transparent; border: 1.5px solid var(--gray-200); padding: 4px 12px; border-radius: var(--radius-md); font-weight: 700; cursor: pointer; color: var(--gray-500); transition: all 0.2s; }
+    .fr-sort-bar { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; flex-wrap: wrap; }
+    .fr-sort-btn { background: white; border: 1.5px solid var(--gray-200); padding: 5px 12px; border-radius: var(--radius-md); font-weight: 700; cursor: pointer; color: var(--gray-600); transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
     .fr-sort-btn.active, .fr-sort-btn:hover { background: var(--primary-50); color: var(--primary); border-color: var(--primary); }
+    .fr-order-toggle-btn { background: white; border: 1.5px solid var(--primary); color: var(--primary); padding: 5px 12px; border-radius: var(--radius-md); font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .fr-order-toggle-btn:hover { background: var(--primary); color: white; }
+    .sort-dir-icon { transition: transform 0.2s ease; }
 
     /* Flight Card */
     .fr-flight-card { display: grid; grid-template-columns: 100px 1fr 160px; background: white; border-radius: var(--radius-xl); border: 1.5px solid var(--gray-100); margin-bottom: var(--space-4); overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); animation: fadeInUp 0.5s both; }

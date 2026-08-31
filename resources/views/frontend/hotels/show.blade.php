@@ -58,9 +58,41 @@
                             </div>
                         </div>
                     </div>
-                    <div class="fe-action-buttons" style="display: flex; gap: 15px;">
-                        <button class="fe-btn-icon"><i class="fas fa-share-alt"></i></button>
-                        <button class="fe-btn-icon"><i class="far fa-heart"></i></button>
+                    <div class="fe-action-buttons" style="display: flex; gap: 12px; position: relative;">
+                        {{-- Share Button --}}
+                        <button class="fe-btn-icon" id="feShareBtn" onclick="toggleShareModal()" title="{{ __('Share') }}" style="position: relative;">
+                            <i class="fas fa-share-alt"></i>
+                        </button>
+
+                        {{-- Favorite (Wishlist) Button --}}
+                        <button class="fe-btn-icon" id="feFavBtn" onclick="toggleHotelWishlist()" title="{{ __('Add to Wishlist') }}" style="position: relative;">
+                            <i class="far fa-heart" id="feFavIcon"></i>
+                        </button>
+
+                        {{-- Share Dropdown / Popover --}}
+                        <div id="feShareDropdown" style="display: none; position: absolute; top: 55px; inset-inline-end: 0; background: white; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); padding: 16px; width: 260px; z-index: 1000;">
+                            <div style="font-size: 0.85rem; font-weight: 800; color: var(--dark); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                                <span>{{ __('Share this Hotel') }}</span>
+                                <button onclick="toggleShareModal()" style="background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 0.9rem;"><i class="fas fa-times"></i></button>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+                                <a href="javascript:void(0)" onclick="shareVia('whatsapp')" style="display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #25D366; color: white; border-radius: 8px; font-size: 0.8rem; font-weight: 700; text-decoration: none;">
+                                    <i class="fab fa-whatsapp" style="font-size: 1rem;"></i> WhatsApp
+                                </a>
+                                <a href="javascript:void(0)" onclick="shareVia('twitter')" style="display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #1DA1F2; color: white; border-radius: 8px; font-size: 0.8rem; font-weight: 700; text-decoration: none;">
+                                    <i class="fab fa-twitter" style="font-size: 1rem;"></i> Twitter (X)
+                                </a>
+                                <a href="javascript:void(0)" onclick="shareVia('facebook')" style="display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #1877F2; color: white; border-radius: 8px; font-size: 0.8rem; font-weight: 700; text-decoration: none;">
+                                    <i class="fab fa-facebook-f" style="font-size: 1rem;"></i> Facebook
+                                </a>
+                                <a href="javascript:void(0)" onclick="shareVia('telegram')" style="display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #0088cc; color: white; border-radius: 8px; font-size: 0.8rem; font-weight: 700; text-decoration: none;">
+                                    <i class="fab fa-telegram-plane" style="font-size: 1rem;"></i> Telegram
+                                </a>
+                            </div>
+                            <button onclick="copyHotelLink()" id="copyLinkBtn" style="width: 100%; padding: 10px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; font-weight: 700; font-size: 0.8rem; color: #1e293b; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;">
+                                <i class="fas fa-link"></i> <span id="copyLinkText">{{ __('Copy Link') }}</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -301,13 +333,46 @@
 
 @push('styles')
 <style>
-    .fe-btn-icon { width: 45px; height: 45px; border-radius: 12px; border: 1px solid var(--gray-100); background: white; color: var(--gray-600); cursor: pointer; transition: all 0.2s; }
-    .fe-btn-icon:hover { background: var(--primary); color: white; border-color: var(--primary); }
+    .fe-btn-icon { width: 45px; height: 45px; border-radius: 12px; border: 1px solid var(--gray-100); background: white; color: var(--gray-600); cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; }
+    .fe-btn-icon:hover { background: var(--primary); color: white; border-color: var(--primary); transform: translateY(-2px); }
+    .fe-btn-icon.active-fav { background: #fee2e2 !important; color: #ef4444 !important; border-color: #fca5a5 !important; animation: favPulse 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .fe-btn-icon.active-fav i { font-weight: 900 !important; }
+    
+    @keyframes favPulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.25); }
+        100% { transform: scale(1); }
+    }
+
     .fe-section-heading { display: flex; align-items: center; gap: 15px; font-size: 1.6rem; font-weight: 900; margin-bottom: 30px; }
     .fe-section-heading i i { color: var(--primary); font-size: 1.2rem; }
     .fe-details-section { margin-bottom: 50px; }
     .gal-thumb.active { opacity: 1 !important; border-color: white !important; transform: scale(1.1); }
     
+    /* Floating Notification Toast */
+    #feHotelToast {
+        position: fixed;
+        bottom: 30px;
+        inset-inline-end: 30px;
+        background: #0f172a;
+        color: white;
+        padding: 14px 22px;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+        font-weight: 700;
+        font-size: 0.9rem;
+        display: none;
+        align-items: center;
+        gap: 12px;
+        z-index: 10000;
+        animation: toastSlide 0.3s ease;
+    }
+
+    @keyframes toastSlide {
+        from { transform: translateY(30px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+
     @media (max-width: 1024px) {
         .fe-grid { grid-template-columns: 1fr !important; }
         .fe-booking-sidebar { display: none; }
@@ -318,7 +383,16 @@
 @endpush
 
 @push('scripts')
+{{-- Floating Toast element --}}
+<div id="feHotelToast">
+    <i class="fas fa-check-circle" id="feToastIcon" style="color: #22c55e; font-size: 1.1rem;"></i>
+    <span id="feToastMsg"></span>
+</div>
+
 <script>
+    // ==========================================
+    // 1. HOTEL GALLERY LOGIC
+    // ==========================================
     let currentImgIdx = 0;
     const hotelImages = @json($images);
     const modal = document.getElementById('hotelGalleryModal');
@@ -352,7 +426,6 @@
         mainImg.src = hotelImages[currentImgIdx].url;
         counter.innerText = `${currentImgIdx + 1} / ${hotelImages.length}`;
         
-        // Update thumbnails
         document.querySelectorAll('.gal-thumb').forEach(thumb => {
             thumb.classList.remove('active');
             if (parseInt(thumb.dataset.idx) === currentImgIdx) {
@@ -362,11 +435,183 @@
         });
     }
     
-    // Close on escape
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') closeGallery();
         if (e.key === 'ArrowRight' && modal.style.display === 'flex') nextImage();
         if (e.key === 'ArrowLeft' && modal.style.display === 'flex') prevImage();
+    });
+
+    // ==========================================
+    // 2. FAVORITE (WISHLIST) SYSTEM
+    // ==========================================
+    const currentHotelId = @json((string)($hotelId ?? 'htl_' . Str::slug($hotelName)));
+    const currentHotelData = {
+        id: currentHotelId,
+        name: @json($hotelName),
+        rating: @json($rating),
+        address: @json($address),
+        image: @json($mainImg),
+        url: window.location.href,
+        savedAt: new Date().toISOString()
+    };
+
+    function getHotelFavorites() {
+        try {
+            return JSON.parse(localStorage.getItem('flyvio_hotel_favorites') || '[]');
+        } catch(e) {
+            return [];
+        }
+    }
+
+    function isHotelFavorited(id) {
+        const favs = getHotelFavorites();
+        return favs.some(item => item.id === id);
+    }
+
+    function initFavoriteState() {
+        const favBtn = document.getElementById('feFavBtn');
+        const favIcon = document.getElementById('feFavIcon');
+        if (!favBtn || !favIcon) return;
+
+        if (isHotelFavorited(currentHotelId)) {
+            favBtn.classList.add('active-fav');
+            favIcon.className = 'fas fa-heart';
+            favBtn.setAttribute('title', @json(__('Remove from Wishlist')));
+        } else {
+            favBtn.classList.remove('active-fav');
+            favIcon.className = 'far fa-heart';
+            favBtn.setAttribute('title', @json(__('Add to Wishlist')));
+        }
+    }
+
+    function toggleHotelWishlist() {
+        let favs = getHotelFavorites();
+        const favBtn = document.getElementById('feFavBtn');
+        const favIcon = document.getElementById('feFavIcon');
+        const index = favs.findIndex(item => item.id === currentHotelId);
+
+        if (index > -1) {
+            // Remove from favorites
+            favs.splice(index, 1);
+            localStorage.setItem('flyvio_hotel_favorites', JSON.stringify(favs));
+            favBtn.classList.remove('active-fav');
+            favIcon.className = 'far fa-heart';
+            favBtn.setAttribute('title', @json(__('Add to Wishlist')));
+            showHotelToast(@json(__('Removed from favorites')), 'fas fa-trash-alt', '#f59e0b');
+        } else {
+            // Add to favorites
+            favs.unshift(currentHotelData);
+            localStorage.setItem('flyvio_hotel_favorites', JSON.stringify(favs));
+            favBtn.classList.add('active-fav');
+            favIcon.className = 'fas fa-heart';
+            favBtn.setAttribute('title', @json(__('Remove from Wishlist')));
+            showHotelToast(@json(__('Added to favorites!')), 'fas fa-heart', '#ef4444');
+        }
+
+        // Trigger global event in case other components listen
+        window.dispatchEvent(new CustomEvent('hotelFavoritesChanged', { detail: { favorites: favs } }));
+    }
+
+    // ==========================================
+    // 3. SHARE SYSTEM
+    // ==========================================
+    function toggleShareModal() {
+        const dropdown = document.getElementById('feShareDropdown');
+        if (!dropdown) return;
+
+        // If native Web Share API is supported on mobile, use it directly
+        if (navigator.share && window.innerWidth < 768) {
+            navigator.share({
+                title: @json($hotelName),
+                text: `${@json($hotelName)} - ${@json($address)} | Flyvio`,
+                url: window.location.href
+            }).catch(() => {});
+            return;
+        }
+
+        // Desktop / Fallback popover
+        dropdown.style.display = (dropdown.style.display === 'block') ? 'none' : 'block';
+    }
+
+    // Close dropdown on clicking outside
+    document.addEventListener('click', (e) => {
+        const shareBtn = document.getElementById('feShareBtn');
+        const dropdown = document.getElementById('feShareDropdown');
+        if (!shareBtn || !dropdown) return;
+        if (!shareBtn.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+
+    function shareVia(platform) {
+        const url = encodeURIComponent(window.location.href);
+        const title = encodeURIComponent(`${@json($hotelName)} - ${@json($address)} | Flyvio`);
+        let shareUrl = '';
+
+        switch(platform) {
+            case 'whatsapp':
+                shareUrl = `https://api.whatsapp.com/send?text=${title}%20${url}`;
+                break;
+            case 'twitter':
+                shareUrl = `https://twitter.com/intent/tweet?text=${title}&url=${url}`;
+                break;
+            case 'facebook':
+                shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+                break;
+            case 'telegram':
+                shareUrl = `https://t.me/share/url?url=${url}&text=${title}`;
+                break;
+        }
+
+        if (shareUrl) {
+            window.open(shareUrl, '_blank', 'width=600,height=500,scrollbars=yes');
+        }
+    }
+
+    function copyHotelLink() {
+        const url = window.location.href;
+        navigator.clipboard.writeText(url).then(() => {
+            const linkText = document.getElementById('copyLinkText');
+            if (linkText) {
+                linkText.innerText = @json(__('Link Copied!'));
+                setTimeout(() => {
+                    linkText.innerText = @json(__('Copy Link'));
+                }, 2500);
+            }
+            showHotelToast(@json(__('Link copied to clipboard!')), 'fas fa-check-circle', '#22c55e');
+            const dropdown = document.getElementById('feShareDropdown');
+            if (dropdown) dropdown.style.display = 'none';
+        }).catch(() => {
+            showHotelToast(@json(__('Unable to copy link')), 'fas fa-exclamation-triangle', '#f59e0b');
+        });
+    }
+
+    // ==========================================
+    // 4. TOAST NOTIFICATION UTILITY
+    // ==========================================
+    let toastTimeout = null;
+    function showHotelToast(msg, icon = 'fas fa-check-circle', iconColor = '#22c55e') {
+        const toast = document.getElementById('feHotelToast');
+        const toastMsg = document.getElementById('feToastMsg');
+        const toastIcon = document.getElementById('feToastIcon');
+        if (!toast || !toastMsg) return;
+
+        toastMsg.innerText = msg;
+        if (toastIcon) {
+            toastIcon.className = icon;
+            toastIcon.style.color = iconColor;
+        }
+
+        toast.style.display = 'flex';
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => {
+            toast.style.display = 'none';
+        }, 3200);
+    }
+
+    // Initialize favorite state on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        initFavoriteState();
     });
 </script>
 @endpush

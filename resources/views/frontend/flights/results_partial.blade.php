@@ -38,9 +38,23 @@
         </div>
         <div class="fr-sort-bar">
             <span>{{ __('Sort by') }}:</span>
-            <button class="fr-sort-btn active" data-sort="price">{{ __('Price') }}</button>
-            <button class="fr-sort-btn" data-sort="duration">{{ __('Duration') }}</button>
-            <button class="fr-sort-btn" data-sort="departure">{{ __('Departure') }}</button>
+            <button type="button" class="fr-sort-btn active" data-sort="price">
+                <span>{{ __('Price') }}</span>
+                <i class="fas fa-arrow-up-long ms-1 sort-dir-icon" id="sortDirIcon_price"></i>
+            </button>
+            <button type="button" class="fr-sort-btn" data-sort="duration">
+                <span>{{ __('Duration') }}</span>
+                <i class="fas fa-arrow-up-long ms-1 sort-dir-icon" id="sortDirIcon_duration" style="display:none;"></i>
+            </button>
+            <button type="button" class="fr-sort-btn" data-sort="departure">
+                <span>{{ __('Departure') }}</span>
+                <i class="fas fa-arrow-up-long ms-1 sort-dir-icon" id="sortDirIcon_departure" style="display:none;"></i>
+            </button>
+            
+            <button type="button" class="fr-order-toggle-btn" id="sortOrderToggleBtn" title="{{ __('Toggle Ascending / Descending') }}">
+                <i class="fas fa-sort-amount-down-alt" id="mainSortOrderIcon"></i>
+                <span id="sortOrderText">{{ __('Ascending') }}</span>
+            </button>
         </div>
     </div>
 
@@ -65,6 +79,8 @@
                 $lastArrTime = null;
                 $totalDurationStr = '';
                 $outboundSegmentsData = [];
+                $mainBaggageDisplay = '1 Piece (23 KG)';
+
                 foreach($options as $opt) {
                     $segs = isset($opt['OriginDestinationOption']['FlightSegment'])
                         ? [$opt['OriginDestinationOption']]
@@ -77,13 +93,48 @@
                         $totalDurationStr = $d1->diff($d2)->format('%hh %im');
                         
                         // Extract outbound segments for summary display
-                        foreach($segs as $seg) {
-                            $s = $seg['FlightSegment'];
+                        $segsCount = count($segs);
+                        for ($si = 0; $si < $segsCount; $si++) {
+                            $s = $segs[$si]['FlightSegment'];
+                            $layStr = null;
+                            if ($si < $segsCount - 1) {
+                                $curArr = \Carbon\Carbon::parse($s['ArrivalDateTime']);
+                                $nextDep = \Carbon\Carbon::parse($segs[$si+1]['FlightSegment']['DepartureDateTime']);
+                                $diffM = $curArr->diffInMinutes($nextDep);
+                                $lh = floor($diffM / 60);
+                                $lm = $diffM % 60;
+                                $layStr = ($lh > 0 ? "{$lh}h " : '') . "{$lm}m";
+                            }
+
+                            $rawB = $s['Baggage'] ?? ($fareInfo['Baggage'] ?? ($itineraryData['Baggage'] ?? null));
+                            $bDisplay = '1 Piece (23 KG)';
+                            if (!empty($rawB)) {
+                                $bUpper = strtoupper(trim(strval($rawB)));
+                                if (preg_match('/(\d+)\s*(K|KG|KGS)/i', $bUpper, $m)) {
+                                    $bDisplay = $m[1] . ' KG';
+                                } elseif (preg_match('/(\d+)\s*(P|PC|PIECE|PIECES)/i', $bUpper, $m)) {
+                                    $bDisplay = $m[1] . ' ' . ($m[1] > 1 ? __('Pieces') : __('Piece')) . ' (23 KG)';
+                                } elseif ($bUpper === '0' || $bUpper === '0P' || $bUpper === '0K') {
+                                    $bDisplay = __('Cabin Bag Only');
+                                } elseif (is_numeric($bUpper)) {
+                                    $bDisplay = $bUpper . ' KG';
+                                } else {
+                                    $bDisplay = $rawB;
+                                }
+                            }
+                            if ($si === 0) $mainBaggageDisplay = $bDisplay;
+
                             $outboundSegmentsData[] = [
                                 'from' => $s['DepartureAirportLocationCode'],
                                 'to' => $s['ArrivalAirportLocationCode'],
                                 'dep' => \Carbon\Carbon::parse($s['DepartureDateTime'])->format('H:i'),
-                                'arr' => \Carbon\Carbon::parse($s['ArrivalDateTime'])->format('H:i')
+                                'arr' => \Carbon\Carbon::parse($s['ArrivalDateTime'])->format('H:i'),
+                                'dep_datetime' => $s['DepartureDateTime'],
+                                'arr_datetime' => $s['ArrivalDateTime'],
+                                'layover' => $layStr,
+                                'layover_airport' => $s['ArrivalAirportLocationCode'],
+                                'baggage' => $bDisplay,
+                                'flight_no' => ($s['MarketingAirlineCode'] ?? $validatingCarrier) . ' ' . ($s['FlightNumber'] ?? ''),
                             ];
                         }
                     }
@@ -121,6 +172,17 @@
                             $dep  = \Carbon\Carbon::parse($firstSeg['DepartureDateTime']);
                             $arr  = \Carbon\Carbon::parse($lastSeg['ArrivalDateTime']);
                             $dur  = $dep->diff($arr)->format('%hh %im');
+
+                            $optLayovers = [];
+                            $optSegCount = count($segments);
+                            for ($si = 0; $si < $optSegCount - 1; $si++) {
+                                $cArr = \Carbon\Carbon::parse($segments[$si]['FlightSegment']['ArrivalDateTime']);
+                                $nDep = \Carbon\Carbon::parse($segments[$si+1]['FlightSegment']['DepartureDateTime']);
+                                $dM = $cArr->diffInMinutes($nDep);
+                                $lh = floor($dM / 60);
+                                $lm = $dM % 60;
+                                $optLayovers[] = $segments[$si]['FlightSegment']['ArrivalAirportLocationCode'] . ' (' . ($lh > 0 ? "{$lh}h " : '') . "{$lm}m)";
+                            }
                         @endphp
                         @if($optIndex > 0)
                             <div class="fr-return-divider"><i class="fas fa-undo"></i> {{ __('Return') }}</div>
@@ -140,9 +202,16 @@
                                     <span class="fr-line"></span>
                                     <span class="fr-dot"></span>
                                 </div>
-                                <span class="fr-stop-badge {{ $stops == 0 ? 'nonstop' : '' }}">
-                                    {{ $stops == 0 ? __('Non-stop') : ($stops . ' ' . ($stops == 1 ? __('Stop') : __('Stops'))) }}
-                                </span>
+                                <div class="d-flex flex-column align-items-center gap-1">
+                                    <span class="fr-stop-badge {{ $stops == 0 ? 'nonstop' : '' }}">
+                                        {{ $stops == 0 ? __('Non-stop') : ($stops . ' ' . ($stops == 1 ? __('Stop') : __('Stops'))) }}
+                                    </span>
+                                    @if(!empty($optLayovers))
+                                        <span class="fr-layover-badge" style="font-size: 0.72rem; color: #b45309; font-weight: 700; background: #fffbeb; padding: 2px 6px; border-radius: 4px; border: 1px solid #fde68a;">
+                                            <i class="far fa-clock me-1"></i>{{ __('Layover') }}: {{ implode(', ', $optLayovers) }}
+                                        </span>
+                                    @endif
+                                </div>
                             </div>
                             <div class="fr-leg-time" style="text-align: end;">
                                 <span class="fr-time">{{ $arr->format('H:i') }}</span>
@@ -151,6 +220,16 @@
                             </div>
                         </div>
                     @endforeach
+                    
+                    {{-- Baggage Allowance info bar --}}
+                    <div class="fr-card-perks" style="display: flex; align-items: center; gap: 15px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--gray-100); font-size: 0.78rem; color: var(--gray-600);">
+                        <span style="display: inline-flex; align-items: center; gap: 5px; color: #0f766e; font-weight: 700; background: #f0fdfa; padding: 3px 8px; border-radius: 5px; border: 1px solid #ccfbf1;">
+                            <i class="fas fa-suitcase-rolling"></i> {{ __('Baggage') }}: {{ $mainBaggageDisplay }}
+                        </span>
+                        <span style="display: inline-flex; align-items: center; gap: 5px; color: #475569;">
+                            <i class="fas fa-couch"></i> {{ $searchParams['class'] ?? 'Economy' }}
+                        </span>
+                    </div>
                 </div>
 
                 <div class="fr-price-col">
@@ -168,6 +247,7 @@
                         'arr_time' => $lastArrTime,
                         'stops' => $maxStops,
                         'duration' => $totalDurationStr,
+                        'baggage' => $mainBaggageDisplay,
                         'segments' => $outboundSegmentsData
                     ])) }}" class="fe-btn fe-btn-primary fr-select-btn">
                         {{ __('Select') }} <i class="fas fa-arrow-right"></i>
