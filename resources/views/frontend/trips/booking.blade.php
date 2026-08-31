@@ -312,6 +312,7 @@
                                     </div>
                                 </div>
                             </div>
+                @if(\App\Models\Setting::get('insurance_enabled', '1') == '1')
                 {{-- ═══ TRAVEL INSURANCE CROSS-SELL COMPONENT ═══ --}}
                 <div class="fe-insurance-component" id="insuranceSection">
                     <div class="fe-insurance-card">
@@ -389,6 +390,7 @@
                         <input type="hidden" name="insurance_amount" id="hiddenInsuranceAmount" value="0">
                     </div>
                 </div>
+                @endif
 
                 <div class="fe-booking-nav">
                     <a href="{{ route('trips.show', $trip->id) }}" class="fe-btn-back">
@@ -1265,6 +1267,7 @@
 
     window.tripInsuranceQuoteData = null;
 
+    @if(\App\Models\Setting::get('insurance_enabled', '1') == '1')
     function fetchTripInsuranceQuote() {
         $('#insurancePriceDisplay').html('<span class="spinner-border spinner-border-sm text-primary" role="status" style="width: 12px; height: 12px; border-width: 2px;"></span> <span class="fs-12 text-muted ms-1">{{ __("Calculating...") }}</span>');
         $('#insuranceTotalOptionPrice').html('<span class="spinner-border spinner-border-sm text-primary me-1" role="status" style="width: 12px; height: 12px; border-width: 2px;"></span> <span class="fs-12 text-muted">{{ __("Calculating...") }}</span>');
@@ -1309,6 +1312,7 @@
         }
         updateTripGrandTotal();
     });
+    @endif
 
     function updateTripGrandTotal() {
         let baseTotal = parseFloat($('#tripGrandTotalAmount').data('base')) || 0;
@@ -1332,7 +1336,9 @@
             $('.fe-select2').select2({ width: '100%' });
         }
 
+        @if(\App\Models\Setting::get('insurance_enabled', '1') == '1')
         fetchTripInsuranceQuote();
+        @endif
 
         // Initialize Auto-Save & Auto-Restore for Tour Package Draft
         if (typeof BookingDraftManager !== 'undefined') {
