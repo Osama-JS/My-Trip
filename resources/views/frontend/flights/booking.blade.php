@@ -377,7 +377,7 @@
                                     <span class="label"><i class="fas fa-suitcase-rolling"></i> {{ __('Baggage') }}</span>
                                     <span class="value" style="font-weight: 700; color: #0f766e;">
                                         <i class="fas fa-check-circle me-1" style="color: #0d9488;"></i>
-                                        {{ $details['baggage'] ?? ($details['segments'][0]['baggage'] ?? '1 Piece (23 KG)') }}
+                                        {{ $details['baggage'] ?? ($details['segments'][0]['baggage'] ?? __('Per Airline Policy')) }}
                                     </span>
                                 </div>
                                 <div class="fe-summary-item">

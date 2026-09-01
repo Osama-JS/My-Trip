@@ -149,6 +149,17 @@ class TraveloproService
                 }
 
                 Log::info("Travelopro Search Response received in {$executionTime}s. Count: {$itineraryCount}");
+
+                // Save full formatted raw JSON response to a dedicated file for easy inspection
+                try {
+                    @file_put_contents(storage_path('logs/travelopro_flight_search.json'), json_encode($results, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+                    Log::channel('single')->info("Travelopro Raw Flight Search Payload saved to storage/logs/travelopro_flight_search.json", [
+                        'count' => $itineraryCount,
+                        'sample_first_itinerary' => $results['AirSearchResponse']['AirSearchResult']['FareItineraries'][0] ?? ($results['AirSearchResponse']['AirSearchResult']['FareItineraries'] ?? null)
+                    ]);
+                } catch (\Exception $logEx) {
+                    Log::warning("Could not write travelopro_flight_search.json: " . $logEx->getMessage());
+                }
                 
                 // Apply Profit Margin
                 $margin     = floatval(\App\Models\Setting::get('flight_margin', 0));

@@ -79,7 +79,7 @@
                 $lastArrTime = null;
                 $totalDurationStr = '';
                 $outboundSegmentsData = [];
-                $mainBaggageDisplay = '1 Piece (23 KG)';
+                $mainBaggageDisplay = __('Per Airline Policy');
 
                 foreach($options as $opt) {
                     $segs = isset($opt['OriginDestinationOption']['FlightSegment'])
@@ -106,22 +106,58 @@
                                 $layStr = ($lh > 0 ? "{$lh}h " : '') . "{$lm}m";
                             }
 
-                            $rawB = $s['Baggage'] ?? ($fareInfo['Baggage'] ?? ($itineraryData['Baggage'] ?? null));
-                            $bDisplay = '1 Piece (23 KG)';
-                            if (!empty($rawB)) {
-                                $bUpper = strtoupper(trim(strval($rawB)));
-                                if (preg_match('/(\d+)\s*(K|KG|KGS)/i', $bUpper, $m)) {
-                                    $bDisplay = $m[1] . ' KG';
-                                } elseif (preg_match('/(\d+)\s*(P|PC|PIECE|PIECES)/i', $bUpper, $m)) {
-                                    $bDisplay = $m[1] . ' ' . ($m[1] > 1 ? __('Pieces') : __('Piece')) . ' (23 KG)';
-                                } elseif ($bUpper === '0' || $bUpper === '0P' || $bUpper === '0K') {
-                                    $bDisplay = __('Cabin Bag Only');
-                                } elseif (is_numeric($bUpper)) {
-                                    $bDisplay = $bUpper . ' KG';
-                                } else {
-                                    $bDisplay = $rawB;
+                            // Pure Travelopro API Baggage Extraction from Segments & FareBreakdown
+                            $fareBreakdowns = $fareInfo['FareBreakdown'] ?? [];
+                            $firstFb = isset($fareBreakdowns[0]) ? $fareBreakdowns[0] : (is_array($fareBreakdowns) ? $fareBreakdowns : []);
+                            
+                            $fbBaggage = null;
+                            if (isset($firstFb['Baggage'])) {
+                                $fbBaggage = is_array($firstFb['Baggage']) 
+                                    ? ($firstFb['Baggage'][$si] ?? ($firstFb['Baggage'][0] ?? null)) 
+                                    : $firstFb['Baggage'];
+                            }
+                            
+                            $fbCabin = null;
+                            if (isset($firstFb['CabinBaggage'])) {
+                                $rawCabin = is_array($firstFb['CabinBaggage']) 
+                                    ? ($firstFb['CabinBaggage'][$si] ?? ($firstFb['CabinBaggage'][0] ?? null)) 
+                                    : $firstFb['CabinBaggage'];
+                                if ($rawCabin && strtoupper($rawCabin) !== 'SB') {
+                                    $fbCabin = $rawCabin;
                                 }
                             }
+
+                            $rawB = $s['Baggage'] 
+                                 ?? $s['baggage']
+                                 ?? $s['BaggageInfo'] 
+                                 ?? $s['BaggageAllowance'] 
+                                 ?? $s['BaggageInformation']
+                                 ?? $s['IncludedCheckedBags']
+                                 ?? $s['FreeBaggage']
+                                 ?? $fbBaggage
+                                 ?? ($fareInfo['Baggage'] ?? ($fareInfo['BaggageInfo'] ?? ($itineraryData['Baggage'] ?? null)));
+
+                            if (is_array($rawB)) $rawB = $rawB[0] ?? null;
+
+                            $bDisplay = __('Per Airline Policy');
+
+                            if (!empty($rawB)) {
+                                $bUpper = strtoupper(trim(strval($rawB)));
+                                if (preg_match('/^(\d+)\s*(K|KG|KGS)$/i', $bUpper, $m)) {
+                                    $bDisplay = ($m[1] == 0) ? ($fbCabin ? __('Cabin Bag Only') . " ({$fbCabin})" : __('Cabin Bag Only')) : ($m[1] . ' KG');
+                                } elseif (preg_match('/^(\d+)\s*(P|PC|PIECE|PIECES)$/i', $bUpper, $m)) {
+                                    $bDisplay = ($m[1] == 0) ? ($fbCabin ? __('Cabin Bag Only') . " ({$fbCabin})" : __('Cabin Bag Only')) : ($m[1] . ' ' . ($m[1] > 1 ? __('Pieces') : __('Piece')));
+                                } elseif ($bUpper === '0' || $bUpper === '0P' || $bUpper === '0PC' || $bUpper === '0K' || $bUpper === '0KG' || $bUpper === 'NIL' || $bUpper === 'NO') {
+                                    $bDisplay = $fbCabin ? __('Cabin Bag Only') . " ({$fbCabin})" : __('Cabin Bag Only');
+                                } elseif (is_numeric($bUpper)) {
+                                    $bDisplay = ($bUpper == 0) ? ($fbCabin ? __('Cabin Bag Only') . " ({$fbCabin})" : __('Cabin Bag Only')) : ($bUpper . ' KG');
+                                } else {
+                                    $bDisplay = $rawB; // Exact raw string from Travelopro API
+                                }
+                            } elseif (!empty($fbCabin)) {
+                                $bDisplay = __('Cabin Bag Only') . " ({$fbCabin})";
+                            }
+
                             if ($si === 0) $mainBaggageDisplay = $bDisplay;
 
                             $outboundSegmentsData[] = [
