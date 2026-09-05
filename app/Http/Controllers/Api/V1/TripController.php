@@ -540,6 +540,10 @@ class TripController extends Controller
                 $totalPrice = ($unitPrice * $passengersCount) + $addonsCostTotal;
             }
 
+            $includeInsurance = ($request->get('include_insurance') == '1' || $request->boolean('include_insurance'));
+            $insuranceAmount = $includeInsurance ? floatval($request->get('insurance_amount', 0)) : 0;
+            $totalPrice += $insuranceAmount;
+
             $booking = TripBooking::create([
                 'user_id' => $user->id,
                 'trip_id' => $trip->id,
@@ -548,6 +552,7 @@ class TripController extends Controller
                 'occupancy' => $request->occupancy_type,
                 'tickets_count' => $passengersCount,
                 'total_price' => $totalPrice,
+                'insurance_amount' => $insuranceAmount,
                 'status' => 'pending',
                 'booking_state' => TripBooking::STATE_AWAITING_PAYMENT,
                 'notes' => $request->notes,
@@ -723,20 +728,28 @@ class TripController extends Controller
         path: "/api/v1/bookings/{id}",
         summary: "Get booking details",
         operationId: "getBookingDetails",
-        description: "Retrieve full details of a specific trip booking. Requires authentication.",
+        description: "Retrieve complete details for a specific booking. Requires authentication.",
         tags: ["Trips"],
         security: [["bearerAuth" => []]],
         parameters: [
+            new OA\Parameter(
+                name: "Accept-Language",
+                in: "header",
+                description: "The language of the response (ar, en)",
+                required: false,
+                schema: new OA\Schema(type: "string", default: "en", enum: ["en", "ar"])
+            ),
             new OA\Parameter(
                 name: "id",
                 in: "path",
                 description: "Booking ID",
                 required: true,
                 schema: new OA\Schema(type: "integer")
-            )
+            ),
         ],
         responses: [
-            new OA\Response(response: 200, description: "Booking retrieved successfully"),
+            new OA\Response(response: 200, description: "Booking details"),
+            new OA\Response(response: 401, description: "Unauthenticated"),
             new OA\Response(response: 404, description: "Booking not found"),
         ]
     )]
@@ -747,7 +760,7 @@ class TripController extends Controller
             return $this->apiResponse(true, __('Unauthenticated'), null, null, 401);
         }
 
-        $booking = TripBooking::with(['trip.toCountry', 'trip.toCity', 'trip.images', 'passengers', 'package', 'season'])
+        $booking = TripBooking::with(['trip.toCountry', 'trip.toCity', 'trip.images', 'passengers', 'package', 'season', 'insurancePolicy'])
             ->where('user_id', $user->id)
             ->find($id);
 
@@ -767,11 +780,23 @@ class TripController extends Controller
             ];
         }
 
+        $policy = $booking->insurancePolicy;
+        $insuranceData = [
+            'has_insurance' => (($booking->insurance_amount ?? 0) > 0 || $policy != null),
+            'amount' => $booking->insurance_amount ?? 0,
+            'policy_number' => $policy?->policy_number,
+            'certificate_number' => $policy?->certificate_number,
+            'certificate_url' => $policy?->pdf_path ? asset('storage/' . $policy->pdf_path) : ($policy?->pdf_url ?? null),
+            'status' => $policy?->status ?? (($booking->insurance_amount ?? 0) > 0 ? 'active' : 'none'),
+        ];
+
         $data = [
             'id' => $booking->id,
             'trip_id' => $booking->trip_id,
             'tickets_count' => $booking->tickets_count,
             'total_price' => $booking->total_price,
+            'insurance_amount' => $booking->insurance_amount ?? 0,
+            'insurance' => $insuranceData,
             'booking_state' => $booking->booking_state,
             'status' => $booking->status,
             'booking_date' => $booking->booking_date,

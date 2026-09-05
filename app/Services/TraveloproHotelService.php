@@ -175,6 +175,87 @@ class TraveloproHotelService
     }
 
     /**
+     * Resolve city and country names to English for Travelopro API.
+     * Travelopro Hotel API v6 requires English city and country names.
+     */
+    public function resolveEnglishCityAndCountry(array $data): array
+    {
+        $cityName = trim($data['cityName'] ?? $data['city_name'] ?? '');
+        $countryName = trim($data['countryName'] ?? $data['country_name'] ?? '');
+        $cityCode = trim($data['cityCode'] ?? $data['city_id'] ?? '');
+
+        // 1. Check HotelCity database table first
+        if (!empty($cityCode) || !empty($cityName) || !empty($countryName)) {
+            $city = null;
+            if (!empty($cityCode)) {
+                $city = \App\Models\HotelCity::where('city_code', $cityCode)->first();
+            }
+            if (!$city && !empty($cityName)) {
+                $city = \App\Models\HotelCity::where('city_name_ar', $cityName)
+                    ->orWhere('city_name_en', $cityName)
+                    ->first();
+            }
+            if (!$city && !empty($cityName) && preg_match('/[\x{0600}-\x{06FF}]/u', $cityName)) {
+                $city = \App\Models\HotelCity::where('city_name_ar', 'like', "%{$cityName}%")->first();
+            }
+
+            if ($city) {
+                return [
+                    'city_name' => $city->city_name_en ?: $cityName,
+                    'country_name' => $city->country_name_en ?: $countryName,
+                    'city_id' => $city->city_code ?: $cityCode,
+                ];
+            }
+        }
+
+        // 2. Comprehensive fallback dictionary for Arabic city & country names
+        $commonCities = [
+            'جدة' => 'Jeddah', 'مكة المكرمة' => 'Makkah', 'مكة' => 'Makkah',
+            'الرياض' => 'Riyadh', 'المدينة المنورة' => 'Medina', 'المدينة' => 'Medina',
+            'الدمام' => 'Dammam', 'الخبر' => 'Khobar', 'أبها' => 'Abha', 'تبوك' => 'Tabuk',
+            'الطائف' => 'Taif', 'جازان' => 'Jazan', 'نجران' => 'Najran', 'حائل' => 'Hail',
+            'ينبع' => 'Yanbu', 'الهفوف' => 'Hofuf', 'الجبيل' => 'Jubail', 'بريدة' => 'Buraidah',
+            'دبي' => 'Dubai', 'أبو ظبي' => 'Abu Dhabi', 'أبوظبي' => 'Abu Dhabi', 'الشارقة' => 'Sharjah',
+            'عجمان' => 'Ajman', 'رأس الخيمة' => 'Ras Al Khaimah',
+            'القاهرة' => 'Cairo', 'الإسكندرية' => 'Alexandria', 'شرم الشيخ' => 'Sharm El Sheikh',
+            'الغردقة' => 'Hurghada', 'الأقصر' => 'Luxor', 'أسوان' => 'Aswan',
+            'إسطنبول' => 'Istanbul', 'اسطنبول' => 'Istanbul', 'أنطاليا' => 'Antalya',
+            'طرابزون' => 'Trabzon', 'بورصة' => 'Bursa', 'كابادوكيا' => 'Cappadocia',
+            'لندن' => 'London', 'مانشستر' => 'Manchester', 'باريس' => 'Paris', 'نيس' => 'Nice',
+            'روما' => 'Rome', 'ميلانو' => 'Milan', 'البندقية' => 'Venice', 'فلورنسا' => 'Florence',
+            'مدريد' => 'Madrid', 'برشلونة' => 'Barcelona', 'فيينا' => 'Vienna', 'جنيف' => 'Geneva',
+            'زيورخ' => 'Zurich', 'كوالالمبور' => 'Kuala Lumpur', 'لنكاوي' => 'Langkawi', 'بينانج' => 'Penang',
+            'بانكوك' => 'Bangkok', 'بوكيت' => 'Phuket', 'بالي' => 'Bali', 'جاكرتا' => 'Jakarta',
+            'الدوحة' => 'Doha', 'المنامة' => 'Manama', 'الكويت' => 'Kuwait City', 'مسقط' => 'Muscat',
+            'صلالة' => 'Salalah', 'عمان' => 'Amman', 'بيروت' => 'Beirut', 'نيويورك' => 'New York',
+            'واشنطن' => 'Washington', 'لوس أنجلوس' => 'Los Angeles', 'ميامي' => 'Miami',
+        ];
+
+        $commonCountries = [
+            'المملكة العربية السعودية' => 'Saudi Arabia', 'السعودية' => 'Saudi Arabia',
+            'الإمارات العربية المتحدة' => 'United Arab Emirates', 'الإمارات' => 'United Arab Emirates',
+            'جمهورية مصر العربية' => 'Egypt', 'مصر' => 'Egypt', 'تركيا' => 'Turkey',
+            'المملكة المتحدة' => 'United Kingdom', 'بريطانيا' => 'United Kingdom', 'إنجلترا' => 'United Kingdom',
+            'فرنسا' => 'France', 'إيطاليا' => 'Italy', 'إسبانيا' => 'Spain', 'ألمانيا' => 'Germany',
+            'سويسرا' => 'Switzerland', 'النمسا' => 'Austria', 'اليونان' => 'Greece', 'جورجيا' => 'Georgia',
+            'أذربيجان' => 'Azerbaijan', 'البوسنة والهرسك' => 'Bosnia and Herzegovina',
+            'ماليزيا' => 'Malaysia', 'تايلاند' => 'Thailand', 'إندونيسيا' => 'Indonesia',
+            'قطر' => 'Qatar', 'البحرين' => 'Bahrain', 'الكويت' => 'Kuwait', 'سلطنة عمان' => 'Oman',
+            'عمان' => 'Oman', 'الأردن' => 'Jordan', 'لبنان' => 'Lebanon', 'الولايات المتحدة' => 'United States',
+            'أمريكا' => 'United States',
+        ];
+
+        $resolvedCity = $commonCities[$cityName] ?? $cityName;
+        $resolvedCountry = $commonCountries[$countryName] ?? $countryName;
+
+        return [
+            'city_name' => $resolvedCity,
+            'country_name' => $resolvedCountry,
+            'city_id' => $cityCode,
+        ];
+    }
+
+    /**
      * Search Hotels.
      */
     public function search(array $data)
@@ -182,18 +263,21 @@ class TraveloproHotelService
         $locale = app()->getLocale();
         $langCode = ($locale === 'ar') ? 'ARA' : 'ENG';
 
+        // Automatically resolve English city and country names required by Travelopro
+        $resolvedLocation = $this->resolveEnglishCityAndCountry($data);
+
         $payload = [
             'checkin' => $data['checkIn'] ?? null,
             'checkout' => $data['checkOut'] ?? null,
-            'city_name' => $data['cityName'] ?? null,
-            'city_id' => $data['cityCode'] ?? null,
-            'country_name' => $data['countryName'] ?? null,
+            'city_name' => $resolvedLocation['city_name'],
+            'city_id' => !empty($resolvedLocation['city_id']) ? $resolvedLocation['city_id'] : ($data['cityCode'] ?? null),
+            'country_name' => $resolvedLocation['country_name'],
             'latitude' => $data['latitude'] ?? null,
             'longitude' => $data['longitude'] ?? null,
             'radius' => $data['radius'] ?? 20,
             'maxResult' => $data['maxResult'] ?? 100,
             'requiredCurrency' => $data['requiredCurrency'] ?? 'SAR',
-            'requiredLanguage' => $langCode,
+            'requiredLanguage' => $data['requiredLanguage'] ?? $langCode,
             'nationality' => $data['residentNationality'] ?? 'SA',
         ];
 
@@ -201,18 +285,20 @@ class TraveloproHotelService
         $payload['occupancy'] = [];
         if (isset($data['distribution_mode']) && $data['distribution_mode'] === 'manual' && isset($data['occupancy'])) {
             foreach ($data['occupancy'] as $index => $roomData) {
+                $rChild = (int) ($roomData['child'] ?? 0);
+                $rAges = (isset($roomData['child_age']) && is_array($roomData['child_age'])) ? $roomData['child_age'] : [];
                 $payload['occupancy'][] = [
                     'room_no' => $index + 1,
                     'adult' => (int) ($roomData['adult'] ?? 1),
-                    'child' => (int) ($roomData['child'] ?? 0),
-                    'child_age' => (isset($roomData['child_age']) && !empty($roomData['child_age'])) ? $roomData['child_age'] : [0]
+                    'child' => $rChild,
+                    'child_age' => ($rChild > 0 && !empty($rAges)) ? array_values($rAges) : []
                 ];
             }
         } else {
             $rooms = (int) ($data['rooms'] ?? 1);
             $adults = (int) ($data['adults'] ?? 1);
             $childs = (int) ($data['childs'] ?? 0);
-            $childAge = $data['childAge'] ?? [];
+            $childAge = (isset($data['childAge']) && is_array($data['childAge'])) ? $data['childAge'] : [];
 
             $remainingAdults = $adults;
             $remainingChilds = $childs;
@@ -230,14 +316,16 @@ class TraveloproHotelService
                 // Distribute child ages
                 $roomAges = [];
                 for ($j = 0; $j < $roomChilds; $j++) {
-                    $roomAges[] = $childAge[$ageIndex++] ?? 0;
+                    if (isset($childAge[$ageIndex])) {
+                        $roomAges[] = (int) $childAge[$ageIndex++];
+                    }
                 }
 
                 $payload['occupancy'][] = [
                     'room_no' => $i,
                     'adult' => (int) $roomAdults,
                     'child' => (int) $roomChilds,
-                    'child_age' => !empty($roomAges) ? $roomAges : [0]
+                    'child_age' => ($roomChilds > 0 && !empty($roomAges)) ? $roomAges : []
                 ];
             }
         }

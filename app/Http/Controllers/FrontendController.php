@@ -578,6 +578,11 @@ class FrontendController extends Controller
         $initialStatus = 'pending';
 
         try {
+            $includeInsurance = ($request->get('include_insurance') == '1');
+            $insuranceAmount = $includeInsurance ? floatval($request->get('insurance_amount', 0)) : 0;
+            $baseTotal = floatval($request->get('total_amount', 0));
+            $finalTotal = $baseTotal + $insuranceAmount;
+
             $hotelBooking = \App\Models\HotelBooking::create([
                 'user_id'   => auth()->id(),
                 'hotel_name'  => $request->get('hotelName', 'Hotel Booking'),
@@ -589,7 +594,8 @@ class FrontendController extends Controller
                 'rooms'       => $rooms,
                 'adults'      => (int) $request->get('adults', 1),
                 'childs'      => (int) $request->get('childs', 0),
-                'total_price' => $request->get('total_amount', 0),
+                'total_price' => $finalTotal,
+                'insurance_amount' => $insuranceAmount,
                 'currency'    => $request->get('currency', 'SAR'),
                 'status'      => $initialStatus,
                 'reference_num' => $referenceNum,

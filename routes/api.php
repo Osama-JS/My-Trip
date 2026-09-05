@@ -127,6 +127,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/user/trip-bookings', [App\Http\Controllers\Api\UserBookingController::class, 'tripBookings']);
     Route::get('/user/trip-bookings/{id}', [App\Http\Controllers\Api\UserBookingController::class, 'tripBookingDetails']);
+    Route::get('/user/trip-bookings/{id}/insurance-certificate', [App\Http\Controllers\Api\UserBookingController::class, 'downloadTripInsuranceCertificate']);
 
     Route::get('/user/bookings/{id}/invoice', [App\Http\Controllers\Api\UserBookingController::class, 'downloadFlightInvoice']);
     Route::get('/user/bookings/{id}/insurance-certificate', [App\Http\Controllers\Api\UserBookingController::class, 'downloadFlightInsuranceCertificate']);

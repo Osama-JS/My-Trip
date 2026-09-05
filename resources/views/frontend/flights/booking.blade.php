@@ -180,21 +180,21 @@
                 </div>
 
                 @if(\App\Models\Setting::get('insurance_enabled', '1') == '1')
-                {{-- ═══ TRAVEL INSURANCE CROSS-SELL COMPONENT ═══ --}}
+                {{-- ═══ TRAVEL INSURANCE CROSS-SELL COMPONENT (FLIGHTS) ═══ --}}
                 <div class="fe-insurance-component" id="insuranceSection">
                     <div class="fe-insurance-card">
                         {{-- Header --}}
                         <div class="fe-ins-header">
                             <div class="fe-ins-header-main">
-                                <div class="fe-ins-shield-icon">
-                                    <i class="fas fa-shield-alt"></i>
+                                <div class="fe-ins-shield-icon" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);">
+                                    <i class="fas fa-plane-departure"></i>
                                 </div>
                                 <div class="fe-ins-titles">
                                     <div class="fe-ins-title-row">
-                                        <h4 class="fe-ins-title">{{ __('Comprehensive Travel & Medical Protection') }}</h4>
-                                        <span class="fe-ins-badge">✓ {{ __('Schengen & Worldwide Approved') }}</span>
+                                        <h4 class="fe-ins-title">{{ __('Comprehensive Flight & Travel Protection') }}</h4>
+                                        <span class="fe-ins-badge">✈️ {{ __('Flight & Travel Approved') }}</span>
                                     </div>
-                                    <p class="fe-ins-subtitle">{{ __('Global coverage for medical emergencies, trip delays, and lost luggage.') }}</p>
+                                    <p class="fe-ins-subtitle">{{ __('Global coverage for medical emergencies, flight delays, cancellations, and lost luggage.') }}</p>
                                 </div>
                             </div>
                             <div class="fe-ins-price-pill">
@@ -215,15 +215,15 @@
                             </div>
                             <div class="fe-ins-benefit-item">
                                 <div class="fe-ins-benefit-icon"><i class="fas fa-check-circle"></i></div>
-                                <div class="fe-ins-benefit-text">{{ __('Trip cancellation & lost luggage compensation') }}</div>
+                                <div class="fe-ins-benefit-text">{{ __('Flight delay & cancellation compensation') }}</div>
                             </div>
                             <div class="fe-ins-benefit-item">
                                 <div class="fe-ins-benefit-icon"><i class="fas fa-check-circle"></i></div>
-                                <div class="fe-ins-benefit-text">{{ __('24/7 global telemedicine doctor access') }}</div>
+                                <div class="fe-ins-benefit-text">{{ __('Lost or delayed luggage compensation') }}</div>
                             </div>
                             <div class="fe-ins-benefit-item">
                                 <div class="fe-ins-benefit-icon"><i class="fas fa-check-circle"></i></div>
-                                <div class="fe-ins-benefit-text">{{ __('Official certificate for Embassy visa applications') }}</div>
+                                <div class="fe-ins-benefit-text">{{ __('Official certificate for Schengen & Embassy visa applications') }}</div>
                             </div>
                         </div>
 
@@ -233,8 +233,8 @@
                                 <div class="fe-ins-opt-left">
                                     <input type="radio" name="include_insurance" value="1" id="optAddInsurance" class="fe-ins-radio">
                                     <div class="fe-ins-opt-info">
-                                        <span class="fe-ins-opt-title">{{ __('Yes, add comprehensive travel insurance for all travelers') }}</span>
-                                        <span class="fe-ins-opt-desc">{{ __('Highly recommended by 94% of international travelers') }}</span>
+                                        <span class="fe-ins-opt-title">{{ __('Yes, add comprehensive flight travel insurance for all passengers') }}</span>
+                                        <span class="fe-ins-opt-desc">{{ __('Highly recommended for flight cancellations & lost baggage') }}</span>
                                     </div>
                                 </div>
                                 <div class="fe-ins-opt-price" id="insuranceTotalOptionPrice">
@@ -247,7 +247,7 @@
                                 <div class="fe-ins-opt-left">
                                     <input type="radio" name="include_insurance" value="0" id="optNoInsurance" checked class="fe-ins-radio">
                                     <div class="fe-ins-opt-info">
-                                        <span class="fe-ins-opt-title" style="color: #64748b; font-weight: 700;">{{ __('No, I decline travel protection (I assume all cancellation & medical risks)') }}</span>
+                                        <span class="fe-ins-opt-title" style="color: #64748b; font-weight: 700;">{{ __('No, I decline flight protection (I assume all cancellation & delay risks)') }}</span>
                                     </div>
                                 </div>
                             </label>

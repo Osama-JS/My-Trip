@@ -640,4 +640,49 @@ class UserBookingController extends Controller
             'policy_number' => $policy->policy_number,
         ]);
     }
+
+    #[OA\Get(
+        path: "/api/user/trip-bookings/{id}/insurance-certificate",
+        summary: "تحميل وثيقة/شهادة التأمين لحجز البكج السياحي",
+        operationId: "downloadTripInsuranceCertificate",
+        description: "يقوم بتوليد وإرجاع رابط لشهادة التأمين الرسمية للبرنامج السياحي.",
+        tags: ["User Bookings"],
+        security: [["bearerAuth" => []]],
+        parameters: [
+            new OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "integer"))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: "Returns URL")
+        ]
+    )]
+    public function downloadTripInsuranceCertificate(Request $request, $id, \App\Services\InvoiceService $invoiceService)
+    {
+        $booking = \App\Models\TripBooking::where('user_id', $request->user()->id)
+            ->where('id', $id)
+            ->firstOrFail();
+
+        $policy = $booking->insurancePolicy ?? \App\Models\InsurancePolicy::where('trip_booking_id', $booking->id)->first();
+        if (!$policy) {
+            return $this->apiResponse(true, __('No insurance policy found for this booking.'), null, null, 404);
+        }
+
+        $filePath = $policy->pdf_path;
+        if (!$filePath || !\Illuminate\Support\Facades\Storage::disk('public')->exists($filePath)) {
+            $filePath = $invoiceService->generateInsurancePolicyPdf($policy);
+            if ($filePath) {
+                $policy->update(['pdf_path' => $filePath]);
+            }
+        }
+
+        if (!$filePath || !\Illuminate\Support\Facades\Storage::disk('public')->exists($filePath)) {
+            return $this->apiResponse(true, __('Failed to generate insurance certificate.'), null, null, 500);
+        }
+
+        $fileUrl = asset('storage/' . $filePath);
+        return $this->apiResponse(false, __('Insurance certificate retrieved successfully'), [
+            'certificate_url' => $fileUrl,
+            'pdf_url' => $fileUrl,
+            'policy_number' => $policy->policy_number,
+        ]);
+    }
 }

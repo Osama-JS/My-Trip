@@ -77,22 +77,24 @@ class SitataInsuranceService
     }
 
     /**
-     * Resolve IATA airport code or city name to ISO 2-letter country code
+     * Resolve IATA airport code or city name or country name to ISO 2-letter country code
      */
     public function resolveCountryCode(?string $code): string
     {
         if (empty($code)) return 'SA';
-        $clean = strtoupper(trim($code));
+        $raw = trim($code);
+        $clean = strtoupper($raw);
 
         if (strlen($clean) === 2) {
             return $clean;
         }
 
+        // Airport / City Code lookup (3 letters)
         if (strlen($clean) === 3) {
             try {
                 $airport = \App\Models\Airport::where('airport_code', $clean)->first();
                 if ($airport && !empty($airport->country_code)) {
-                    return strtoupper($airport->country_code);
+                    return strtoupper(substr($airport->country_code, 0, 2));
                 }
             } catch (\Exception $e) {}
 
@@ -103,13 +105,13 @@ class SitataInsuranceService
                 'DXB' => 'AE', 'AUH' => 'AE', 'SHJ' => 'AE', 'DWC' => 'AE',
                 'CAI' => 'EG', 'HBE' => 'EG', 'SSH' => 'EG', 'HRG' => 'EG', 'LXR' => 'EG',
                 'AMM' => 'JO', 'AQJ' => 'JO', 'BEY' => 'LB', 'BAH' => 'BH', 'KWI' => 'KW', 'DOH' => 'QA', 'MCT' => 'OM',
+                'MLE' => 'MV', 'ZRH' => 'CH', 'GVA' => 'CH', 'VIE' => 'AT', 'ATH' => 'GR',
                 'LHR' => 'GB', 'LGW' => 'GB', 'MAN' => 'GB', 'STN' => 'GB',
                 'CDG' => 'FR', 'ORY' => 'FR', 'NCE' => 'FR', 'LYS' => 'FR',
                 'FRA' => 'DE', 'MUC' => 'DE', 'BER' => 'DE', 'HAM' => 'DE',
                 'FCO' => 'IT', 'MXP' => 'IT', 'VCE' => 'IT', 'BLQ' => 'IT',
                 'MAD' => 'ES', 'BCN' => 'ES', 'AGP' => 'ES', 'VLC' => 'ES',
-                'AMS' => 'NL', 'VIE' => 'AT', 'ZRH' => 'CH', 'GVA' => 'CH', 'ATH' => 'GR',
-                'JFK' => 'US', 'LAX' => 'US', 'ORD' => 'US', 'MIA' => 'US', 'SFO' => 'US',
+                'AMS' => 'NL', 'JFK' => 'US', 'LAX' => 'US', 'ORD' => 'US', 'MIA' => 'US', 'SFO' => 'US',
                 'YYZ' => 'CA', 'YVR' => 'CA', 'KUL' => 'MY', 'BKK' => 'TH', 'SIN' => 'SG',
                 'DEL' => 'IN', 'BOM' => 'IN', 'DAC' => 'BD', 'ISB' => 'PK', 'KHI' => 'PK',
             ];
@@ -119,7 +121,60 @@ class SitataInsuranceService
             }
         }
 
-        return $clean;
+        // Country name dictionary (Arabic and English)
+        $countryMap = [
+            'المملكة العربية السعودية' => 'SA', 'السعودية' => 'SA', 'SAUDI ARABIA' => 'SA', 'KSA' => 'SA',
+            'جزر المالديف' => 'MV', 'المالديف' => 'MV', 'MALDIVES' => 'MV',
+            'سويسرا' => 'CH', 'SWITZERLAND' => 'CH',
+            'تركيا' => 'TR', 'TURKEY' => 'TR', 'TURKIYE' => 'TR',
+            'مصر' => 'EG', 'جمهورية مصر العربية' => 'EG', 'EGYPT' => 'EG',
+            'الإمارات العربية المتحدة' => 'AE', 'الإمارات' => 'AE', 'UNITED ARAB EMIRATES' => 'AE', 'UAE' => 'AE',
+            'المملكة المتحدة' => 'GB', 'بريطانيا' => 'GB', 'إنجلترا' => 'GB', 'UNITED KINGDOM' => 'GB', 'UK' => 'GB',
+            'فرنسا' => 'FR', 'FRANCE' => 'FR',
+            'إيطاليا' => 'IT', 'ITALY' => 'IT',
+            'إسبانيا' => 'ES', 'SPAIN' => 'ES',
+            'ألمانيا' => 'DE', 'GERMANY' => 'DE',
+            'النمسا' => 'AT', 'AUSTRIA' => 'AT',
+            'اليونان' => 'GR', 'GREECE' => 'GR',
+            'جورجيا' => 'GE', 'GEORGIA' => 'GE',
+            'أذربيجان' => 'AZ', 'AZERBAIJAN' => 'AZ',
+            'البوسنة والهرسك' => 'BA', 'البوسنة' => 'BA', 'BOSNIA' => 'BA', 'BOSNIA AND HERZEGOVINA' => 'BA',
+            'ماليزيا' => 'MY', 'MALAYSIA' => 'MY',
+            'تايلاند' => 'TH', 'THAILAND' => 'TH',
+            'إندونيسيا' => 'ID', 'INDONESIA' => 'ID', 'BALI' => 'ID',
+            'قطر' => 'QA', 'QATAR' => 'QA',
+            'البحرين' => 'BH', 'BAHRAIN' => 'BH',
+            'الكويت' => 'KW', 'KUWAIT' => 'KW',
+            'سلطنة عمان' => 'OM', 'عمان' => 'OM', 'OMAN' => 'OM',
+            'الأردن' => 'JO', 'JORDAN' => 'JO',
+            'لبنان' => 'LB', 'LEBANON' => 'LB',
+            'الولايات المتحدة' => 'US', 'أمريكا' => 'US', 'UNITED STATES' => 'US', 'USA' => 'US',
+            'كندا' => 'CA', 'CANADA' => 'CA',
+            'سنغافورة' => 'SG', 'SINGAPORE' => 'SG',
+            'الهند' => 'IN', 'INDIA' => 'IN',
+        ];
+
+        if (isset($countryMap[$raw])) {
+            return $countryMap[$raw];
+        }
+        if (isset($countryMap[$clean])) {
+            return $countryMap[$clean];
+        }
+
+        // Check HotelCity database
+        try {
+            $city = \App\Models\HotelCity::where('city_name_ar', $raw)
+                ->orWhere('city_name_en', $raw)
+                ->orWhere('country_name_ar', $raw)
+                ->orWhere('country_name_en', $raw)
+                ->first();
+            if ($city && !empty($city->country_code)) {
+                return strtoupper(substr($city->country_code, 0, 2));
+            }
+        } catch (\Exception $e) {}
+
+        // Default / Safe fallback
+        return 'SA';
     }
 
     /**
@@ -238,8 +293,8 @@ class SitataInsuranceService
             'currency'         => 'SAR',
             'duration_days'    => $durationDays,
             'passengers_count' => $paxCount,
-            'coverage_title'   => $this->getCoverageTitle($coverageType),
-            'benefits'         => $this->getCoverageBenefits($coverageType, $tripCost),
+            'coverage_title'   => $this->getCoverageTitle($coverageType, $bookingType),
+            'benefits'         => $this->getCoverageBenefits($coverageType, $tripCost, $bookingType),
         ];
     }
 
@@ -451,48 +506,101 @@ class SitataInsuranceService
     /**
      * Coverage title translation helper
      */
-    protected function getCoverageTitle(string $type): string
+    protected function getCoverageTitle(string $type, string $bookingType = 'flight'): string
     {
         $isAr = app()->getLocale() == 'ar';
+        if ($bookingType === 'hotel') {
+            return $isAr ? 'تأمين وحماية الإقامة الفندقية الشامل' : 'Comprehensive Hotel Stay & Medical Protection';
+        } elseif ($bookingType === 'trip' || $bookingType === 'package') {
+            return $isAr ? 'تأمين وحماية البرنامج والجولات السياحية' : 'Comprehensive Tour Package & Travel Protection';
+        }
+
         return match ($type) {
-            'basic' => $isAr ? 'حماية السفر الأساسية' : 'Basic Travel Protection',
-            'schengen' => $isAr ? 'تأمين معتمد لتأشيرة شنغن' : 'Schengen Visa Approved Insurance',
-            'vip' => $isAr ? 'تأمين السفر الشامل VIP' : 'VIP Elite Travel Protection',
-            default => $isAr ? 'حماية وتأمين السفر الشامل' : 'Comprehensive Travel Protection',
+            'basic' => $isAr ? 'حماية رحلات الطيران الأساسية' : 'Basic Flight Travel Protection',
+            'schengen' => $isAr ? 'تأمين طيران معتمد لتأشيرة شنغن' : 'Schengen Visa Approved Flight Insurance',
+            'vip' => $isAr ? 'تأمين الطيران والسفر الشامل VIP' : 'VIP Elite Flight & Travel Protection',
+            default => $isAr ? 'تأمين وحماية رحلات الطيران الشامل' : 'Comprehensive Flight & Travel Protection',
         };
     }
 
     /**
-     * Coverage benefits list
+     * Coverage benefits list tailored by booking type
      */
-    public function getCoverageBenefits(string $type, float $tripCost = 0): array
+    public function getCoverageBenefits(string $type, float $tripCost = 0, string $bookingType = 'flight'): array
     {
         $isAr = app()->getLocale() == 'ar';
+
+        if ($bookingType === 'hotel') {
+            return [
+                [
+                    'icon' => 'fas fa-heartbeat',
+                    'title' => $isAr ? 'طوارئ طبية وحوادث أثناء الإقامة' : 'Medical & Emergency Stay Coverage',
+                    'limit' => $isAr ? 'حتى 100,000 $ (شامل التنويم والإسعاف)' : 'Up to $100,000 (Hospitalization & Ambulance)',
+                ],
+                [
+                    'icon' => 'fas fa-hotel',
+                    'title' => $isAr ? 'إلغاء أو انقطاع الإقامة الطارئ' : 'Emergency Hotel Cancellation',
+                    'limit' => $isAr ? 'تعويض تكلفة الليالي غير المستردة' : 'Reimbursement of Non-Refundable Nights',
+                ],
+                [
+                    'icon' => 'fas fa-user-md',
+                    'title' => $isAr ? 'استشارات طبية عن بُعد 24/7' : '24/7 Global Telemedicine',
+                    'limit' => $isAr ? 'تحدث مع أطباء معتمدين بأي وقت' : 'Instant Multi-lingual Doctor Access',
+                ],
+                [
+                    'icon' => 'fas fa-file-invoice-dollar',
+                    'title' => $isAr ? 'وثيقة إثبات سكن معتمدة للتأشيرة' : 'Accommodation Visa Certificate',
+                    'limit' => $isAr ? 'معتمدة لسفارات شنغن وكافة الدول' : 'Fully Approved for Visa Applications',
+                ],
+            ];
+        }
+
+        if ($bookingType === 'trip' || $bookingType === 'package') {
+            return [
+                [
+                    'icon' => 'fas fa-heartbeat',
+                    'title' => $isAr ? 'طوارئ وإصابات الجولات السياحية' : 'Tour & Excursion Medical Protection',
+                    'limit' => $isAr ? 'حتى 100,000 $ (شامل الأنشطة والحوادث)' : 'Up to $100,000 (Activities & Injuries)',
+                ],
+                [
+                    'icon' => 'fas fa-map-marked-alt',
+                    'title' => $isAr ? 'إلغاء أو تعطل البرنامج السياحي' : 'Tour Cancellation & Interruption',
+                    'limit' => $isAr ? 'تعويض كامل رسوم الجولات والبكج' : 'Full Tour Package Reimbursement',
+                ],
+                [
+                    'icon' => 'fas fa-headset',
+                    'title' => $isAr ? 'مساعدة سياحية وطبية 24/7' : '24/7 Global Travel Assistance',
+                    'limit' => $isAr ? 'دعم طوارئ وتوجيه دولي على مدار الساعة' : 'Round-the-clock International Support',
+                ],
+                [
+                    'icon' => 'fas fa-passport',
+                    'title' => $isAr ? 'مطابق لتأشيرات السفر السياحية' : 'Visa Compliant Tour Insurance',
+                    'limit' => $isAr ? 'وثيقة معتمدة ومطابقة لشنغن والدول كافة' : 'Official Embassy & Visa Approved Certificate',
+                ],
+            ];
+        }
+
+        // Default: Flight Booking
         return [
             [
                 'icon' => 'fas fa-heartbeat',
-                'title' => $isAr ? 'علاج وطوارئ طبية' : 'Medical & Hospital Emergencies',
+                'title' => $isAr ? 'طوارئ وعلاج طبي أثناء السفر' : 'Emergency Medical & Hospitalization',
                 'limit' => $isAr ? 'حتى 100,000 $ (شامل الحوادث والتنويم)' : 'Up to $100,000 (Inpatient & Surgery)',
             ],
             [
                 'icon' => 'fas fa-plane-slash',
-                'title' => $isAr ? 'إلغاء أو انقطاع الرحلة' : 'Trip Cancellation & Interruption',
-                'limit' => $isAr ? 'تعويض كامل قيمة التذاكر والحجز' : 'Full Ticket & Booking Reimbursement',
+                'title' => $isAr ? 'تأخر وإلغاء رحلات الطيران' : 'Flight Delays & Cancellations',
+                'limit' => $isAr ? 'تعويض التذاكر ومصاريف الانتظار' : 'Ticket Reimbursement & Delay Expenses',
             ],
             [
                 'icon' => 'fas fa-suitcase-rolling',
-                'title' => $isAr ? 'فقدان أو تأخر الأمتعة' : 'Baggage Loss & Delay',
+                'title' => $isAr ? 'فقدان أو تأخر وصول الأمتعة' : 'Baggage Loss & Baggage Delay',
                 'limit' => $isAr ? 'تعويض فوري حتى 1,500 $' : 'Instant Compensation up to $1,500',
             ],
             [
                 'icon' => 'fas fa-passport',
-                'title' => $isAr ? 'مطابق لسفارات شنغن' : 'Schengen Embassy Compliant',
+                'title' => $isAr ? 'مطابق لسفارات شنغن والسفر الدولي' : 'Schengen Embassy & Visa Compliant',
                 'limit' => $isAr ? 'معتمد رسمياً لطلب التأشيرات' : 'Fully Approved for Visa Applications',
-            ],
-            [
-                'icon' => 'fas fa-user-md',
-                'title' => $isAr ? 'استشارات طبية 24/7' : '24/7 Global Telemedicine',
-                'limit' => $isAr ? 'تحدث مع أطباء معتمدين بأي وقت' : 'Instant Video & Call Doctor Access',
             ],
         ];
     }

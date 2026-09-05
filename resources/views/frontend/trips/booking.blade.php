@@ -313,21 +313,21 @@
                                 </div>
                             </div>
                 @if(\App\Models\Setting::get('insurance_enabled', '1') == '1')
-                {{-- ═══ TRAVEL INSURANCE CROSS-SELL COMPONENT ═══ --}}
+                {{-- ═══ TRAVEL INSURANCE CROSS-SELL COMPONENT (TOUR PACKAGES) ═══ --}}
                 <div class="fe-insurance-component" id="insuranceSection">
                     <div class="fe-insurance-card">
                         {{-- Header --}}
                         <div class="fe-ins-header">
                             <div class="fe-ins-header-main">
-                                <div class="fe-ins-shield-icon">
-                                    <i class="fas fa-shield-alt"></i>
+                                <div class="fe-ins-shield-icon" style="background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);">
+                                    <i class="fas fa-map-marked-alt"></i>
                                 </div>
                                 <div class="fe-ins-titles">
                                     <div class="fe-ins-title-row">
-                                        <h4 class="fe-ins-title">{{ __('Comprehensive Travel & Medical Protection') }}</h4>
-                                        <span class="fe-ins-badge">✓ {{ __('Schengen & Worldwide Approved') }}</span>
+                                        <h4 class="fe-ins-title">{{ __('Comprehensive Tour Package & Travel Protection') }}</h4>
+                                        <span class="fe-ins-badge">🎒 {{ __('Tour Package Approved') }}</span>
                                     </div>
-                                    <p class="fe-ins-subtitle">{{ __('Global coverage for medical emergencies, trip delays, and lost luggage.') }}</p>
+                                    <p class="fe-ins-subtitle">{{ __('Protection for medical emergencies, tour cancellations, activity disruptions, and travel delays.') }}</p>
                                 </div>
                             </div>
                             <div class="fe-ins-price-pill">
@@ -348,15 +348,15 @@
                             </div>
                             <div class="fe-ins-benefit-item">
                                 <div class="fe-ins-benefit-icon"><i class="fas fa-check-circle"></i></div>
-                                <div class="fe-ins-benefit-text">{{ __('Trip cancellation & luggage protection') }}</div>
+                                <div class="fe-ins-benefit-text">{{ __('Tour package & excursion cancellation coverage') }}</div>
                             </div>
                             <div class="fe-ins-benefit-item">
                                 <div class="fe-ins-benefit-icon"><i class="fas fa-check-circle"></i></div>
-                                <div class="fe-ins-benefit-text">{{ __('24/7 global telemedicine doctor access') }}</div>
+                                <div class="fe-ins-benefit-text">{{ __('24/7 global travel & emergency assistance during tours') }}</div>
                             </div>
                             <div class="fe-ins-benefit-item">
                                 <div class="fe-ins-benefit-icon"><i class="fas fa-check-circle"></i></div>
-                                <div class="fe-ins-benefit-text">{{ __('Official certificate for Visa applications') }}</div>
+                                <div class="fe-ins-benefit-text">{{ __('Official embassy certificate for visa applications') }}</div>
                             </div>
                         </div>
 
@@ -366,8 +366,8 @@
                                 <div class="fe-ins-opt-left">
                                     <input type="radio" name="include_insurance" value="1" id="optAddInsurance" class="fe-ins-radio">
                                     <div class="fe-ins-opt-info">
-                                        <span class="fe-ins-opt-title">{{ __('Yes, add comprehensive travel insurance for all travelers') }}</span>
-                                        <span class="fe-ins-opt-desc">{{ __('Highly recommended by 94% of international travelers') }}</span>
+                                        <span class="fe-ins-opt-title">{{ __('Yes, add comprehensive tour package insurance for all travelers') }}</span>
+                                        <span class="fe-ins-opt-desc">{{ __('Highly recommended for activity cancellations & travel medical protection') }}</span>
                                     </div>
                                 </div>
                                 <div class="fe-ins-opt-price" id="insuranceTotalOptionPrice">
@@ -380,7 +380,7 @@
                                 <div class="fe-ins-opt-left">
                                     <input type="radio" name="include_insurance" value="0" id="optNoInsurance" checked class="fe-ins-radio">
                                     <div class="fe-ins-opt-info">
-                                        <span class="fe-ins-opt-title" style="color: #64748b; font-weight: 700;">{{ __('No, I decline travel protection (I assume all cancellation & medical risks)') }}</span>
+                                        <span class="fe-ins-opt-title" style="color: #64748b; font-weight: 700;">{{ __('No, I decline tour protection (I assume all excursion cancellation & medical risks)') }}</span>
                                     </div>
                                 </div>
                             </label>

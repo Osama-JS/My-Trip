@@ -34,7 +34,8 @@ class InsuranceApiController extends Controller
         }
 
         $request->validate([
-            'destination_country' => 'nullable|string|max:10',
+            'destination_country' => 'nullable|string|max:100',
+            'origin_country'      => 'nullable|string|max:100',
             'departure_date'      => 'nullable|date',
             'return_date'         => 'nullable|date',
             'trip_cost'           => 'nullable|numeric|min:0',

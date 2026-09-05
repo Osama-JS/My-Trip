@@ -259,6 +259,86 @@
                     </div>
                 </div>
 
+                @if(\App\Models\Setting::get('insurance_enabled', '1') == '1')
+                {{-- ═══ TRAVEL INSURANCE CROSS-SELL COMPONENT (HOTELS) ═══ --}}
+                <div class="fe-insurance-component" id="insuranceSection">
+                    <div class="fe-insurance-card">
+                        {{-- Header --}}
+                        <div class="fe-ins-header">
+                            <div class="fe-ins-header-main">
+                                <div class="fe-ins-shield-icon" style="background: linear-gradient(135deg, #059669 0%, #047857 100%);">
+                                    <i class="fas fa-hotel"></i>
+                                </div>
+                                <div class="fe-ins-titles">
+                                    <div class="fe-ins-title-row">
+                                        <h4 class="fe-ins-title">{{ __('Comprehensive Hotel Stay & Medical Protection') }}</h4>
+                                        <span class="fe-ins-badge">🏨 {{ __('Hotel Stay Approved') }}</span>
+                                    </div>
+                                    <p class="fe-ins-subtitle">{{ __('Protection for medical emergencies, hotel stay cancellations, and unexpected trip interruptions.') }}</p>
+                                </div>
+                            </div>
+                            <div class="fe-ins-price-pill">
+                                <span class="fe-ins-price-label">{{ __('Starting from') }}</span>
+                                <span class="fe-ins-price-val" id="insurancePriceDisplay">
+                                    <span class="spinner-border spinner-border-sm text-primary" role="status" style="width: 12px; height: 12px; border-width: 2px;"></span>
+                                    <span class="fs-12 text-muted ms-1">{{ __('Calculating...') }}</span>
+                                </span>
+                                <span class="fe-ins-price-unit">/ {{ __('person') }}</span>
+                            </div>
+                        </div>
+
+                        {{-- Benefits Grid --}}
+                        <div class="fe-ins-benefits-grid">
+                            <div class="fe-ins-benefit-item">
+                                <div class="fe-ins-benefit-icon"><i class="fas fa-check-circle"></i></div>
+                                <div class="fe-ins-benefit-text">{{ __('Emergency medical & hospitalization up to $100,000') }}</div>
+                            </div>
+                            <div class="fe-ins-benefit-item">
+                                <div class="fe-ins-benefit-icon"><i class="fas fa-check-circle"></i></div>
+                                <div class="fe-ins-benefit-text">{{ __('Hotel stay cancellation & interruption coverage') }}</div>
+                            </div>
+                            <div class="fe-ins-benefit-item">
+                                <div class="fe-ins-benefit-icon"><i class="fas fa-check-circle"></i></div>
+                                <div class="fe-ins-benefit-text">{{ __('24/7 global telemedicine doctor access during your stay') }}</div>
+                            </div>
+                            <div class="fe-ins-benefit-item">
+                                <div class="fe-ins-benefit-icon"><i class="fas fa-check-circle"></i></div>
+                                <div class="fe-ins-benefit-text">{{ __('Official accommodation certificate for visa applications') }}</div>
+                            </div>
+                        </div>
+
+                        {{-- Selectable Choices --}}
+                        <div class="fe-ins-options">
+                            <label class="fe-ins-option-card" id="optAddInsuranceWrapper">
+                                <div class="fe-ins-opt-left">
+                                    <input type="radio" name="include_insurance" value="1" id="optAddInsurance" class="fe-ins-radio">
+                                    <div class="fe-ins-opt-info">
+                                        <span class="fe-ins-opt-title">{{ __('Yes, add comprehensive hotel stay insurance for all guests') }}</span>
+                                        <span class="fe-ins-opt-desc">{{ __('Highly recommended for hotel cancellation & emergency medical protection') }}</span>
+                                    </div>
+                                </div>
+                                <div class="fe-ins-opt-price" id="insuranceTotalOptionPrice">
+                                    <span class="spinner-border spinner-border-sm text-primary me-1" role="status" style="width: 12px; height: 12px; border-width: 2px;"></span>
+                                    <span class="fs-12 text-muted">{{ __('Calculating...') }}</span>
+                                </div>
+                            </label>
+
+                            <label class="fe-ins-option-card selected" id="optNoInsuranceWrapper">
+                                <div class="fe-ins-opt-left">
+                                    <input type="radio" name="include_insurance" value="0" id="optNoInsurance" checked class="fe-ins-radio">
+                                    <div class="fe-ins-opt-info">
+                                        <span class="fe-ins-opt-title" style="color: #64748b; font-weight: 700;">{{ __('No, I decline hotel protection (I assume all stay cancellation & medical risks)') }}</span>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+
+                        <input type="hidden" name="insurance_quote_id" id="hiddenInsuranceQuoteId" value="">
+                        <input type="hidden" name="insurance_amount" id="hiddenInsuranceAmount" value="0">
+                    </div>
+                </div>
+                @endif
+
                 <div class="fe-booking-action">
                     @auth
                         @if(!auth()->user()->canBookDirectly())
@@ -327,11 +407,17 @@
                             <div class="room-meta"><i class="fas fa-utensils"></i> {{ $details['boardType'] ?? __('Room Only') }}</div>
                         </div>
 
+                        {{-- Travel Insurance Line in Sidebar --}}
+                        <div class="fe-summary-item" id="sidebarHotelInsuranceRow" style="display:none; background:#f0fdf4; border-radius:8px; padding:10px 12px; margin-bottom:15px; border:1px solid #bbf7d0;">
+                            <span class="label" style="color:#15803d; font-weight:700;"><i class="fas fa-shield-alt text-success me-1"></i> {{ __('Travel Insurance') }}</span>
+                            <span class="value" style="color:#15803d; font-weight:800;" id="sidebarHotelInsuranceAmount">+ 0.00 SAR</span>
+                        </div>
+
                         <div class="fe-summary-total">
                             <div class="total-label">{{ __('Total for :n Nights', ['n' => $nights ?? 1]) }}</div>
                             <div class="total-value">
                                 <span class="currency">{{ $details['currency'] ?? 'SAR' }}</span>
-                                <span class="amount">{{ number_format($details['total_amount'] ?? 0, 2) }}</span>
+                                <span class="amount" id="hotelGrandTotalAmount" data-base="{{ floatval($details['total_amount'] ?? 0) }}">{{ number_format($details['total_amount'] ?? 0, 2) }}</span>
                             </div>
                             <p class="total-note">{{ __('Includes all taxes and fees') }}</p>
                         </div>
@@ -400,6 +486,200 @@
     .fe-terms-fine { font-size: 0.75rem; color: var(--gray-500); margin-top: 15px; }
     .fe-terms-fine a { color: var(--primary); font-weight: 700; }
 
+    /* ─── Travel Insurance Cross-Sell Component ─────────────────────────── */
+    .fe-insurance-component {
+        margin: 25px 0;
+        width: 100%;
+    }
+    .fe-insurance-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+        border: 2px solid #bae6fd;
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 8px 24px rgba(2, 132, 199, 0.06);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    .fe-insurance-card:hover {
+        border-color: #7dd3fc;
+        box-shadow: 0 12px 30px rgba(2, 132, 199, 0.1);
+    }
+    .fe-ins-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+        padding-bottom: 18px;
+        border-bottom: 1px solid #e0f2fe;
+    }
+    .fe-ins-header-main {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex: 1 1 300px;
+    }
+    .fe-ins-shield-icon {
+        width: 48px;
+        height: 48px;
+        min-width: 48px;
+        background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+        color: #ffffff;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.35rem;
+        box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+    }
+    .fe-ins-titles {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    .fe-ins-title-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .fe-ins-title {
+        margin: 0;
+        font-size: 1.12rem;
+        font-weight: 800;
+        color: #0f172a;
+        line-height: 1.3;
+    }
+    .fe-ins-badge {
+        background: #dcfce7;
+        color: #15803d;
+        border: 1px solid #86efac;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+    .fe-ins-subtitle {
+        margin: 0;
+        font-size: 0.84rem;
+        color: #64748b;
+        font-weight: 500;
+    }
+    .fe-ins-price-pill {
+        background: #ffffff;
+        border: 1.5px solid #e0f2fe;
+        border-radius: 14px;
+        padding: 8px 16px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(2, 132, 199, 0.05);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-width: 120px;
+    }
+    .fe-ins-price-label {
+        font-size: 0.7rem;
+        color: #64748b;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    .fe-ins-price-val {
+        font-size: 1.15rem;
+        font-weight: 900;
+        color: #0284c7;
+        margin: 2px 0;
+    }
+    .fe-ins-price-unit {
+        font-size: 0.72rem;
+        color: #94a3b8;
+        font-weight: 600;
+    }
+    .fe-ins-benefits-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px;
+        padding: 16px 0;
+        border-bottom: 1px solid #e0f2fe;
+    }
+    .fe-ins-benefit-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .fe-ins-benefit-icon {
+        color: #0284c7;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+    .fe-ins-benefit-text {
+        font-size: 0.82rem;
+        color: #334155;
+        font-weight: 600;
+        line-height: 1.35;
+    }
+    .fe-ins-options {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 18px;
+    }
+    .fe-ins-option-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+        background: #ffffff;
+        border: 2px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 14px 18px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin: 0;
+    }
+    .fe-ins-option-card:hover {
+        border-color: #93c5fd;
+        background: #f8fafc;
+    }
+    .fe-ins-option-card.selected {
+        border-color: #0284c7;
+        background: #f0f9ff;
+        box-shadow: 0 4px 12px rgba(2, 132, 199, 0.08);
+    }
+    .fe-ins-opt-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .fe-ins-radio {
+        width: 18px;
+        height: 18px;
+        accent-color: #0284c7;
+        cursor: pointer;
+    }
+    .fe-ins-opt-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    .fe-ins-opt-title {
+        font-size: 0.9rem;
+        font-weight: 800;
+        color: #0f172a;
+    }
+    .fe-ins-opt-desc {
+        font-size: 0.78rem;
+        color: #10b981;
+        font-weight: 700;
+    }
+    .fe-ins-opt-price {
+        font-size: 1.05rem;
+        font-weight: 900;
+        color: #0284c7;
+        white-space: nowrap;
+    }
+
     /* Responsive form helper */
     .fe-form-row-2 { grid-template-columns: 1fr 1fr; }
 
@@ -421,7 +701,85 @@
 
 @push('scripts')
 <script>
+    window.hotelInsuranceQuoteData = null;
+
+    @if(\App\Models\Setting::get('insurance_enabled', '1') == '1')
+    function fetchHotelInsuranceQuote() {
+        $('#insurancePriceDisplay').html('<span class="spinner-border spinner-border-sm text-primary" role="status" style="width: 12px; height: 12px; border-width: 2px;"></span> <span class="fs-12 text-muted ms-1">{{ __("Calculating...") }}</span>');
+        $('#insuranceTotalOptionPrice').html('<span class="spinner-border spinner-border-sm text-primary me-1" role="status" style="width: 12px; height: 12px; border-width: 2px;"></span> <span class="fs-12 text-muted">{{ __("Calculating...") }}</span>');
+
+        @php
+            $paxCount = max(1, ((int)($details['adults'] ?? 1) + (int)($details['childs'] ?? 0)));
+            $destCountry = $details['countryCode'] ?? $details['countryName'] ?? 'GLOBAL';
+            $checkInDate = \Carbon\Carbon::parse($details['checkIn'] ?? now())->format('Y-m-d');
+            $checkOutDate = \Carbon\Carbon::parse($details['checkOut'] ?? now()->addDays(5))->format('Y-m-d');
+            $baseCost = floatval($details['total_amount'] ?? 0);
+        @endphp
+
+        $.ajax({
+            url: '{{ route("insurance.quote") }}',
+            type: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                destination_country: '{{ $destCountry }}',
+                departure_date: '{{ $checkInDate }}',
+                return_date: '{{ $checkOutDate }}',
+                trip_cost: {{ $baseCost }},
+                passengers_count: {{ $paxCount }},
+                booking_type: 'hotel'
+            },
+            success: function(res) {
+                if (res && res.success) {
+                    window.hotelInsuranceQuoteData = res;
+                    $('#insurancePriceDisplay').text(res.unit_price.toFixed(2) + ' SAR');
+                    $('#insuranceTotalOptionPrice').text('+ ' + res.selling_price.toFixed(2) + ' SAR');
+                    $('#hiddenInsuranceQuoteId').val(res.quote_id);
+                } else {
+                    $('#insurancePriceDisplay').text('-- SAR');
+                    $('#insuranceTotalOptionPrice').text('-- SAR');
+                }
+            },
+            error: function() {
+                $('#insurancePriceDisplay').text('-- SAR');
+                $('#insuranceTotalOptionPrice').text('-- SAR');
+            }
+        });
+    }
+
+    $(document).on('change', 'input[name="include_insurance"]', function() {
+        if ($(this).val() == '1') {
+            $('#optAddInsuranceWrapper').addClass('selected');
+            $('#optNoInsuranceWrapper').removeClass('selected');
+        } else {
+            $('#optNoInsuranceWrapper').addClass('selected');
+            $('#optAddInsuranceWrapper').removeClass('selected');
+        }
+        updateHotelGrandTotal();
+    });
+
+    function updateHotelGrandTotal() {
+        let baseTotal = parseFloat($('#hotelGrandTotalAmount').data('base')) || 0;
+        let insuranceTotal = ($('input[name="include_insurance"]:checked').val() == '1') ? (window.hotelInsuranceQuoteData?.selling_price || 0) : 0;
+
+        $('#hiddenInsuranceAmount').val(insuranceTotal.toFixed(2));
+
+        if (insuranceTotal > 0) {
+            $('#sidebarHotelInsuranceRow').slideDown(200);
+            $('#sidebarHotelInsuranceAmount').text('+ ' + insuranceTotal.toFixed(2) + ' SAR');
+        } else {
+            $('#sidebarHotelInsuranceRow').slideUp(200);
+        }
+
+        let finalTotal = baseTotal + insuranceTotal;
+        $('#hotelGrandTotalAmount').text(finalTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    }
+    @endif
+
     document.addEventListener('DOMContentLoaded', function() {
+        @if(\App\Models\Setting::get('insurance_enabled', '1') == '1')
+        fetchHotelInsuranceQuote();
+        @endif
+
         if (typeof BookingDraftManager !== 'undefined') {
             window.hotelDraftManager = new BookingDraftManager('#hotelBookingForm', 'hotel_{{ md5(url()->full()) }}');
         }
