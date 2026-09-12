@@ -382,48 +382,80 @@ class BookingController extends Controller
     public function syncHotelBookingStatus($id, \App\Services\TraveloproHotelService $hotelService)
     {
         $booking = \App\Models\HotelBooking::where('user_id', Auth::id())->findOrFail($id);
+        $isAjax = request()->ajax() || request()->wantsJson();
 
-        // AGGRESSIVE SYNC: If status is not confirmed, always try to finalize or check status
-        if ($booking->status !== 'confirmed') {
-            Log::info("Sync Status calling finalizer for booking {$id}");
-            $finalized = $this->finalizeHotelSupplierBooking($booking);
-            if ($finalized) {
-                if (request()->ajax()) {
+        // 1. If already confirmed
+        if ($booking->status === 'confirmed' || !empty($booking->supplier_confirmation_num)) {
+            if ($booking->status !== 'confirmed') {
+                $booking->update(['status' => 'confirmed']);
+            }
+            if ($isAjax) {
+                return response()->json([
+                    'success' => true,
+                    'status'  => 'confirmed',
+                    'supplier_confirmation_num' => $booking->supplier_confirmation_num,
+                    'message' => __('الحجز مؤكد بنجاح.')
+                ]);
+            }
+            return back()->with('info', __('الحجز مؤكد بنجاح.'));
+        }
+
+        // 2. Try to finalize if in paid or pending status
+        Log::info("Sync Status calling finalizer for booking {$id}");
+        $this->finalizeHotelSupplierBooking($booking);
+        $booking->refresh();
+
+        if ($booking->status === 'confirmed' || !empty($booking->supplier_confirmation_num)) {
+            if ($booking->status !== 'confirmed') {
+                $booking->update(['status' => 'confirmed']);
+            }
+            if ($isAjax) {
+                return response()->json([
+                    'success' => true,
+                    'status'  => 'confirmed',
+                    'supplier_confirmation_num' => $booking->supplier_confirmation_num,
+                    'message' => __('تم تأكيد الحجز بنجاح.')
+                ]);
+            }
+            return back()->with('success', __('تم تأكيد الحجز بنجاح.'));
+        }
+
+        // 3. If has confirmation num, query supplier details
+        if (!empty($booking->supplier_confirmation_num)) {
+            $result = $hotelService->getBookingDetails([
+                'supplierConfirmationNum' => $booking->supplier_confirmation_num,
+                'referenceNum' => $booking->reference_num,
+                'sessionId' => $booking->session_id,
+                'productId' => $booking->product_id,
+                'tokenId' => $booking->token_id,
+            ]);
+
+            if (isset($result['status']) && $result['status'] === 'success' && isset($result['bookingDetails'])) {
+                $apiStatus = strtolower($result['bookingDetails']['status'] ?? $booking->status);
+                
+                if ($apiStatus !== $booking->status) {
+                    $booking->update(['status' => $apiStatus]);
+                }
+                if ($isAjax) {
                     return response()->json([
                         'success' => true,
-                        'message' => __('Booking finalized and confirmed successfully.'),
-                        'status' => 'confirmed'
+                        'status'  => $apiStatus,
+                        'message' => __('تم تحديث حالة الحجز.')
                     ]);
                 }
-                return back()->with('success', __('Booking finalized and confirmed successfully.'));
+                return back()->with('success', __('تم تحديث حالة الحجز بنجاح.'));
             }
         }
 
-        // If still no confirmation num, we can't sync with API
-        if (empty($booking->supplier_confirmation_num)) {
-             return back()->with('info', __('الحجز بانتظار الدفع أو التأكيد.'));
+        if ($isAjax) {
+            return response()->json([
+                'success' => false,
+                'status'  => $booking->status,
+                'message' => __('الحجز قيد المعالجة والتأكيد مع المزود.')
+            ]);
         }
 
-        $result = $hotelService->getBookingDetails([
-            'supplierConfirmationNum' => $booking->supplier_confirmation_num,
-            'referenceNum' => $booking->reference_num,
-            'sessionId' => $booking->session_id,
-            'productId' => $booking->product_id,
-            'tokenId' => $booking->token_id,
-        ]);
-
-        if (isset($result['status']) && $result['status'] === 'success' && isset($result['bookingDetails'])) {
-            $apiStatus = strtolower($result['bookingDetails']['status'] ?? $booking->status);
-            
-            if ($apiStatus !== $booking->status) {
-                $booking->update(['status' => $apiStatus]);
-                return back()->with('success', __('تم تحديث حالة الحجز بنجاح. الحالة الحالية: :status', ['status' => __($apiStatus)]));
-            }
-            
-            return back()->with('info', __('حالة الحجز محدثة بالفعل.'));
-        }
-
-        return back()->with('error', __('تعذر جلب تفاصيل الحجز من المزود حالياً.'));
+        return back()->with('info', __('الحجز قيد المعالجة والتأكيد مع المزود.'));
     }
 
     /**

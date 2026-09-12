@@ -377,11 +377,11 @@
                         <div class="fe-summary-details">
                             <div class="fe-summary-item">
                                 <span class="label">{{ __('Check-in') }}</span>
-                                <span class="value">{{ $details['checkIn'] ?? '' }}</span>
+                                <span class="value">{{ $details['checkIn'] ?? '' }} <small style="color:var(--primary); font-weight:700; display:block;">({{ __('From 14:00') }})</small></span>
                             </div>
                             <div class="fe-summary-item">
                                 <span class="label">{{ __('Check-out') }}</span>
-                                <span class="value">{{ $details['checkOut'] ?? '' }}</span>
+                                <span class="value">{{ $details['checkOut'] ?? '' }} <small style="color:var(--primary); font-weight:700; display:block;">({{ __('Until 12:00') }})</small></span>
                             </div>
                             <div class="fe-summary-item">
                                 <span class="label">{{ __('Guests') }}</span>

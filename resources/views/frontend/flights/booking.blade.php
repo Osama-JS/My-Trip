@@ -94,6 +94,9 @@
         <input type="hidden" name="from" value="{{ $details['from'] ?? '' }}">
         <input type="hidden" name="to" value="{{ $details['to'] ?? '' }}">
         <input type="hidden" name="departDate" value="{{ $details['departDate'] ?? '' }}">
+        <input type="hidden" name="returnDate" value="{{ $details['returnDate'] ?? '' }}">
+        <input type="hidden" name="journeyType" value="{{ $details['journeyType'] ?? '' }}">
+        <input type="hidden" name="flight_class" value="{{ $details['class'] ?? 'Economy' }}">
         <input type="hidden" name="airline" value="{{ $details['airline'] ?? '' }}">
         <input type="hidden" name="dep_time" value="{{ $details['dep_time'] ?? '' }}">
         <input type="hidden" name="arr_time" value="{{ $details['arr_time'] ?? '' }}">
@@ -101,10 +104,18 @@
         <input type="hidden" name="duration" value="{{ $details['duration'] ?? '' }}">
         @if(!empty($details['segments']) && is_array($details['segments']))
             @foreach($details['segments'] as $i => $seg)
+                <input type="hidden" name="segments[{{ $i }}][leg_index]" value="{{ $seg['leg_index'] ?? 0 }}">
+                <input type="hidden" name="segments[{{ $i }}][is_return]" value="{{ !empty($seg['is_return']) ? '1' : '0' }}">
+                <input type="hidden" name="segments[{{ $i }}][leg_type]" value="{{ $seg['leg_type'] ?? '' }}">
                 <input type="hidden" name="segments[{{ $i }}][from]" value="{{ $seg['from'] ?? '' }}">
                 <input type="hidden" name="segments[{{ $i }}][to]" value="{{ $seg['to'] ?? '' }}">
                 <input type="hidden" name="segments[{{ $i }}][dep]" value="{{ $seg['dep'] ?? '' }}">
                 <input type="hidden" name="segments[{{ $i }}][arr]" value="{{ $seg['arr'] ?? '' }}">
+                <input type="hidden" name="segments[{{ $i }}][dep_datetime]" value="{{ $seg['dep_datetime'] ?? '' }}">
+                <input type="hidden" name="segments[{{ $i }}][arr_datetime]" value="{{ $seg['arr_datetime'] ?? '' }}">
+                <input type="hidden" name="segments[{{ $i }}][flight_no]" value="{{ $seg['flight_no'] ?? '' }}">
+                <input type="hidden" name="segments[{{ $i }}][baggage]" value="{{ $seg['baggage'] ?? '' }}">
+                <input type="hidden" name="segments[{{ $i }}][layover]" value="{{ $seg['layover'] ?? '' }}">
             @endforeach
         @endif
         
@@ -113,6 +124,20 @@
             $childCount = (int)(is_array($details['childs'] ?? 0) ? reset($details['childs']) : ($details['childs'] ?? 0));
             $infantCount = (int)(is_array($details['infants'] ?? 0) ? reset($details['infants']) : ($details['infants'] ?? 0));
             $totalPax = $adultCount + $childCount + $infantCount;
+            
+            $isRoundTrip = !empty($details['returnDate']) || (($details['journeyType'] ?? '') === 'Return') || (!empty($details['segments']) && is_array($details['segments']) && collect($details['segments'])->contains('is_return', true));
+            
+            $outboundSegments = [];
+            $returnSegments = [];
+            if (!empty($details['segments']) && is_array($details['segments'])) {
+                foreach ($details['segments'] as $s) {
+                    if (!empty($s['is_return']) || ($s['leg_type'] ?? '') === 'return' || ($s['leg_index'] ?? 0) > 0) {
+                        $returnSegments[] = $s;
+                    } else {
+                        $outboundSegments[] = $s;
+                    }
+                }
+            }
         @endphp
         
         <input type="hidden" name="adults" value="{{ $adultCount }}">
@@ -122,6 +147,78 @@
         <div class="fe-booking-grid">
             {{-- Main Form Content --}}
             <div class="fe-booking-main">
+
+                {{-- Selected Flight Itinerary Overview Banner --}}
+                <div class="fe-booking-card" style="background: linear-gradient(to right, #ffffff, #f8fafc); border-left: 4px solid var(--primary);">
+                    <div class="fe-card-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--gray-100); padding-bottom: 12px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-plane text-primary"></i>
+                            <h3 style="margin: 0; font-size: 1.1rem; font-weight: 800;">{{ __('Selected Flight Itinerary') }}</h3>
+                        </div>
+                        @if($isRoundTrip)
+                            <span class="badge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.8rem; font-weight: 800; padding: 4px 10px; border-radius: 20px;">
+                                <i class="fas fa-sync-alt me-1"></i> {{ __('Round Trip') }}
+                            </span>
+                        @else
+                            <span class="badge" style="background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; font-size: 0.8rem; font-weight: 800; padding: 4px 10px; border-radius: 20px;">
+                                <i class="fas fa-plane me-1"></i> {{ __('One Way') }}
+                            </span>
+                        @endif
+                    </div>
+                    <div class="fe-card-body" style="padding-top: 15px;">
+                        {{-- Outbound Leg Details --}}
+                        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="font-weight: 800; color: #1d4ed8; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px;">
+                                    <i class="fas fa-plane-departure"></i> {{ __('Outbound Flight') }}: {{ $details['from'] ?? '' }} ➔ {{ $details['to'] ?? '' }}
+                                </span>
+                                <span style="font-size: 0.8rem; font-weight: 700; color: #475569; background: #f8fafc; padding: 2px 8px; border-radius: 6px;">
+                                    <i class="far fa-calendar-alt me-1"></i> {{ $details['departDate'] ?? '' }}
+                                </span>
+                            </div>
+                            @if(!empty($outboundSegments))
+                                @foreach($outboundSegments as $seg)
+                                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; color: #334155; padding: 4px 0;">
+                                        <span><strong>{{ $seg['from'] }} ➔ {{ $seg['to'] }}</strong> @if(!empty($seg['flight_no']))<small class="text-muted">({{ $seg['flight_no'] }})</small>@endif</span>
+                                        <span class="fw-bold">{{ $seg['dep'] }} - {{ $seg['arr'] }}</span>
+                                    </div>
+                                @endforeach
+                            @else
+                                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: #334155;">
+                                    <span><strong>{{ $details['from'] ?? '' }} ➔ {{ $details['to'] ?? '' }}</strong> ({{ $details['airline'] ?? '' }})</span>
+                                    <span class="fw-bold">{{ $details['dep_time'] ?? '' }} - {{ $details['arr_time'] ?? '' }}</span>
+                                </div>
+                            @endif
+                        </div>
+
+                        {{-- Return Leg Details if Round Trip --}}
+                        @if($isRoundTrip)
+                            <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 12px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <span style="font-weight: 800; color: #0369a1; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px;">
+                                        <i class="fas fa-plane-arrival"></i> {{ __('Return Flight') }}: {{ $details['to'] ?? '' }} ➔ {{ $details['from'] ?? '' }}
+                                    </span>
+                                    <span style="font-size: 0.8rem; font-weight: 700; color: #0284c7; background: #e0f2fe; padding: 2px 8px; border-radius: 6px;">
+                                        <i class="far fa-calendar-check me-1"></i> {{ $details['returnDate'] ?? '' }}
+                                    </span>
+                                </div>
+                                @if(!empty($returnSegments))
+                                    @foreach($returnSegments as $seg)
+                                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; color: #0f172a; padding: 4px 0;">
+                                            <span><strong>{{ $seg['from'] }} ➔ {{ $seg['to'] }}</strong> @if(!empty($seg['flight_no']))<small class="text-muted">({{ $seg['flight_no'] }})</small>@endif</span>
+                                            <span class="fw-bold">{{ $seg['dep'] }} - {{ $seg['arr'] }}</span>
+                                        </div>
+                                    @endforeach
+                                @else
+                                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: #0f172a;">
+                                        <span><strong>{{ $details['to'] ?? '' }} ➔ {{ $details['from'] ?? '' }}</strong></span>
+                                        <span class="fw-bold">{{ __('Return Included') }}</span>
+                                    </div>
+                                @endif
+                            </div>
+                        @endif
+                    </div>
+                </div>
                 
                 {{-- Contact Information --}}
                 <div class="fe-booking-card">
@@ -287,8 +384,13 @@
             {{-- Sidebar Summary --}}
             <aside class="fe-booking-sidebar">
                 <div class="fe-summary-card">
-                    <div class="fe-summary-header">
-                        <h3>{{ __('Flight Summary') }}</h3>
+                    <div class="fe-summary-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3 style="margin: 0;">{{ __('Flight Summary') }}</h3>
+                        @if($isRoundTrip)
+                            <span class="badge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 12px;">
+                                <i class="fas fa-sync-alt me-1"></i> {{ __('Round Trip') }}
+                            </span>
+                        @endif
                     </div>
                     <div class="fe-summary-body">
                         <div class="fe-summary-flight">
@@ -298,7 +400,11 @@
                                 </div>
                                 <div class="path">
                                     <span class="line"></span>
-                                    <i class="fas fa-plane"></i>
+                                    @if($isRoundTrip)
+                                        <i class="fas fa-exchange-alt" style="color: var(--primary);"></i>
+                                    @else
+                                        <i class="fas fa-plane"></i>
+                                    @endif
                                     <span class="line"></span>
                                 </div>
                                 <div class="city">
@@ -314,9 +420,15 @@
                                 </div>
                                 @endif
                                 <div class="fe-summary-item">
-                                    <span class="label"><i class="far fa-calendar-alt"></i> {{ __('Departure') }}</span>
+                                    <span class="label"><i class="far fa-calendar-alt text-primary"></i> {{ __('Departure') }}</span>
                                     <span class="value">{{ $details['departDate'] ?? '' }}</span>
                                 </div>
+                                @if($isRoundTrip && !empty($details['returnDate']))
+                                <div class="fe-summary-item">
+                                    <span class="label"><i class="far fa-calendar-check text-info"></i> {{ __('Return Date') }}</span>
+                                    <span class="value" style="font-weight: 700; color: #0284c7;">{{ $details['returnDate'] }}</span>
+                                </div>
+                                @endif
                                 @if(!empty($details['dep_time']))
                                 <div class="fe-summary-item">
                                     <span class="label"><i class="far fa-clock"></i> {{ __('Time') }}</span>
@@ -329,41 +441,55 @@
                                     <span class="value">{{ $details['stops'] == 0 ? __('Non-stop') : $details['stops'] . ' ' . ($details['stops'] == 1 ? __('Stop') : __('Stops')) }}</span>
                                 </div>
                                 
+                                {{-- Comprehensive Itinerary Segments Breakdown --}}
                                 @if(!empty($details['segments']) && is_array($details['segments']))
-                                    <div class="fe-summary-segments" style="margin: 10px 0 15px; background: var(--gray-50); border-radius: 8px; padding: 12px; font-size: 0.85rem; border: 1px dashed var(--gray-200);">
-                                        <div style="font-weight: 700; color: var(--dark); margin-bottom: 8px; font-size: 0.8rem; text-transform: uppercase;">{{ __('Flight Route Details') }}</div>
-                                        @foreach($details['segments'] as $index => $seg)
-                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                                                <span style="font-weight: 700; color: var(--primary);">
-                                                    {{ $seg['from'] ?? '' }} 
-                                                    <i class="fas fa-arrow-right" style="font-size:0.7rem; margin:0 6px; color: var(--gray-400);"></i> 
-                                                    {{ $seg['to'] ?? '' }}
-                                                    @if(!empty($seg['flight_no']))
-                                                        <span style="font-size:0.7rem; font-weight:600; color:var(--gray-500); margin-inline-start:3px;">({{ $seg['flight_no'] }})</span>
-                                                    @endif
-                                                </span>
-                                                <span style="color: var(--dark-600); font-weight: 600;">{{ $seg['dep'] ?? '' }} - {{ $seg['arr'] ?? '' }}</span>
-                                            </div>
-
-                                            {{-- Layover Info between segments --}}
-                                            @php
-                                                $layoverTime = $seg['layover'] ?? null;
-                                                if (!$layoverTime && !empty($seg['arr_datetime']) && !empty($details['segments'][$index+1]['dep_datetime'])) {
-                                                    $t1 = \Carbon\Carbon::parse($seg['arr_datetime']);
-                                                    $t2 = \Carbon\Carbon::parse($details['segments'][$index+1]['dep_datetime']);
-                                                    $diffM = $t1->diffInMinutes($t2);
-                                                    $lh = floor($diffM / 60);
-                                                    $lm = $diffM % 60;
-                                                    $layoverTime = ($lh > 0 ? "{$lh}h " : '') . "{$lm}m";
-                                                }
-                                            @endphp
-                                            @if($layoverTime && !$loop->last)
-                                                <div style="margin: 4px 0 6px; padding: 4px 8px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; font-size: 0.75rem; color: #92400e; display: flex; align-items: center; justify-content: space-between;">
-                                                    <span><i class="far fa-clock me-1"></i> <strong>{{ __('Layover') }}:</strong> {{ $seg['to'] ?? ($seg['layover_airport'] ?? '') }}</span>
-                                                    <span style="font-weight: 700;">{{ $layoverTime }}</span>
-                                                </div>
+                                    <div class="fe-summary-segments" style="margin: 12px 0 15px; background: var(--gray-50); border-radius: 10px; padding: 12px; font-size: 0.85rem; border: 1px solid var(--gray-200);">
+                                        <div style="font-weight: 800; color: var(--dark); margin-bottom: 8px; font-size: 0.8rem; text-transform: uppercase; display: flex; align-items: center; justify-content: space-between;">
+                                            <span>{{ __('Flight Route Details') }}</span>
+                                            @if($isRoundTrip)
+                                                <small style="color: var(--primary); font-weight: 700;">({{ __('Both Legs') }})</small>
                                             @endif
-                                        @endforeach
+                                        </div>
+
+                                        {{-- Outbound Segments in Sidebar --}}
+                                        @if(!empty($outboundSegments))
+                                            <div style="font-size: 0.75rem; font-weight: 800; color: #1d4ed8; margin: 6px 0 4px; display: flex; align-items: center; gap: 5px;">
+                                                <i class="fas fa-plane-departure"></i> {{ __('Outbound') }}:
+                                            </div>
+                                            @foreach($outboundSegments as $index => $seg)
+                                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; padding-inline-start: 6px;">
+                                                    <span style="font-weight: 700; color: var(--dark);">
+                                                        {{ $seg['from'] ?? '' }} 
+                                                        <i class="fas fa-arrow-right" style="font-size:0.7rem; margin:0 4px; color: var(--gray-400);"></i> 
+                                                        {{ $seg['to'] ?? '' }}
+                                                        @if(!empty($seg['flight_no']))
+                                                            <span style="font-size:0.7rem; font-weight:600; color:var(--gray-500); margin-inline-start:2px;">({{ $seg['flight_no'] }})</span>
+                                                        @endif
+                                                    </span>
+                                                    <span style="color: var(--dark-600); font-weight: 600;">{{ $seg['dep'] ?? '' }} - {{ $seg['arr'] ?? '' }}</span>
+                                                </div>
+                                            @endforeach
+                                        @endif
+
+                                        {{-- Return Segments in Sidebar --}}
+                                        @if(!empty($returnSegments))
+                                            <div style="font-size: 0.75rem; font-weight: 800; color: #0284c7; margin: 10px 0 4px; padding-top: 6px; border-top: 1px dashed var(--gray-200); display: flex; align-items: center; gap: 5px;">
+                                                <i class="fas fa-plane-arrival"></i> {{ __('Return') }}:
+                                            </div>
+                                            @foreach($returnSegments as $index => $seg)
+                                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; padding-inline-start: 6px;">
+                                                    <span style="font-weight: 700; color: var(--dark);">
+                                                        {{ $seg['from'] ?? '' }} 
+                                                        <i class="fas fa-arrow-right" style="font-size:0.7rem; margin:0 4px; color: var(--gray-400);"></i> 
+                                                        {{ $seg['to'] ?? '' }}
+                                                        @if(!empty($seg['flight_no']))
+                                                            <span style="font-size:0.7rem; font-weight:600; color:var(--gray-500); margin-inline-start:2px;">({{ $seg['flight_no'] }})</span>
+                                                        @endif
+                                                    </span>
+                                                    <span style="color: var(--dark-600); font-weight: 600;">{{ $seg['dep'] ?? '' }} - {{ $seg['arr'] ?? '' }}</span>
+                                                </div>
+                                            @endforeach
+                                        @endif
                                     </div>
                                 @endif
                                 @endif

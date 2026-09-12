@@ -717,12 +717,17 @@ body.dark-mode .callout-danger {
             @endif
         </div>
     @elseif($displayStatus === 'paid' || $displayStatus === 'processing')
-        <div class="callout-alert callout-warning">
-            <i class="fas fa-hourglass-half fa-spin-slow"></i>
-            <div>
-                <strong>{{ __('Payment Received') }}</strong>
-                <span>{{ __('Finalizing your reservation with the hotel supplier...') }}</span>
+        <div class="callout-alert callout-warning" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <i class="fas fa-hourglass-half fa-spin-slow"></i>
+                <div>
+                    <strong>{{ __('Payment Received') }}</strong>
+                    <span>{{ __('Finalizing your reservation with the hotel supplier...') }}</span>
+                </div>
             </div>
+            <button type="button" onclick="syncStatusNow(this)" class="btn btn-sm btn-primary" style="border-radius: 8px; font-weight: 700; padding: 6px 14px; font-size: 0.82rem;">
+                <i class="fas fa-sync-alt me-1"></i> {{ __('Refresh Status') }}
+            </button>
         </div>
     @elseif($booking->status === 'cancelled')
         <div class="callout-alert callout-danger">
@@ -758,10 +763,12 @@ body.dark-mode .callout-danger {
                     <div>
                         <span class="pass-label">{{ __('CHECK-IN') }}</span>
                         <span class="pass-val">{{ $booking->check_in->format('d M Y') }}</span>
+                        <small style="color: var(--primary-blue); font-weight: 700; display: block; font-size: 0.72rem;">{{ __('From 14:00') }}</small>
                     </div>
                     <div>
                         <span class="pass-label">{{ __('CHECK-OUT') }}</span>
                         <span class="pass-val">{{ $booking->check_out->format('d M Y') }}</span>
+                        <small style="color: #ef4444; font-weight: 700; display: block; font-size: 0.72rem;">{{ __('Until 12:00') }}</small>
                     </div>
                     <div>
                         <span class="pass-label">{{ __('ROOMS & NIGHTS') }}</span>
@@ -789,11 +796,13 @@ body.dark-mode .callout-danger {
                             <div class="date-box">
                                 <label>{{ __('Check-in') }}</label>
                                 <strong>{{ $booking->check_in->format('D, d M Y') }}</strong>
+                                <small style="color: var(--primary-blue); font-weight: 700; display: block; font-size: 0.75rem;">{{ __('From 14:00') }}</small>
                             </div>
                             <div class="date-arrow"><i class="fas fa-long-arrow-alt-{{ app()->isLocale('ar') ? 'left' : 'right' }}"></i></div>
                             <div class="date-box text-end">
                                 <label>{{ __('Check-out') }}</label>
                                 <strong>{{ $booking->check_out->format('D, d M Y') }}</strong>
+                                <small style="color: #ef4444; font-weight: 700; display: block; font-size: 0.75rem;">{{ __('Until 12:00') }}</small>
                             </div>
                         </div>
                         <div class="nights-pill">
@@ -1045,6 +1054,68 @@ body.dark-mode .callout-danger {
 document.getElementById('btn-cancel-hotel')?.addEventListener('click', function() {
     if (confirm('{{ __("Are you sure you want to request cancellation?") }}')) {
         document.getElementById('form-cancel-hotel').submit();
+    }
+});
+
+function syncStatusNow(btn) {
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> {{ __("Checking...") }}';
+    }
+    fetch('{{ route("customer.bookings.hotels.sync-status", $booking->id) }}', {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'confirmed' || data.success) {
+            window.location.reload();
+        } else {
+            alert(data.message || '{{ __("Status is still processing. Please wait...") }}');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-sync-alt me-1"></i> {{ __("Refresh Status") }}';
+            }
+        }
+    })
+    .catch(err => {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-sync-alt me-1"></i> {{ __("Refresh Status") }}';
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const isPaid = {{ in_array($booking->status, ['paid', 'processing']) ? 'true' : 'false' }};
+    if (isPaid) {
+        let attempts = 0;
+        function pollHotelStatus() {
+            if (attempts >= 10) return;
+            attempts++;
+            fetch('{{ route("customer.bookings.hotels.sync-status", $booking->id) }}', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'confirmed' || data.success) {
+                    window.location.reload();
+                } else {
+                    setTimeout(pollHotelStatus, 4000);
+                }
+            })
+            .catch(() => {
+                setTimeout(pollHotelStatus, 6000);
+            });
+        }
+        setTimeout(pollHotelStatus, 3000);
     }
 });
 </script>

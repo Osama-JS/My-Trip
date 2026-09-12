@@ -203,7 +203,22 @@
         // 1. Journey Type Toggle
         journeyTypeInputs.forEach(input => {
             input.addEventListener('change', function() {
-                returnDateGroup.style.display = this.value === 'Return' ? 'flex' : 'none';
+                const isReturn = this.value === 'Return';
+                returnDateGroup.style.display = isReturn ? 'flex' : 'none';
+                const returnInput = document.getElementById('returnDate');
+                if (isReturn) {
+                    returnInput.setAttribute('required', 'required');
+                    const depVal = document.getElementById('departDate').value;
+                    if (depVal && (!returnInput.value || returnInput.value < depVal)) {
+                        if (returnPicker) {
+                            returnPicker.setDate(depVal);
+                        } else {
+                            returnInput.value = depVal;
+                        }
+                    }
+                } else {
+                    returnInput.removeAttribute('required');
+                }
             });
         });
 
@@ -272,9 +287,44 @@
         setupAutocomplete('airport_from_text', 'airport_from', 'dropdown_from');
         setupAutocomplete('airport_to_text', 'airport_to', 'dropdown_to');
 
-        // 3. Flatpickr
+        // 3. Flatpickr with Dynamic Return Date Sync & Validation
+        let departPicker = null;
+        let returnPicker = null;
+
         if (typeof flatpickr !== 'undefined') {
-            flatpickr('.datepicker', { minDate: 'today', dateFormat: 'Y-m-d', disableMobile: true });
+            const departEl = document.getElementById('departDate');
+            const returnEl = document.getElementById('returnDate');
+
+            if (departEl) {
+                departPicker = flatpickr(departEl, {
+                    minDate: 'today',
+                    dateFormat: 'Y-m-d',
+                    disableMobile: true,
+                    onChange: function(selectedDates, dateStr) {
+                        if (returnPicker && dateStr) {
+                            returnPicker.set('minDate', dateStr);
+                            const curRet = returnEl.value;
+                            if (curRet && curRet < dateStr) {
+                                returnPicker.setDate(dateStr);
+                            }
+                        }
+                    }
+                });
+            }
+
+            if (returnEl) {
+                returnPicker = flatpickr(returnEl, {
+                    minDate: departEl && departEl.value ? departEl.value : 'today',
+                    dateFormat: 'Y-m-d',
+                    disableMobile: true,
+                    onChange: function(selectedDates, dateStr) {
+                        const depVal = departEl ? departEl.value : '';
+                        if (depVal && dateStr && dateStr < depVal) {
+                            returnPicker.setDate(depVal);
+                        }
+                    }
+                });
+            }
         }
 
         // 4. Passenger Popover
@@ -354,6 +404,27 @@
         // 6. AJAX Form Submit
         form.addEventListener('submit', function(e) {
             e.preventDefault();
+
+            const journeyType = document.querySelector('input[name="journeyType"]:checked')?.value || 'OneWay';
+            const depDate = document.getElementById('departDate').value;
+            const retDate = document.getElementById('returnDate').value;
+
+            if (!depDate) {
+                alert('{{ __("Please select a departure date.") }}');
+                return;
+            }
+
+            if (journeyType === 'Return') {
+                if (!retDate) {
+                    alert('{{ __("Please select a return date.") }}');
+                    return;
+                }
+                if (retDate < depDate) {
+                    alert('{{ __("Return date cannot be earlier than departure date.") }}');
+                    if (returnPicker) returnPicker.setDate(depDate);
+                    return;
+                }
+            }
 
             // Build query string
             const formData = new FormData(form);

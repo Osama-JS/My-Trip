@@ -678,24 +678,35 @@ class FrontendController extends Controller
      */
     public function flightResults(Request $request)
     {
+        $journeyType = $request->get('journeyType', 'OneWay');
+        $departDate = $request->get('departDate');
+        $returnDate = $request->get('returnDate');
+
+        // Sanitize & enforce returnDate >= departDate for Return trips
+        if ($journeyType === 'Return' && $returnDate && $departDate) {
+            if ($returnDate < $departDate) {
+                $returnDate = $departDate;
+            }
+        }
+
         // Prepare search request for Travelopro
         $searchData = [
-            'journeyType' => $request->get('journeyType', 'OneWay'),
+            'journeyType' => $journeyType,
             'class' => $request->get('class', 'Economy'),
             'adults' => (int)$request->get('adults', 1),
             'childs' => (int)$request->get('childs', 0),
             'infants' => (int)$request->get('infants', 0),
             'OriginDestinationInfo' => [
                 [
-                    'departureDate' => $request->get('departDate'),
+                    'departureDate' => $departDate,
                     'airportOriginCode' => $request->get('from'),
                     'airportDestinationCode' => $request->get('to'),
                 ]
             ]
         ];
 
-        if ($request->get('journeyType') === 'Return') {
-             $searchData['OriginDestinationInfo'][0]['returnDate'] = $request->get('returnDate');
+        if ($journeyType === 'Return' && $returnDate) {
+             $searchData['OriginDestinationInfo'][0]['returnDate'] = $returnDate;
         }
 
         $results = $this->traveloproService->searchFlights($searchData);
@@ -706,17 +717,22 @@ class FrontendController extends Controller
             $itineraries = [$itineraries];
         }
 
+        $params = $request->all();
+        if ($journeyType === 'Return' && $returnDate) {
+            $params['returnDate'] = $returnDate;
+        }
+
         // If AJAX request, return partial view only
         if ($request->ajax() || $request->get('ajax') == '1') {
             return view('frontend.flights.results_partial', [
                 'results' => $results,
-                'searchParams' => $request->all()
+                'searchParams' => $params
             ]);
         }
 
         return view('frontend.flights.results', [
             'results' => $results,
-            'searchParams' => $request->all()
+            'searchParams' => $params
         ]);
     }
 
@@ -806,6 +822,24 @@ class FrontendController extends Controller
             $details['session_id'] = $revalidate['SessionId'];
         } elseif (isset($revalidate['AirRevalidateResponse']['SessionId'])) {
             $details['session_id'] = $revalidate['AirRevalidateResponse']['SessionId'];
+        }
+
+        // Enrich itinerary / segments / return date if available in validate response
+        $validatedItin = $result['FareItineraries']['FareItinerary'] ?? ($result['FareItineraries'][0] ?? null);
+        if ($validatedItin && isset($validatedItin['OriginDestinationOptions'])) {
+            $valOptions = $validatedItin['OriginDestinationOptions'];
+            if (isset($valOptions['OriginDestinationOption'])) {
+                $valOptions = [$valOptions];
+            }
+            if (is_array($valOptions) && count($valOptions) > 1) {
+                $details['journeyType'] = 'Return';
+                if (empty($details['returnDate'])) {
+                    $retSegs = isset($valOptions[1]['OriginDestinationOption']['FlightSegment']) ? [$valOptions[1]['OriginDestinationOption']] : ($valOptions[1]['OriginDestinationOption'] ?? []);
+                    if (!empty($retSegs)) {
+                        $details['returnDate'] = \Carbon\Carbon::parse($retSegs[0]['FlightSegment']['DepartureDateTime'] ?? now())->format('Y-m-d');
+                    }
+                }
+            }
         }
 
         $countries = \App\Models\Country::all();

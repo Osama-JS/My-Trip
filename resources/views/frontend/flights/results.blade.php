@@ -153,17 +153,76 @@
                             $price = floatval($fareInfo['ItinTotalFares']['TotalFare']['Amount']);
                             $currency = $fareInfo['ItinTotalFares']['TotalFare']['CurrencyCode'];
                             $validatingCarrier = $itin['ValidatingAirlineCode'];
-                            $options = $itin['OriginDestinationOptions'];
-                            if (isset($options['OriginDestinationOption'])) {
-                                $options = [$options];
+                            $rawOptions = $itin['OriginDestinationOptions'] ?? [];
+                            $options = [];
+                            if (isset($rawOptions['OriginDestinationOption'])) {
+                                $options = [$rawOptions];
+                            } elseif (is_array($rawOptions)) {
+                                $options = $rawOptions;
                             }
                             
-                            // Extract max stops for filtering
+                            $isRoundTrip = (count($options) > 1) || (($searchParams['journeyType'] ?? '') === 'Return') || !empty($searchParams['returnDate']);
                             $maxStops = 0;
-                            foreach($options as $opt) {
-                                $segs = isset($opt['OriginDestinationOption']['FlightSegment']) ? [$opt['OriginDestinationOption']] : $opt['OriginDestinationOption'];
+                            $totalDurationMinutes = 0;
+                            $firstDepTime = null;
+                            $lastArrTime = null;
+                            $totalDurationStr = '';
+                            $allSegmentsData = [];
+
+                            foreach($options as $optIdx => $opt) {
+                                $rawSegs = $opt['OriginDestinationOption'] ?? [];
+                                $segs = isset($rawSegs['FlightSegment']) ? [$rawSegs] : (is_array($rawSegs) ? $rawSegs : []);
+                                if (empty($segs)) continue;
+
+                                $d1 = \Carbon\Carbon::parse($segs[0]['FlightSegment']['DepartureDateTime']);
+                                $d2 = \Carbon\Carbon::parse(end($segs)['FlightSegment']['ArrivalDateTime']);
+                                $totalDurationMinutes += $d1->diffInMinutes($d2);
+
+                                if ($optIdx === 0) {
+                                    $firstDepTime = $d1->format('H:i');
+                                    $totalDurationStr = $d1->diff($d2)->format('%hh %im');
+                                }
+                                $lastArrTime = $d2->format('H:i');
+
                                 $sCount = count($segs) - 1;
-                                if($sCount > $maxStops) $maxStops = $sCount;
+                                if ($sCount > $maxStops) $maxStops = $sCount;
+
+                                $segsCount = count($segs);
+                                for ($si = 0; $si < $segsCount; $si++) {
+                                    $s = $segs[$si]['FlightSegment'];
+                                    $layStr = null;
+                                    if ($si < $segsCount - 1) {
+                                        $curArr = \Carbon\Carbon::parse($s['ArrivalDateTime']);
+                                        $nextDep = \Carbon\Carbon::parse($segs[$si+1]['FlightSegment']['DepartureDateTime']);
+                                        $diffM = $curArr->diffInMinutes($nextDep);
+                                        $lh = floor($diffM / 60);
+                                        $lm = $diffM % 60;
+                                        $layStr = ($lh > 0 ? "{$lh}h " : '') . "{$lm}m";
+                                    }
+
+                                    $allSegmentsData[] = [
+                                        'leg_index' => $optIdx,
+                                        'is_return' => ($optIdx > 0),
+                                        'leg_type' => ($optIdx > 0 ? 'return' : 'outbound'),
+                                        'from' => $s['DepartureAirportLocationCode'] ?? '',
+                                        'to' => $s['ArrivalAirportLocationCode'] ?? '',
+                                        'dep' => \Carbon\Carbon::parse($s['DepartureDateTime'])->format('H:i'),
+                                        'arr' => \Carbon\Carbon::parse($s['ArrivalDateTime'])->format('H:i'),
+                                        'dep_datetime' => $s['DepartureDateTime'] ?? '',
+                                        'arr_datetime' => $s['ArrivalDateTime'] ?? '',
+                                        'layover' => $layStr,
+                                        'layover_airport' => $s['ArrivalAirportLocationCode'] ?? '',
+                                        'flight_no' => ($s['MarketingAirlineCode'] ?? $validatingCarrier) . ' ' . ($s['FlightNumber'] ?? ''),
+                                    ];
+                                }
+                            }
+
+                            $retDateVal = $searchParams['returnDate'] ?? null;
+                            if (!$retDateVal && $isRoundTrip && isset($options[1])) {
+                                $rSegs = isset($options[1]['OriginDestinationOption']['FlightSegment']) ? [$options[1]['OriginDestinationOption']] : ($options[1]['OriginDestinationOption'] ?? []);
+                                if (!empty($rSegs)) {
+                                    $retDateVal = \Carbon\Carbon::parse($rSegs[0]['FlightSegment']['DepartureDateTime'] ?? now())->format('Y-m-d');
+                                }
                             }
                         @endphp
                         
@@ -171,17 +230,6 @@
                              data-price="{{ $price }}" 
                              data-airline="{{ $validatingCarrier }}" 
                              data-stops="{{ $maxStops }}"
-                             @php
-                                 $firstDepTime = \Carbon\Carbon::parse($itineraries[0]['OriginDestinationOptions']['OriginDestinationOption'][0]['FlightSegment']['DepartureDateTime'] ?? $itineraries[0]['OriginDestinationOptions']['OriginDestinationOption']['FlightSegment']['DepartureDateTime'] ?? now())->format('H:i');
-                                 
-                                 $totalDurationMinutes = 0;
-                                 foreach($options as $opt) {
-                                     $segs = isset($opt['OriginDestinationOption']['FlightSegment']) ? [$opt['OriginDestinationOption']] : $opt['OriginDestinationOption'];
-                                     $d1 = \Carbon\Carbon::parse($segs[0]['FlightSegment']['DepartureDateTime']);
-                                     $d2 = \Carbon\Carbon::parse(end($segs)['FlightSegment']['ArrivalDateTime']);
-                                     $totalDurationMinutes += $d1->diffInMinutes($d2);
-                                 }
-                             @endphp
                              data-dep-time="{{ $firstDepTime }}"
                              data-duration-min="{{ $totalDurationMinutes }}"
                              style="animation-delay: {{ $index * 0.1 }}s">
@@ -189,6 +237,15 @@
                                 <div class="airline-info">
                                     <img src="https://travelnext.works/api/airlines/{{ $validatingCarrier }}.gif" alt="{{ $validatingCarrier }}" class="airline-logo">
                                     <span class="airline-name">{{ $validatingCarrier }}</span>
+                                    @if($isRoundTrip)
+                                        <span class="badge bg-primary-subtle text-primary mt-2" style="font-size: 0.72rem; padding: 3px 8px; border-radius: 12px; border: 1px solid #bfdbfe; font-weight: 800;">
+                                            <i class="fas fa-sync-alt me-1"></i> {{ __('Round Trip') }}
+                                        </span>
+                                    @else
+                                        <span class="badge bg-light text-secondary mt-2" style="font-size: 0.72rem; padding: 3px 8px; border-radius: 12px; font-weight: 700;">
+                                            <i class="fas fa-plane me-1"></i> {{ __('One Way') }}
+                                        </span>
+                                    @endif
                                 </div>
 
                                 <div class="itinerary-details">
@@ -201,21 +258,30 @@
                                             $firstSeg = $segments[0]['FlightSegment'];
                                             $lastSeg = end($segments)['FlightSegment'];
                                             $stops = count($segments) - 1;
+                                            $dep = \Carbon\Carbon::parse($firstSeg['DepartureDateTime']);
+                                            $arr = \Carbon\Carbon::parse($lastSeg['ArrivalDateTime']);
+                                            $duration = $dep->diff($arr)->format('%h' . __('h') . ' %i' . __('m'));
                                         @endphp
 
-                                        <div class="flight-leg {{ $optIndex > 0 ? 'return-leg' : '' }}">
+                                        @if($optIndex > 0)
+                                            <div style="font-size: 0.78rem; font-weight: 800; color: #0369a1; background: #e0f2fe; padding: 2px 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; margin: 6px 0 2px;">
+                                                <i class="fas fa-plane-arrival"></i> {{ __('Return Flight') }} - {{ $dep->format('d M Y') }}
+                                            </div>
+                                        @elseif($isRoundTrip)
+                                            <div style="font-size: 0.78rem; font-weight: 800; color: #1d4ed8; background: #eff6ff; padding: 2px 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 2px;">
+                                                <i class="fas fa-plane-departure"></i> {{ __('Outbound Flight') }} - {{ $dep->format('d M Y') }}
+                                            </div>
+                                        @endif
+
+                                        <div class="flight-leg {{ $optIndex > 0 ? 'return-leg' : '' }}" style="{{ $optIndex > 0 ? 'margin-top: 6px;' : '' }}">
                                             <div class="leg-time dep">
-                                                <span class="time">{{ \Carbon\Carbon::parse($firstSeg['DepartureDateTime'])->format('H:i') }}</span>
+                                                <span class="time">{{ $dep->format('H:i') }}</span>
                                                 <span class="airport">{{ $firstSeg['DepartureAirportLocationCode'] }}</span>
+                                                <span style="font-size: 0.7rem; color: #94a3b8;">{{ $dep->format('d M') }}</span>
                                             </div>
 
                                             <div class="leg-path">
                                                 <div class="duration">
-                                                    @php
-                                                        $dep = \Carbon\Carbon::parse($firstSeg['DepartureDateTime']);
-                                                        $arr = \Carbon\Carbon::parse($lastSeg['ArrivalDateTime']);
-                                                        $duration = $dep->diff($arr)->format('%h' . __('h') . ' %i' . __('m'));
-                                                    @endphp
                                                     {{ $duration }}
                                                 </div>
                                                 <div class="path-viz">
@@ -231,8 +297,9 @@
                                             </div>
 
                                             <div class="leg-time arr">
-                                                <span class="time">{{ \Carbon\Carbon::parse($lastSeg['ArrivalDateTime'])->format('H:i') }}</span>
+                                                <span class="time">{{ $arr->format('H:i') }}</span>
                                                 <span class="airport">{{ $lastSeg['ArrivalAirportLocationCode'] }}</span>
+                                                <span style="font-size: 0.7rem; color: #94a3b8;">{{ $arr->format('d M') }}</span>
                                             </div>
                                         </div>
                                     @endforeach
@@ -243,7 +310,19 @@
                                         <span class="amount">{{ number_format($price, 2) }}</span>
                                         <span class="currency">{{ $currency }}</span>
                                     </div>
-                                    <a href="{{ route('flights.booking.form', array_merge($searchParams, ['fare_source_code' => $fareInfo['FareSourceCode'], 'session_id' => $results['AirSearchResponse']['session_id'] ?? ($results['AirSearchResponse']['AirSearchResult']['SessionId'] ?? ''), 'total_amount' => $price])) }}" class="btn btn-primary btn-sm">
+                                    <a href="{{ route('flights.booking.form', array_merge($searchParams, [
+                                        'fare_source_code' => $fareInfo['FareSourceCode'], 
+                                        'session_id' => $results['AirSearchResponse']['session_id'] ?? ($results['AirSearchResponse']['AirSearchResult']['SessionId'] ?? ''), 
+                                        'total_amount' => $price,
+                                        'airline' => $validatingCarrier,
+                                        'dep_time' => $firstDepTime,
+                                        'arr_time' => $lastArrTime,
+                                        'stops' => $maxStops,
+                                        'duration' => $totalDurationStr,
+                                        'journeyType' => $isRoundTrip ? 'Return' : 'OneWay',
+                                        'returnDate' => $retDateVal,
+                                        'segments' => $allSegmentsData
+                                    ])) }}" class="btn btn-primary btn-sm">
                                         {{ __('Select') }}
                                     </a>
                                 </div>

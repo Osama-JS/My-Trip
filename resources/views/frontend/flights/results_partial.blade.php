@@ -37,21 +37,24 @@
             @endif
         </div>
         <div class="fr-sort-bar">
-            <span>{{ __('Sort by') }}:</span>
-            <button type="button" class="fr-sort-btn active" data-sort="price">
+            <span class="fr-sort-label" style="color: var(--gray-500); font-weight: 700;"><i class="fas fa-sort-amount-down me-1"></i>{{ __('Sort by') }}:</span>
+            <button type="button" class="fr-sort-btn active" data-sort="price" title="{{ __('Sort by lowest to highest price') }}">
+                <i class="fas fa-tag me-1"></i>
                 <span>{{ __('Price') }}</span>
                 <i class="fas fa-arrow-up-long ms-1 sort-dir-icon" id="sortDirIcon_price"></i>
             </button>
-            <button type="button" class="fr-sort-btn" data-sort="duration">
+            <button type="button" class="fr-sort-btn" data-sort="duration" title="{{ __('Sort by shortest flight duration') }}">
+                <i class="fas fa-clock me-1"></i>
                 <span>{{ __('Duration') }}</span>
                 <i class="fas fa-arrow-up-long ms-1 sort-dir-icon" id="sortDirIcon_duration" style="display:none;"></i>
             </button>
-            <button type="button" class="fr-sort-btn" data-sort="departure">
+            <button type="button" class="fr-sort-btn" data-sort="departure" title="{{ __('Sort by earliest departure time') }}">
+                <i class="fas fa-plane-departure me-1"></i>
                 <span>{{ __('Departure') }}</span>
                 <i class="fas fa-arrow-up-long ms-1 sort-dir-icon" id="sortDirIcon_departure" style="display:none;"></i>
             </button>
             
-            <button type="button" class="fr-order-toggle-btn" id="sortOrderToggleBtn" title="{{ __('Toggle Ascending / Descending') }}">
+            <button type="button" class="fr-order-toggle-btn" id="sortOrderToggleBtn" title="{{ __('Toggle Ascending / Descending order') }}">
                 <i class="fas fa-sort-amount-down-alt" id="mainSortOrderIcon"></i>
                 <span id="sortOrderText">{{ __('Ascending') }}</span>
             </button>
@@ -69,114 +72,136 @@
                 $price = floatval($fareInfo['ItinTotalFares']['TotalFare']['Amount']);
                 $currency = $fareInfo['ItinTotalFares']['TotalFare']['CurrencyCode'];
                 $validatingCarrier = $itineraryData['ValidatingAirlineCode'];
-                $options = $itineraryData['OriginDestinationOptions'];
-                if (isset($options['OriginDestinationOption'])) {
-                    $options = [$options];
+                $rawOptions = $itineraryData['OriginDestinationOptions'] ?? [];
+                $options = [];
+                if (isset($rawOptions['OriginDestinationOption'])) {
+                    $options = [$rawOptions];
+                } elseif (is_array($rawOptions)) {
+                    $options = $rawOptions;
                 }
+                
+                $isRoundTrip = (count($options) > 1) || (($searchParams['journeyType'] ?? '') === 'Return') || !empty($searchParams['returnDate']);
                 $maxStops = 0;
                 $totalDurationMinutes = 0;
                 $firstDepTime = null;
                 $lastArrTime = null;
                 $totalDurationStr = '';
-                $outboundSegmentsData = [];
+                $allSegmentsData = [];
                 $mainBaggageDisplay = __('Per Airline Policy');
 
-                foreach($options as $opt) {
-                    $segs = isset($opt['OriginDestinationOption']['FlightSegment'])
-                        ? [$opt['OriginDestinationOption']]
-                        : $opt['OriginDestinationOption'];
+                foreach($options as $optIdx => $opt) {
+                    $rawSegs = $opt['OriginDestinationOption'] ?? [];
+                    $segs = isset($rawSegs['FlightSegment'])
+                        ? [$rawSegs]
+                        : (is_array($rawSegs) ? $rawSegs : []);
+                    
+                    if (empty($segs)) continue;
+
                     $d1 = \Carbon\Carbon::parse($segs[0]['FlightSegment']['DepartureDateTime']);
                     $d2 = \Carbon\Carbon::parse(end($segs)['FlightSegment']['ArrivalDateTime']);
                     $totalDurationMinutes += $d1->diffInMinutes($d2);
-                    if (!$firstDepTime) {
+                    
+                    if ($optIdx === 0) {
                         $firstDepTime = $d1->format('H:i');
                         $totalDurationStr = $d1->diff($d2)->format('%hh %im');
-                        
-                        // Extract outbound segments for summary display
-                        $segsCount = count($segs);
-                        for ($si = 0; $si < $segsCount; $si++) {
-                            $s = $segs[$si]['FlightSegment'];
-                            $layStr = null;
-                            if ($si < $segsCount - 1) {
-                                $curArr = \Carbon\Carbon::parse($s['ArrivalDateTime']);
-                                $nextDep = \Carbon\Carbon::parse($segs[$si+1]['FlightSegment']['DepartureDateTime']);
-                                $diffM = $curArr->diffInMinutes($nextDep);
-                                $lh = floor($diffM / 60);
-                                $lm = $diffM % 60;
-                                $layStr = ($lh > 0 ? "{$lh}h " : '') . "{$lm}m";
-                            }
-
-                            // Pure Travelopro API Baggage Extraction from Segments & FareBreakdown
-                            $fareBreakdowns = $fareInfo['FareBreakdown'] ?? [];
-                            $firstFb = isset($fareBreakdowns[0]) ? $fareBreakdowns[0] : (is_array($fareBreakdowns) ? $fareBreakdowns : []);
-                            
-                            $fbBaggage = null;
-                            if (isset($firstFb['Baggage'])) {
-                                $fbBaggage = is_array($firstFb['Baggage']) 
-                                    ? ($firstFb['Baggage'][$si] ?? ($firstFb['Baggage'][0] ?? null)) 
-                                    : $firstFb['Baggage'];
-                            }
-                            
-                            $fbCabin = null;
-                            if (isset($firstFb['CabinBaggage'])) {
-                                $rawCabin = is_array($firstFb['CabinBaggage']) 
-                                    ? ($firstFb['CabinBaggage'][$si] ?? ($firstFb['CabinBaggage'][0] ?? null)) 
-                                    : $firstFb['CabinBaggage'];
-                                if ($rawCabin && strtoupper($rawCabin) !== 'SB') {
-                                    $fbCabin = $rawCabin;
-                                }
-                            }
-
-                            $rawB = $s['Baggage'] 
-                                 ?? $s['baggage']
-                                 ?? $s['BaggageInfo'] 
-                                 ?? $s['BaggageAllowance'] 
-                                 ?? $s['BaggageInformation']
-                                 ?? $s['IncludedCheckedBags']
-                                 ?? $s['FreeBaggage']
-                                 ?? $fbBaggage
-                                 ?? ($fareInfo['Baggage'] ?? ($fareInfo['BaggageInfo'] ?? ($itineraryData['Baggage'] ?? null)));
-
-                            if (is_array($rawB)) $rawB = $rawB[0] ?? null;
-
-                            $bDisplay = __('Per Airline Policy');
-
-                            if (!empty($rawB)) {
-                                $bUpper = strtoupper(trim(strval($rawB)));
-                                if (preg_match('/^(\d+)\s*(K|KG|KGS)$/i', $bUpper, $m)) {
-                                    $bDisplay = ($m[1] == 0) ? ($fbCabin ? __('Cabin Bag Only') . " ({$fbCabin})" : __('Cabin Bag Only')) : ($m[1] . ' KG');
-                                } elseif (preg_match('/^(\d+)\s*(P|PC|PIECE|PIECES)$/i', $bUpper, $m)) {
-                                    $bDisplay = ($m[1] == 0) ? ($fbCabin ? __('Cabin Bag Only') . " ({$fbCabin})" : __('Cabin Bag Only')) : ($m[1] . ' ' . ($m[1] > 1 ? __('Pieces') : __('Piece')));
-                                } elseif ($bUpper === '0' || $bUpper === '0P' || $bUpper === '0PC' || $bUpper === '0K' || $bUpper === '0KG' || $bUpper === 'NIL' || $bUpper === 'NO') {
-                                    $bDisplay = $fbCabin ? __('Cabin Bag Only') . " ({$fbCabin})" : __('Cabin Bag Only');
-                                } elseif (is_numeric($bUpper)) {
-                                    $bDisplay = ($bUpper == 0) ? ($fbCabin ? __('Cabin Bag Only') . " ({$fbCabin})" : __('Cabin Bag Only')) : ($bUpper . ' KG');
-                                } else {
-                                    $bDisplay = $rawB; // Exact raw string from Travelopro API
-                                }
-                            } elseif (!empty($fbCabin)) {
-                                $bDisplay = __('Cabin Bag Only') . " ({$fbCabin})";
-                            }
-
-                            if ($si === 0) $mainBaggageDisplay = $bDisplay;
-
-                            $outboundSegmentsData[] = [
-                                'from' => $s['DepartureAirportLocationCode'],
-                                'to' => $s['ArrivalAirportLocationCode'],
-                                'dep' => \Carbon\Carbon::parse($s['DepartureDateTime'])->format('H:i'),
-                                'arr' => \Carbon\Carbon::parse($s['ArrivalDateTime'])->format('H:i'),
-                                'dep_datetime' => $s['DepartureDateTime'],
-                                'arr_datetime' => $s['ArrivalDateTime'],
-                                'layover' => $layStr,
-                                'layover_airport' => $s['ArrivalAirportLocationCode'],
-                                'baggage' => $bDisplay,
-                                'flight_no' => ($s['MarketingAirlineCode'] ?? $validatingCarrier) . ' ' . ($s['FlightNumber'] ?? ''),
-                            ];
-                        }
                     }
                     $lastArrTime = $d2->format('H:i');
+
                     $sCount = count($segs) - 1;
                     if ($sCount > $maxStops) $maxStops = $sCount;
+
+                    // Extract all segments for summary and booking
+                    $segsCount = count($segs);
+                    for ($si = 0; $si < $segsCount; $si++) {
+                        $s = $segs[$si]['FlightSegment'];
+                        $layStr = null;
+                        if ($si < $segsCount - 1) {
+                            $curArr = \Carbon\Carbon::parse($s['ArrivalDateTime']);
+                            $nextDep = \Carbon\Carbon::parse($segs[$si+1]['FlightSegment']['DepartureDateTime']);
+                            $diffM = $curArr->diffInMinutes($nextDep);
+                            $lh = floor($diffM / 60);
+                            $lm = $diffM % 60;
+                            $layStr = ($lh > 0 ? "{$lh}h " : '') . "{$lm}m";
+                        }
+
+                        // Pure Travelopro API Baggage Extraction from Segments & FareBreakdown
+                        $fareBreakdowns = $fareInfo['FareBreakdown'] ?? [];
+                        $firstFb = isset($fareBreakdowns[0]) ? $fareBreakdowns[0] : (is_array($fareBreakdowns) ? $fareBreakdowns : []);
+                        
+                        $fbBaggage = null;
+                        if (isset($firstFb['Baggage'])) {
+                            $fbBaggage = is_array($firstFb['Baggage']) 
+                                ? ($firstFb['Baggage'][$si] ?? ($firstFb['Baggage'][0] ?? null)) 
+                                : $firstFb['Baggage'];
+                        }
+                        
+                        $fbCabin = null;
+                        if (isset($firstFb['CabinBaggage'])) {
+                            $rawCabin = is_array($firstFb['CabinBaggage']) 
+                                ? ($firstFb['CabinBaggage'][$si] ?? ($firstFb['CabinBaggage'][0] ?? null)) 
+                                : $firstFb['CabinBaggage'];
+                            if ($rawCabin && strtoupper($rawCabin) !== 'SB') {
+                                $fbCabin = $rawCabin;
+                            }
+                        }
+
+                        $rawB = $s['Baggage'] 
+                             ?? $s['baggage']
+                             ?? $s['BaggageInfo'] 
+                             ?? $s['BaggageAllowance'] 
+                             ?? $s['BaggageInformation']
+                             ?? $s['IncludedCheckedBags']
+                             ?? $s['FreeBaggage']
+                             ?? $fbBaggage
+                             ?? ($fareInfo['Baggage'] ?? ($fareInfo['BaggageInfo'] ?? ($itineraryData['Baggage'] ?? null)));
+
+                        if (is_array($rawB)) $rawB = $rawB[0] ?? null;
+
+                        $bDisplay = __('Per Airline Policy');
+
+                        if (!empty($rawB)) {
+                            $bUpper = strtoupper(trim(strval($rawB)));
+                            if (preg_match('/^(\d+)\s*(K|KG|KGS)$/i', $bUpper, $m)) {
+                                $bDisplay = ($m[1] == 0) ? ($fbCabin ? __('Cabin Bag Only') . " ({$fbCabin})" : __('Cabin Bag Only')) : ($m[1] . ' KG');
+                            } elseif (preg_match('/^(\d+)\s*(P|PC|PIECE|PIECES)$/i', $bUpper, $m)) {
+                                $bDisplay = ($m[1] == 0) ? ($fbCabin ? __('Cabin Bag Only') . " ({$fbCabin})" : __('Cabin Bag Only')) : ($m[1] . ' ' . ($m[1] > 1 ? __('Pieces') : __('Piece')));
+                            } elseif ($bUpper === '0' || $bUpper === '0P' || $bUpper === '0PC' || $bUpper === '0K' || $bUpper === '0KG' || $bUpper === 'NIL' || $bUpper === 'NO') {
+                                $bDisplay = $fbCabin ? __('Cabin Bag Only') . " ({$fbCabin})" : __('Cabin Bag Only');
+                            } elseif (is_numeric($bUpper)) {
+                                $bDisplay = ($bUpper == 0) ? ($fbCabin ? __('Cabin Bag Only') . " ({$fbCabin})" : __('Cabin Bag Only')) : ($bUpper . ' KG');
+                            } else {
+                                $bDisplay = $rawB; // Exact raw string from Travelopro API
+                            }
+                        } elseif (!empty($fbCabin)) {
+                            $bDisplay = __('Cabin Bag Only') . " ({$fbCabin})";
+                        }
+
+                        if ($optIdx === 0 && $si === 0) $mainBaggageDisplay = $bDisplay;
+
+                        $allSegmentsData[] = [
+                            'leg_index' => $optIdx,
+                            'is_return' => ($optIdx > 0),
+                            'leg_type' => ($optIdx > 0 ? 'return' : 'outbound'),
+                            'from' => $s['DepartureAirportLocationCode'] ?? '',
+                            'to' => $s['ArrivalAirportLocationCode'] ?? '',
+                            'dep' => \Carbon\Carbon::parse($s['DepartureDateTime'])->format('H:i'),
+                            'arr' => \Carbon\Carbon::parse($s['ArrivalDateTime'])->format('H:i'),
+                            'dep_datetime' => $s['DepartureDateTime'] ?? '',
+                            'arr_datetime' => $s['ArrivalDateTime'] ?? '',
+                            'layover' => $layStr,
+                            'layover_airport' => $s['ArrivalAirportLocationCode'] ?? '',
+                            'baggage' => $bDisplay,
+                            'flight_no' => ($s['MarketingAirlineCode'] ?? $validatingCarrier) . ' ' . ($s['FlightNumber'] ?? ''),
+                        ];
+                    }
+                }
+
+                $retDateVal = $searchParams['returnDate'] ?? null;
+                if (!$retDateVal && $isRoundTrip && isset($options[1])) {
+                    $rSegs = isset($options[1]['OriginDestinationOption']['FlightSegment']) ? [$options[1]['OriginDestinationOption']] : ($options[1]['OriginDestinationOption'] ?? []);
+                    if (!empty($rSegs)) {
+                        $retDateVal = \Carbon\Carbon::parse($rSegs[0]['FlightSegment']['DepartureDateTime'] ?? now())->format('Y-m-d');
+                    }
                 }
             @endphp
 
@@ -196,6 +221,22 @@
                 </div>
 
                 <div class="fr-legs-col">
+                    {{-- Trip Type Header Badge --}}
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: -5px;">
+                        @if($isRoundTrip)
+                            <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 800; background: #eff6ff; color: #1d4ed8; padding: 3px 10px; border-radius: 20px; border: 1px solid #bfdbfe;">
+                                <i class="fas fa-sync-alt fa-spin-hover"></i> {{ __('Round Trip') }}
+                            </span>
+                        @else
+                            <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 800; background: #f8fafc; color: #475569; padding: 3px 10px; border-radius: 20px; border: 1px solid #e2e8f0;">
+                                <i class="fas fa-plane"></i> {{ __('One Way') }}
+                            </span>
+                        @endif
+                        <span style="font-size: 0.75rem; color: #64748b; font-weight: 600;">
+                            <i class="far fa-clock me-1"></i> {{ __('Total Duration') }}: {{ $totalDurationStr }}
+                        </span>
+                    </div>
+
                     @foreach($options as $optIndex => $option)
                         @php
                             $segments = $option['OriginDestinationOption'];
@@ -220,10 +261,25 @@
                                 $optLayovers[] = $segments[$si]['FlightSegment']['ArrivalAirportLocationCode'] . ' (' . ($lh > 0 ? "{$lh}h " : '') . "{$lm}m)";
                             }
                         @endphp
+                        
+                        {{-- Leg Label / Divider --}}
                         @if($optIndex > 0)
-                            <div class="fr-return-divider"><i class="fas fa-undo"></i> {{ __('Return') }}</div>
+                            <div class="fr-return-divider" style="margin: 4px 0; font-size: 0.78rem; color: #0284c7; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                                <span style="background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 6px; border: 1px solid #bae6fd;">
+                                    <i class="fas fa-plane-arrival me-1"></i> {{ __('Return Flight') }}
+                                </span>
+                                <span style="font-size: 0.72rem; color: #64748b; font-weight: 600;">{{ $dep->format('d M Y') }}</span>
+                            </div>
+                        @elseif($isRoundTrip)
+                            <div style="margin-bottom: -10px; font-size: 0.78rem; color: #2563eb; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                                <span style="background: #eff6ff; color: #1d4ed8; padding: 2px 8px; border-radius: 6px; border: 1px solid #dbeafe;">
+                                    <i class="fas fa-plane-departure me-1"></i> {{ __('Outbound Flight') }}
+                                </span>
+                                <span style="font-size: 0.72rem; color: #64748b; font-weight: 600;">{{ $dep->format('d M Y') }}</span>
+                            </div>
                         @endif
-                        <div class="fr-leg">
+
+                        <div class="fr-leg" style="{{ $optIndex > 0 ? 'background: #f8fafc; padding: 10px 14px; border-radius: 10px; border: 1px dashed #cbd5e1;' : ($isRoundTrip ? 'background: #ffffff; padding: 10px 14px; border-radius: 10px; border: 1px solid #e2e8f0;' : '') }}">
                             <div class="fr-leg-time">
                                 <span class="fr-time">{{ $dep->format('H:i') }}</span>
                                 <span class="fr-airport">{{ $firstSeg['DepartureAirportLocationCode'] }}</span>
@@ -284,7 +340,9 @@
                         'stops' => $maxStops,
                         'duration' => $totalDurationStr,
                         'baggage' => $mainBaggageDisplay,
-                        'segments' => $outboundSegmentsData
+                        'journeyType' => $isRoundTrip ? 'Return' : 'OneWay',
+                        'returnDate' => $retDateVal,
+                        'segments' => $allSegmentsData
                     ])) }}" class="fe-btn fe-btn-primary fr-select-btn">
                         {{ __('Select') }} <i class="fas fa-arrow-right"></i>
                     </a>

@@ -543,12 +543,31 @@
                         
                         $depAir = \App\Models\Airport::where('airport_code', $depCode)->first();
                         $arrAir = \App\Models\Airport::where('airport_code', $arrCode)->first();
-                        $depCity = $depAir ? (app()->getLocale() == 'ar' ? $depAir->city_ar : $depAir->city) : $depCode;
-                        $arrCity = $arrAir ? (app()->getLocale() == 'ar' ? $arrAir->city_ar : $arrAir->city) : $arrCode;
+                        $depCity = $depAir ? (app()->getLocale() == 'ar' ? ($depAir->city_name_ar ?? $depAir->city_name) : $depAir->city_name) : $depCode;
+                        $arrCity = $arrAir ? (app()->getLocale() == 'ar' ? ($arrAir->city_name_ar ?? $arrAir->city_name) : $arrAir->city_name) : $arrCode;
 
                         $depDate = isset($firstSeg['DepartureDateTime']) ? \Carbon\Carbon::parse($firstSeg['DepartureDateTime'])->translatedFormat('d M Y, H:i') : 'N/A';
                         $arrDate = isset($lastSeg['ArrivalDateTime']) ? \Carbon\Carbon::parse($lastSeg['ArrivalDateTime'])->translatedFormat('d M Y, H:i') : 'N/A';
                         $flightNo = ($firstSeg['MarketingAirlineCode'] ?? '') . ' ' . ($firstSeg['FlightNumber'] ?? '');
+
+                        // Calculate transit layovers between connecting flights
+                        $layovers = [];
+                        $segCount = count($segments);
+                        for ($si = 0; $si < $segCount - 1; $si++) {
+                            $curArr = isset($segments[$si]['ArrivalDateTime']) ? \Carbon\Carbon::parse($segments[$si]['ArrivalDateTime']) : null;
+                            $nextDep = isset($segments[$si+1]['DepartureDateTime']) ? \Carbon\Carbon::parse($segments[$si+1]['DepartureDateTime']) : null;
+                            $transitAirportCode = $segments[$si]['ArrivalAirportLocationCode'] ?? ($segments[$si]['ArrivalAirport']['LocationCode'] ?? '');
+                            
+                            $layDuration = '';
+                            if ($curArr && $nextDep) {
+                                $diffM = $curArr->diffInMinutes($nextDep);
+                                $lh = floor($diffM / 60);
+                                $lm = $diffM % 60;
+                                $layDuration = ($lh > 0 ? "{$lh}h " : '') . "{$lm}m";
+                            }
+                            $layovers[] = $transitAirportCode . ($layDuration ? " ({$layDuration})" : '');
+                        }
+                        $stopsCount = $segCount - 1;
                     @endphp
                     @if(count($legs) > 1)
                         <div style="font-size: 11px; color: #f2cb57; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; border-bottom: 1px dashed rgba(255,255,255,0.2); padding-bottom: 6px;">
@@ -571,7 +590,19 @@
                                     </svg>
                                     ──────
                                 </div>
-                                <div class="flight-badge">{{ $flightNo }} {{ count($segments) > 1 ? '(' . (count($segments)-1) . ' ' . __('Stops') . ')' : '' }}</div>
+                                <div class="flight-badge">{{ $flightNo }}</div>
+                                @if($stopsCount > 0)
+                                    <div style="font-size: 10px; color: #f2cb57; font-weight: 700; margin-top: 5px; line-height: 1.3;">
+                                        <svg width="10" height="10" viewBox="0 0 24 24" style="vertical-align: middle;">
+                                            <path fill="#f2cb57" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+                                        </svg>
+                                        {{ $stopsCount }} {{ $stopsCount == 1 ? __('Stop') : __('Stops') }} {{ !empty($layovers) ? '(' . implode(', ', $layovers) . ')' : '' }}
+                                    </div>
+                                @else
+                                    <div style="font-size: 10px; color: #34d399; font-weight: 700; margin-top: 5px;">
+                                        {{ __('Non-stop') }}
+                                    </div>
+                                @endif
                             </td>
                             <td width="35%" align="center" valign="middle">
                                 <div class="airport-code">{{ $arrCode }}</div>
@@ -611,7 +642,7 @@
                         <td width="35%" align="center" valign="middle">
                             <div class="airport-code">{{ $fb->destination ?? 'N/A' }}</div>
                             <div class="airport-label">{{ __('Arrival') }}</div>
-                            <div class="airport-time" dir="ltr">{{ $fb->return_date ?? 'N/A' }}</div>
+                            <div class="airport-time" dir="ltr">{{ $fb->return_date ?? $fb->departure_date ?? 'N/A' }}</div>
                         </td>
                     </tr>
                 </table>

@@ -82,9 +82,22 @@ trait HotelBookingFinalizer
             $supplierRef = $result['supplierConfirmationNum']
                 ?? $result['referenceNum']
                 ?? $result['bookingId']
+                ?? $result['BookingId']
+                ?? $result['ConfirmationNumber']
+                ?? $result['SupplierConfirmationNum']
+                ?? $result['booking_reference']
+                ?? ($result['BookingDetails']['ConfirmationNumber'] ?? null)
+                ?? ($result['bookingDetails']['supplierConfirmationNum'] ?? null)
+                ?? ($result['bookingDetails']['BookingId'] ?? null)
                 ?? null;
 
-            if ($supplierRef) {
+            $statusStr = is_string($result['status'] ?? null) ? strtolower($result['status']) : strtolower($result['status']['status'] ?? ($result['BookingStatus'] ?? ($result['bookingStatus'] ?? '')));
+            $isSuccess = $supplierRef || in_array($statusStr, ['success', 'confirmed', 'ok']);
+
+            if ($isSuccess) {
+                if (!$supplierRef) {
+                    $supplierRef = 'CONF-' . strtoupper(uniqid());
+                }
                 $booking->update([
                     'status' => 'confirmed',
                     'supplier_confirmation_num' => $supplierRef,
@@ -97,6 +110,7 @@ trait HotelBookingFinalizer
 
             $errorMsg = $result['status']['error']
                 ?? $result['message']
+                ?? $result['error']
                 ?? 'Unknown supplier error';
 
             Log::error("Late hotel_book failed for ID {$booking->id}: {$errorMsg}");

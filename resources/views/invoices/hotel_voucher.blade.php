@@ -417,6 +417,7 @@
                         <div class="date-big">{{ $booking->check_in->translatedFormat('d M') }}</div>
                         <div class="date-label">{{ __('Check-in') }}</div>
                         <div class="date-detail" dir="ltr">{{ $booking->check_in->translatedFormat('l, Y') }}</div>
+                        <div style="font-size: 10px; color: #34d399; font-weight: 700; margin-top: 4px;">{{ __('From 14:00') }}</div>
                     </td>
                     <td width="30%" align="center" valign="middle">
                         <div style="margin-bottom: 8px; white-space: nowrap;">
@@ -432,6 +433,7 @@
                         <div class="date-big">{{ $booking->check_out->translatedFormat('d M') }}</div>
                         <div class="date-label">{{ __('Check-out') }}</div>
                         <div class="date-detail" dir="ltr">{{ $booking->check_out->translatedFormat('l, Y') }}</div>
+                        <div style="font-size: 10px; color: #f87171; font-weight: 700; margin-top: 4px;">{{ __('Until 12:00') }}</div>
                     </td>
                 </tr>
             </table>

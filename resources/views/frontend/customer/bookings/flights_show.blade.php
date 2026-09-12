@@ -776,59 +776,153 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
         </div>
     @endif
 
+    @php
+        $pnrDisplay = $booking->pnr_code 
+            ?: ($booking->supplier_confirmation_num 
+            ?: ($booking->flightBooking->pnr_code ?? ($booking->flightBooking->pnr ?? null)));
+        
+        if (empty($pnrDisplay) && !empty($apiTripDetails)) {
+            $pnrDisplay = $apiTripDetails['TripDetailsResponse']['TripDetailsResult']['TravelItinerary']['ItineraryRef']['AirReservationID'] 
+                ?? $apiTripDetails['TripDetailsResponse']['TripDetailsResult']['TravelItinerary']['UniqueID'] 
+                ?? null;
+        }
+        if (empty($pnrDisplay)) {
+            $pnrDisplay = $booking->booking_reference ?: 'N/A';
+        }
+
+        // Extract legs from itinerary_data
+        $itinData = $booking->flightBooking->itinerary_data ?? [];
+        $legs = [];
+        if (isset($itinData['FareItineraries']['FareItinerary']['OriginDestinationOptions'])) {
+            $options = $itinData['FareItineraries']['FareItinerary']['OriginDestinationOptions'];
+            if (isset($options['OriginDestinationOption']['FlightSegment'])) {
+                $options = [$options['OriginDestinationOption']];
+            } else {
+                $options = $options['OriginDestinationOption'] ?? [];
+            }
+            
+            foreach($options as $legIndex => $opt) {
+                $segs = $opt['FlightSegment'] ?? $opt;
+                $legSegments = [];
+                if (isset($segs['FlightNumber'])) { 
+                    $legSegments[] = $segs; 
+                } else { 
+                    foreach($segs as $s) { 
+                        $legSegments[] = $s['FlightSegment'] ?? $s; 
+                    } 
+                }
+                if (!empty($legSegments)) {
+                    $legs[] = $legSegments;
+                }
+            }
+        }
+
+        $isRoundTrip = !empty($booking->flightBooking->return_date) || count($legs) > 1;
+
+        $originCode = $booking->flightBooking->origin ?? 'N/A';
+        $destCode = $booking->flightBooking->destination ?? 'N/A';
+        
+        // 1. Fallback to live API data if available
+        $apiResItems = $apiTripDetails['TripDetailsResponse']['TripDetailsResult']['TravelItinerary']['ItineraryInfo']['ReservationItems'] ?? [];
+        if (isset($apiResItems['ReservationItem'])) {
+            $apiResItems = [$apiResItems];
+        } elseif (isset($apiResItems[0]) && !isset($apiResItems[0]['ReservationItem'])) {
+            $apiResItems = array_map(function($i) { return ['ReservationItem' => $i]; }, $apiResItems);
+        }
+        
+        if (!empty($apiResItems)) {
+            $firstItem = $apiResItems[0]['ReservationItem'] ?? $apiResItems[0];
+            $lastItem = end($apiResItems)['ReservationItem'] ?? end($apiResItems);
+            
+            if ($originCode === 'N/A') $originCode = $firstItem['DepartureAirport']['LocationCode'] ?? $originCode;
+            if ($destCode === 'N/A') $destCode = $lastItem['ArrivalAirport']['LocationCode'] ?? $destCode;
+        }
+
+        // 2. Fallback to local itinerary data if still N/A
+        if (($originCode === 'N/A' || $destCode === 'N/A') && !empty($legs)) {
+            $firstSeg = $legs[0][0] ?? [];
+            $lastSeg = end($legs[0]) ?? [];
+            if ($originCode === 'N/A') $originCode = $firstSeg['DepartureAirportLocationCode'] ?? ($firstSeg['DepartureAirport']['LocationCode'] ?? $originCode);
+            if ($destCode === 'N/A') $destCode = $lastSeg['ArrivalAirportLocationCode'] ?? ($lastSeg['ArrivalAirport']['LocationCode'] ?? $destCode);
+        }
+
+        $originAirport = $originCode !== 'N/A' ? \App\Models\Airport::where('airport_code', $originCode)->first() : null;
+        $destAirport = $destCode !== 'N/A' ? \App\Models\Airport::where('airport_code', $destCode)->first() : null;
+        
+        $originName = $originAirport ? ($originAirport->city_name . ' - ' . $originAirport->airport_name) : $originCode;
+        $destName = $destAirport ? ($destAirport->city_name . ' - ' . $destAirport->airport_name) : $destCode;
+
+        $exactDepartureTime = null;
+        $exactReturnTime = null;
+
+        // Extract departure & return datetime
+        if (!empty($apiResItems)) {
+            $firstItem = $apiResItems[0]['ReservationItem'] ?? $apiResItems[0];
+            if (isset($firstItem['DepartureDateTime'])) {
+                $exactDepartureTime = \Carbon\Carbon::parse($firstItem['DepartureDateTime']);
+            }
+        }
+        if (!$exactDepartureTime && !empty($legs[0][0]['DepartureDateTime'])) {
+            $exactDepartureTime = \Carbon\Carbon::parse($legs[0][0]['DepartureDateTime']);
+        }
+
+        if ($isRoundTrip) {
+            if (isset($legs[1][0]['DepartureDateTime'])) {
+                $exactReturnTime = \Carbon\Carbon::parse($legs[1][0]['DepartureDateTime']);
+            } elseif ($booking->flightBooking->return_date) {
+                $exactReturnTime = \Carbon\Carbon::parse($booking->flightBooking->return_date);
+            }
+        }
+    @endphp
+
     {{-- ─── Boarding Pass Ticket Header ─── --}}
     <div class="boarding-pass">
-        <div class="pass-header">
-            <span class="pass-title">{{ __('BOARDING PASS / FLIGHT TICKET') }}</span>
-            <span class="pass-pnr">{{ __('Airline PNR') }}: {{ $booking->pnr_code ?: 'N/A' }}</span>
+        <div class="pass-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <span class="pass-title">{{ __('BOARDING PASS / FLIGHT TICKET') }}</span>
+                @php
+                    $statusBadgeClass = 'bg-success';
+                    $statusIcon = 'fa-check-circle';
+                    $statusLabel = __('Confirmed');
+                    if ($booking->status === 'pending') {
+                        $statusBadgeClass = 'bg-warning text-dark';
+                        $statusIcon = 'fa-hourglass-half';
+                        $statusLabel = __('Pending Payment');
+                    } elseif ($booking->status === 'cancelled') {
+                        $statusBadgeClass = 'bg-danger';
+                        $statusIcon = 'fa-times-circle';
+                        $statusLabel = __('Cancelled');
+                    } elseif ($booking->status === 'ticketed') {
+                        $statusBadgeClass = 'bg-primary';
+                        $statusIcon = 'fa-ticket-alt';
+                        $statusLabel = __('Ticketed');
+                    }
+                @endphp
+                <span class="badge {{ $statusBadgeClass }}" style="padding: 6px 12px; border-radius: 8px; font-weight: 800; font-size: 0.8rem; letter-spacing: 0.5px;">
+                    <i class="fas {{ $statusIcon }} me-1"></i>
+                    {{ $statusLabel }}
+                </span>
+                @if($isRoundTrip)
+                    <span class="badge" style="background: rgba(255,255,255,0.15); color: #fff; padding: 6px 10px; border-radius: 8px; font-weight: 700; font-size: 0.75rem;">
+                        <i class="fas fa-sync-alt me-1"></i> {{ __('Round Trip') }}
+                    </span>
+                @else
+                    <span class="badge" style="background: rgba(255,255,255,0.15); color: #fff; padding: 6px 10px; border-radius: 8px; font-weight: 700; font-size: 0.75rem;">
+                        <i class="fas fa-long-arrow-alt-right me-1"></i> {{ __('One Way') }}
+                    </span>
+                @endif
+            </div>
+            <span class="pass-pnr" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 900;">
+                <i class="fas fa-barcode"></i>
+                <span>{{ __('Airline PNR') }}: <strong>{{ $pnrDisplay }}</strong></span>
+            </span>
         </div>
         <div class="pass-body">
-            @php
-                $originCode = $booking->flightBooking->origin ?? 'N/A';
-                $destCode = $booking->flightBooking->destination ?? 'N/A';
-                
-                // 1. Fallback to live API data if available
-                $apiResItems = $apiTripDetails['TripDetailsResponse']['TripDetailsResult']['TravelItinerary']['ItineraryInfo']['ReservationItems'] ?? [];
-                if (isset($apiResItems['ReservationItem'])) {
-                    $apiResItems = [$apiResItems];
-                } elseif (isset($apiResItems[0]) && !isset($apiResItems[0]['ReservationItem'])) {
-                    $apiResItems = array_map(function($i) { return ['ReservationItem' => $i]; }, $apiResItems);
-                }
-                
-                if (!empty($apiResItems)) {
-                    $firstItem = $apiResItems[0]['ReservationItem'] ?? $apiResItems[0];
-                    $lastItem = end($apiResItems)['ReservationItem'] ?? end($apiResItems);
-                    
-                    if ($originCode === 'N/A') $originCode = $firstItem['DepartureAirport']['LocationCode'] ?? $originCode;
-                    if ($destCode === 'N/A') $destCode = $lastItem['ArrivalAirport']['LocationCode'] ?? $destCode;
-                }
-
-                // 2. Fallback to local itinerary data if still N/A
-                $itinData = $booking->flightBooking->itinerary_data ?? [];
-                if (($originCode === 'N/A' || $destCode === 'N/A') && is_array($itinData)) {
-                    $options = $itinData['FareItineraries']['FareItinerary']['OriginDestinationOptions'] ?? [];
-                    $opts = $options['OriginDestinationOption'] ?? [];
-                    if (isset($opts['FlightSegment'])) $opts = [$opts];
-                    
-                    if (!empty($opts)) {
-                        $firstSeg = $opts[0]['FlightSegment'] ?? $opts[0][0]['FlightSegment'] ?? $opts[0];
-                        $lastSeg = end($opts)['FlightSegment'] ?? end($opts);
-                        if (is_array($lastSeg) && isset($lastSeg[0])) {
-                            $lastSeg = end($lastSeg)['FlightSegment'] ?? end($lastSeg);
-                        }
-                        
-                        if ($originCode === 'N/A') $originCode = $firstSeg['DepartureAirport']['LocationCode'] ?? $originCode;
-                        if ($destCode === 'N/A') $destCode = $lastSeg['ArrivalAirport']['LocationCode'] ?? $destCode;
-                    }
-                }
-
-                $originAirport = $originCode !== 'N/A' ? \App\Models\Airport::where('airport_code', $originCode)->first() : null;
-                $destAirport = $destCode !== 'N/A' ? \App\Models\Airport::where('airport_code', $destCode)->first() : null;
-                
-                $originName = $originAirport ? ($originAirport->city_name . ' - ' . $originAirport->airport_name) : $originCode;
-                $destName = $destAirport ? ($destAirport->city_name . ' - ' . $destAirport->airport_name) : $destCode;
-            @endphp
-            <div class="pass-airport-row">
+            {{-- Outbound Route --}}
+            <div style="font-size: 0.8rem; font-weight: 800; color: var(--primary-blue); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
+                <i class="fas fa-plane-departure me-1"></i> {{ __('Outbound Flight') }}
+            </div>
+            <div class="pass-airport-row" style="{{ $isRoundTrip ? 'margin-bottom: 16px;' : 'margin-bottom: 24px;' }}">
                 <div class="pass-airport-code">
                     <h3>{{ strtoupper(substr($originCode, 0, 3)) }}</h3>
                     <span style="font-size: 0.8rem; line-height: 1.2;">{{ $originName }}</span>
@@ -842,8 +936,30 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
                 </div>
             </div>
 
+            {{-- Return Route (If Round Trip) --}}
+            @if($isRoundTrip)
+                <div style="border-top: 1px dashed var(--border-color); padding-top: 16px; margin-top: 8px;">
+                    <div style="font-size: 0.8rem; font-weight: 800; color: #b45309; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
+                        <i class="fas fa-plane-arrival me-1"></i> {{ __('Return Flight') }}
+                    </div>
+                    <div class="pass-airport-row" style="margin-bottom: 24px;">
+                        <div class="pass-airport-code">
+                            <h3 style="color: #b45309;">{{ strtoupper(substr($destCode, 0, 3)) }}</h3>
+                            <span style="font-size: 0.8rem; line-height: 1.2;">{{ $destName }}</span>
+                        </div>
+                        <div class="pass-path-line">
+                            <i class="fas fa-plane fa-flip-horizontal" style="color: #b45309;"></i>
+                        </div>
+                        <div class="pass-airport-code dest-code">
+                            <h3 style="color: #b45309;">{{ strtoupper(substr($originCode, 0, 3)) }}</h3>
+                            <span style="font-size: 0.8rem; line-height: 1.2;">{{ $originName }}</span>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             <div class="boarding-pass-stub-line">
-                <div class="pass-details-grid">
+                <div class="pass-details-grid" style="{{ $isRoundTrip ? 'grid-template-columns: repeat(5, 1fr);' : '' }}">
                     <div>
                         <span class="pass-label">{{ __('PASSENGER') }}</span>
                         <span class="pass-val">{{ auth()->user()->full_name }}</span>
@@ -854,8 +970,14 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
                     </div>
                     <div>
                         <span class="pass-label">{{ __('DEPARTURE DATE') }}</span>
-                        <span class="pass-val">{{ $booking->flightBooking->departure_date ? $booking->flightBooking->departure_date->format('d M Y') : 'N/A' }}</span>
+                        <span class="pass-val">{{ $exactDepartureTime ? $exactDepartureTime->format('d M Y') : ($booking->flightBooking->departure_date ? $booking->flightBooking->departure_date->format('d M Y') : 'N/A') }}</span>
                     </div>
+                    @if($isRoundTrip)
+                    <div>
+                        <span class="pass-label" style="color: #b45309;">{{ __('RETURN DATE') }}</span>
+                        <span class="pass-val" style="color: #b45309; font-weight: 800;">{{ $exactReturnTime ? $exactReturnTime->format('d M Y') : 'N/A' }}</span>
+                    </div>
+                    @endif
                     <div>
                         <span class="pass-label">{{ __('CLASS') }}</span>
                         <span class="pass-val">{{ $booking->flightBooking->flight_class ?? __('Economy') }}</span>
@@ -878,56 +1000,50 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
                     <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted);">{{ $booking->airline_name ?? __('Direct Flight') }}</span>
                 </div>
                 <div class="detail-card-body">
-                    <div class="info-row">
-                        <span class="info-label">{{ __('Origin') }}</span>
-                        <span class="info-value">{{ $originName }} ({{ $originCode }})</span>
+                    {{-- Outbound Flight Summary --}}
+                    <div class="mb-3 p-3 rounded" style="background: rgba(37, 99, 235, 0.04); border: 1px solid rgba(37,99,235,0.15);">
+                        <div style="font-weight: 800; color: var(--primary-blue); font-size: 0.9rem; margin-bottom: 8px;">
+                            <i class="fas fa-plane-departure me-1"></i> {{ __('Outbound Journey') }}: {{ $originCode }} <i class="fas fa-long-arrow-alt-right mx-1"></i> {{ $destCode }}
+                        </div>
+                        <div class="info-row" style="margin-bottom: 6px;">
+                            <span class="info-label">{{ __('Origin') }}</span>
+                            <span class="info-value">{{ $originName }} ({{ $originCode }})</span>
+                        </div>
+                        <div class="info-row" style="margin-bottom: 6px;">
+                            <span class="info-label">{{ __('Destination') }}</span>
+                            <span class="info-value">{{ $destName }} ({{ $destCode }})</span>
+                        </div>
+                        <div class="info-row" style="margin-bottom: 0;">
+                            <span class="info-label">{{ __('Departure') }}</span>
+                            <span class="info-value text-dark" style="font-weight: 900;">
+                                {{ $exactDepartureTime ? $exactDepartureTime->format('d M Y, h:i A') : ($booking->flightBooking->departure_date ? $booking->flightBooking->departure_date->format('d M Y') : 'N/A') }}
+                            </span>
+                        </div>
                     </div>
-                    <div class="info-row">
-                        <span class="info-label">{{ __('Destination') }}</span>
-                        <span class="info-value">{{ $destName }} ({{ $destCode }})</span>
-                    </div>
-                    
-                    @php
-                        $exactDepartureTime = null;
-                        
-                        // 1. Extract from Live API data first
-                        if (!empty($apiResItems)) {
-                            $firstItem = $apiResItems[0]['ReservationItem'] ?? $apiResItems[0];
-                            if (isset($firstItem['DepartureDateTime'])) {
-                                $exactDepartureTime = \Carbon\Carbon::parse($firstItem['DepartureDateTime']);
-                            }
-                        }
-                        
-                        // 2. Fallback to DB itinerary data
-                        if (!$exactDepartureTime && is_array($itinData)) {
-                            $options = $itinData['FareItineraries']['FareItinerary']['OriginDestinationOptions'] ?? [];
-                            $opts = $options['OriginDestinationOption'] ?? [];
-                            if (isset($opts['FlightSegment'])) $opts = [$opts];
-                            
-                            foreach($opts as $opt) {
-                                $segs = $opt['FlightSegment'] ?? $opt;
-                                if (isset($segs['DepartureDateTime'])) {
-                                    $exactDepartureTime = \Carbon\Carbon::parse($segs['DepartureDateTime']);
-                                    break;
-                                } elseif (is_array($segs)) {
-                                    foreach($segs as $s) {
-                                        $dt = $s['FlightSegment']['DepartureDateTime'] ?? $s['DepartureDateTime'] ?? null;
-                                        if ($dt) {
-                                            $exactDepartureTime = \Carbon\Carbon::parse($dt);
-                                            break 2;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    @endphp
 
-                    <div class="info-row" style="background: rgba(37, 99, 235, 0.05); padding: 12px; border-radius: 8px; border: 1px solid rgba(37,99,235,0.2);">
-                        <span class="info-label" style="color: var(--primary-blue); font-weight: 800;"><i class="fas fa-calendar-alt me-1"></i> {{ __('Departure') }}</span>
-                        <span class="info-value text-dark" style="font-size: 1.1rem; font-weight: 900;">
-                            {{ $exactDepartureTime ? $exactDepartureTime->format('d M Y, h:i A') : ($booking->flightBooking->departure_date ? $booking->flightBooking->departure_date->format('d M Y') : 'N/A') }}
-                        </span>
+                    {{-- Return Flight Summary (If Round Trip) --}}
+                    @if($isRoundTrip)
+                    <div class="mb-3 p-3 rounded" style="background: rgba(245, 158, 11, 0.06); border: 1px solid rgba(245, 158, 11, 0.25);">
+                        <div style="font-weight: 800; color: #b45309; font-size: 0.9rem; margin-bottom: 8px;">
+                            <i class="fas fa-plane-arrival me-1"></i> {{ __('Return Journey') }}: {{ $destCode }} <i class="fas fa-long-arrow-alt-right mx-1"></i> {{ $originCode }}
+                        </div>
+                        <div class="info-row" style="margin-bottom: 6px;">
+                            <span class="info-label">{{ __('Origin') }}</span>
+                            <span class="info-value">{{ $destName }} ({{ $destCode }})</span>
+                        </div>
+                        <div class="info-row" style="margin-bottom: 6px;">
+                            <span class="info-label">{{ __('Destination') }}</span>
+                            <span class="info-value">{{ $originName }} ({{ $originCode }})</span>
+                        </div>
+                        <div class="info-row" style="margin-bottom: 0;">
+                            <span class="info-label">{{ __('Return Date') }}</span>
+                            <span class="info-value text-dark" style="font-weight: 900; color: #b45309 !important;">
+                                {{ $exactReturnTime ? $exactReturnTime->format('d M Y, h:i A') : 'N/A' }}
+                            </span>
+                        </div>
                     </div>
+                    @endif
+
                     @if($exactDepartureTime && $exactDepartureTime->isFuture())
                         <div class="info-row mt-3 p-3 rounded" style="background: rgba(16, 185, 129, 0.1); border-left: 4px solid var(--fd-success);">
                             <span class="info-label text-success" style="font-weight: 800;"><i class="fas fa-stopwatch me-1"></i> {{ __('Time to Departure') }}</span>
@@ -936,7 +1052,7 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
                     @endif
 
                     @if($booking->flightBooking->flight_class)
-                    <div class="info-row">
+                    <div class="info-row mt-2">
                         <span class="info-label">{{ __('Cabin Class') }}</span>
                         <span class="info-value">{{ $booking->flightBooking->flight_class }}</span>
                     </div>
