@@ -656,7 +656,7 @@ class FrontendController extends Controller
             ->firstOrFail();
 
         if ($booking->status === 'confirmed') {
-            return redirect()->route('customer.bookings.hotels.show', $booking_id)
+            return redirect()->route('customer.bookings.show', ['id' => $booking_id, 'type' => 'hotel'])
                 ->with('info', __('This hotel booking is already paid and confirmed.'));
         }
 
@@ -1083,7 +1083,7 @@ class FrontendController extends Controller
 
         if ($booking) {
             if ($booking->status === 'confirmed') {
-                return redirect()->route('customer.bookings.flights.show', $booking_id)
+                return redirect()->route('customer.bookings.show', ['id' => $booking_id, 'type' => 'flight'])
                     ->with('info', __('This flight booking is already paid and confirmed.'));
             }
 

@@ -63,7 +63,7 @@ class PaymentWebController extends Controller
             if ($type === 'hotel' && $booking->status === 'pending' && $booking->created_at->diffInMinutes(now()) >= 10) {
                 $booking->update(['status' => 'cancelled']);
                 Log::info("HotelBooking #{$booking_id} marked as CANCELLED at checkout due to expiry.");
-                return redirect()->route('customer.bookings.hotels.show', $booking_id)
+                return redirect()->route('customer.bookings.show', ['id' => $booking_id, 'type' => 'hotel'])
                     ->with('error', __('تنتهي صلاحية حجز الفندق بعد 10 دقائق من إنشائه. يرجى البحث والحجز من جديد. (Session Expired)'));
             }
 
@@ -71,7 +71,7 @@ class PaymentWebController extends Controller
             if ($type === 'flight' && $booking->status === 'pending' && $booking->ticketing_time_limit && now()->greaterThan($booking->ticketing_time_limit)) {
                 $booking->update(['status' => 'cancelled']);
                 Log::info("FlightBooking #{$booking_id} marked as CANCELLED at checkout due to ticketing time limit.");
-                return redirect()->route('customer.bookings.flights.show', $booking_id)
+                return redirect()->route('customer.bookings.show', ['id' => $booking_id, 'type' => 'flight'])
                     ->with('error', __('انتهت مهلة الدفع الخاصة بحجز الطيران. يرجى البحث والحجز من جديد لضمان توافر السعر والمقاعد. (PNR Expired)'));
             }
 
