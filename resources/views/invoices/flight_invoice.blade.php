@@ -439,23 +439,46 @@
                 if (isset($resItems['FlightNumber'])) $resItems = [$resItems];
                 $baggageInfo = ($resItems[0] ?? $resItems)['Baggage'] ?? null;
 
-                // Only rebuild legs from live API if itinerary_data didn't have legs
                 if (empty($legs) && !empty($resItems)) {
                     $currentLeg = [];
                     $lastArrivalAirport = null;
+                    $lastArrivalDateTime = null;
                     $originCode = $fb->origin ?? null;
                     $destCode   = $fb->destination ?? null;
+                    $journeyOrigin = $originCode;
 
                     foreach ($resItems as $idx => $item) {
                         $itemDep = $item['DepartureAirport']['LocationCode'] ?? ($item['DepartureAirportLocationCode'] ?? '');
                         $itemArr = $item['ArrivalAirport']['LocationCode'] ?? ($item['ArrivalAirportLocationCode'] ?? '');
+                        $itemDepDt = $item['DepartureDateTime'] ?? null;
+
+                        if (!$journeyOrigin && $itemDep) {
+                            $journeyOrigin = $itemDep;
+                        }
 
                         $isNewLeg = false;
                         if (!empty($currentLeg)) {
+                            // 1. Discontinuous airport connection
                             if ($lastArrivalAirport && strtoupper($itemDep) !== strtoupper($lastArrivalAirport)) {
                                 $isNewLeg = true;
-                            } elseif ($destCode && $lastArrivalAirport && strtoupper($lastArrivalAirport) === strtoupper($destCode)) {
+                            }
+                            // 2. Reached turnaround destination
+                            elseif ($destCode && $lastArrivalAirport && strtoupper($lastArrivalAirport) === strtoupper($destCode)) {
                                 $isNewLeg = true;
+                            }
+                            // 3. Returning back to initial journey origin
+                            elseif ($journeyOrigin && strtoupper($itemArr) === strtoupper($journeyOrigin) && strtoupper($itemDep) !== strtoupper($journeyOrigin)) {
+                                $isNewLeg = true;
+                            }
+                            // 4. Layover >= 18 hours (stopover in multi-city)
+                            elseif ($lastArrivalDateTime && $itemDepDt) {
+                                try {
+                                    $arrC = \Carbon\Carbon::parse($lastArrivalDateTime);
+                                    $depC = \Carbon\Carbon::parse($itemDepDt);
+                                    if ($arrC->diffInHours($depC) >= 18) {
+                                        $isNewLeg = true;
+                                    }
+                                } catch (\Exception $e) {}
                             }
                         }
 
@@ -466,6 +489,7 @@
 
                         $currentLeg[] = $item;
                         $lastArrivalAirport = $itemArr;
+                        $lastArrivalDateTime = $item['ArrivalDateTime'] ?? null;
                     }
                     if (!empty($currentLeg)) {
                         $legs[] = $currentLeg;
