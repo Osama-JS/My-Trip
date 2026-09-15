@@ -370,25 +370,33 @@
             $legs = [];
             $baggageInfo = null;
 
-            // ── Primary: read from itinerary_data['segments'] (saved at booking time) ──
+            // ── 1. Read from itinerary_data (saved at booking time or recovered) ──
             $itinData = $fb->itinerary_data ?? null;
             if (is_string($itinData)) $itinData = json_decode($itinData, true);
 
             if (!empty($itinData['segments'])) {
-                // New format: itinerary_data = ['segments' => [['legs' => [...]], ...]]
                 foreach ($itinData['segments'] as $legData) {
-                    $legSegs = $legData['legs'] ?? [];
-                    if (!empty($legSegs)) {
-                        $legs[] = $legSegs;
+                    if (isset($legData['legs']) && is_array($legData['legs'])) {
+                        $legs[] = $legData['legs'];
+                    } elseif (isset($legData['from']) || isset($legData['DepartureAirportLocationCode'])) {
+                        $legIdx = (int)($legData['leg_index'] ?? 0);
+                        $legs[$legIdx][] = $legData;
                     }
                 }
+                $legs = array_values($legs);
+            } elseif (!empty($itinData) && is_array($itinData) && (isset($itinData[0]['from']) || isset($itinData[0]['DepartureAirportLocationCode']))) {
+                $legsGrouped = [];
+                foreach ($itinData as $s) {
+                    $legIdx = (int)($s['leg_index'] ?? 0);
+                    $legsGrouped[$legIdx][] = $s;
+                }
+                $legs = array_values($legsGrouped);
             } elseif (!empty($itinData['FareItineraries']['FareItinerary']['OriginDestinationOptions'])) {
                 // Legacy format from FareItineraries
                 $options = $itinData['FareItineraries']['FareItinerary']['OriginDestinationOptions'];
                 $options = isset($options['OriginDestinationOption']['FlightSegment'])
                     ? [$options['OriginDestinationOption']]
                     : ($options['OriginDestinationOption'] ?? []);
-                // Handle numeric outer wrapper e.g. [0 => ['OriginDestinationOption' => [...]]]
                 if (isset($options[0]['OriginDestinationOption'])) {
                     $flat = [];
                     foreach ($options as $wrapper) {
@@ -413,7 +421,6 @@
                     if (!empty($legSegments)) $legs[] = $legSegments;
                 }
             } elseif (!empty($itinData) && isset($itinData[0]['OriginDestinationOption'])) {
-                // Search response format: array of [{OriginDestinationOption:[{FlightSegment:{...}}]}]
                 foreach ($itinData as $wrapper) {
                     $odOpts = $wrapper['OriginDestinationOption'] ?? [];
                     if (!isset($odOpts[0])) $odOpts = [$odOpts];
@@ -426,45 +433,10 @@
                 }
             }
 
-            // ── Fallback: build from FlightBooking basic fields ──────────────
-            if (empty($legs)) {
-                $depDt = null;
-                try {
-                    $rawDep = $fb->getOriginal('departure_date') ?? $fb->departure_date;
-                    if ($rawDep) $depDt = \Carbon\Carbon::parse($rawDep)->toIso8601String();
-                } catch (\Exception $e) {}
-
-                $outSeg = [
-                    'DepartureAirportLocationCode' => $fb->origin ?? 'N/A',
-                    'ArrivalAirportLocationCode'   => $fb->destination ?? 'N/A',
-                    'DepartureDateTime'            => $depDt,
-                    'ArrivalDateTime'              => null,
-                    'FlightNumber'                 => $fb->flight_number ?? 'N/A',
-                    'MarketingAirlineCode'         => $fb->airline_code ?? 'N/A',
-                    'MarketingAirlineName'         => $fb->airline_name ?? 'N/A',
-                ];
-                $legs[] = [$outSeg];
-
-                if ($fb->return_date) {
-                    $retDt = null;
-                    try { $retDt = \Carbon\Carbon::parse($fb->getOriginal('return_date'))->toIso8601String(); } catch (\Exception $e) {}
-                    $legs[] = [[
-                        'DepartureAirportLocationCode' => $fb->destination ?? 'N/A',
-                        'ArrivalAirportLocationCode'   => $fb->origin ?? 'N/A',
-                        'DepartureDateTime'            => $retDt,
-                        'ArrivalDateTime'              => null,
-                        'FlightNumber'                 => $fb->flight_number ?? 'N/A',
-                        'MarketingAirlineCode'         => $fb->airline_code ?? 'N/A',
-                        'MarketingAirlineName'         => $fb->airline_name ?? 'N/A',
-                    ]];
-                }
-            }
-
-            // ── Try to enrich from TripDetailsResponse if available ──────────
+            // ── 2. Enrich from TripDetailsResponse if available from live API ──
             if (!empty($tripDetails['TripDetailsResponse']['TripDetailsResult']['TravelItinerary']['ItineraryInfo']['ReservationItems']['ReservationItem'])) {
                 $resItems = $tripDetails['TripDetailsResponse']['TripDetailsResult']['TravelItinerary']['ItineraryInfo']['ReservationItems']['ReservationItem'];
                 if (isset($resItems['FlightNumber'])) $resItems = [$resItems];
-                // Override legs with real API data which has correct times
                 $originCode = $fb->origin ?? null;
                 $destCode   = $fb->destination ?? null;
                 if ($fb->return_date && $originCode && $destCode) {
@@ -485,6 +457,44 @@
                     $legs = [$resItems];
                 }
                 $baggageInfo = ($resItems[0] ?? $resItems)['Baggage'] ?? null;
+            }
+
+            // ── 3. Fallback: Build from FlightBooking & Booking database fields ──
+            if (empty($legs)) {
+                $depDt = null;
+                try {
+                    $rawDep = $fb->getOriginal('departure_date') ?? $fb->departure_date;
+                    if ($rawDep) $depDt = \Carbon\Carbon::parse($rawDep)->toIso8601String();
+                } catch (\Exception $e) {}
+
+                $mainAirlineCode = $booking->airline_code ?? ($fb->airline_code ?? '');
+                $mainAirlineName = $booking->airline_name ?? ($fb->airline_name ?? 'Flight');
+                $mainFlightNo    = $fb->flight_number ?? ($mainAirlineCode ? "{$mainAirlineCode}" : 'Flight');
+
+                $outSeg = [
+                    'DepartureAirportLocationCode' => $fb->origin ?? 'N/A',
+                    'ArrivalAirportLocationCode'   => $fb->destination ?? 'N/A',
+                    'DepartureDateTime'            => $depDt,
+                    'ArrivalDateTime'              => $depDt ? \Carbon\Carbon::parse($depDt)->addHours(2)->toIso8601String() : null,
+                    'FlightNumber'                 => $mainFlightNo,
+                    'MarketingAirlineCode'         => $mainAirlineCode,
+                    'MarketingAirlineName'         => $mainAirlineName,
+                ];
+                $legs[] = [$outSeg];
+
+                if ($fb->return_date) {
+                    $retDt = null;
+                    try { $retDt = \Carbon\Carbon::parse($fb->getOriginal('return_date'))->toIso8601String(); } catch (\Exception $e) {}
+                    $legs[] = [[
+                        'DepartureAirportLocationCode' => $fb->destination ?? 'N/A',
+                        'ArrivalAirportLocationCode'   => $fb->origin ?? 'N/A',
+                        'DepartureDateTime'            => $retDt,
+                        'ArrivalDateTime'              => $retDt ? \Carbon\Carbon::parse($retDt)->addHours(2)->toIso8601String() : null,
+                        'FlightNumber'                 => $mainFlightNo,
+                        'MarketingAirlineCode'         => $mainAirlineCode,
+                        'MarketingAirlineName'         => $mainAirlineName,
+                    ]];
+                }
             }
 
             if (!$baggageInfo) $baggageInfo = '1x 23KG (Checked) + 1x 7KG (Cabin)';
@@ -516,7 +526,7 @@
                     <tr>
                         <td width="33%">
                             <span class="info-label">{{ __('Airline') }}</span><br>
-                            <span class="info-value">{{ $booking->airline_name ?? 'N/A' }}</span>
+                            <span class="info-value">{{ $booking->airline_name ?? ($booking->airline_code ?? 'N/A') }}</span>
                         </td>
                         <td width="33%" align="center">
                             <span class="info-label">{{ __('Invoice No.') }}</span><br>
@@ -538,25 +548,51 @@
                     @php
                         $firstSeg = $segments[0];
                         $lastSeg = end($segments);
-                        $depCode = $firstSeg['DepartureAirportLocationCode'] ?? ($firstSeg['DepartureAirport']['LocationCode'] ?? '');
-                        $arrCode = $lastSeg['ArrivalAirportLocationCode'] ?? ($lastSeg['ArrivalAirport']['LocationCode'] ?? '');
+                        $depCode = $firstSeg['DepartureAirportLocationCode'] ?? ($firstSeg['DepartureAirport']['LocationCode'] ?? ($firstSeg['from'] ?? ($legIndex === 0 ? ($fb->origin ?? '') : ($fb->destination ?? ''))));
+                        $arrCode = $lastSeg['ArrivalAirportLocationCode'] ?? ($lastSeg['ArrivalAirport']['LocationCode'] ?? ($lastSeg['to'] ?? ($legIndex === 0 ? ($fb->destination ?? '') : ($fb->origin ?? ''))));
                         
                         $depAir = \App\Models\Airport::where('airport_code', $depCode)->first();
                         $arrAir = \App\Models\Airport::where('airport_code', $arrCode)->first();
                         $depCity = $depAir ? (app()->getLocale() == 'ar' ? ($depAir->city_name_ar ?? $depAir->city_name) : $depAir->city_name) : $depCode;
                         $arrCity = $arrAir ? (app()->getLocale() == 'ar' ? ($arrAir->city_name_ar ?? $arrAir->city_name) : $arrAir->city_name) : $arrCode;
 
-                        $depDate = isset($firstSeg['DepartureDateTime']) ? \Carbon\Carbon::parse($firstSeg['DepartureDateTime'])->translatedFormat('d M Y, H:i') : 'N/A';
-                        $arrDate = isset($lastSeg['ArrivalDateTime']) ? \Carbon\Carbon::parse($lastSeg['ArrivalDateTime'])->translatedFormat('d M Y, H:i') : 'N/A';
-                        $flightNo = ($firstSeg['MarketingAirlineCode'] ?? '') . ' ' . ($firstSeg['FlightNumber'] ?? '');
+                        // Departure Date/Time calculation
+                        $depDateTimeRaw = $firstSeg['DepartureDateTime'] ?? ($firstSeg['dep_datetime'] ?? (!empty($firstSeg['dep']) ? (($legIndex > 0 && $fb->return_date ? $fb->return_date : $fb->departure_date) . ' ' . $firstSeg['dep']) : ($legIndex > 0 && $fb->return_date ? $fb->return_date : $fb->departure_date)));
+                        $depDate = 'N/A';
+                        if ($depDateTimeRaw) {
+                            try { $depDate = \Carbon\Carbon::parse($depDateTimeRaw)->translatedFormat('d M Y, H:i'); } catch (\Exception $e) { $depDate = $depDateTimeRaw; }
+                        }
+
+                        // Arrival Date/Time calculation
+                        $arrDateTimeRaw = $lastSeg['ArrivalDateTime'] ?? ($lastSeg['arr_datetime'] ?? (!empty($lastSeg['arr']) ? (($legIndex > 0 && $fb->return_date ? $fb->return_date : $fb->departure_date) . ' ' . $lastSeg['arr']) : null));
+                        $arrDate = 'N/A';
+                        if ($arrDateTimeRaw) {
+                            try { $arrDate = \Carbon\Carbon::parse($arrDateTimeRaw)->translatedFormat('d M Y, H:i'); } catch (\Exception $e) { $arrDate = $arrDateTimeRaw; }
+                        } elseif ($depDateTimeRaw && $depDate !== 'N/A') {
+                            try { $arrDate = \Carbon\Carbon::parse($depDateTimeRaw)->addHours(2)->translatedFormat('d M Y, H:i'); } catch (\Exception $e) {}
+                        }
+
+                        // Flight number and airline code/name calculation
+                        $airlineCodeVal = $firstSeg['MarketingAirlineCode'] ?? ($firstSeg['airline'] ?? ($booking->airline_code ?? ''));
+                        $airlineNameVal = $firstSeg['MarketingAirlineName'] ?? ($booking->airline_name ?? ($booking->airline_code ?? ''));
+                        $flightNumberVal = $firstSeg['FlightNumber'] ?? ($firstSeg['flight_no'] ?? ($fb->flight_number ?? ''));
+
+                        $flightNo = trim($flightNumberVal);
+                        if (empty($flightNo) || $flightNo === 'N/A') {
+                            $flightNo = trim($airlineCodeVal . ' ' . ($airlineNameVal ?: 'Flight'));
+                        } elseif ($airlineCodeVal && !str_contains($flightNo, $airlineCodeVal)) {
+                            $flightNo = $airlineCodeVal . ' ' . $flightNo;
+                        }
 
                         // Calculate transit layovers between connecting flights
                         $layovers = [];
                         $segCount = count($segments);
                         for ($si = 0; $si < $segCount - 1; $si++) {
-                            $curArr = isset($segments[$si]['ArrivalDateTime']) ? \Carbon\Carbon::parse($segments[$si]['ArrivalDateTime']) : null;
-                            $nextDep = isset($segments[$si+1]['DepartureDateTime']) ? \Carbon\Carbon::parse($segments[$si+1]['DepartureDateTime']) : null;
-                            $transitAirportCode = $segments[$si]['ArrivalAirportLocationCode'] ?? ($segments[$si]['ArrivalAirport']['LocationCode'] ?? '');
+                            $curArrRaw = $segments[$si]['ArrivalDateTime'] ?? ($segments[$si]['arr_datetime'] ?? null);
+                            $nextDepRaw = $segments[$si+1]['DepartureDateTime'] ?? ($segments[$si+1]['dep_datetime'] ?? null);
+                            $curArr = $curArrRaw ? \Carbon\Carbon::parse($curArrRaw) : null;
+                            $nextDep = $nextDepRaw ? \Carbon\Carbon::parse($nextDepRaw) : null;
+                            $transitAirportCode = $segments[$si]['ArrivalAirportLocationCode'] ?? ($segments[$si]['ArrivalAirport']['LocationCode'] ?? ($segments[$si]['to'] ?? ''));
                             
                             $layDuration = '';
                             if ($curArr && $nextDep) {
@@ -564,6 +600,8 @@
                                 $lh = floor($diffM / 60);
                                 $lm = $diffM % 60;
                                 $layDuration = ($lh > 0 ? "{$lh}h " : '') . "{$lm}m";
+                            } elseif (!empty($segments[$si]['layover'])) {
+                                $layDuration = $segments[$si]['layover'];
                             }
                             $layovers[] = $transitAirportCode . ($layDuration ? " ({$layDuration})" : '');
                         }

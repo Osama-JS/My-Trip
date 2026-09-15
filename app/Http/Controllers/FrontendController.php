@@ -961,6 +961,47 @@ class FrontendController extends Controller
                 \App\Models\FlightApiLog::where('id', $result['_api_log_id'])->update(['booking_id' => $booking->id]);
             }
 
+            // 3. Structure and save Itinerary Segments
+            $submittedSegments = $request->get('segments', []);
+            $itineraryPayload = null;
+            $flightNumber = $request->get('flight_number');
+
+            if (!empty($submittedSegments) && is_array($submittedSegments)) {
+                $legsGrouped = [];
+                foreach ($submittedSegments as $s) {
+                    $legIdx = (int)($s['leg_index'] ?? 0);
+                    $sDep = $s['dep_datetime'] ?? (!empty($s['dep']) ? ($request->get('departDate') . 'T' . $s['dep'] . ':00') : null);
+                    $sArr = $s['arr_datetime'] ?? (!empty($s['arr']) ? (($request->get('returnDate') && $legIdx > 0 ? $request->get('returnDate') : $request->get('departDate')) . 'T' . $s['arr'] . ':00') : null);
+                    $sFlight = $s['flight_no'] ?? $flightNumber ?? '';
+                    $sAirline = $s['airline'] ?? $request->get('airline') ?? $booking->airline_code ?? '';
+
+                    if (empty($flightNumber) && !empty($sFlight)) {
+                        $flightNumber = $sFlight;
+                    }
+
+                    $legsGrouped[$legIdx][] = [
+                        'DepartureAirportLocationCode' => $s['from'] ?? '',
+                        'ArrivalAirportLocationCode'   => $s['to'] ?? '',
+                        'DepartureDateTime'            => $sDep,
+                        'ArrivalDateTime'              => $sArr,
+                        'FlightNumber'                 => $sFlight,
+                        'MarketingAirlineCode'         => $sAirline,
+                        'MarketingAirlineName'         => $booking->airline_name ?? $request->get('airline') ?? '',
+                        'Baggage'                      => $s['baggage'] ?? null,
+                        'Layover'                      => $s['layover'] ?? null,
+                    ];
+                }
+                $segmentsPayload = [];
+                foreach ($legsGrouped as $legSegs) {
+                    $segmentsPayload[] = ['legs' => $legSegs];
+                }
+                $itineraryPayload = ['segments' => $segmentsPayload];
+            }
+
+            if (!$itineraryPayload && isset($result['AirBookingResponse']['AirBookingResult'])) {
+                $itineraryPayload = $result['AirBookingResponse']['AirBookingResult'];
+            }
+
             \App\Models\FlightBooking::create([
                 'user_id' => auth()->id(),
                 'booking_id' => $booking->id,
@@ -968,12 +1009,12 @@ class FrontendController extends Controller
                 'destination' => $request->get('to'),
                 'departure_date' => $request->get('departDate'),
                 'return_date' => $request->get('returnDate'),
-                'flight_number' => $request->get('flight_number'),
-                'flight_class' => $request->get('class', 'Economy'),
+                'flight_number' => $flightNumber,
+                'flight_class' => $request->get('flight_class', $request->get('class', 'Economy')),
                 'adults' => (int)$request->get('adults', 1),
                 'childs' => (int)$request->get('childs', 0),
                 'infants' => (int)$request->get('infants', 0),
-                'itinerary_data' => $result['AirBookingResponse']['AirBookingResult'] ?? null,
+                'itinerary_data' => $itineraryPayload,
                 'total_amount' => $request->get('total_amount'),
                 'currency' => 'SAR',
                 'extra_services' => $request->get('passengers', [])
