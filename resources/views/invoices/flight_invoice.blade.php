@@ -369,6 +369,8 @@
 
             $legs = [];
             $baggageInfo = null;
+            $tripDetails = $tripDetails ?? $apiTripDetails ?? null;
+            $resItems = [];
 
             // ── 1. Read from itinerary_data (saved at booking time or recovered) ──
             $itinData = $fb->itinerary_data ?? null;
@@ -533,6 +535,50 @@
                         'MarketingAirlineName'         => $mainAirlineName,
                     ]];
                 }
+            }
+
+            // ── 4. Ensure Round-Trip Return Leg is Present ──
+            $originCodeVal = $fb->origin ?? 'N/A';
+            $destCodeVal   = $fb->destination ?? 'N/A';
+
+            if (!empty($resItems)) {
+                $firstItem = $resItems[0]['ReservationItem'] ?? $resItems[0];
+                $lastItem = end($resItems)['ReservationItem'] ?? end($resItems);
+                if ($originCodeVal === 'N/A' || empty($originCodeVal)) {
+                    $originCodeVal = $firstItem['DepartureAirport']['LocationCode'] ?? ($firstItem['DepartureAirportLocationCode'] ?? $originCodeVal);
+                }
+                if ($destCodeVal === 'N/A' || empty($destCodeVal)) {
+                    $destCodeVal = $lastItem['ArrivalAirport']['LocationCode'] ?? ($lastItem['ArrivalAirportLocationCode'] ?? $destCodeVal);
+                }
+            }
+
+            if (($originCodeVal === 'N/A' || $destCodeVal === 'N/A') && !empty($legs)) {
+                $firstSeg = $legs[0][0] ?? [];
+                $lastSeg = end($legs[0]) ?? [];
+                if ($originCodeVal === 'N/A') $originCodeVal = $firstSeg['DepartureAirportLocationCode'] ?? ($firstSeg['DepartureAirport']['LocationCode'] ?? ($firstSeg['from'] ?? $originCodeVal));
+                if ($destCodeVal === 'N/A') $destCodeVal = $lastSeg['ArrivalAirportLocationCode'] ?? ($lastSeg['ArrivalAirport']['LocationCode'] ?? ($lastSeg['to'] ?? $destCodeVal));
+            }
+
+            $isRoundTripBooking = !empty($fb->return_date) || count($legs) > 1;
+
+            if ($isRoundTripBooking && count($legs) === 1) {
+                $retDt = null;
+                if (!empty($fb->return_date)) {
+                    try { $retDt = \Carbon\Carbon::parse($fb->getOriginal('return_date') ?? $fb->return_date)->toIso8601String(); } catch (\Exception $e) {}
+                }
+                $mainAirlineCode = $booking->airline_code ?? ($fb->airline_code ?? '');
+                $mainAirlineName = $booking->airline_name ?? ($fb->airline_name ?? 'Flight');
+                $mainFlightNo    = $fb->flight_number ?? ($mainAirlineCode ?: 'Flight');
+
+                $legs[] = [[
+                    'DepartureAirportLocationCode' => $destCodeVal !== 'N/A' ? $destCodeVal : ($fb->destination ?? 'N/A'),
+                    'ArrivalAirportLocationCode'   => $originCodeVal !== 'N/A' ? $originCodeVal : ($fb->origin ?? 'N/A'),
+                    'DepartureDateTime'            => $retDt,
+                    'ArrivalDateTime'              => $retDt ? \Carbon\Carbon::parse($retDt)->addHours(2)->toIso8601String() : null,
+                    'FlightNumber'                 => $mainFlightNo,
+                    'MarketingAirlineCode'         => $mainAirlineCode,
+                    'MarketingAirlineName'         => $mainAirlineName,
+                ]];
             }
 
             if (!$baggageInfo) $baggageInfo = '1x 23KG (Checked) + 1x 7KG (Cabin)';

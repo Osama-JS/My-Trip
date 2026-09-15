@@ -479,19 +479,22 @@ class BookingController extends Controller
                 ->findOrFail($id);
         }
 
-        // Use existing invoice or generate new one
-        $payment = $booking->payments()->latest()->first();
-
-        if ($payment && $payment->invoice_path && Storage::disk('public')->exists($payment->invoice_path)) {
-            $filePath = Storage::disk('public')->path($payment->invoice_path);
-            return response()->download($filePath, 'invoice-' . $booking->id . '.pdf');
-        }
-
-        // Generate on demand
+        // Generate fresh invoice to reflect latest template and itinerary data
         $invoicePath = $this->invoiceService->generateInvoice($booking);
 
         if (!$invoicePath) {
+            // Fallback to existing invoice if available
+            $payment = $booking->payments()->latest()->first();
+            if ($payment && $payment->invoice_path && Storage::disk('public')->exists($payment->invoice_path)) {
+                $filePath = Storage::disk('public')->path($payment->invoice_path);
+                return response()->download($filePath, 'invoice-' . $booking->id . '.pdf');
+            }
             return back()->with('error', __('تعذّر توليد الفاتورة. الرجاء المحاولة لاحقاً.'));
+        }
+
+        $payment = $booking->payments()->latest()->first();
+        if ($payment) {
+            $payment->update(['invoice_path' => $invoicePath]);
         }
 
         $filePath = Storage::disk('public')->path($invoicePath);
