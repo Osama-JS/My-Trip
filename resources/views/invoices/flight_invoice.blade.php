@@ -379,7 +379,7 @@
                     if (isset($legData['legs']) && is_array($legData['legs'])) {
                         $legs[] = $legData['legs'];
                     } elseif (isset($legData['from']) || isset($legData['DepartureAirportLocationCode'])) {
-                        $legIdx = (int)($legData['leg_index'] ?? 0);
+                        $legIdx = (int)($legData['leg_index'] ?? (isset($legData['is_return']) && $legData['is_return'] ? 1 : 0));
                         $legs[$legIdx][] = $legData;
                     }
                 }
@@ -387,7 +387,7 @@
             } elseif (!empty($itinData) && is_array($itinData) && (isset($itinData[0]['from']) || isset($itinData[0]['DepartureAirportLocationCode']))) {
                 $legsGrouped = [];
                 foreach ($itinData as $s) {
-                    $legIdx = (int)($s['leg_index'] ?? 0);
+                    $legIdx = (int)($s['leg_index'] ?? (isset($s['is_return']) && $s['is_return'] ? 1 : 0));
                     $legsGrouped[$legIdx][] = $s;
                 }
                 $legs = array_values($legsGrouped);
@@ -433,30 +433,44 @@
                 }
             }
 
-            // ── 2. Enrich from TripDetailsResponse if available from live API ──
+            // ── 2. Enrich from TripDetailsResponse or extract legs if empty ──
             if (!empty($tripDetails['TripDetailsResponse']['TripDetailsResult']['TravelItinerary']['ItineraryInfo']['ReservationItems']['ReservationItem'])) {
                 $resItems = $tripDetails['TripDetailsResponse']['TripDetailsResult']['TravelItinerary']['ItineraryInfo']['ReservationItems']['ReservationItem'];
                 if (isset($resItems['FlightNumber'])) $resItems = [$resItems];
-                $originCode = $fb->origin ?? null;
-                $destCode   = $fb->destination ?? null;
-                if ($fb->return_date && $originCode && $destCode) {
-                    $outbound = []; $return = []; $inReturn = false;
-                    foreach ($resItems as $seg) {
-                        if (!$inReturn) {
-                            $outbound[] = $seg;
-                            $arrCode = $seg['ArrivalAirport']['LocationCode'] ?? ($seg['ArrivalAirportLocationCode'] ?? '');
-                            if (strtoupper($arrCode) === strtoupper($destCode)) $inReturn = true;
-                        } else {
-                            $return[] = $seg;
-                        }
-                    }
-                    $legs = [];
-                    if (!empty($outbound)) $legs[] = $outbound;
-                    if (!empty($return))   $legs[] = $return;
-                } else {
-                    $legs = [$resItems];
-                }
                 $baggageInfo = ($resItems[0] ?? $resItems)['Baggage'] ?? null;
+
+                // Only rebuild legs from live API if itinerary_data didn't have legs
+                if (empty($legs) && !empty($resItems)) {
+                    $currentLeg = [];
+                    $lastArrivalAirport = null;
+                    $originCode = $fb->origin ?? null;
+                    $destCode   = $fb->destination ?? null;
+
+                    foreach ($resItems as $idx => $item) {
+                        $itemDep = $item['DepartureAirport']['LocationCode'] ?? ($item['DepartureAirportLocationCode'] ?? '');
+                        $itemArr = $item['ArrivalAirport']['LocationCode'] ?? ($item['ArrivalAirportLocationCode'] ?? '');
+
+                        $isNewLeg = false;
+                        if (!empty($currentLeg)) {
+                            if ($lastArrivalAirport && strtoupper($itemDep) !== strtoupper($lastArrivalAirport)) {
+                                $isNewLeg = true;
+                            } elseif ($destCode && $lastArrivalAirport && strtoupper($lastArrivalAirport) === strtoupper($destCode)) {
+                                $isNewLeg = true;
+                            }
+                        }
+
+                        if ($isNewLeg) {
+                            $legs[] = $currentLeg;
+                            $currentLeg = [];
+                        }
+
+                        $currentLeg[] = $item;
+                        $lastArrivalAirport = $itemArr;
+                    }
+                    if (!empty($currentLeg)) {
+                        $legs[] = $currentLeg;
+                    }
+                }
             }
 
             // ── 3. Fallback: Build from FlightBooking & Booking database fields ──
@@ -544,6 +558,9 @@
         <!-- ─── FLIGHT ROUTE CARD ─── -->
         <div class="route-card">
             @if(count($legs) > 0)
+                @php
+                    $totalLegsCount = count($legs);
+                @endphp
                 @foreach($legs as $legIndex => $segments)
                     @php
                         $firstSeg = $segments[0];
@@ -555,6 +572,18 @@
                         $arrAir = \App\Models\Airport::where('airport_code', $arrCode)->first();
                         $depCity = $depAir ? (app()->getLocale() == 'ar' ? ($depAir->city_name_ar ?? $depAir->city_name) : $depAir->city_name) : $depCode;
                         $arrCity = $arrAir ? (app()->getLocale() == 'ar' ? ($arrAir->city_name_ar ?? $arrAir->city_name) : $arrAir->city_name) : $arrCode;
+
+                        // Header Title for this leg
+                        $legHeaderTitle = '';
+                        if ($totalLegsCount === 2) {
+                            $legHeaderTitle = $legIndex == 0 ? __('Outbound Flight') : __('Return Flight');
+                        } elseif ($totalLegsCount > 2) {
+                            $legHeaderTitle = __('Flight :num (:from ➔ :to)', [
+                                'num'  => $legIndex + 1,
+                                'from' => $depCity ?: $depCode,
+                                'to'   => $arrCity ?: $arrCode
+                            ]);
+                        }
 
                         // Departure Date/Time calculation
                         $depDateTimeRaw = $firstSeg['DepartureDateTime'] ?? ($firstSeg['dep_datetime'] ?? (!empty($firstSeg['dep']) ? (($legIndex > 0 && $fb->return_date ? $fb->return_date : $fb->departure_date) . ' ' . $firstSeg['dep']) : ($legIndex > 0 && $fb->return_date ? $fb->return_date : $fb->departure_date)));
@@ -607,12 +636,12 @@
                         }
                         $stopsCount = $segCount - 1;
                     @endphp
-                    @if(count($legs) > 1)
-                        <div style="font-size: 11px; color: #f2cb57; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; border-bottom: 1px dashed rgba(255,255,255,0.2); padding-bottom: 6px;">
-                            {{ $legIndex == 0 ? __('Outbound Flight') : __('Return Flight') }}
+                    @if(!empty($legHeaderTitle))
+                        <div style="font-size: 11px; color: #f2cb57; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-top: {{ $legIndex > 0 ? '16px' : '0' }}; margin-bottom: 12px; border-bottom: 1px dashed rgba(255,255,255,0.2); padding-bottom: 6px;">
+                            {{ $legHeaderTitle }}
                         </div>
                     @endif
-                    <table width="100%" style="margin-bottom: 20px;">
+                    <table width="100%" style="margin-bottom: 12px;">
                         <tr>
                             <td width="35%" align="center" valign="middle">
                                 <div class="airport-code">{{ $depCode }}</div>
@@ -650,7 +679,7 @@
                             </td>
                         </tr>
                     </table>
-                    <div class="baggage-strip">
+                    <div class="baggage-strip" style="margin-bottom: {{ $legIndex < $totalLegsCount - 1 ? '16px' : '0' }};">
                         <svg width="12" height="12" viewBox="0 0 24 24" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 4px;">
                             <path fill="rgba(255,255,255,0.6)" d="M17 6h-2V4c0-1.1-.9-2-2-2h-2c-1.1 0-2 .9-2 2v2H7c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zM10 4h4v2h-4V4zm7 15H7V8h10v11z"/>
                             <path fill="rgba(255,255,255,0.6)" d="M9 10h2v7H9zm4 0h2v7h-2z"/>

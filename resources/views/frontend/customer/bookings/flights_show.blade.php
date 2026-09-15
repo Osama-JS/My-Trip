@@ -792,8 +792,28 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
 
         // Extract legs from itinerary_data
         $itinData = $booking->flightBooking->itinerary_data ?? [];
+        if (is_string($itinData)) $itinData = json_decode($itinData, true);
         $legs = [];
-        if (isset($itinData['FareItineraries']['FareItinerary']['OriginDestinationOptions'])) {
+
+        // 1. Check structured segments in itinerary_data
+        if (!empty($itinData['segments'])) {
+            foreach ($itinData['segments'] as $legData) {
+                if (isset($legData['legs']) && is_array($legData['legs'])) {
+                    $legs[] = $legData['legs'];
+                } elseif (isset($legData['from']) || isset($legData['DepartureAirportLocationCode'])) {
+                    $legIdx = (int)($legData['leg_index'] ?? (isset($legData['is_return']) && $legData['is_return'] ? 1 : 0));
+                    $legs[$legIdx][] = $legData;
+                }
+            }
+            $legs = array_values($legs);
+        } elseif (!empty($itinData) && is_array($itinData) && (isset($itinData[0]['from']) || isset($itinData[0]['DepartureAirportLocationCode']))) {
+            $legsGrouped = [];
+            foreach ($itinData as $s) {
+                $legIdx = (int)($s['leg_index'] ?? (isset($s['is_return']) && $s['is_return'] ? 1 : 0));
+                $legsGrouped[$legIdx][] = $s;
+            }
+            $legs = array_values($legsGrouped);
+        } elseif (isset($itinData['FareItineraries']['FareItinerary']['OriginDestinationOptions'])) {
             $options = $itinData['FareItineraries']['FareItinerary']['OriginDestinationOptions'];
             if (isset($options['OriginDestinationOption']['FlightSegment'])) {
                 $options = [$options['OriginDestinationOption']];
@@ -817,19 +837,47 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
             }
         }
 
-        $isRoundTrip = !empty($booking->flightBooking->return_date) || count($legs) > 1;
-
-        $originCode = $booking->flightBooking->origin ?? 'N/A';
-        $destCode = $booking->flightBooking->destination ?? 'N/A';
-        
-        // 1. Fallback to live API data if available
+        // 2. Fallback to live API data if available and legs is empty
         $apiResItems = $apiTripDetails['TripDetailsResponse']['TripDetailsResult']['TravelItinerary']['ItineraryInfo']['ReservationItems'] ?? [];
         if (isset($apiResItems['ReservationItem'])) {
-            $apiResItems = [$apiResItems];
+            $apiResItems = [$apiResItems['ReservationItem']];
         } elseif (isset($apiResItems[0]) && !isset($apiResItems[0]['ReservationItem'])) {
             $apiResItems = array_map(function($i) { return ['ReservationItem' => $i]; }, $apiResItems);
         }
-        
+
+        if (empty($legs) && !empty($apiResItems)) {
+            $flatItems = [];
+            foreach ($apiResItems as $wrapper) {
+                $flatItems[] = $wrapper['ReservationItem'] ?? $wrapper;
+            }
+            $currentLeg = [];
+            $lastArrival = null;
+            $destCodeVal = $booking->flightBooking->destination ?? null;
+            foreach ($flatItems as $item) {
+                $itemDep = $item['DepartureAirport']['LocationCode'] ?? ($item['DepartureAirportLocationCode'] ?? '');
+                $itemArr = $item['ArrivalAirport']['LocationCode'] ?? ($item['ArrivalAirportLocationCode'] ?? '');
+                
+                if (!empty($currentLeg)) {
+                    if ($lastArrival && strtoupper($itemDep) !== strtoupper($lastArrival)) {
+                        $legs[] = $currentLeg;
+                        $currentLeg = [];
+                    } elseif ($destCodeVal && $lastArrival && strtoupper($lastArrival) === strtoupper($destCodeVal)) {
+                        $legs[] = $currentLeg;
+                        $currentLeg = [];
+                    }
+                }
+                $currentLeg[] = $item;
+                $lastArrival = $itemArr;
+            }
+            if (!empty($currentLeg)) $legs[] = $currentLeg;
+        }
+
+        $totalLegsCount = count($legs);
+        $isRoundTrip = !empty($booking->flightBooking->return_date) || $totalLegsCount > 1;
+
+        $originCode = $booking->flightBooking->origin ?? 'N/A';
+        $destCode = $booking->flightBooking->destination ?? 'N/A';
+
         if (!empty($apiResItems)) {
             $firstItem = $apiResItems[0]['ReservationItem'] ?? $apiResItems[0];
             $lastItem = end($apiResItems)['ReservationItem'] ?? end($apiResItems);
@@ -838,12 +886,11 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
             if ($destCode === 'N/A') $destCode = $lastItem['ArrivalAirport']['LocationCode'] ?? $destCode;
         }
 
-        // 2. Fallback to local itinerary data if still N/A
         if (($originCode === 'N/A' || $destCode === 'N/A') && !empty($legs)) {
             $firstSeg = $legs[0][0] ?? [];
             $lastSeg = end($legs[0]) ?? [];
-            if ($originCode === 'N/A') $originCode = $firstSeg['DepartureAirportLocationCode'] ?? ($firstSeg['DepartureAirport']['LocationCode'] ?? $originCode);
-            if ($destCode === 'N/A') $destCode = $lastSeg['ArrivalAirportLocationCode'] ?? ($lastSeg['ArrivalAirport']['LocationCode'] ?? $destCode);
+            if ($originCode === 'N/A') $originCode = $firstSeg['DepartureAirportLocationCode'] ?? ($firstSeg['DepartureAirport']['LocationCode'] ?? ($firstSeg['from'] ?? $originCode));
+            if ($destCode === 'N/A') $destCode = $lastSeg['ArrivalAirportLocationCode'] ?? ($lastSeg['ArrivalAirport']['LocationCode'] ?? ($lastSeg['to'] ?? $destCode));
         }
 
         $originAirport = $originCode !== 'N/A' ? \App\Models\Airport::where('airport_code', $originCode)->first() : null;
@@ -855,23 +902,24 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
         $exactDepartureTime = null;
         $exactReturnTime = null;
 
-        // Extract departure & return datetime
-        if (!empty($apiResItems)) {
-            $firstItem = $apiResItems[0]['ReservationItem'] ?? $apiResItems[0];
-            if (isset($firstItem['DepartureDateTime'])) {
-                $exactDepartureTime = \Carbon\Carbon::parse($firstItem['DepartureDateTime']);
-            }
+        if (!empty($legs[0][0]['DepartureDateTime'])) {
+            try { $exactDepartureTime = \Carbon\Carbon::parse($legs[0][0]['DepartureDateTime']); } catch (\Exception $e) {}
+        } elseif (!empty($legs[0][0]['dep_datetime'])) {
+            try { $exactDepartureTime = \Carbon\Carbon::parse($legs[0][0]['dep_datetime']); } catch (\Exception $e) {}
         }
-        if (!$exactDepartureTime && !empty($legs[0][0]['DepartureDateTime'])) {
-            $exactDepartureTime = \Carbon\Carbon::parse($legs[0][0]['DepartureDateTime']);
+        if (!$exactDepartureTime && $booking->flightBooking && $booking->flightBooking->departure_date) {
+            $exactDepartureTime = \Carbon\Carbon::parse($booking->flightBooking->departure_date);
         }
 
-        if ($isRoundTrip) {
-            if (isset($legs[1][0]['DepartureDateTime'])) {
-                $exactReturnTime = \Carbon\Carbon::parse($legs[1][0]['DepartureDateTime']);
-            } elseif ($booking->flightBooking->return_date) {
-                $exactReturnTime = \Carbon\Carbon::parse($booking->flightBooking->return_date);
+        if ($totalLegsCount > 1 && isset($legs[1][0])) {
+            $rSeg = $legs[1][0];
+            $rDt = $rSeg['DepartureDateTime'] ?? ($rSeg['dep_datetime'] ?? null);
+            if ($rDt) {
+                try { $exactReturnTime = \Carbon\Carbon::parse($rDt); } catch (\Exception $e) {}
             }
+        }
+        if (!$exactReturnTime && $booking->flightBooking && $booking->flightBooking->return_date) {
+            $exactReturnTime = \Carbon\Carbon::parse($booking->flightBooking->return_date);
         }
     @endphp
 
@@ -1000,48 +1048,89 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
                     <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted);">{{ $booking->airline_name ?? __('Direct Flight') }}</span>
                 </div>
                 <div class="detail-card-body">
-                    {{-- Outbound Flight Summary --}}
-                    <div class="mb-3 p-3 rounded" style="background: rgba(37, 99, 235, 0.04); border: 1px solid rgba(37,99,235,0.15);">
-                        <div style="font-weight: 800; color: var(--primary-blue); font-size: 0.9rem; margin-bottom: 8px;">
-                            <i class="fas fa-plane-departure me-1"></i> {{ __('Outbound Journey') }}: {{ $originCode }} <i class="fas fa-long-arrow-alt-right mx-1"></i> {{ $destCode }}
-                        </div>
-                        <div class="info-row" style="margin-bottom: 6px;">
-                            <span class="info-label">{{ __('Origin') }}</span>
-                            <span class="info-value">{{ $originName }} ({{ $originCode }})</span>
-                        </div>
-                        <div class="info-row" style="margin-bottom: 6px;">
-                            <span class="info-label">{{ __('Destination') }}</span>
-                            <span class="info-value">{{ $destName }} ({{ $destCode }})</span>
-                        </div>
-                        <div class="info-row" style="margin-bottom: 0;">
-                            <span class="info-label">{{ __('Departure') }}</span>
-                            <span class="info-value text-dark" style="font-weight: 900;">
-                                {{ $exactDepartureTime ? $exactDepartureTime->format('d M Y, h:i A') : ($booking->flightBooking->departure_date ? $booking->flightBooking->departure_date->format('d M Y') : 'N/A') }}
-                            </span>
-                        </div>
-                    </div>
+                    @if($totalLegsCount > 2)
+                        {{-- Multi-City Legs --}}
+                        @foreach($legs as $legIdx => $legSegs)
+                            @php
+                                $lFirst = $legSegs[0] ?? [];
+                                $lLast  = end($legSegs) ?: [];
+                                $lDepCode = $lFirst['DepartureAirportLocationCode'] ?? ($lFirst['DepartureAirport']['LocationCode'] ?? ($lFirst['from'] ?? 'N/A'));
+                                $lArrCode = $lLast['ArrivalAirportLocationCode'] ?? ($lLast['ArrivalAirport']['LocationCode'] ?? ($lLast['to'] ?? 'N/A'));
+                                $lDepAir = \App\Models\Airport::where('airport_code', $lDepCode)->first();
+                                $lArrAir = \App\Models\Airport::where('airport_code', $lArrCode)->first();
+                                $lDepName = $lDepAir ? ($lDepAir->city_name . ' - ' . $lDepAir->airport_name) : $lDepCode;
+                                $lArrName = $lArrAir ? ($lArrAir->city_name . ' - ' . $lArrAir->airport_name) : $lArrCode;
 
-                    {{-- Return Flight Summary (If Round Trip) --}}
-                    @if($isRoundTrip)
-                    <div class="mb-3 p-3 rounded" style="background: rgba(245, 158, 11, 0.06); border: 1px solid rgba(245, 158, 11, 0.25);">
-                        <div style="font-weight: 800; color: #b45309; font-size: 0.9rem; margin-bottom: 8px;">
-                            <i class="fas fa-plane-arrival me-1"></i> {{ __('Return Journey') }}: {{ $destCode }} <i class="fas fa-long-arrow-alt-right mx-1"></i> {{ $originCode }}
+                                $lDepTimeRaw = $lFirst['DepartureDateTime'] ?? ($lFirst['dep_datetime'] ?? null);
+                                $lDepTime = null;
+                                if ($lDepTimeRaw) {
+                                    try { $lDepTime = \Carbon\Carbon::parse($lDepTimeRaw); } catch (\Exception $e) {}
+                                }
+                            @endphp
+                            <div class="mb-3 p-3 rounded" style="background: rgba(37, 99, 235, 0.04); border: 1px solid rgba(37,99,235,0.15);">
+                                <div style="font-weight: 800; color: var(--primary-blue); font-size: 0.9rem; margin-bottom: 8px;">
+                                    <i class="fas fa-plane-departure me-1"></i> {{ __('Flight :num', ['num' => $legIdx + 1]) }}: {{ $lDepCode }} <i class="fas fa-long-arrow-alt-right mx-1"></i> {{ $lArrCode }}
+                                </div>
+                                <div class="info-row" style="margin-bottom: 6px;">
+                                    <span class="info-label">{{ __('Origin') }}</span>
+                                    <span class="info-value">{{ $lDepName }} ({{ $lDepCode }})</span>
+                                </div>
+                                <div class="info-row" style="margin-bottom: 6px;">
+                                    <span class="info-label">{{ __('Destination') }}</span>
+                                    <span class="info-value">{{ $lArrName }} ({{ $lArrCode }})</span>
+                                </div>
+                                <div class="info-row" style="margin-bottom: 0;">
+                                    <span class="info-label">{{ __('Departure') }}</span>
+                                    <span class="info-value text-dark" style="font-weight: 900;">
+                                        {{ $lDepTime ? $lDepTime->format('d M Y, h:i A') : 'N/A' }}
+                                    </span>
+                                </div>
+                            </div>
+                        @endforeach
+                    @else
+                        {{-- Outbound Flight Summary --}}
+                        <div class="mb-3 p-3 rounded" style="background: rgba(37, 99, 235, 0.04); border: 1px solid rgba(37,99,235,0.15);">
+                            <div style="font-weight: 800; color: var(--primary-blue); font-size: 0.9rem; margin-bottom: 8px;">
+                                <i class="fas fa-plane-departure me-1"></i> {{ __('Outbound Journey') }}: {{ $originCode }} <i class="fas fa-long-arrow-alt-right mx-1"></i> {{ $destCode }}
+                            </div>
+                            <div class="info-row" style="margin-bottom: 6px;">
+                                <span class="info-label">{{ __('Origin') }}</span>
+                                <span class="info-value">{{ $originName }} ({{ $originCode }})</span>
+                            </div>
+                            <div class="info-row" style="margin-bottom: 6px;">
+                                <span class="info-label">{{ __('Destination') }}</span>
+                                <span class="info-value">{{ $destName }} ({{ $destCode }})</span>
+                            </div>
+                            <div class="info-row" style="margin-bottom: 0;">
+                                <span class="info-label">{{ __('Departure') }}</span>
+                                <span class="info-value text-dark" style="font-weight: 900;">
+                                    {{ $exactDepartureTime ? $exactDepartureTime->format('d M Y, h:i A') : ($booking->flightBooking->departure_date ? $booking->flightBooking->departure_date->format('d M Y') : 'N/A') }}
+                                </span>
+                            </div>
                         </div>
-                        <div class="info-row" style="margin-bottom: 6px;">
-                            <span class="info-label">{{ __('Origin') }}</span>
-                            <span class="info-value">{{ $destName }} ({{ $destCode }})</span>
+
+                        {{-- Return Flight Summary (If Round Trip) --}}
+                        @if($isRoundTrip)
+                        <div class="mb-3 p-3 rounded" style="background: rgba(245, 158, 11, 0.06); border: 1px solid rgba(245, 158, 11, 0.25);">
+                            <div style="font-weight: 800; color: #b45309; font-size: 0.9rem; margin-bottom: 8px;">
+                                <i class="fas fa-plane-arrival me-1"></i> {{ __('Return Journey') }}: {{ $destCode }} <i class="fas fa-long-arrow-alt-right mx-1"></i> {{ $originCode }}
+                            </div>
+                            <div class="info-row" style="margin-bottom: 6px;">
+                                <span class="info-label">{{ __('Origin') }}</span>
+                                <span class="info-value">{{ $destName }} ({{ $destCode }})</span>
+                            </div>
+                            <div class="info-row" style="margin-bottom: 6px;">
+                                <span class="info-label">{{ __('Destination') }}</span>
+                                <span class="info-value">{{ $originName }} ({{ $originCode }})</span>
+                            </div>
+                            <div class="info-row" style="margin-bottom: 0;">
+                                <span class="info-label">{{ __('Return Date') }}</span>
+                                <span class="info-value text-dark" style="font-weight: 900; color: #b45309 !important;">
+                                    {{ $exactReturnTime ? $exactReturnTime->format('d M Y, h:i A') : 'N/A' }}
+                                </span>
+                            </div>
                         </div>
-                        <div class="info-row" style="margin-bottom: 6px;">
-                            <span class="info-label">{{ __('Destination') }}</span>
-                            <span class="info-value">{{ $originName }} ({{ $originCode }})</span>
-                        </div>
-                        <div class="info-row" style="margin-bottom: 0;">
-                            <span class="info-label">{{ __('Return Date') }}</span>
-                            <span class="info-value text-dark" style="font-weight: 900; color: #b45309 !important;">
-                                {{ $exactReturnTime ? $exactReturnTime->format('d M Y, h:i A') : 'N/A' }}
-                            </span>
-                        </div>
-                    </div>
+                        @endif
                     @endif
 
                     @if($exactDepartureTime && $exactDepartureTime->isFuture())
