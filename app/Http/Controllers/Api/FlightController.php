@@ -726,9 +726,14 @@ class FlightController extends Controller
                     'contact_email' => $request->customerEmail,
                     'contact_phone' => $request->customerPhone,
                     'pnr_created_at' => now(),
-                    'ticketing_time_limit' => isset($bookingResult['TicketingTimeLimit']) 
-                        ? \Carbon\Carbon::parse($bookingResult['TicketingTimeLimit']) 
-                        : now()->addMinutes(3),
+                    'ticketing_time_limit' => (function() use ($bookingResult) {
+                        $rawTtl = isset($bookingResult['TicketingTimeLimit']) 
+                            ? \Carbon\Carbon::parse($bookingResult['TicketingTimeLimit']) 
+                            : now()->addMinutes(15);
+                        $diffM = now()->diffInMinutes($rawTtl, false);
+                        $buffer = $diffM > 10 ? 5 : ($diffM > 5 ? 2 : 0);
+                        return $rawTtl->copy()->subMinutes($buffer);
+                    })(),
                     'airline_code' => $request->airline_code ?? ($itinerary['ValidatingAirlineCode'] ?? null),
                     'airline_name' => $request->airline_name ?? ($itinerary['ValidatingAirlineCode'] ?? null),
                 ]);

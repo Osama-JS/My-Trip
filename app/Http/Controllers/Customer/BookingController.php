@@ -213,6 +213,12 @@ class BookingController extends Controller
             $booking = \App\Models\HotelBooking::where('user_id', Auth::id())
                 ->findOrFail($id);
 
+            // AUTO-FINALIZE: If paid or having supplier ref, ensure finalized and confirmed
+            if ($booking->status === 'paid' || (!empty($booking->supplier_confirmation_num) && $booking->status !== 'confirmed')) {
+                $this->finalizeHotelSupplierBooking($booking);
+                $booking->refresh();
+            }
+
             // AUTO-CANCEL: If pending and older than 10 minutes, update status in DB
             if ($booking->status === 'pending' && $booking->created_at->diffInMinutes(now()) >= 10) {
                 $booking->update(['status' => 'cancelled']);

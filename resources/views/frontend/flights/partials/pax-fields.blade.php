@@ -51,18 +51,25 @@
             </div>
         </div>
 
+        @php
+            $savedPax = session('quick_rebook_flight_passengers')[$index] ?? null;
+            $savedTitle = $savedPax['title'] ?? 'Mr';
+            $savedNat = $savedPax['nationality'] ?? 'SA';
+            $savedIssueCountry = $savedPax['passport_country'] ?? 'SA';
+        @endphp
+
         @if(\App\Models\Setting::get('allow_manual_passport_edit', '1') == '1')
         <div class="fe-form-row mt-3">
             <div class="fe-form-group" style="max-width: 200px;">
                 <label class="fe-label">{{ __('Title') }}</label>
                 <select name="passengers[{{ $index }}][title]" class="fe-input" onchange="const hEl = document.getElementById('hidden_title_{{ $index }}'); if(hEl) hEl.value = this.value;">
                     @if($type == 'adult')
-                        <option value="Mr">{{ __('Mr') }}</option>
-                        <option value="Mrs">{{ __('Mrs') }}</option>
-                        <option value="Ms">{{ __('Ms') }}</option>
+                        <option value="Mr" {{ old("passengers.{$index}.title", $savedTitle) == 'Mr' ? 'selected' : '' }}>{{ __('Mr') }}</option>
+                        <option value="Mrs" {{ old("passengers.{$index}.title", $savedTitle) == 'Mrs' ? 'selected' : '' }}>{{ __('Mrs') }}</option>
+                        <option value="Ms" {{ old("passengers.{$index}.title", $savedTitle) == 'Ms' ? 'selected' : '' }}>{{ __('Ms') }}</option>
                     @else
-                        <option value="Master">{{ __('Master') }}</option>
-                        <option value="Miss">{{ __('Miss') }}</option>
+                        <option value="Master" {{ old("passengers.{$index}.title", $savedTitle) == 'Master' ? 'selected' : '' }}>{{ __('Master') }}</option>
+                        <option value="Miss" {{ old("passengers.{$index}.title", $savedTitle) == 'Miss' ? 'selected' : '' }}>{{ __('Miss') }}</option>
                     @endif
                 </select>
             </div>
@@ -71,29 +78,29 @@
         <div class="fe-form-row three-cols mt-2">
             <div class="fe-form-group">
                 <label class="fe-label">{{ __('First Name') }}</label>
-                <input type="text" name="passengers[{{ $index }}][first_name]" class="fe-input" required placeholder="{{ __('First name') }}">
+                <input type="text" name="passengers[{{ $index }}][first_name]" class="fe-input" required value="{{ old("passengers.{$index}.first_name", $savedPax['first_name'] ?? '') }}" placeholder="{{ __('First name') }}">
             </div>
             <div class="fe-form-group">
                 <label class="fe-label">{{ __('Last Name') }}</label>
-                <input type="text" name="passengers[{{ $index }}][last_name]" class="fe-input" required placeholder="{{ __('Last name') }}">
+                <input type="text" name="passengers[{{ $index }}][last_name]" class="fe-input" required value="{{ old("passengers.{$index}.last_name", $savedPax['last_name'] ?? '') }}" placeholder="{{ __('Last name') }}">
             </div>
             <div class="fe-form-group">
                 <label class="fe-label">{{ __('Date of Birth') }}</label>
-                <input type="text" name="passengers[{{ $index }}][dob]" class="fe-input dob-picker-{{ $type }}" required readonly placeholder="YYYY-MM-DD">
+                <input type="text" name="passengers[{{ $index }}][dob]" class="fe-input dob-picker-{{ $type }}" required readonly value="{{ old("passengers.{$index}.dob", $savedPax['dob'] ?? '') }}" placeholder="YYYY-MM-DD">
             </div>
         </div>
 
         <div class="fe-form-row three-cols">
             <div class="fe-form-group">
                 <label class="fe-label">{{ $isPassport ? __('Passport Number') : __('Passport / ID Number') }}</label>
-                <input type="text" name="passengers[{{ $index }}][passport_no]" class="fe-input" required placeholder="A1234567">
+                <input type="text" name="passengers[{{ $index }}][passport_no]" class="fe-input" required value="{{ old("passengers.{$index}.passport_no", $savedPax['passport_number'] ?? '') }}" placeholder="A1234567">
             </div>
             <div class="fe-form-group">
                 <label class="fe-label">{{ __('Nationality') }}</label>
                 <select name="passengers[{{ $index }}][nationality]" class="fe-input fe-select2" required>
                     <option value=""></option>
                     @foreach($countries as $country)
-                        <option value="{{ $country->iso }}" {{ $country->iso == 'SA' ? 'selected' : '' }}>
+                        <option value="{{ $country->iso }}" {{ old("passengers.{$index}.nationality", $savedNat) == $country->iso ? 'selected' : '' }}>
                             {{ $country->name }} ({{ $country->iso }})
                         </option>
                     @endforeach
@@ -104,7 +111,7 @@
                 <select name="passengers[{{ $index }}][passport_issue_country]" class="fe-input fe-select2" {{ $isPassport ? 'required' : '' }}>
                     <option value=""></option>
                     @foreach($countries as $country)
-                        <option value="{{ $country->iso }}" {{ $country->iso == 'SA' ? 'selected' : '' }}>
+                        <option value="{{ $country->iso }}" {{ old("passengers.{$index}.passport_issue_country", $savedIssueCountry) == $country->iso ? 'selected' : '' }}>
                             {{ $country->name }} ({{ $country->iso }})
                         </option>
                     @endforeach
@@ -115,7 +122,7 @@
         <div class="fe-form-row two-cols">
             <div class="fe-form-group">
                 <label class="fe-label">{{ $isPassport ? __('Passport Expiry Date') : __('Document Expiry Date') }}</label>
-                <input type="text" name="passengers[{{ $index }}][passport_expiry_date]" class="fe-input expiry-picker" {{ $isPassport ? 'required' : '' }} readonly placeholder="YYYY-MM-DD">
+                <input type="text" name="passengers[{{ $index }}][passport_expiry_date]" class="fe-input expiry-picker" {{ $isPassport ? 'required' : '' }} readonly value="{{ old("passengers.{$index}.passport_expiry_date", $savedPax['passport_expiry'] ?? '') }}" placeholder="YYYY-MM-DD">
             </div>
             <div class="fe-form-group" style="{{ $isPassport ? '' : 'display:none;' }}">
                 <label class="fe-label">

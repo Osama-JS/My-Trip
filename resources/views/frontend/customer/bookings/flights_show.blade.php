@@ -1399,16 +1399,27 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
                             @if($isExpired)
                                 <div class="expired-msg-sidebar">
                                     <i class="fas fa-exclamation-triangle"></i>
-                                    <span>{{ __('This PNR reservation has expired.') }}</span>
+                                    <span>{{ __('انتهت مهلة الدفع الخاصة بهذا الحجز.') }}</span>
                                 </div>
+                                <a href="{{ route('customer.bookings.flights.quick-rebook', $booking->id) }}" class="action-btn action-btn-primary" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+                                    <i class="fas fa-sync-alt"></i> {{ __('إعادة الحجز السريع') }}
+                                </a>
                                 <a href="{{ route('flights') }}" class="action-btn action-btn-outline">
-                                    <i class="fas fa-search"></i> {{ __('Search Flights') }}
+                                    <i class="fas fa-search"></i> {{ __('بحث رحلة جديدة') }}
                                 </a>
                             @else
                                 <a href="{{ route('flights.payment.select', $booking->id) }}" class="action-btn action-btn-primary" id="payButton">
                                     <i class="fas fa-credit-card"></i> {{ __('Pay Now') }}
                                 </a>
                             @endif
+                        @elseif($booking->status === 'cancelled')
+                            <div class="expired-msg-sidebar">
+                                <i class="fas fa-times-circle"></i>
+                                <span>{{ __('هذا الحجز ملغي.') }}</span>
+                            </div>
+                            <a href="{{ route('customer.bookings.flights.quick-rebook', $booking->id) }}" class="action-btn action-btn-primary" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+                                <i class="fas fa-sync-alt"></i> {{ __('إعادة الحجز السريع') }}
+                            </a>
                         @elseif($booking->status === 'confirmed')
                             <a href="{{ route('customer.bookings.invoice', ['id' => $booking->id, 'type' => 'flight']) }}" class="action-btn action-btn-success">
                                 <i class="fas fa-file-invoice-dollar"></i> {{ __('Download Voucher') }}

@@ -614,16 +614,55 @@ class PaymentWebController extends Controller
         $traveloproService = app(\App\Services\TraveloproService::class);
         $result = $traveloproService->orderTicket($booking->booking_reference);
 
-        if (isset($result['status']) && $result['status'] === 'error') {
-            Log::error("Auto ticket issuance FAILED for Booking #{$booking->id}: " . ($result['message'] ?? 'Unknown error'));
-            // Keep as 'paid' so admin can retry manually
+        $ticketResult = $result['OrderTicketResponse']['OrderTicketResult']
+                     ?? $result['TicketOrderResponse']['TicketOrderResult']
+                     ?? null;
+
+        $hasError = (isset($result['status']) && $result['status'] === 'error')
+                 || isset($result['Errors'])
+                 || (isset($result['BookFlightResponse']['BookFlightResult']['Success']) && $result['BookFlightResponse']['BookFlightResult']['Success'] === 'false');
+
+        if ($hasError || (!$ticketResult && empty($result['eTicketNumbers']))) {
+            $errorMsg = $result['message'] ?? ($result['Errors']['Error']['ErrorMessage'] ?? 'Failed to issue ticket with airline');
+            Log::error("Auto ticket issuance FAILED for Flight Booking #{$booking->id}: {$errorMsg}");
+
+            // Instant Auto-Refund to User Wallet
+            if ($booking->user) {
+                try {
+                    $walletService = app(\App\Services\WalletService::class);
+                    $wallet = $walletService->getOrCreateWallet($booking->user_id);
+                    $refundAmount = (float)($booking->total_amount ?? 0);
+                    if ($refundAmount > 0) {
+                        $walletService->credit(
+                            $wallet->id,
+                            $refundAmount,
+                            __('استرداد فوري لحجز طيران رقم #:ref لتعذر إصدار التذكرة اللحظي من شركة الطيران', ['ref' => $booking->booking_reference ?: $booking->id]),
+                            'booking_refund',
+                            $booking->id
+                        );
+                        $booking->update(['status' => 'cancelled', 'ticket_status' => 'refunded_to_wallet']);
+                        Log::info("Booking #{$booking->id} amount ({$refundAmount} SAR) auto-refunded to wallet #{$wallet->id}");
+
+                        $this->notificationService->sendToUser(
+                            $booking->user,
+                            'wallet_refund',
+                            __('Instant Wallet Refund'),
+                            __('Due to airline seat unavailability, :amount SAR has been refunded to your wallet for Booking #:ref.', [
+                                'amount' => number_format($refundAmount, 2),
+                                'ref' => $booking->booking_reference ?: $booking->id
+                            ]),
+                            ['booking_id' => $booking->id, 'type' => 'flight', 'action' => 'wallet']
+                        );
+                        return;
+                    }
+                } catch (\Exception $e) {
+                    Log::error("Wallet auto-refund failed for Booking #{$booking->id}: " . $e->getMessage());
+                }
+            }
             return;
         }
 
         // ── Parse eTicket numbers from Travelopro response ────────────────
-        $ticketResult = $result['OrderTicketResponse']['OrderTicketResult']
-                     ?? $result['TicketOrderResponse']['TicketOrderResult']
-                     ?? null;
 
         $eTickets = [];
         if ($ticketResult) {

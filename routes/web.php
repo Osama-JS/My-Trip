@@ -480,6 +480,8 @@ Route::middleware(['auth', 'isCustomer'])->prefix('customer')->name('customer.')
     Route::post('/bookings/{id}/sync-status', [CustomerBookingController::class, 'syncHotelBookingStatus'])->name('bookings.hotels.sync-status');
     Route::get('/bookings/{id}/invoice', [CustomerBookingController::class, 'downloadInvoice'])->name('bookings.invoice');
     Route::get('/bookings/hotels/{id}/voucher', [CustomerBookingController::class, 'downloadHotelVoucher'])->name('bookings.hotels.voucher');
+    Route::get('/bookings/flights/{id}/quick-rebook', [\App\Http\Controllers\FrontendController::class, 'quickRebookFlight'])->name('bookings.flights.quick-rebook');
+    Route::get('/bookings/hotels/{id}/quick-rebook', [\App\Http\Controllers\FrontendController::class, 'quickRebookHotel'])->name('bookings.hotels.quick-rebook');
 
     // Favorites
     Route::get('/favorites', [FavoriteController::class, 'index'])->name('favorites.index');

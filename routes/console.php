@@ -13,3 +13,6 @@ Schedule::command('app:sync-hotel-cities')->weeklyOn(0, '04:00');
 
 // ✅ P2: Poll Travelopro post-ticket status every 5 minutes for pending bookings
 Schedule::command('travelopro:poll-status --limit=30')->everyFiveMinutes();
+
+// ✅ P1: Auto-cancel expired pending flight and hotel bookings & send alerts
+Schedule::command('bookings:cancel-expired')->everyMinute();

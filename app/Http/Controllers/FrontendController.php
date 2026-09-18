@@ -951,9 +951,14 @@ class FrontendController extends Controller
                 'airline_code' => $request->get('airline') ?? ($bookingResult['Itineraries']['Itinerary'][0]['ValidatingAirlineCode'] ?? null),
                 'airline_name' => $request->get('airline') ?? ($bookingResult['Itineraries']['Itinerary'][0]['ValidatingAirlineCode'] ?? null),
                 'pnr_created_at' => now(),
-                'ticketing_time_limit' => isset($bookingResult['TicketingTimeLimit']) 
-                    ? \Carbon\Carbon::parse($bookingResult['TicketingTimeLimit']) 
-                    : now()->addMinutes(3),
+                'ticketing_time_limit' => (function() use ($bookingResult) {
+                    $rawTtl = isset($bookingResult['TicketingTimeLimit']) 
+                        ? \Carbon\Carbon::parse($bookingResult['TicketingTimeLimit']) 
+                        : now()->addMinutes(15);
+                    $diffM = now()->diffInMinutes($rawTtl, false);
+                    $buffer = $diffM > 10 ? 5 : ($diffM > 5 ? 2 : 0);
+                    return $rawTtl->copy()->subMinutes($buffer);
+                })(),
             ]);
 
             // Link API Log
@@ -1479,11 +1484,121 @@ class FrontendController extends Controller
     }
 
     /**
-     * Sync Airports from Travelopro
+     * 1-Click Quick Re-Book for Flights
      */
-    public function syncAirports()
+    public function quickRebookFlight($id)
     {
-        $result = $this->traveloproService->syncAirports();
-        return response()->json($result);
+        $booking = \App\Models\Booking::with(['flightBooking', 'passengers'])->where('user_id', auth()->id())->findOrFail($id);
+        $fb = $booking->flightBooking;
+
+        // 1. Save passengers and contact in session for pre-filling on the new booking form
+        $paxData = [];
+        if ($booking->passengers) {
+            foreach ($booking->passengers as $pax) {
+                $paxData[] = [
+                    'type'             => $pax->passenger_type ?? 'adult',
+                    'title'            => $pax->title ?? 'Mr',
+                    'first_name'       => $pax->first_name,
+                    'last_name'        => $pax->last_name,
+                    'dob'              => $pax->dob ? \Carbon\Carbon::parse($pax->dob)->format('Y-m-d') : null,
+                    'nationality'      => $pax->nationality ?? 'SA',
+                    'passport_number'  => $pax->passport_number,
+                    'passport_expiry'  => $pax->passport_expiry ? \Carbon\Carbon::parse($pax->passport_expiry)->format('Y-m-d') : null,
+                    'passport_country' => $pax->passport_issue_country ?? 'SA',
+                ];
+            }
+        }
+
+        session([
+            'quick_rebook_flight_passengers' => $paxData,
+            'quick_rebook_contact_email'     => $booking->contact_email,
+            'quick_rebook_contact_phone'     => $booking->contact_phone,
+        ]);
+
+        // 2. Determine trip search parameters
+        $origin = $fb->origin ?? 'RUH';
+        $dest = $fb->destination ?? 'JED';
+        $depDate = $fb->departure_date ? \Carbon\Carbon::parse($fb->departure_date)->format('Y-m-d') : now()->addDays(2)->format('Y-m-d');
+        if (\Carbon\Carbon::parse($depDate)->isPast()) {
+            $depDate = now()->addDays(2)->format('Y-m-d');
+        }
+
+        $retDate = null;
+        if (!empty($fb->return_date)) {
+            $retDate = \Carbon\Carbon::parse($fb->return_date)->format('Y-m-d');
+            if (\Carbon\Carbon::parse($retDate)->isPast()) {
+                $retDate = \Carbon\Carbon::parse($depDate)->addDays(5)->format('Y-m-d');
+            }
+        }
+
+        $adults = $booking->passengers ? $booking->passengers->where('passenger_type', 'adult')->count() : 1;
+        $children = $booking->passengers ? $booking->passengers->where('passenger_type', 'child')->count() : 0;
+        $infants = $booking->passengers ? $booking->passengers->where('passenger_type', 'infant')->count() : 0;
+        $cabinClass = $fb->flight_class ?? 'Economy';
+
+        $searchParams = [
+            'trip_type'   => !empty($retDate) ? 'round' : 'oneway',
+            'origin'      => $origin,
+            'destination' => $dest,
+            'depart_date' => $depDate,
+            'adults'      => max(1, $adults),
+            'children'    => $children,
+            'infants'     => $infants,
+            'class'       => $cabinClass,
+        ];
+        if (!empty($retDate)) {
+            $searchParams['return_date'] = $retDate;
+        }
+
+        return redirect()->route('flights.search', $searchParams)
+            ->with('success', __('تم تجهيز بيانات بحث الرحلة والمسافرين تلقائياً لإعادة الحجز السريع.'));
+    }
+
+    /**
+     * 1-Click Quick Re-Book for Hotels
+     */
+    public function quickRebookHotel($id)
+    {
+        $booking = \App\Models\HotelBooking::with(['passengers'])->where('user_id', auth()->id())->findOrFail($id);
+
+        $guestsData = [];
+        if ($booking->passengers) {
+            foreach ($booking->passengers as $pax) {
+                $guestsData[] = [
+                    'type'       => $pax->passenger_type ?? 'adult',
+                    'title'      => $pax->title ?? 'Mr',
+                    'first_name' => $pax->first_name,
+                    'last_name'  => $pax->last_name,
+                    'email'      => $pax->email,
+                    'phone'      => $pax->phone,
+                ];
+            }
+        }
+
+        session([
+            'quick_rebook_hotel_guests' => $guestsData,
+        ]);
+
+        $checkIn = $booking->check_in ? \Carbon\Carbon::parse($booking->check_in)->format('Y-m-d') : now()->addDays(2)->format('Y-m-d');
+        if (\Carbon\Carbon::parse($checkIn)->isPast()) {
+            $checkIn = now()->addDays(2)->format('Y-m-d');
+        }
+
+        $checkOut = $booking->check_out ? \Carbon\Carbon::parse($booking->check_out)->format('Y-m-d') : \Carbon\Carbon::parse($checkIn)->addDays(3)->format('Y-m-d');
+        if (\Carbon\Carbon::parse($checkOut)->isPast()) {
+            $checkOut = \Carbon\Carbon::parse($checkIn)->addDays(3)->format('Y-m-d');
+        }
+
+        $searchParams = [
+            'city_name' => $booking->city_name,
+            'checkIn'   => $checkIn,
+            'checkOut'  => $checkOut,
+            'rooms'     => $booking->rooms_count ?? 1,
+            'adults'    => $booking->adults_count ?? 1,
+            'children'  => $booking->children_count ?? 0,
+        ];
+
+        return redirect()->route('hotels.search', $searchParams)
+            ->with('success', __('تم تجهيز بيانات بحث الفندق والضيوف تلقائياً لإعادة الحجز السريع.'));
     }
 }

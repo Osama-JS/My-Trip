@@ -690,7 +690,7 @@ body.dark-mode .callout-danger {
     @php
         // Supplier confirmation visual confirm logic
         $displayStatus = $booking->status;
-        if($booking->status === 'pending' && !empty($booking->supplier_confirmation_num)) {
+        if (!empty($booking->supplier_confirmation_num) || $booking->status === 'confirmed') {
             $displayStatus = 'confirmed';
         }
 
@@ -979,7 +979,13 @@ body.dark-mode .callout-danger {
                             </a>
                         @endif
 
-                        @if(!$isExpired)
+                        @if($isExpired || $booking->status === 'cancelled')
+                            <a href="{{ route('customer.bookings.hotels.quick-rebook', $booking->id) }}" class="action-btn action-btn-primary" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+                                <i class="fas fa-sync-alt"></i> {{ __('إعادة الحجز السريع') }}
+                            </a>
+                        @endif
+
+                        @if(!$isExpired && $booking->status !== 'cancelled')
                             <form id="sync-form" action="{{ route('customer.bookings.hotels.sync-status', $booking->id) }}" method="POST" style="margin: 0;">
                                 @csrf
                                 <button type="submit" class="action-btn action-btn-outline" style="width: 100%;">
