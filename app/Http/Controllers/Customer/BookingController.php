@@ -173,6 +173,21 @@ class BookingController extends Controller
                 ->where('user_id', Auth::id())
                 ->findOrFail($id);
 
+            // AUTO-CANCEL: If pending and expired (passed ticketing_time_limit or older than 15 minutes)
+            if ($booking->status === 'pending') {
+                $isExpired = false;
+                if ($booking->ticketing_time_limit && now()->greaterThan($booking->ticketing_time_limit)) {
+                    $isExpired = true;
+                } elseif ($booking->created_at && $booking->created_at->diffInMinutes(now()) >= 15) {
+                    $isExpired = true;
+                }
+
+                if ($isExpired) {
+                    $booking->update(['status' => 'cancelled']);
+                    Log::info("FlightBooking #{$id} auto-cancelled due to expiry.");
+                }
+            }
+
             $apiTripDetails = null;
             // Fetch e_ticket details from API if the booking has a reference
             if ($booking->booking_reference) {

@@ -78,16 +78,23 @@ class CancelExpiredBookings extends Command
             }
         }
 
-        // 2. Cancellation: Pending flights that have reached or passed their deadline
+        // 2. Cancellation: Pending flights that have reached deadline OR are older than 15 minutes (fallback for null TTL)
         $expiredFlights = Booking::with('user')
             ->where('status', 'pending')
-            ->whereNotNull('ticketing_time_limit')
-            ->where('ticketing_time_limit', '<=', now())
+            ->where(function($q) {
+                $q->where(function($sub) {
+                    $sub->whereNotNull('ticketing_time_limit')
+                        ->where('ticketing_time_limit', '<=', now());
+                })->orWhere(function($sub) {
+                    $sub->whereNull('ticketing_time_limit')
+                        ->where('created_at', '<=', now()->subMinutes(15));
+                })->orWhere('created_at', '<=', now()->subHours(2));
+            })
             ->get();
 
         foreach ($expiredFlights as $booking) {
             $booking->update(['status' => 'cancelled']);
-            Log::info("Flight Booking #{$booking->id} (Ref: {$booking->booking_reference}) AUTO-CANCELLED due to ticketing time limit expiration.");
+            Log::info("Flight Booking #{$booking->id} (Ref: {$booking->booking_reference}) AUTO-CANCELLED due to expiration.");
 
             if ($booking->user) {
                 $ref = $booking->booking_reference ?: "#{$booking->id}";
