@@ -630,16 +630,21 @@ class PaymentWebController extends Controller
 
         try {
             $tripDetails = $traveloproService->getTripDetails($booking->booking_reference, $booking->id);
-            $tdResult = $tripDetails['TripDetailsResponse']['TripDetailsResult'] ?? [];
-            $tdStatus = strtolower($tdResult['TicketStatus'] ?? ($tdResult['Status'] ?? ''));
-            if (in_array($tdStatus, ['ticketed', 'confirmed', 'booked', 'success'])) {
+            $tdResult = $tripDetails['TripDetailsResponse']['TripDetailsResult'] 
+                     ?? $tripDetails['AirTripDetailsResponse']['AirTripDetailsResult']
+                     ?? $tripDetails['TripDetailsResult']
+                     ?? $tripDetails;
+
+            $tdStatus = strtolower(strval($tdResult['TicketStatus'] ?? ($tdResult['Status'] ?? ($tdResult['BookingStatus'] ?? ''))));
+            if (in_array($tdStatus, ['ticketed', 'confirmed', 'booked', 'success', 'ok', 'active']) || !empty($tdResult['TravelItinerary']['ReservationItems'])) {
                 $isTicketedInTripDetails = true;
             }
 
             // Extract airline PNR
             $pnrFromTripDetails = $tdResult['TravelItinerary']['ItineraryRef']['AirReservationID'] 
                                ?? $tdResult['TravelItinerary']['UniqueID'] 
-                               ?? ($tdResult['ReservationItems'][0]['ReservationItem']['AirlinePNR'] ?? null);
+                               ?? ($tdResult['ReservationItems'][0]['ReservationItem']['AirlinePNR'] 
+                               ?? ($tdResult['TravelItinerary']['ReservationItems'][0]['ReservationItem']['AirlinePNR'] ?? null));
 
             // Extract tickets recursively if available
             array_walk_recursive($tripDetails, function($value, $key) use (&$eTickets) {
@@ -649,6 +654,11 @@ class PaymentWebController extends Controller
             });
         } catch (\Exception $e) {
             Log::warning("Could not fetch TripDetails during autoIssueFlightTicket for Booking #{$booking->id}: " . $e->getMessage());
+        }
+
+        // Check if passengers already have e-tickets or ticket numbers in DB
+        if (!$isTicketedInTripDetails && ($booking->passengers()->whereNotNull('e_ticket_no')->exists() || !empty($booking->ticket_numbers))) {
+            $isTicketedInTripDetails = true;
         }
 
         if ($hasError && !$isTicketedInTripDetails && empty($result['eTicketNumbers'])) {
