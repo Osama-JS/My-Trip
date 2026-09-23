@@ -612,7 +612,7 @@ class PaymentWebController extends Controller
         Log::info("Auto-issuing ticket for Flight Booking #{$booking->id}, UniqueID: {$booking->booking_reference}");
 
         $traveloproService = app(\App\Services\TraveloproService::class);
-        $result = $traveloproService->orderTicket($booking->booking_reference);
+        $result = $traveloproService->orderTicket($booking->booking_reference, $booking->id);
 
         $ticketResult = $result['OrderTicketResponse']['OrderTicketResult']
                      ?? $result['TicketOrderResponse']['TicketOrderResult']
@@ -622,7 +622,36 @@ class PaymentWebController extends Controller
                  || isset($result['Errors'])
                  || (isset($result['BookFlightResponse']['BookFlightResult']['Success']) && $result['BookFlightResponse']['BookFlightResult']['Success'] === 'false');
 
-        if ($hasError || (!$ticketResult && empty($result['eTicketNumbers']))) {
+        // Check if TripDetails shows it's already ticketed or has PNR
+        $tripDetails = null;
+        $isTicketedInTripDetails = false;
+        $pnrFromTripDetails = null;
+        $eTickets = [];
+
+        try {
+            $tripDetails = $traveloproService->getTripDetails($booking->booking_reference, $booking->id);
+            $tdResult = $tripDetails['TripDetailsResponse']['TripDetailsResult'] ?? [];
+            $tdStatus = strtolower($tdResult['TicketStatus'] ?? ($tdResult['Status'] ?? ''));
+            if (in_array($tdStatus, ['ticketed', 'confirmed', 'booked', 'success'])) {
+                $isTicketedInTripDetails = true;
+            }
+
+            // Extract airline PNR
+            $pnrFromTripDetails = $tdResult['TravelItinerary']['ItineraryRef']['AirReservationID'] 
+                               ?? $tdResult['TravelItinerary']['UniqueID'] 
+                               ?? ($tdResult['ReservationItems'][0]['ReservationItem']['AirlinePNR'] ?? null);
+
+            // Extract tickets recursively if available
+            array_walk_recursive($tripDetails, function($value, $key) use (&$eTickets) {
+                if (in_array(strtolower($key), ['eticketnumber', 'ticketnumber', 'e_ticket', 'ticket_no', 'ticketno']) && !empty($value) && is_string($value)) {
+                    $eTickets[] = $value;
+                }
+            });
+        } catch (\Exception $e) {
+            Log::warning("Could not fetch TripDetails during autoIssueFlightTicket for Booking #{$booking->id}: " . $e->getMessage());
+        }
+
+        if ($hasError && !$isTicketedInTripDetails && empty($result['eTicketNumbers'])) {
             $errorMsg = $result['message'] ?? ($result['Errors']['Error']['ErrorMessage'] ?? 'Failed to issue ticket with airline');
             Log::error("Auto ticket issuance FAILED for Flight Booking #{$booking->id}: {$errorMsg}");
 
@@ -653,7 +682,6 @@ class PaymentWebController extends Controller
                             ]),
                             ['booking_id' => $booking->id, 'type' => 'flight', 'action' => 'wallet']
                         );
-                        return;
                     }
                 } catch (\Exception $e) {
                     Log::error("Wallet auto-refund failed for Booking #{$booking->id}: " . $e->getMessage());
@@ -662,25 +690,28 @@ class PaymentWebController extends Controller
             return;
         }
 
-        // ── Parse eTicket numbers from Travelopro response ────────────────
-
-        $eTickets = [];
+        // Parse eTicket numbers from Travelopro OrderTicket response if not already collected
         if ($ticketResult) {
-            // Travelopro returns eTickets under various keys; handle all formats
             $rawTickets = $ticketResult['eTicketNumbers']
                        ?? $ticketResult['ETicketNumbers']
                        ?? $ticketResult['TicketNumbers']
                        ?? [];
 
-            $eTickets = is_array($rawTickets) ? array_values($rawTickets) : [$rawTickets];
+            $parsedRaw = is_array($rawTickets) ? array_values($rawTickets) : [$rawTickets];
+            $eTickets = array_merge($eTickets, $parsedRaw);
         }
+        $eTickets = array_values(array_unique(array_filter($eTickets)));
 
         // ── Update main booking record ────────────────────────────────────
-        $booking->update([
+        $updateData = [
             'status'         => 'confirmed',
             'ticket_status'  => 'ticketed',
             'ticket_numbers' => $eTickets,
-        ]);
+        ];
+        if (!empty($pnrFromTripDetails) && empty($booking->pnr_code)) {
+            $updateData['pnr_code'] = $pnrFromTripDetails;
+        }
+        $booking->update($updateData);
 
         Log::info("Flight Booking #{$booking->id} CONFIRMED. eTickets: " . implode(', ', $eTickets));
 
