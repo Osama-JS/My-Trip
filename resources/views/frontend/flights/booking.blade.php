@@ -28,7 +28,7 @@
     @endif
 
     {{-- ═══ PAGE TIME LIMIT / SESSION COUNTDOWN BANNER ═══ --}}
-    <div class="fe-session-timer-card" id="flightPageTimeLimit" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #fff; padding: 16px 24px; border-radius: 18px; margin-bottom: 25px; box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.2); border: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+    <div class="fe-session-timer-card" id="flightPageTimeLimit" data-remaining-seconds="900" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #fff; padding: 16px 24px; border-radius: 18px; margin-bottom: 25px; box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.2); border: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
         <div style="display: flex; align-items: center; gap: 15px;">
             <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; display: flex; align-items: center; justify-content: center; font-size: 20px;">
                 <i class="fas fa-hourglass-half"></i>
@@ -49,6 +49,77 @@
             </div>
         </div>
     </div>
+
+    <script>
+    (function initFlightBookingPageTimer() {
+        function startTimer() {
+            const timerBox = document.getElementById('flightPageTimeLimit');
+            const timerDisplay = document.getElementById('flightPageTimerDisplay');
+            if (!timerBox || !timerDisplay) return;
+
+            const storageKey = 'flight_active_timer_start';
+            const totalDuration = 15 * 60; // 15 minutes (900s)
+            let sessionStart = sessionStorage.getItem(storageKey);
+
+            if (!sessionStart) {
+                sessionStart = Date.now();
+                sessionStorage.setItem(storageKey, sessionStart);
+            }
+
+            let elapsed = Math.floor((Date.now() - parseInt(sessionStart, 10)) / 1000);
+            let remainingSeconds = Math.max(0, totalDuration - elapsed);
+
+            function tick() {
+                if (remainingSeconds <= 0) {
+                    if (window.__flightBookingInterval) clearInterval(window.__flightBookingInterval);
+                    timerDisplay.textContent = '00:00';
+                    timerDisplay.style.background = 'rgba(239, 68, 68, 0.4)';
+                    timerDisplay.style.color = '#fff';
+
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: '{{ app()->getLocale() == "ar" ? "انتهت مهلة الحجز" : "Booking Session Expired" }}',
+                            text: '{{ app()->getLocale() == "ar" ? "انتهت مهلة الـ 15 دقيقة المحددة لحجز هذه المقاعد. يرجى إعادة البحث لاختيار أحدث الأسعار والمقاعد المتاحة." : "The 15-minute hold period for these flight seats has expired. Please search again." }}',
+                            confirmButtonText: '{{ app()->getLocale() == "ar" ? "إعادة البحث" : "Search Again" }}',
+                            allowOutsideClick: false,
+                            allowEscapeKey: false,
+                        }).then(() => {
+                            sessionStorage.removeItem(storageKey);
+                            window.location.href = "{{ route('flights') }}";
+                        });
+                    } else {
+                        alert('{{ app()->getLocale() == "ar" ? "انتهت مهلة الحجز. يرجى إعادة البحث." : "Booking session expired. Please search again." }}');
+                        sessionStorage.removeItem(storageKey);
+                        window.location.href = "{{ route('flights') }}";
+                    }
+                    return;
+                }
+
+                const minutes = Math.floor(remainingSeconds / 60);
+                const seconds = remainingSeconds % 60;
+                timerDisplay.textContent = (minutes < 10 ? '0' + minutes : minutes) + ':' + (seconds < 10 ? '0' + seconds : seconds);
+
+                if (remainingSeconds < 60) {
+                    timerDisplay.style.background = 'rgba(239, 68, 68, 0.4)';
+                    timerDisplay.style.color = '#fff';
+                }
+
+                remainingSeconds--;
+            }
+
+            tick();
+            if (window.__flightBookingInterval) clearInterval(window.__flightBookingInterval);
+            window.__flightBookingInterval = setInterval(tick, 1000);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', startTimer);
+        } else {
+            startTimer();
+        }
+    })();
+    </script>
 
     {{-- ═══ LUXURY GUEST AUTHENTICATION BANNER ═══ --}}
     @guest

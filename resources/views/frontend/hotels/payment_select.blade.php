@@ -486,9 +486,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const timerDisplay = document.getElementById('hotelPaymentTimerDisplay');
     if (!timerBox || !timerDisplay) return;
 
-    let remainingSeconds = parseInt(timerBox.getAttribute('data-remaining-seconds'), 10);
-    if (isNaN(remainingSeconds)) {
-        remainingSeconds = 10 * 60;
+    let serverRemaining = parseInt(timerBox.getAttribute('data-remaining-seconds'), 10);
+    if (isNaN(serverRemaining)) {
+        serverRemaining = 10 * 60;
+    }
+
+    const storageKey = 'hotel_active_timer_start';
+    let sessionStart = sessionStorage.getItem(storageKey);
+    let remainingSeconds = serverRemaining;
+
+    if (sessionStart) {
+        let elapsed = Math.floor((Date.now() - parseInt(sessionStart, 10)) / 1000);
+        if (elapsed >= 0 && elapsed < (10 * 60)) {
+            remainingSeconds = Math.min(serverRemaining, (10 * 60) - elapsed);
+        }
+    } else {
+        sessionStorage.setItem(storageKey, Date.now() - ((10 * 60 - serverRemaining) * 1000));
     }
 
     let timerInterval = null;
@@ -509,10 +522,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     allowOutsideClick: false,
                     allowEscapeKey: false,
                 }).then(() => {
+                    sessionStorage.removeItem(storageKey);
                     window.location.href = "{{ route('hotels') }}";
                 });
             } else {
                 alert('{{ app()->getLocale() == "ar" ? "انتهت مهلة الدفع. يرجى إعادة البحث." : "Payment session expired. Please search again." }}');
+                sessionStorage.removeItem(storageKey);
                 window.location.href = "{{ route('hotels') }}";
             }
             return;

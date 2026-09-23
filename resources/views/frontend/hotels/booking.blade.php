@@ -36,6 +36,100 @@
         $currLocale = app()->getLocale();
     @endphp
 
+    {{-- ═══ PAGE TIME LIMIT / SESSION COUNTDOWN BANNER ═══ --}}
+    <div class="fe-session-timer-card" id="hotelPageTimeLimit" data-remaining-seconds="600" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #fff; padding: 16px 24px; border-radius: 18px; margin-bottom: 25px; box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.2); border: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                <i class="fas fa-hourglass-half"></i>
+            </div>
+            <div>
+                <div style="font-size: 14px; font-weight: 800; color: #f8fafc; margin-bottom: 2px;">
+                    {{ app()->getLocale() == 'ar' ? 'مهلة الجلسة لضمان السعر وتوافر الغرف' : 'Page Time Limit: Price & Room Guarantee' }}
+                </div>
+                <div style="font-size: 12.5px; color: #94a3b8;">
+                    {{ app()->getLocale() == 'ar' ? 'الأسعار وتوافر الغرف مضمونة طوال فترة العداد التنازلي' : 'Room rates and availability are held until the timer expires' }}
+                </div>
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 12px; color: #cbd5e1; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">{{ app()->getLocale() == 'ar' ? 'الوقت المتبقي' : 'Time Remaining' }}:</span>
+            <div style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; font-family: monospace; font-size: 1.3rem; font-weight: 900; padding: 6px 16px; border-radius: 10px; letter-spacing: 1px;" id="hotelPageTimerDisplay">
+                10:00
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function initHotelBookingPageTimer() {
+        function startTimer() {
+            const timerBox = document.getElementById('hotelPageTimeLimit');
+            const timerDisplay = document.getElementById('hotelPageTimerDisplay');
+            if (!timerBox || !timerDisplay) return;
+
+            const storageKey = 'hotel_active_timer_start';
+            const totalDuration = 10 * 60; // 10 minutes (600s)
+            let sessionStart = sessionStorage.getItem(storageKey);
+
+            if (!sessionStart) {
+                sessionStart = Date.now();
+                sessionStorage.setItem(storageKey, sessionStart);
+            }
+
+            let elapsed = Math.floor((Date.now() - parseInt(sessionStart, 10)) / 1000);
+            let remainingSeconds = Math.max(0, totalDuration - elapsed);
+
+            function tick() {
+                if (remainingSeconds <= 0) {
+                    if (window.__hotelBookingInterval) clearInterval(window.__hotelBookingInterval);
+                    timerDisplay.textContent = '00:00';
+                    timerDisplay.style.background = 'rgba(239, 68, 68, 0.4)';
+                    timerDisplay.style.color = '#fff';
+
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: '{{ app()->getLocale() == "ar" ? "انتهت مهلة الحجز" : "Booking Session Expired" }}',
+                            text: '{{ app()->getLocale() == "ar" ? "انتهت مهلة الـ 10 دقائق المحددة لحجز هذه الغرفة. يرجى إعادة البحث لاختيار أحدث الأسعار والغرف المتاحة." : "The 10-minute hold period for this room has expired. Please search again." }}',
+                            confirmButtonText: '{{ app()->getLocale() == "ar" ? "إعادة البحث" : "Search Again" }}',
+                            allowOutsideClick: false,
+                            allowEscapeKey: false,
+                        }).then(() => {
+                            sessionStorage.removeItem(storageKey);
+                            window.location.href = "{{ route('hotels') }}";
+                        });
+                    } else {
+                        alert('{{ app()->getLocale() == "ar" ? "انتهت مهلة الحجز. يرجى إعادة البحث." : "Booking session expired. Please search again." }}');
+                        sessionStorage.removeItem(storageKey);
+                        window.location.href = "{{ route('hotels') }}";
+                    }
+                    return;
+                }
+
+                const minutes = Math.floor(remainingSeconds / 60);
+                const seconds = remainingSeconds % 60;
+                timerDisplay.textContent = (minutes < 10 ? '0' + minutes : minutes) + ':' + (seconds < 10 ? '0' + seconds : seconds);
+
+                if (remainingSeconds < 60) {
+                    timerDisplay.style.background = 'rgba(239, 68, 68, 0.4)';
+                    timerDisplay.style.color = '#fff';
+                }
+
+                remainingSeconds--;
+            }
+
+            tick();
+            if (window.__hotelBookingInterval) clearInterval(window.__hotelBookingInterval);
+            window.__hotelBookingInterval = setInterval(tick, 1000);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', startTimer);
+        } else {
+            startTimer();
+        }
+    })();
+    </script>
+
     @guest
         <div class="fe-guest-auth-card mb-4">
             <div class="fe-guest-auth-glow"></div>

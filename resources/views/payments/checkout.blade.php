@@ -278,22 +278,25 @@
             const timerDisplay = document.getElementById('checkoutTimerDisplay');
             if (!timerBox || !timerDisplay) return;
 
+            const bookingType = "{{ $booking_type ?? 'flight' }}";
+            const storageKey = (bookingType === 'hotel') ? 'hotel_active_timer_start' : 'flight_active_timer_start';
+            const maxDuration = (bookingType === 'hotel') ? (10 * 60) : (15 * 60);
+
             let serverRemaining = parseInt(timerBox.getAttribute('data-remaining-seconds'), 10);
             if (isNaN(serverRemaining) || serverRemaining <= 0) {
-                serverRemaining = 15 * 60;
+                serverRemaining = maxDuration;
             }
 
-            const storageKey = 'flight_active_timer_start';
             let sessionStart = sessionStorage.getItem(storageKey);
             let remainingSeconds = serverRemaining;
 
             if (sessionStart) {
                 let elapsed = Math.floor((Date.now() - parseInt(sessionStart, 10)) / 1000);
-                if (elapsed >= 0 && elapsed < (15 * 60)) {
-                    remainingSeconds = Math.min(serverRemaining, (15 * 60) - elapsed);
+                if (elapsed >= 0 && elapsed < maxDuration) {
+                    remainingSeconds = Math.min(serverRemaining, maxDuration - elapsed);
                 }
             } else {
-                sessionStorage.setItem(storageKey, Date.now() - ((15 * 60 - serverRemaining) * 1000));
+                sessionStorage.setItem(storageKey, Date.now() - ((maxDuration - serverRemaining) * 1000));
             }
 
             function tick() {
@@ -303,20 +306,25 @@
                     timerDisplay.style.background = 'rgba(239, 68, 68, 0.4)';
                     timerDisplay.style.color = '#fff';
 
+                    const redirectUrl = (bookingType === 'hotel') ? "{{ route('hotels') }}" : "{{ route('flights') }}";
+                    const isAr = {{ app()->getLocale() == 'ar' ? 'true' : 'false' }};
+
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({
                             icon: 'warning',
-                            title: 'انتهت مهلة الدفع',
-                            text: 'انتهت المهلة المحددة للدفع وجلسة الحجز. يرجى إعادة المحاولة أو حجز مقاعد جديدة.',
-                            confirmButtonText: 'العودة للرئيسية',
+                            title: isAr ? 'انتهت مهلة الدفع' : 'Payment Session Expired',
+                            text: isAr ? 'انتهت المهلة المحددة للدفع وجلسة الحجز. يرجى إعادة البحث لاختيار أحدث الأسعار والتوافر.' : 'The hold period for this booking has expired. Please search again.',
+                            confirmButtonText: isAr ? 'إعادة البحث' : 'Search Again',
                             allowOutsideClick: false,
                             allowEscapeKey: false,
                         }).then(() => {
-                            window.location.href = "{{ url('/') }}";
+                            sessionStorage.removeItem(storageKey);
+                            window.location.href = redirectUrl;
                         });
                     } else {
-                        alert('انتهت مهلة الدفع. يرجى إعادة المحاولة.');
-                        window.location.href = "{{ url('/') }}";
+                        alert(isAr ? 'انتهت مهلة الدفع. يرجى إعادة البحث.' : 'Payment session expired. Please search again.');
+                        sessionStorage.removeItem(storageKey);
+                        window.location.href = redirectUrl;
                     }
                     return;
                 }
