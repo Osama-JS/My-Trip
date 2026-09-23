@@ -130,12 +130,12 @@ class PaymentWebController extends Controller
     {
         switch ($type) {
             case 'hotel':
-                return HotelBooking::with('user')->find($id);
+                return HotelBooking::with('user')->where('id', $id)->first();
             case 'flight':
-                return FlightBooking::with('user')->find($id);
+                return FlightBooking::with(['user', 'flightBooking'])->where('id', $id)->first();
             case 'trip':
             default:
-                return TripBooking::with(['trip', 'user'])->find($id);
+                return TripBooking::with(['trip', 'user'])->where('id', $id)->first();
         }
     }
 
@@ -695,13 +695,24 @@ class PaymentWebController extends Controller
             }
         }
 
-        // ── Generate Invoice PDF ──────────────────────────────────────────
+        // ── Generate Invoice / E-Ticket PDF & Send Confirmation Email ─────
         try {
             $invoiceService = app(\App\Services\InvoiceService::class);
-            $invoiceService->generateInvoice($booking);
-            Log::info("Invoice generated for Flight Booking #{$booking->id}");
+            $voucherPath = $invoiceService->generateInvoice($booking);
+            Log::info("Invoice/ETicket generated for Flight Booking #{$booking->id} at: {$voucherPath}");
+
+            $recipientEmail = $booking->user->email ?? ($booking->contact_email ?? null);
+            if (!$recipientEmail && $booking->passengers()->exists()) {
+                $recipientEmail = $booking->passengers()->first()->email ?? null;
+            }
+
+            if ($recipientEmail) {
+                \Illuminate\Support\Facades\Mail::to($recipientEmail)
+                    ->send(new \App\Mail\FlightBookingConfirmedMail($booking, $voucherPath));
+                Log::info("FlightBookingConfirmedMail sent successfully to {$recipientEmail} for Booking #{$booking->id}");
+            }
         } catch (\Exception $e) {
-            Log::warning("Invoice generation failed for Booking #{$booking->id}: " . $e->getMessage());
+            Log::warning("Flight booking confirmation email / invoice generation failed for Booking #{$booking->id}: " . $e->getMessage());
         }
     }
 

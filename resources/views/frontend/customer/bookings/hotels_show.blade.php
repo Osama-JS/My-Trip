@@ -716,6 +716,20 @@ body.dark-mode .callout-danger {
                 <div class="conf-badge">{{ $booking->supplier_confirmation_num }}</div>
             @endif
         </div>
+    @elseif($displayStatus === 'pending')
+        @php
+            $hotelExpiryTime = $booking->created_at ? $booking->created_at->addMinutes(15) : now()->addMinutes(15);
+        @endphp
+        <div class="callout-alert callout-warning" id="hotelHoldTimer" data-expiry="{{ $hotelExpiryTime->toIso8601String() }}">
+            <i class="fas fa-hourglass-start fa-spin"></i>
+            <div>
+                <strong>{{ __('Action Required: Complete Payment') }}</strong>
+                <div>{{ __('Your hotel room hold is temporary. Please complete payment before the session expires.') }}</div>
+                <div class="timer-display-wrapper mt-2">
+                    <span class="badge bg-danger p-2" id="hotelTimerDisplay" style="font-family: monospace; font-size: 1.1rem; font-weight: 800;">15:00</span>
+                </div>
+            </div>
+        </div>
     @elseif($displayStatus === 'paid' || $displayStatus === 'processing')
         <div class="callout-alert callout-warning" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
             <div style="display: flex; align-items: center; gap: 12px;">
@@ -1096,6 +1110,37 @@ function syncStatusNow(btn) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    const hotelTimerBox = document.getElementById('hotelHoldTimer');
+    if (hotelTimerBox) {
+        const hotelDisplay = document.getElementById('hotelTimerDisplay');
+        const expiryDate = new Date(hotelTimerBox.dataset.expiry).getTime();
+
+        const x = setInterval(function() {
+            const now = new Date().getTime();
+            const distance = expiryDate - now;
+
+            if (distance < 0) {
+                clearInterval(x);
+                if (hotelDisplay) {
+                    hotelDisplay.innerHTML = "00:00";
+                    hotelDisplay.classList.add('expired');
+                }
+                setTimeout(() => { window.location.reload(); }, 2000);
+                return;
+            }
+
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            if (hotelDisplay) {
+                hotelDisplay.innerHTML = (minutes < 10 ? "0" + minutes : minutes) + ":" + (seconds < 10 ? "0" + seconds : seconds);
+                if (distance < 60000) {
+                    hotelDisplay.style.color = '#ef4444';
+                }
+            }
+        }, 1000);
+    }
+
     const isPaid = {{ in_array($booking->status, ['paid', 'processing']) ? 'true' : 'false' }};
     if (isPaid) {
         let attempts = 0;

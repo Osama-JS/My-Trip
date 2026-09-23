@@ -224,6 +224,129 @@
         </div>
     </div>
 
+    <!-- Page Time Limit Countdown Banner -->
+    @php
+        $remainingSeconds = 900; // default 15 minutes (900s)
+        if (isset($booking)) {
+            if ($booking_type === 'flight') {
+                $mainB = ($booking && method_exists($booking, 'booking') && $booking->booking) ? $booking->booking : $booking;
+                if (!empty($mainB->ticketing_time_limit)) {
+                    $expiry = \Carbon\Carbon::parse($mainB->ticketing_time_limit);
+                    $remainingSeconds = max(0, (int) now()->diffInSeconds($expiry, false));
+                } elseif (!empty($mainB->created_at)) {
+                    $expiry = $mainB->created_at->copy()->addMinutes(15);
+                    $remainingSeconds = max(0, (int) now()->diffInSeconds($expiry, false));
+                }
+            } elseif ($booking_type === 'hotel') {
+                if (!empty($booking->created_at)) {
+                    $expiry = $booking->created_at->copy()->addMinutes(10);
+                    $remainingSeconds = max(0, (int) now()->diffInSeconds($expiry, false));
+                }
+            } else {
+                if (!empty($booking->created_at)) {
+                    $expiry = $booking->created_at->copy()->addMinutes(15);
+                    $remainingSeconds = max(0, (int) now()->diffInSeconds($expiry, false));
+                }
+            }
+        }
+        $initMinutes = floor($remainingSeconds / 60);
+        $initSecs = $remainingSeconds % 60;
+        $initialDisplay = sprintf('%02d:%02d', $initMinutes, $initSecs);
+    @endphp
+    <div class="card" style="padding: 16px 20px; background: rgba(15, 23, 42, 0.85); border-color: rgba(99, 102, 241, 0.3); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;" id="checkoutTimeLimitBox" data-remaining-seconds="{{ $remainingSeconds }}">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(99, 102, 241, 0.2); color: #818cf8; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+                <i class="fas fa-stopwatch"></i>
+            </div>
+            <div>
+                <div style="font-weight: 800; font-size: 13.5px; color: #f8fafc;">مهلة الدفع وإتمام الحجز (Page Time Limit)</div>
+                <div style="font-size: 11.5px; color: #94a3b8;">الأسعار والمقاعد محجوزة مؤقتاً لجلستك الحالية</div>
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 11px; color: #94a3b8; font-weight: 700;">الوقت المتبقي:</span>
+            <div style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; font-family: monospace; font-size: 1.25rem; font-weight: 900; padding: 4px 14px; border-radius: 8px; letter-spacing: 1px;" id="checkoutTimerDisplay">
+                {{ $initialDisplay }}
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        function startCheckoutTimer() {
+            const timerBox = document.getElementById('checkoutTimeLimitBox');
+            const timerDisplay = document.getElementById('checkoutTimerDisplay');
+            if (!timerBox || !timerDisplay) return;
+
+            let serverRemaining = parseInt(timerBox.getAttribute('data-remaining-seconds'), 10);
+            if (isNaN(serverRemaining) || serverRemaining <= 0) {
+                serverRemaining = 15 * 60;
+            }
+
+            const storageKey = 'flight_active_timer_start';
+            let sessionStart = sessionStorage.getItem(storageKey);
+            let remainingSeconds = serverRemaining;
+
+            if (sessionStart) {
+                let elapsed = Math.floor((Date.now() - parseInt(sessionStart, 10)) / 1000);
+                if (elapsed >= 0 && elapsed < (15 * 60)) {
+                    remainingSeconds = Math.min(serverRemaining, (15 * 60) - elapsed);
+                }
+            } else {
+                sessionStorage.setItem(storageKey, Date.now() - ((15 * 60 - serverRemaining) * 1000));
+            }
+
+            function tick() {
+                if (remainingSeconds <= 0) {
+                    if (window.__checkoutInterval) clearInterval(window.__checkoutInterval);
+                    timerDisplay.textContent = '00:00';
+                    timerDisplay.style.background = 'rgba(239, 68, 68, 0.4)';
+                    timerDisplay.style.color = '#fff';
+
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'انتهت مهلة الدفع',
+                            text: 'انتهت المهلة المحددة للدفع وجلسة الحجز. يرجى إعادة المحاولة أو حجز مقاعد جديدة.',
+                            confirmButtonText: 'العودة للرئيسية',
+                            allowOutsideClick: false,
+                            allowEscapeKey: false,
+                        }).then(() => {
+                            window.location.href = "{{ url('/') }}";
+                        });
+                    } else {
+                        alert('انتهت مهلة الدفع. يرجى إعادة المحاولة.');
+                        window.location.href = "{{ url('/') }}";
+                    }
+                    return;
+                }
+
+                const minutes = Math.floor(remainingSeconds / 60);
+                const seconds = remainingSeconds % 60;
+
+                timerDisplay.textContent = (minutes < 10 ? '0' + minutes : minutes) + ':' + (seconds < 10 ? '0' + seconds : seconds);
+
+                if (remainingSeconds < 60) {
+                    timerDisplay.style.background = 'rgba(239, 68, 68, 0.4)';
+                    timerDisplay.style.color = '#fff';
+                }
+
+                remainingSeconds--;
+            }
+
+            tick();
+            if (window.__checkoutInterval) clearInterval(window.__checkoutInterval);
+            window.__checkoutInterval = setInterval(tick, 1000);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', startCheckoutTimer);
+        } else {
+            startCheckoutTimer();
+        }
+    })();
+    </script>
+
     <!-- Summary Card -->
     <div class="card">
         <div class="summary-header">
@@ -408,6 +531,19 @@
                         </p>
                     </div>
                 @elseif(isset($checkout_id))
+                    <script type="text/javascript">
+                        var wpwlOptions = {
+                            paymentTarget: "_top",
+                            locale: "ar",
+                            style: "plain",
+                            labels: {
+                                cvv: "رمز الأمان (CVV)",
+                                cardHolder: "اسم صاحب البطاقة",
+                                cardNumber: "رقم البطاقة",
+                                expiryDate: "تاريخ الانتهاء"
+                            }
+                        };
+                    </script>
                     <script src="https://{{ config('hyperpay.widget_url', 'test.oppwa.com') }}/v1/paymentWidgets.js?checkoutId={{ $checkout_id }}" crossorigin="anonymous"></script>
                     <form action="{{ route('payments.web.callback', ['payment_type' => $method, 'source' => $source, 'booking_id' => $booking->id, 'type' => $booking_type]) }}" class="paymentWidgets" data-brands="{{ $method === 'mada' ? 'MADA' : ($method === 'apple_pay' ? 'APPLEPAY' : 'VISA MASTER') }}"></form>
                 @else
@@ -442,22 +578,6 @@
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-@if(in_array($method, ['mada', 'visa_master', 'apple_pay']) && isset($checkout_id))
-    <script type="text/javascript">
-        var wpwlOptions = {
-            paymentTarget: "_top",
-            locale: "ar",
-            style: "plain",
-            labels: {
-                cvv: "رمز الأمان (CVV)",
-                cardHolder: "اسم صاحب البطاقة",
-                cardNumber: "رقم البطاقة",
-                expiryDate: "تاريخ الانتهاء"
-            }
-        };
-    </script>
-@endif
 
 <script>
     function updateFileName(input) {

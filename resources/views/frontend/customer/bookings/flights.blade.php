@@ -419,20 +419,30 @@
     animation: statusPulseOrange 1.5s infinite;
 }
 
-.status-badge-wrapper.status-confirmed {
+.status-badge-wrapper.status-confirmed,
+.status-badge-wrapper.status-paid,
+.status-badge-wrapper.status-ticketed,
+.status-badge-wrapper.status-completed {
     background: rgba(16, 185, 129, 0.08);
     color: #15803d;
 }
-.status-badge-wrapper.status-confirmed .pulse-dot {
+.status-badge-wrapper.status-confirmed .pulse-dot,
+.status-badge-wrapper.status-paid .pulse-dot,
+.status-badge-wrapper.status-ticketed .pulse-dot,
+.status-badge-wrapper.status-completed .pulse-dot {
     background: #10b981;
     animation: statusPulseGreen 1.5s infinite;
 }
 
-.status-badge-wrapper.status-cancelled {
+.status-badge-wrapper.status-cancelled,
+.status-badge-wrapper.status-failed,
+.status-badge-wrapper.status-expired {
     background: rgba(239, 68, 68, 0.08);
     color: #b91c1c;
 }
-.status-badge-wrapper.status-cancelled .pulse-dot {
+.status-badge-wrapper.status-cancelled .pulse-dot,
+.status-badge-wrapper.status-failed .pulse-dot,
+.status-badge-wrapper.status-expired .pulse-dot {
     background: #ef4444;
 }
 
@@ -572,9 +582,13 @@
                     <span class="price-label">{{ __('Total Price') }}</span>
                 </div>
 
-                <span class="status-badge-wrapper status-{{ $booking->status }}">
+                @php
+                    $isConfirmedStatus = in_array($booking->status, ['confirmed', 'paid', 'ticketed', 'completed']);
+                    $isPendingStatus = ($booking->status === 'pending');
+                @endphp
+                <span class="status-badge-wrapper {{ $isConfirmedStatus ? 'status-confirmed' : ($isPendingStatus ? 'status-pending' : 'status-cancelled') }}">
                     <span class="pulse-dot"></span>
-                    {{ $booking->status === 'pending' ? __('Pending') : ($booking->status === 'confirmed' ? __('Confirmed') : __('Cancelled')) }}
+                    {{ $isConfirmedStatus ? __('Confirmed') : ($isPendingStatus ? __('Pending') : __('Cancelled')) }}
                 </span>
 
                 <div class="stub-actions">

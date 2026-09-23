@@ -451,20 +451,30 @@ i, .fas, .far, .fab, .fa {
     animation: statusPulseOrange 1.5s infinite;
 }
 
-.status-badge-wrapper.status-confirmed {
+.status-badge-wrapper.status-confirmed,
+.status-badge-wrapper.status-paid,
+.status-badge-wrapper.status-ticketed,
+.status-badge-wrapper.status-completed {
     background: rgba(16, 185, 129, 0.08);
     color: #15803d;
 }
-.status-badge-wrapper.status-confirmed .pulse-dot {
+.status-badge-wrapper.status-confirmed .pulse-dot,
+.status-badge-wrapper.status-paid .pulse-dot,
+.status-badge-wrapper.status-ticketed .pulse-dot,
+.status-badge-wrapper.status-completed .pulse-dot {
     background: #10b981;
     animation: statusPulseGreen 1.5s infinite;
 }
 
-.status-badge-wrapper.status-cancelled {
+.status-badge-wrapper.status-cancelled,
+.status-badge-wrapper.status-failed,
+.status-badge-wrapper.status-expired {
     background: rgba(239, 68, 68, 0.08);
     color: #b91c1c;
 }
-.status-badge-wrapper.status-cancelled .pulse-dot {
+.status-badge-wrapper.status-cancelled .pulse-dot,
+.status-badge-wrapper.status-failed .pulse-dot,
+.status-badge-wrapper.status-expired .pulse-dot {
     background: #ef4444;
 }
 
@@ -734,9 +744,13 @@ i, .fas, .far, .fab, .fa {
                                 <span class="type-badge type-trip"><i class="fas fa-map-marked-alt"></i> {{ __('Trip') }}</span>
                             </div>
                             <div class="booking-meta">
-                                <span class="status-badge-wrapper status-{{ $booking->status }}">
+                                @php
+                                    $isTripConfirmed = in_array($booking->status, ['confirmed', 'paid', 'completed']);
+                                    $isTripPending = ($booking->status === 'pending');
+                                @endphp
+                                <span class="status-badge-wrapper {{ $isTripConfirmed ? 'status-confirmed' : ($isTripPending ? 'status-pending' : 'status-cancelled') }}">
                                     <span class="pulse-dot"></span>
-                                    {{ $booking->status === 'pending' ? __('Pending') : ($booking->status === 'confirmed' ? __('Confirmed') : __('Cancelled')) }}
+                                    {{ $isTripConfirmed ? __('Confirmed') : ($isTripPending ? __('Pending') : __('Cancelled')) }}
                                 </span>
                                 <span class="bullet-sep">·</span>
                                 <span>{{ $booking->tickets_count }} {{ __('Passenger') }}</span>
@@ -760,9 +774,13 @@ i, .fas, .far, .fab, .fa {
                                 <span class="type-badge type-flight"><i class="fas fa-plane"></i> {{ __('Flight') }}</span>
                             </div>
                             <div class="booking-meta">
-                                <span class="status-badge-wrapper status-{{ $booking->status }}">
+                                @php
+                                    $isFlightConfirmed = in_array($booking->status, ['confirmed', 'paid', 'ticketed', 'completed']);
+                                    $isFlightPending = ($booking->status === 'pending');
+                                @endphp
+                                <span class="status-badge-wrapper {{ $isFlightConfirmed ? 'status-confirmed' : ($isFlightPending ? 'status-pending' : 'status-cancelled') }}">
                                     <span class="pulse-dot"></span>
-                                    {{ $booking->status === 'pending' ? __('Pending') : ($booking->status === 'confirmed' ? __('Confirmed') : __('Cancelled')) }}
+                                    {{ $isFlightConfirmed ? __('Confirmed') : ($isFlightPending ? __('Pending') : __('Cancelled')) }}
                                 </span>
                                 <span class="bullet-sep">·</span>
                                 <span>{{ $booking->passengers()->count() }} {{ __('Passenger') }}</span>
@@ -784,9 +802,13 @@ i, .fas, .far, .fab, .fa {
                                 <span class="type-badge type-hotel"><i class="fas fa-hotel"></i> {{ __('Hotel') }}</span>
                             </div>
                             <div class="booking-meta">
-                                <span class="status-badge-wrapper status-{{ $booking->status }}">
+                                @php
+                                    $isHotelConfirmed = in_array($booking->status, ['confirmed', 'paid', 'completed']);
+                                    $isHotelPending = ($booking->status === 'pending');
+                                @endphp
+                                <span class="status-badge-wrapper {{ $isHotelConfirmed ? 'status-confirmed' : ($isHotelPending ? 'status-pending' : 'status-cancelled') }}">
                                     <span class="pulse-dot"></span>
-                                    {{ $booking->status === 'pending' ? __('Pending') : ($booking->status === 'confirmed' ? __('Confirmed') : __('Cancelled')) }}
+                                    {{ $isHotelConfirmed ? __('Confirmed') : ($isHotelPending ? __('Pending') : __('Cancelled')) }}
                                 </span>
                                 <span class="bullet-sep">·</span>
                                 <span>{{ $booking->city_name }}</span>

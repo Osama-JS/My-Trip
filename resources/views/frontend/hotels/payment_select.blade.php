@@ -17,6 +17,36 @@
             <div class="pay-steps__item active"><span class="pay-steps__bubble">3</span><span class="pay-steps__label">{{ __('Payment') }}</span></div>
         </div>
 
+        {{-- ── Page Time Limit Banner ── --}}
+        @php
+            $hotelExpiryTime = $booking->created_at ? $booking->created_at->copy()->addMinutes(10) : now()->addMinutes(10);
+            $remainingSeconds = max(0, (int) now()->diffInSeconds($hotelExpiryTime, false));
+            $initMinutes = floor($remainingSeconds / 60);
+            $initSecs = $remainingSeconds % 60;
+            $initialDisplay = sprintf('%02d:%02d', $initMinutes, $initSecs);
+        @endphp
+        <div class="fe-session-timer-card" id="hotelPaymentTimeLimit" data-remaining-seconds="{{ $remainingSeconds }}" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #fff; padding: 16px 24px; border-radius: 18px; margin-bottom: 25px; box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.2); border: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                    <i class="fas fa-hourglass-half"></i>
+                </div>
+                <div>
+                    <div style="font-size: 14px; font-weight: 800; color: #f8fafc; margin-bottom: 2px;">
+                        {{ app()->getLocale() == 'ar' ? 'مهلة الدفع وتأكيد الغرفة (Page Time Limit)' : 'Page Time Limit: Complete Payment' }}
+                    </div>
+                    <div style="font-size: 12.5px; color: #94a3b8;">
+                        {{ app()->getLocale() == 'ar' ? 'الغرف والأسعار محجوزة مؤقتاً لجلستك الحالية' : 'Rooms and rates are held until the countdown expires' }}
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 12px; color: #cbd5e1; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">{{ app()->getLocale() == 'ar' ? 'الوقت المتبقي' : 'Time Remaining' }}:</span>
+                <div style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; font-family: monospace; font-size: 1.3rem; font-weight: 900; padding: 6px 16px; border-radius: 10px; letter-spacing: 1px;" id="hotelPaymentTimerDisplay">
+                    {{ $initialDisplay }}
+                </div>
+            </div>
+        </div>
+
         <div class="pay-grid">
 
             {{-- ── LEFT: Methods ── --}}
@@ -449,5 +479,61 @@
     .pay-trust { flex-wrap: wrap; gap: 12px; }
 }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const timerBox = document.getElementById('hotelPaymentTimeLimit');
+    const timerDisplay = document.getElementById('hotelPaymentTimerDisplay');
+    if (!timerBox || !timerDisplay) return;
+
+    let remainingSeconds = parseInt(timerBox.getAttribute('data-remaining-seconds'), 10);
+    if (isNaN(remainingSeconds)) {
+        remainingSeconds = 10 * 60;
+    }
+
+    let timerInterval = null;
+
+    function updateHotelPaymentTimer() {
+        if (remainingSeconds <= 0) {
+            if (timerInterval) clearInterval(timerInterval);
+            timerDisplay.textContent = '00:00';
+            timerDisplay.style.background = 'rgba(239, 68, 68, 0.4)';
+            timerDisplay.style.color = '#fff';
+
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: '{{ app()->getLocale() == "ar" ? "انتهت مهلة الدفع" : "Payment Session Expired" }}',
+                    text: '{{ app()->getLocale() == "ar" ? "انتهت المهلة المحددة لحجز الغرفة وتأكيد السعر. يرجى إعادة البحث." : "The hold period for this hotel room has expired. Please search again." }}',
+                    confirmButtonText: '{{ app()->getLocale() == "ar" ? "إعادة البحث" : "Search Again" }}',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                }).then(() => {
+                    window.location.href = "{{ route('hotels') }}";
+                });
+            } else {
+                alert('{{ app()->getLocale() == "ar" ? "انتهت مهلة الدفع. يرجى إعادة البحث." : "Payment session expired. Please search again." }}');
+                window.location.href = "{{ route('hotels') }}";
+            }
+            return;
+        }
+
+        const minutes = Math.floor(remainingSeconds / 60);
+        const seconds = remainingSeconds % 60;
+
+        timerDisplay.textContent = (minutes < 10 ? '0' + minutes : minutes) + ':' + (seconds < 10 ? '0' + seconds : seconds);
+
+        if (remainingSeconds < 60) {
+            timerDisplay.style.background = 'rgba(239, 68, 68, 0.4)';
+            timerDisplay.style.color = '#fff';
+        }
+
+        remainingSeconds--;
+    }
+
+    updateHotelPaymentTimer();
+    timerInterval = setInterval(updateHotelPaymentTimer, 1000);
+});
+</script>
 
 @endsection

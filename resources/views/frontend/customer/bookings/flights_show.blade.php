@@ -763,14 +763,17 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
     </a>
 
     {{-- Expiry Alerts & PNR States --}}
-    @if($booking->status === 'pending' && $booking->ticketing_time_limit)
-        <div class="callout-alert callout-warning" id="pnrTimer" data-expiry="{{ $booking->ticketing_time_limit->toIso8601String() }}">
+    @php
+        $flightExpiry = $booking->ticketing_time_limit ?: ($booking->created_at ? $booking->created_at->addMinutes(15) : now()->addMinutes(15));
+    @endphp
+    @if($booking->status === 'pending')
+        <div class="callout-alert callout-warning" id="pnrTimer" data-expiry="{{ $flightExpiry->toIso8601String() }}">
             <i class="fas fa-hourglass-start fa-spin"></i>
             <div>
                 <strong>{{ __('Action Required: Complete Payment') }}</strong>
                 <div>{{ __('Your flight hold reservation is temporary. Please pay now to secure your ticket.') }}</div>
                 <div class="timer-display-wrapper mt-2">
-                    <span class="badge bg-danger p-2" id="timerDisplay" style="font-family: monospace; font-size: 1.1rem; font-weight: 800;">00:00</span>
+                    <span class="badge bg-danger p-2" id="timerDisplay" style="font-family: monospace; font-size: 1.1rem; font-weight: 800;">15:00</span>
                 </div>
             </div>
         </div>
@@ -936,7 +939,7 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
                         $statusBadgeClass = 'bg-warning text-dark';
                         $statusIcon = 'fa-hourglass-half';
                         $statusLabel = __('Pending Payment');
-                    } elseif ($booking->status === 'cancelled') {
+                    } elseif (in_array($booking->status, ['cancelled', 'failed', 'expired'])) {
                         $statusBadgeClass = 'bg-danger';
                         $statusIcon = 'fa-times-circle';
                         $statusLabel = __('Cancelled');
@@ -944,6 +947,10 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
                         $statusBadgeClass = 'bg-primary';
                         $statusIcon = 'fa-ticket-alt';
                         $statusLabel = __('Ticketed');
+                    } elseif (in_array($booking->status, ['confirmed', 'paid', 'completed'])) {
+                        $statusBadgeClass = 'bg-success';
+                        $statusIcon = 'fa-check-circle';
+                        $statusLabel = __('Confirmed');
                     }
                 @endphp
                 <span class="badge {{ $statusBadgeClass }}" style="padding: 6px 12px; border-radius: 8px; font-weight: 800; font-size: 0.8rem; letter-spacing: 0.5px;">
@@ -1172,7 +1179,7 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
                                 </div>
                             </div>
                             <div class="passenger-docs">
-                                @if($pax->e_ticket_no && $booking->status === 'confirmed')
+                                @if($pax->e_ticket_no && in_array($booking->status, ['confirmed', 'paid', 'ticketed', 'completed']))
                                     <div class="ticket-tag" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); padding: 8px 14px; border-radius: 10px; flex: 1; min-width: 140px;">
                                         <label style="color: #10b981; font-size: 0.65rem;"><i class="fas fa-ticket-alt me-1"></i>{{ __('E-Ticket No') }}</label>
                                         <strong style="color: #047857; font-size: 1.05rem; letter-spacing: 0.5px;">{{ $pax->e_ticket_no }}</strong>
@@ -1420,8 +1427,8 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
                             <a href="{{ route('customer.bookings.flights.quick-rebook', $booking->id) }}" class="action-btn action-btn-primary" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
                                 <i class="fas fa-sync-alt"></i> {{ __('إعادة الحجز السريع') }}
                             </a>
-                        @elseif($booking->status === 'confirmed')
-                            <a href="{{ route('customer.bookings.invoice', ['id' => $booking->id, 'type' => 'flight']) }}" class="action-btn action-btn-success">
+                        @elseif(in_array($booking->status, ['confirmed', 'paid', 'ticketed', 'completed']))
+                            <a href="{{ route('customer.bookings.invoice', ['id' => $booking->id, 'type' => 'flight']) }}" class="action-btn action-btn-success" target="_blank">
                                 <i class="fas fa-file-invoice-dollar"></i> {{ __('Download Voucher') }}
                             </a>
                         @endif
@@ -1446,22 +1453,22 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
                                 <small>{{ $booking->created_at->format('d M Y, H:i') }}</small>
                             </div>
                         </div>
-                        <div class="tl-item {{ in_array($booking->status, ['paid', 'confirmed']) ? 'done' : '' }}">
+                        <div class="tl-item {{ in_array($booking->status, ['paid', 'confirmed', 'ticketed', 'completed']) ? 'done' : '' }}">
                             <div class="tl-dot">
-                                <i class="fas {{ in_array($booking->status, ['paid', 'confirmed']) ? 'fa-check' : 'fa-credit-card' }}"></i>
+                                <i class="fas {{ in_array($booking->status, ['paid', 'confirmed', 'ticketed', 'completed']) ? 'fa-check' : 'fa-credit-card' }}"></i>
                             </div>
                             <div class="tl-text">
                                 <strong>{{ __('Payment Verification') }}</strong>
-                                <small>{{ in_array($booking->status, ['paid', 'confirmed']) ? __('Completed') : __('Awaiting Payment') }}</small>
+                                <small>{{ in_array($booking->status, ['paid', 'confirmed', 'ticketed', 'completed']) ? __('Completed') : __('Awaiting Payment') }}</small>
                             </div>
                         </div>
-                        <div class="tl-item {{ $booking->status === 'confirmed' ? 'done' : '' }}">
+                        <div class="tl-item {{ in_array($booking->status, ['confirmed', 'paid', 'ticketed', 'completed']) ? 'done' : '' }}">
                             <div class="tl-dot">
-                                <i class="fas {{ $booking->status === 'confirmed' ? 'fa-check' : 'fa-plane' }}"></i>
+                                <i class="fas {{ in_array($booking->status, ['confirmed', 'paid', 'ticketed', 'completed']) ? 'fa-check' : 'fa-plane' }}"></i>
                             </div>
                             <div class="tl-text">
                                 <strong>{{ __('Official Tickets Sent') }}</strong>
-                                <small>{{ $booking->status === 'confirmed' ? __('Ready to fly') : __('Processing...') }}</small>
+                                <small>{{ in_array($booking->status, ['confirmed', 'paid', 'ticketed', 'completed']) ? __('Ready to fly') : __('Processing...') }}</small>
                             </div>
                         </div>
                     </div>
@@ -1472,11 +1479,12 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
     </div>
 </div>
 
-@if($booking->status === 'pending' && $booking->ticketing_time_limit)
+@if($booking->status === 'pending')
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const timerBox = document.getElementById('pnrTimer');
+        if (!timerBox) return;
         const display = document.getElementById('timerDisplay');
         const payButton = document.getElementById('payButton');
         const expiryDate = new Date(timerBox.dataset.expiry).getTime();
@@ -1487,8 +1495,10 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
 
             if (distance < 0) {
                 clearInterval(x);
-                display.innerHTML = "00:00";
-                display.classList.add('expired');
+                if (display) {
+                    display.innerHTML = "00:00";
+                    display.classList.add('expired');
+                }
                 if (payButton) {
                     payButton.classList.add('disabled');
                     payButton.style.opacity = '0.5';
@@ -1502,10 +1512,11 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
             const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-            display.innerHTML = (minutes < 10 ? "0" + minutes : minutes) + ":" + (seconds < 10 ? "0" + seconds : seconds);
-
-            if (distance < 60000) { // Last minute
-                display.style.color = '#ef4444';
+            if (display) {
+                display.innerHTML = (minutes < 10 ? "0" + minutes : minutes) + ":" + (seconds < 10 ? "0" + seconds : seconds);
+                if (distance < 60000) {
+                    display.style.color = '#ef4444';
+                }
             }
         }, 1000);
     });

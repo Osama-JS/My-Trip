@@ -29,11 +29,13 @@ class Booking extends Model
         'platform_profit',
         'insurance_policy_id',
         'insurance_amount',
+        'ticketing_time_limit',
     ];
 
     protected $casts = [
-        'pnr_created_at'  => 'datetime',
-        'ticket_numbers'  => 'array',
+        'pnr_created_at'        => 'datetime',
+        'ticketing_time_limit'  => 'datetime',
+        'ticket_numbers'        => 'array',
     ];
 
     public function user(): BelongsTo

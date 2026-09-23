@@ -1108,7 +1108,7 @@ class FrontendController extends Controller
             }
         }
 
-        return view('frontend.flights.payment_select', ['booking' => $flightBooking]);
+        return view('frontend.flights.payment_select', ['booking' => $flightBooking, 'mainBooking' => $booking]);
     }
 
     /**

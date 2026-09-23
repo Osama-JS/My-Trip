@@ -95,8 +95,14 @@ class BookingController extends Controller
 
         $query = \App\Models\Booking::where('user_id', Auth::id());
         
-        if ($status && in_array($status, ['pending', 'confirmed', 'cancelled'])) {
-            $query->where('status', $status);
+        if ($status) {
+            if ($status === 'confirmed') {
+                $query->whereIn('status', ['confirmed', 'paid', 'ticketed', 'completed']);
+            } elseif ($status === 'cancelled') {
+                $query->whereIn('status', ['cancelled', 'failed', 'expired']);
+            } elseif ($status === 'pending') {
+                $query->where('status', 'pending');
+            }
         }
 
         if ($search) {
@@ -490,6 +496,7 @@ class BookingController extends Controller
             $booking = Booking::where('user_id', Auth::id())
                 ->where(function($q) {
                     $q->where('status', 'confirmed')
+                      ->orWhere('status', 'paid')
                       ->orWhere('status', 'ticketed')
                       ->orWhere('status', 'completed');
                 })

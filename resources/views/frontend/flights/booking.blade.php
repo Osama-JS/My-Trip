@@ -27,6 +27,29 @@
         </div>
     @endif
 
+    {{-- ═══ PAGE TIME LIMIT / SESSION COUNTDOWN BANNER ═══ --}}
+    <div class="fe-session-timer-card" id="flightPageTimeLimit" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #fff; padding: 16px 24px; border-radius: 18px; margin-bottom: 25px; box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.2); border: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                <i class="fas fa-hourglass-half"></i>
+            </div>
+            <div>
+                <div style="font-size: 14px; font-weight: 800; color: #f8fafc; margin-bottom: 2px;">
+                    {{ app()->getLocale() == 'ar' ? 'مهلة الجلسة لضمان السعر والمقاعد' : 'Page Time Limit: Price & Seat Guarantee' }}
+                </div>
+                <div style="font-size: 12.5px; color: #94a3b8;">
+                    {{ app()->getLocale() == 'ar' ? 'الأسعار وتوافر المقاعد مضمونة طوال فترة العداد التنازلي' : 'Fares and seat availability are held until the timer expires' }}
+                </div>
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 12px; color: #cbd5e1; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">{{ app()->getLocale() == 'ar' ? 'الوقت المتبقي' : 'Time Remaining' }}:</span>
+            <div style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; font-family: monospace; font-size: 1.3rem; font-weight: 900; padding: 6px 16px; border-radius: 10px; letter-spacing: 1px;" id="flightPageTimerDisplay">
+                15:00
+            </div>
+        </div>
+    </div>
+
     {{-- ═══ LUXURY GUEST AUTHENTICATION BANNER ═══ --}}
     @guest
         @php $currLocale = app()->getLocale(); @endphp
@@ -2140,6 +2163,61 @@ $(document).ready(function() {
 
     // Fetch Extra Services on page load
     fetchExtraServices();
+
+    // ═══ PAGE TIME LIMIT / SESSION COUNTDOWN TIMER ═══
+    (function initFlightPageTimer() {
+        const timerDisplay = document.getElementById('flightPageTimerDisplay');
+        if (!timerDisplay) return;
+
+        let sessionDuration = 15 * 60; // 15 minutes (900 seconds)
+        const storageKey = 'flight_active_timer_start';
+        
+        let startTime = sessionStorage.getItem(storageKey);
+        if (!startTime || (Date.now() - parseInt(startTime, 10) > 15 * 60 * 1000)) {
+            startTime = Date.now();
+            sessionStorage.setItem(storageKey, startTime);
+        } else {
+            startTime = parseInt(startTime, 10);
+        }
+
+        function updateTimer() {
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const remaining = Math.max(0, sessionDuration - elapsed);
+
+            const minutes = Math.floor(remaining / 60);
+            const seconds = remaining % 60;
+
+            timerDisplay.textContent = (minutes < 10 ? '0' + minutes : minutes) + ':' + (seconds < 10 ? '0' + seconds : seconds);
+
+            if (remaining <= 60) {
+                timerDisplay.style.background = 'rgba(239, 68, 68, 0.4)';
+                timerDisplay.style.color = '#fff';
+            }
+
+            if (remaining <= 0) {
+                clearInterval(timerInterval);
+                sessionStorage.removeItem(storageKey);
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: '{{ app()->getLocale() == "ar" ? "انتهت مهلة الجلسة" : "Session Expired" }}',
+                        text: '{{ app()->getLocale() == "ar" ? "انتهت مهلة الجلسة المحددة بـ 15 دقيقة لضمان المقاعد والأسعار. يرجى إعادة البحث لتحديث الأسعار." : "Your 15-minute booking session has expired. Please search again to revalidate fares and seat availability." }}',
+                        confirmButtonText: '{{ app()->getLocale() == "ar" ? "إعادة البحث" : "Search Again" }}',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                    }).then(() => {
+                        window.location.href = "{{ route('flights') }}";
+                    });
+                } else {
+                    alert('{{ app()->getLocale() == "ar" ? "انتهت مهلة الجلسة. يرجى إعادة البحث." : "Session expired. Please search again." }}');
+                    window.location.href = "{{ route('flights') }}";
+                }
+            }
+        }
+
+        updateTimer();
+        const timerInterval = setInterval(updateTimer, 1000);
+    })();
 });
 </script>
 <style>
