@@ -25,6 +25,7 @@ class BookingPassenger extends Model
         'passport_image',
         'nationality',
         'passport_issue_country',
+        'e_ticket_no',
     ];
 
 

@@ -92,28 +92,56 @@
     <!-- Passengers & E-Tickets List -->
     @if($booking->passengers && $booking->passengers->count() > 0)
     <div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; margin-bottom: 24px;">
-        <div style="background-color: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 12px 16px; font-weight: 700; font-size: 14px; color: #334155;">
-            👥 {{ __('Travelers & E-Tickets') }} ({{ $booking->passengers->count() }})
+        <div style="background-color: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 12px 16px; font-weight: 700; font-size: 14px; color: #334155; display: flex; justify-content: space-between; align-items: center;">
+            <span>👥 {{ __('Travelers & E-Tickets') }} ({{ $booking->passengers->count() }})</span>
         </div>
-        <div style="padding: 14px 16px; background-color: #ffffff;">
-            <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; font-size: 13px;">
-                @foreach($booking->passengers as $p)
-                <tr>
-                    <td style="padding: 8px 0; border-bottom: 1px solid #f1f5f9;">
-                        <div style="font-weight: 800; color: #0f172a;">
-                            {{ $p->title }} {{ $p->first_name }} {{ $p->last_name }}
-                            <span style="font-size: 11px; background: #e2e8f0; color: #475569; padding: 2px 6px; border-radius: 4px; margin-inline-start: 6px; text-transform: uppercase;">
-                                {{ $p->passenger_type ?: 'Adult' }}
+        <div style="padding: 0; background-color: #ffffff; overflow-x: auto;">
+            <table width="100%" cellpadding="10" cellspacing="0" style="border-collapse: collapse; font-size: 13px; text-align: {{ app()->isLocale('ar') ? 'right' : 'left' }};">
+                <thead>
+                    <tr style="background-color: #f1f5f9; color: #475569; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; width: 5%;">#</th>
+                        <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; width: 35%;">{{ __('Passenger Name') }}</th>
+                        <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; width: 15%;">{{ __('Type') }}</th>
+                        <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; width: 20%;">{{ __('Passport') }}</th>
+                        <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; width: 25%;">{{ __('E-Ticket No') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($booking->passengers as $index => $p)
+                    @php
+                        $ticketNo = $p->e_ticket_no 
+                                 ?: ($booking->ticket_numbers[$index] 
+                                 ?? ($booking->ticket_numbers[0] ?? null));
+                    @endphp
+                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                        <td style="padding: 12px 14px; color: #64748b; font-weight: 700;">
+                            {{ $loop->iteration }}
+                        </td>
+                        <td style="padding: 12px 14px; font-weight: 800; color: #0f172a;">
+                            {{ $p->title ? $p->title . ' ' : '' }}{{ $p->first_name }} {{ $p->last_name }}
+                        </td>
+                        <td style="padding: 12px 14px;">
+                            <span style="font-size: 11px; background: #e2e8f0; color: #334155; padding: 3px 8px; border-radius: 4px; font-weight: 700; text-transform: uppercase;">
+                                {{ __($p->passenger_type ?: 'Adult') }}
                             </span>
-                        </div>
-                        @if($p->e_ticket_no)
-                        <div style="font-size: 12px; color: #2563eb; font-weight: 700; margin-top: 2px;">
-                            {{ __('E-Ticket No') }}: {{ $p->e_ticket_no }}
-                        </div>
-                        @endif
-                    </td>
-                </tr>
-                @endforeach
+                        </td>
+                        <td style="padding: 12px 14px; color: #475569; font-weight: 600;">
+                            {{ $p->passport_number ?: '-' }}
+                        </td>
+                        <td style="padding: 12px 14px;">
+                            @if($ticketNo)
+                                <span style="display: inline-block; background-color: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; padding: 4px 10px; border-radius: 6px; font-family: monospace; font-size: 13px; font-weight: 800; letter-spacing: 0.5px;">
+                                    🎫 {{ $ticketNo }}
+                                </span>
+                            @else
+                                <span style="color: #64748b; font-size: 12px; font-style: italic;">
+                                    {{ $booking->pnr_code ? __('Confirmed') . ' (' . $booking->pnr_code . ')' : __('Confirmed') }}
+                                </span>
+                            @endif
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
             </table>
         </div>
     </div>
