@@ -18,8 +18,8 @@
             direction: {{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }};
             text-align: {{ app()->getLocale() == 'ar' ? 'right' : 'left' }};
             color: #2d3748;
-            line-height: 1.7;
-            font-size: 12px;
+            line-height: 1.6;
+            font-size: 11px;
             background: #ffffff;
             margin: 0;
             padding: 0;
@@ -30,12 +30,13 @@
             background: #ffffff;
             padding: 0;
             border-radius: 2px;
+            width: 100%;
         }
 
         /* ── Top Banner ── */
         .top-banner {
             background-color: #041741;
-            padding: 28px 40px 22px 40px;
+            padding: 20px 30px 16px 30px;
             color: #ffffff;
         }
         .top-banner-inner {
@@ -43,67 +44,67 @@
             border-collapse: collapse;
         }
         .brand-name {
-            font-size: 26px;
+            font-size: 22px;
             font-weight: 900;
             color: #ffffff;
             letter-spacing: 2px;
             text-transform: uppercase;
         }
         .brand-tag {
-            font-size: 9px;
+            font-size: 8px;
             color: #f2cb57;
-            letter-spacing: 4px;
+            letter-spacing: 3px;
             text-transform: uppercase;
             font-weight: 700;
             margin-top: 2px;
         }
         .doc-type {
-            font-size: 18px;
+            font-size: 15px;
             color: #f2cb57;
             font-weight: 300;
             letter-spacing: 2px;
             text-transform: uppercase;
         }
         .doc-date {
-            font-size: 11px;
+            font-size: 10px;
             color: rgba(255,255,255,0.55);
-            margin-top: 4px;
+            margin-top: 3px;
         }
 
         /* ── Gold Accent Strip ── */
         .gold-strip {
-            height: 4px;
+            height: 3px;
             background-color: #f2cb57;
         }
 
         /* ── Content Area ── */
         .content {
-            padding: 30px 40px 20px 40px;
+            padding: 22px 30px 16px 30px;
         }
 
         /* ── PNR Block ── */
         .pnr-block {
-            border: 2px solid #041741;
-            border-radius: 10px;
+            border: 1.5px solid #041741;
+            border-radius: 8px;
             padding: 0;
-            margin-bottom: 28px;
+            margin-bottom: 20px;
             overflow: hidden;
             page-break-inside: avoid;
         }
         .pnr-block-top {
             background: #f9f8f3;
-            padding: 12px 18px;
+            padding: 10px 16px;
             border-bottom: 1px dashed #d5d0c4;
         }
         .pnr-label {
-            font-size: 9px;
+            font-size: 8px;
             color: #8a8575;
             text-transform: uppercase;
             letter-spacing: 2px;
             margin-bottom: 2px;
         }
         .pnr-value {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 900;
             color: #041741;
             letter-spacing: 2px;
@@ -112,89 +113,103 @@
         .pnr-status {
             display: inline-block;
             color: #16a34a;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 900;
             text-transform: uppercase;
             letter-spacing: 2px;
-            margin-top: 8px;
+            margin-top: 6px;
         }
         .pnr-block-bottom {
-            padding: 10px 18px;
+            padding: 8px 16px;
             background: #ffffff;
         }
 
         /* ── Section Title ── */
         .section-title {
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 800;
             color: #041741;
             text-transform: uppercase;
             letter-spacing: 2px;
-            padding-bottom: 8px;
-            margin-bottom: 14px;
+            padding-bottom: 6px;
+            margin-bottom: 10px;
             border-bottom: 2px solid #f2cb57;
             page-break-after: avoid;
         }
 
         /* ── Info Grid ── */
         .info-label {
-            font-size: 9px;
+            font-size: 8px;
             color: #9ca3af;
             text-transform: uppercase;
             letter-spacing: 1px;
             margin-bottom: 1px;
         }
         .info-value {
-            font-size: 13px;
+            font-size: 11px;
             color: #1a1f36;
             font-weight: 700;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
         .info-row {
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             page-break-inside: avoid;
         }
 
         /* ── Flight Route Card ── */
         .route-card {
             background: #041741;
-            border-radius: 10px;
-            padding: 16px 20px 12px 20px;
-            margin-bottom: 24px;
+            border-radius: 8px;
+            padding: 14px 16px 10px 16px;
+            margin-bottom: 18px;
             color: #ffffff;
             page-break-inside: avoid;
+            width: 100%;
+            box-sizing: border-box;
         }
         .airport-code {
-            font-size: 26px;
+            font-size: 22px;
             font-weight: 900;
             color: #ffffff;
             letter-spacing: 1px;
         }
         .airport-label {
-            font-size: 9px;
+            font-size: 8px;
             color: rgba(255,255,255,0.45);
             text-transform: uppercase;
             letter-spacing: 2px;
         }
+        .airport-city {
+            font-size: 11px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 3px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
         .airport-time {
-            font-size: 12px;
+            font-size: 10px;
             color: #f2cb57;
             font-weight: 700;
-            margin-top: 4px;
+            margin-top: 3px;
         }
         .flight-badge {
             display: inline-block;
             color: #f2cb57;
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 900;
             letter-spacing: 1px;
-            margin-top: 4px;
+            margin-top: 3px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
         .baggage-strip {
             border-top: 1px dashed rgba(255,255,255,0.15);
-            margin-top: 12px;
-            padding-top: 8px;
+            margin-top: 10px;
+            padding-top: 6px;
             text-align: center;
-            font-size: 11px;
+            font-size: 10px;
             color: rgba(255,255,255,0.6);
         }
         .baggage-strip strong {
@@ -204,8 +219,9 @@
         /* ── Premium Tables ── */
         .p-table {
             width: 100%;
-            margin-bottom: 24px;
+            margin-bottom: 18px;
             border-collapse: collapse;
+            table-layout: fixed;
         }
         .p-table tr {
             page-break-inside: avoid;
@@ -213,17 +229,19 @@
         .p-table th {
             background: #041741;
             color: #f2cb57;
-            font-size: 9px;
+            font-size: 8px;
             text-transform: uppercase;
             letter-spacing: 1.5px;
-            padding: 10px 14px;
+            padding: 8px 12px;
             text-align: {{ app()->getLocale() == 'ar' ? 'right' : 'left' }};
             font-weight: 700;
         }
         .p-table td {
-            padding: 11px 14px;
-            font-size: 12px;
+            padding: 9px 12px;
+            font-size: 11px;
             border-bottom: 1px solid #f0f1f5;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
         .p-table tr:nth-child(even) td {
             background: #fafbfc;
@@ -234,12 +252,14 @@
             font-family: 'Courier New', monospace, 'Cairo';
             background: #f9f8f3;
             border: 1px solid #e8e4d9;
-            padding: 3px 10px;
+            padding: 2px 8px;
             border-radius: 4px;
             color: #041741;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 700;
             letter-spacing: 1px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
 
         /* ── Total Box ── */
@@ -250,20 +270,20 @@
         }
         .total-box {
             background: #041741;
-            padding: 16px 22px;
+            padding: 14px 18px;
             border-radius: 8px;
-            width: 280px;
+            width: 260px;
             float: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }};
             page-break-inside: avoid;
         }
         .total-label {
-            font-size: 9px;
+            font-size: 8px;
             color: rgba(255,255,255,0.5);
             text-transform: uppercase;
             letter-spacing: 2px;
         }
         .total-amount {
-            font-size: 26px;
+            font-size: 22px;
             font-weight: 900;
             color: #f2cb57;
             letter-spacing: 1px;
@@ -278,30 +298,83 @@
 
         /* ── Terms ── */
         .terms-section {
-            margin-top: 24px;
-            padding: 12px 18px;
+            margin-top: 18px;
+            padding: 10px 14px;
             background: #fffcf2;
             border: 1px solid #f9eed3;
-            border-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}: 4px solid #f2cb57;
+            border-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}: 3px solid #f2cb57;
             border-radius: 6px;
-            font-size: 9.5px;
+            font-size: 9px;
             color: #5c5541;
-            line-height: 1.7;
+            line-height: 1.6;
+            page-break-inside: avoid;
         }
         .terms-title {
-            font-size: 10px;
+            font-size: 9px;
             font-weight: 800;
             color: #041741;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
 
+        /* ── Details Grid Section ── */
+        .details-grid {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 18px;
+            page-break-inside: avoid;
+        }
+        .details-grid td {
+            vertical-align: top;
+        }
+        .details-cell {
+            padding: 14px;
+        }
+        .details-section-title {
+            font-size: 11px;
+            font-weight: 800;
+            color: #041741;
+            margin-bottom: 10px;
+            border: none;
+        }
 
+        /* ── Insurance Badge ── */
+        .insurance-badge {
+            margin-top: 10px;
+            margin-bottom: 10px;
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            border-radius: 6px;
+            padding: 8px 12px;
+            page-break-inside: avoid;
+        }
 
         /* ── Bottom Gold Bar ── */
         .bottom-bar {
-            height: 4px;
+            height: 3px;
             background: #f2cb57;
             border-radius: 0 0 2px 2px;
+        }
+
+        /* ── Leg Header ── */
+        .leg-header {
+            font-size: 10px;
+            color: #f2cb57;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            border-bottom: 1px dashed rgba(255,255,255,0.2);
+            padding-bottom: 5px;
+        }
+
+        /* ── Stops Info ── */
+        .stops-info {
+            font-size: 9px;
+            font-weight: 700;
+            margin-top: 4px;
+            line-height: 1.3;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
 
     </style>
@@ -318,11 +391,11 @@
         <div class="top-banner">
             <table class="top-banner-inner">
                 <tr>
-                    <td width="30%" valign="middle" style="text-align: {{ app()->getLocale() == 'ar' ? 'right' : 'left' }};">
+                    <td width="28%" valign="middle" style="text-align: {{ app()->getLocale() == 'ar' ? 'right' : 'left' }};">
                         <div class="brand-name">{{ __('Fly Vio') }}</div>
                         <div class="brand-tag">{{ __('Premium Travel Services') }}</div>
                     </td>
-                    <td width="40%" valign="middle" style="text-align: center;">
+                    <td width="44%" valign="middle" style="text-align: center;">
                         @php
                             $siteLogoPath = \App\Models\Setting::get('site_logo', 'images/logo-full.png');
                             if (filter_var($siteLogoPath, FILTER_VALIDATE_URL)) {
@@ -332,10 +405,10 @@
                             }
                         @endphp
                         @if(filter_var($siteLogoPath, FILTER_VALIDATE_URL) || file_exists(public_path($siteLogoPath)))
-                            <img src="{{ $logoImgSrc }}" alt="Logo" style="max-height: 55px; max-width: 140px;">
+                            <img src="{{ $logoImgSrc }}" alt="Logo" style="max-height: 48px; max-width: 130px;">
                         @endif
                     </td>
-                    <td width="30%" valign="middle" style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }};">
+                    <td width="28%" valign="middle" style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }};">
                         <div class="doc-type">{{ __('E-Ticket Receipt') }}</div>
                         <div class="doc-date">{{ __('Issued on') }}: {{ $booking->created_at->translatedFormat('d M Y, H:i') }}</div>
                     </td>
@@ -587,36 +660,36 @@
         <!-- ─── PNR BLOCK ─── -->
         <div class="pnr-block">
             <div class="pnr-block-top">
-                <table width="100%">
+                <table width="100%" cellpadding="0" cellspacing="0">
                     <tr>
-                        <td width="55%" valign="middle">
+                        <td width="50%" valign="middle">
                             <div class="pnr-label">{{ __('Booking Reference (PNR)') }}</div>
                             <div class="pnr-value">{{ $booking->booking_reference }}</div>
                             <div class="pnr-status">{{ __('Confirmed & Paid') }}</div>
                         </td>
-                        <td width="20%" align="center" valign="middle">
+                        <td width="22%" align="center" valign="middle">
                             @if($airlineLogo)
-                                <img src="{{ $airlineLogo }}" alt="{{ $airlineCode }}" height="32" style="border-radius: 4px; border: 1px solid #e8e4d9; padding: 3px; background: #fff;">
+                                <img src="{{ $airlineLogo }}" alt="{{ $airlineCode }}" height="28" style="border-radius: 4px; border: 1px solid #e8e4d9; padding: 2px; background: #fff;">
                             @endif
                         </td>
-                        <td width="25%" align="{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}" valign="middle">
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ $qrDataEncoded }}&color=041741" alt="QR" width="60" style="border: 2px solid #041741; padding: 3px; background: white; border-radius: 6px;">
+                        <td width="28%" align="{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}" valign="middle">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ $qrDataEncoded }}&color=041741" alt="QR" width="52" style="border: 1.5px solid #041741; padding: 2px; background: white; border-radius: 5px;">
                         </td>
                     </tr>
                 </table>
             </div>
             <div class="pnr-block-bottom">
-                <table width="100%">
+                <table width="100%" cellpadding="0" cellspacing="0">
                     <tr>
-                        <td width="33%">
+                        <td width="33%" valign="top">
                             <span class="info-label">{{ __('Airline') }}</span><br>
                             <span class="info-value">{{ $booking->airline_name ?? ($booking->airline_code ?? 'N/A') }}</span>
                         </td>
-                        <td width="33%" align="center">
+                        <td width="34%" align="center" valign="top">
                             <span class="info-label">{{ __('Invoice No.') }}</span><br>
                             <span class="info-value">INV-{{ str_pad($booking->id, 6, '0', STR_PAD_LEFT) }}</span>
                         </td>
-                        <td width="34%" style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }};">
+                        <td width="33%" style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }};" valign="top">
                             <span class="info-label">{{ __('Payment Status') }}</span><br>
                             <span class="info-value" style="color: #059669;">{{ __('Fully Paid') }}</span>
                         </td>
@@ -707,50 +780,50 @@
                         $stopsCount = $segCount - 1;
                     @endphp
                     @if(!empty($legHeaderTitle))
-                        <div style="font-size: 11px; color: #f2cb57; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-top: {{ $legIndex > 0 ? '16px' : '0' }}; margin-bottom: 12px; border-bottom: 1px dashed rgba(255,255,255,0.2); padding-bottom: 6px;">
+                        <div class="leg-header" style="margin-top: {{ $legIndex > 0 ? '14px' : '0' }};">
                             {{ $legHeaderTitle }}
                         </div>
                     @endif
-                    <table width="100%" style="margin-bottom: 12px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 10px;">
                         <tr>
-                            <td width="35%" align="center" valign="middle">
+                            <td width="32%" align="center" valign="middle">
                                 <div class="airport-code">{{ $depCode }}</div>
-                                <div style="font-size: 13px; font-weight: 700; margin-bottom: 4px;">{{ $depCity }}</div>
+                                <div class="airport-city">{{ $depCity }}</div>
                                 <div class="airport-label">{{ __('Departure') }}</div>
                                 <div class="airport-time" dir="ltr">{{ $depDate }}</div>
                             </td>
-                            <td width="30%" align="center" valign="middle">
-                                <div style="font-size: 11px; color: rgba(255,255,255,0.35); margin-bottom: 4px;">
-                                    ──────
-                                    <svg width="14" height="14" viewBox="0 0 24 24" style="vertical-align: middle; margin: 0 4px;">
+                            <td width="36%" align="center" valign="middle">
+                                <div style="font-size: 10px; color: rgba(255,255,255,0.35); margin-bottom: 3px;">
+                                    ─────
+                                    <svg width="12" height="12" viewBox="0 0 24 24" style="vertical-align: middle; margin: 0 3px;">
                                         <path fill="rgba(255,255,255,0.35)" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
                                     </svg>
-                                    ──────
+                                    ─────
                                 </div>
                                 <div class="flight-badge">{{ $flightNo }}</div>
                                 @if($stopsCount > 0)
-                                    <div style="font-size: 10px; color: #f2cb57; font-weight: 700; margin-top: 5px; line-height: 1.3;">
-                                        <svg width="10" height="10" viewBox="0 0 24 24" style="vertical-align: middle;">
-                                            <path fill="#f2cb57" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
-                                        </svg>
-                                        {{ $stopsCount }} {{ $stopsCount == 1 ? __('Stop') : __('Stops') }} {{ !empty($layovers) ? '(' . implode(', ', $layovers) . ')' : '' }}
+                                    <div class="stops-info" style="color: #f2cb57;">
+                                        {{ $stopsCount }} {{ $stopsCount == 1 ? __('Stop') : __('Stops') }}
+                                        @if(!empty($layovers))
+                                            <br><span style="font-size: 8px; color: rgba(255,255,255,0.5);">({{ implode(', ', $layovers) }})</span>
+                                        @endif
                                     </div>
                                 @else
-                                    <div style="font-size: 10px; color: #34d399; font-weight: 700; margin-top: 5px;">
+                                    <div class="stops-info" style="color: #34d399;">
                                         {{ __('Non-stop') }}
                                     </div>
                                 @endif
                             </td>
-                            <td width="35%" align="center" valign="middle">
+                            <td width="32%" align="center" valign="middle">
                                 <div class="airport-code">{{ $arrCode }}</div>
-                                <div style="font-size: 13px; font-weight: 700; margin-bottom: 4px;">{{ $arrCity }}</div>
+                                <div class="airport-city">{{ $arrCity }}</div>
                                 <div class="airport-label">{{ __('Arrival') }}</div>
                                 <div class="airport-time" dir="ltr">{{ $arrDate }}</div>
                             </td>
                         </tr>
                     </table>
-                    <div class="baggage-strip" style="margin-bottom: {{ $legIndex < $totalLegsCount - 1 ? '16px' : '0' }};">
-                        <svg width="12" height="12" viewBox="0 0 24 24" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 4px;">
+                    <div class="baggage-strip" style="margin-bottom: {{ $legIndex < $totalLegsCount - 1 ? '14px' : '0' }};">
+                        <svg width="10" height="10" viewBox="0 0 24 24" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 3px;">
                             <path fill="rgba(255,255,255,0.6)" d="M17 6h-2V4c0-1.1-.9-2-2-2h-2c-1.1 0-2 .9-2 2v2H7c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zM10 4h4v2h-4V4zm7 15H7V8h10v11z"/>
                             <path fill="rgba(255,255,255,0.6)" d="M9 10h2v7H9zm4 0h2v7h-2z"/>
                         </svg>
@@ -787,28 +860,28 @@
         </div>
 
         <!-- ─── DETAILS GRID ─── -->
-        <table style="margin-bottom: 26px;">
+        <table class="details-grid" width="100%" cellpadding="0" cellspacing="0">
             <tr>
                 <td width="48%" valign="top">
-                    <div style="padding: 18px; min-height: 140px;">
-                        <div class="section-title" style="margin-bottom: 14px; font-size: 13px; color: #041741; border: none;">
-                            <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f464.png" width="14" height="14" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 6px;">
+                    <div class="details-cell">
+                        <div class="details-section-title">
+                            <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f464.png" width="12" height="12" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 5px;">
                             {{ __('Passenger Details') }}
                         </div>
-                        <table width="100%">
+                        <table width="100%" cellpadding="0" cellspacing="0">
                             <tr>
-                                <td width="50%" valign="top">
+                                <td width="50%" valign="top" style="padding-bottom: 8px;">
                                     <span class="info-label">{{ __('Primary Contact') }}</span><br>
-                                    <span class="info-value" style="color: #1a1f36; font-weight: 700;">{{ $booking->passengers->first()->title ?? '' }} {{ $booking->passengers->first()->first_name ?? 'N/A' }} {{ $booking->passengers->first()->last_name ?? '' }}</span>
+                                    <span class="info-value">{{ $booking->passengers->first()->title ?? '' }} {{ $booking->passengers->first()->first_name ?? 'N/A' }} {{ $booking->passengers->first()->last_name ?? '' }}</span>
                                 </td>
-                                <td width="50%" valign="top">
+                                <td width="50%" valign="top" style="padding-bottom: 8px;">
                                     <span class="info-label">{{ __('Phone') }}</span><br>
-                                    <span class="info-value" dir="ltr" style="font-weight: 700;">{{ $booking->contact_phone ?? '—' }}</span>
+                                    <span class="info-value" dir="ltr">{{ $booking->contact_phone ?? '—' }}</span>
                                 </td>
                             </tr>
                             @if(isset($booking->user) && $booking->user->email)
                             <tr>
-                                <td colspan="2" style="padding-top: 12px;">
+                                <td colspan="2" valign="top">
                                     <span class="info-label">{{ __('Email') }}</span><br>
                                     <span class="info-value">{{ $booking->user->email }}</span>
                                 </td>
@@ -819,26 +892,26 @@
                 </td>
                 <td width="4%"></td>
                 <td width="48%" valign="top">
-                    <div style="padding: 18px; min-height: 140px;">
-                        <div class="section-title" style="margin-bottom: 14px; font-size: 13px; color: #041741; border: none;">
-                            <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f4b3.png" width="14" height="14" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 6px;">
+                    <div class="details-cell">
+                        <div class="details-section-title">
+                            <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f4b3.png" width="12" height="12" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 5px;">
                             {{ __('Payment Summary') }}
                         </div>
-                        <table width="100%">
+                        <table width="100%" cellpadding="0" cellspacing="0">
                             <tr>
-                                <td width="50%" valign="top">
+                                <td width="50%" valign="top" style="padding-bottom: 8px;">
                                     <span class="info-label">{{ __('Payment Method') }}</span><br>
-                                    <span class="info-value" style="font-weight: 700;">{{ __('Electronic Payment') }}</span>
+                                    <span class="info-value">{{ __('Electronic Payment') }}</span>
                                 </td>
-                                <td width="50%" valign="top">
+                                <td width="50%" valign="top" style="padding-bottom: 8px;">
                                     <span class="info-label">{{ __('Booking Date') }}</span><br>
-                                    <span class="info-value" style="font-weight: 700;">{{ $booking->created_at->translatedFormat('d M Y') }}</span>
+                                    <span class="info-value">{{ $booking->created_at->translatedFormat('d M Y') }}</span>
                                 </td>
                             </tr>
                             <tr>
-                                <td colspan="2" style="padding-top: 12px;">
+                                <td colspan="2" valign="top">
                                     <span class="info-label">{{ __('Total Amount') }}</span><br>
-                                    <span class="info-value" style="color: #d9a01c; font-size: 18px; font-weight: 900;">{{ number_format($booking->total_amount, 2) }} {{ $booking->currency }}</span>
+                                    <span class="info-value" style="color: #d9a01c; font-size: 16px; font-weight: 900;">{{ number_format($booking->total_amount, 2) }} {{ $booking->currency }}</span>
                                 </td>
                             </tr>
                         </table>
@@ -850,23 +923,23 @@
         <!-- ─── PASSENGERS TABLE ─── -->
         @if($booking->passengers && $booking->passengers->count() > 0)
         <div class="section-title" style="margin-top: 4px;">
-            <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f9f3.png" width="14" height="14" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 4px;">
+            <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f9f3.png" width="12" height="12" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 4px;">
             {{ __('Travelers List') }}
         </div>
         <table class="p-table">
             <thead>
                 <tr>
-                    <th width="8%">#</th>
-                    <th width="42%">
-                        <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f464.png" width="10" height="10" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 4px; opacity: 0.8;">
+                    <th width="7%">#</th>
+                    <th width="38%">
+                        <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f464.png" width="9" height="9" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 3px; opacity: 0.8;">
                         {{ __('Passenger Name') }}
                     </th>
                     <th width="20%">
-                        <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f3ab.png" width="10" height="10" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 4px; opacity: 0.8;">
+                        <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f3ab.png" width="9" height="9" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 3px; opacity: 0.8;">
                         {{ __('Type') }}
                     </th>
-                    <th width="30%" style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }};">
-                        <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f4c4.png" width="10" height="10" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 4px; opacity: 0.8;">
+                    <th width="35%" style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }};">
+                        <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f4c4.png" width="9" height="9" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 3px; opacity: 0.8;">
                         {{ __('E-Ticket Number') }}
                     </th>
                 </tr>
@@ -917,8 +990,8 @@
         @endif
 
         <!-- ─── FARE BREAKDOWN ─── -->
-        <div class="section-title" style="margin-top: 10px;">
-            <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f4b8.png" width="14" height="14" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 4px;">
+        <div class="section-title" style="margin-top: 8px;">
+            <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f4b8.png" width="12" height="12" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 4px;">
             {{ __('Fare Breakdown') }}
         </div>
         @php
@@ -942,21 +1015,21 @@
             $policy = $booking->insurancePolicy;
         @endphp
         <!-- ─── TRAVEL INSURANCE BADGE ─── -->
-        <div style="margin-top: 12px; margin-bottom: 12px; background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 8px; padding: 10px 14px;">
-            <table width="100%">
+        <div class="insurance-badge">
+            <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
-                    <td width="72%">
-                        <div style="font-weight: 800; color: #166534; font-size: 11.5px;">
+                    <td width="70%" valign="middle">
+                        <div style="font-weight: 800; color: #166534; font-size: 10px;">
                             🛡️ {{ __('Comprehensive Travel & Medical Insurance Included') }}
                         </div>
-                        <div style="font-size: 9.5px; color: #15803d; margin-top: 2px;">
+                        <div style="font-size: 8.5px; color: #15803d; margin-top: 2px; word-wrap: break-word;">
                             {{ __('Policy No:') }} <strong>{{ $policy->policy_number ?? ('POL-'.strtoupper(substr(md5($booking->id), 0, 8))) }}</strong> · 
                             {{ __('Coverage Limit:') }} <strong>$500,000 USD</strong> · 
                             {{ __('Status:') }} <strong style="color:#059669;">{{ __('Active / Insured') }}</strong>
                         </div>
                     </td>
-                    <td width="28%" style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }}; vertical-align: middle;">
-                        <span style="background: #16a34a; color: #fff; font-size: 9.5px; font-weight: 800; padding: 4px 8px; border-radius: 12px; text-transform: uppercase;">
+                    <td width="30%" style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }}; vertical-align: middle;">
+                        <span style="background: #16a34a; color: #fff; font-size: 8.5px; font-weight: 800; padding: 3px 7px; border-radius: 10px; text-transform: uppercase;">
                             ✓ {{ __('INSURED') }}
                         </span>
                     </td>
@@ -968,22 +1041,22 @@
         <table class="p-table">
             <thead>
                 <tr>
-                    <th width="70%">{{ __('Description') }}</th>
-                    <th width="30%" style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }};">{{ __('Amount') }}</th>
+                    <th width="65%">{{ __('Description') }}</th>
+                    <th width="35%" style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }};">{{ __('Amount') }}</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
                     <td>
                         <div style="font-weight: 700; color: #1a1f36;">{{ __('Flight Ticket Fare') }}</div>
-                        <div style="font-size:10px; color:#9ca3af; margin-top:2px;">
+                        <div style="font-size: 9px; color: #9ca3af; margin-top: 2px; word-wrap: break-word;">
                             @if($airlineLogo)
-                                <img src="{{ $airlineLogo }}" height="11" style="vertical-align: middle; margin-right: 4px; margin-left: 4px;">
+                                <img src="{{ $airlineLogo }}" height="10" style="vertical-align: middle; margin-right: 3px; margin-left: 3px;">
                             @endif
                             {{ $booking->airline_name ?? 'N/A' }} · {{ $origin }} → {{ $destination }} · {{ __('Reference') }}: {{ $booking->booking_reference }}
                         </div>
                     </td>
-                    <td style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }}; font-weight: 800; color: #1a1f36; font-size: 14px; vertical-align: middle;">
+                    <td style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }}; font-weight: 800; color: #1a1f36; font-size: 12px; vertical-align: middle;">
                         {{ number_format($baseFare, 2) }} {{ $booking->currency }}
                     </td>
                 </tr>
@@ -991,9 +1064,9 @@
                 <tr>
                     <td>
                         <div style="font-weight: 700; color: #1a1f36;">{{ __('Extra Services') }}</div>
-                        <div style="font-size:10px; color:#9ca3af; margin-top:2px;">{{ __('Baggage, Meals, Seats') }}</div>
+                        <div style="font-size: 9px; color: #9ca3af; margin-top: 2px;">{{ __('Baggage, Meals, Seats') }}</div>
                     </td>
-                    <td style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }}; font-weight: 800; color: #1a1f36; font-size: 14px; vertical-align: middle;">
+                    <td style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }}; font-weight: 800; color: #1a1f36; font-size: 12px; vertical-align: middle;">
                         {{ number_format($totalExtraPrice, 2) }} {{ $booking->currency }}
                     </td>
                 </tr>
@@ -1002,18 +1075,18 @@
                 <tr>
                     <td>
                         <div style="font-weight: 700; color: #1a1f36;">🛡️ {{ __('Comprehensive Travel & Medical Insurance') }}</div>
-                        <div style="font-size:10px; color:#9ca3af; margin-top:2px;">{{ __('Emergency Medical ($500k), Trip Delay, Baggage Protection') }}</div>
+                        <div style="font-size: 9px; color: #9ca3af; margin-top: 2px;">{{ __('Emergency Medical ($500k), Trip Delay, Baggage Protection') }}</div>
                     </td>
-                    <td style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }}; font-weight: 800; color: #1a1f36; font-size: 14px; vertical-align: middle;">
+                    <td style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }}; font-weight: 800; color: #1a1f36; font-size: 12px; vertical-align: middle;">
                         {{ number_format($insAmount, 2) }} {{ $booking->currency }}
                     </td>
                 </tr>
                 @endif
                 <tr>
-                    <td style="background: #041741; color: #ffffff; font-size: 13px; font-weight: 700; padding: 14px 18px; text-transform: uppercase; letter-spacing: 1px;">
+                    <td style="background: #041741; color: #ffffff; font-size: 11px; font-weight: 700; padding: 12px 14px; text-transform: uppercase; letter-spacing: 1px;">
                         {{ __('Total Paid') }}
                     </td>
-                    <td style="background: #041741; color: #f2cb57; font-size: 18px; font-weight: 900; padding: 14px 18px; text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }};">
+                    <td style="background: #041741; color: #f2cb57; font-size: 16px; font-weight: 900; padding: 12px 14px; text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }};">
                         {{ number_format($booking->total_amount, 2) }} {{ $booking->currency }}
                     </td>
                 </tr>
@@ -1041,12 +1114,12 @@
 
 <!-- ═══ PAGE FOOTER ═══ -->
 <htmlpagefooter name="page-footer">
-    <div style="height: 4px; background: #f2cb57; margin: 0 40px; border-radius: 4px;"></div>
-    <div style="padding-top: 8px; font-size: 9px; color: #9ca3af; margin: 0 40px;">
-        <table width="100%">
+    <div style="height: 3px; background: #f2cb57; margin: 0 30px; border-radius: 3px;"></div>
+    <div style="padding-top: 6px; font-size: 8px; color: #9ca3af; margin: 0 30px;">
+        <table width="100%" cellpadding="0" cellspacing="0">
             <tr>
                 <td width="33%" style="color: #041741; font-weight: 700;">{{ __('Fly Vio') }} &copy; {{ date('Y') }}</td>
-                <td width="33%" align="center">{{ __('System Generated Document') }}</td>
+                <td width="34%" align="center">{{ __('System Generated Document') }}</td>
                 <td width="33%" style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }}; direction: ltr;">
                     Page {PAGENO} of {nbpg}
                 </td>
