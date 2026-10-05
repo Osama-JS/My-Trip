@@ -60,10 +60,31 @@ class InsuranceController extends Controller
     public function customerPolicies(Request $request)
     {
         $user = auth()->user();
-        $policies = InsurancePolicy::where('user_id', $user->id)
-            ->with(['flightBooking', 'tripBooking', 'hotelBooking'])
-            ->latest()
-            ->paginate(10);
+        $query = InsurancePolicy::where('user_id', $user->id)
+            ->with(['flightBooking', 'tripBooking', 'hotelBooking']);
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('policy_number', 'like', "%{$search}%")
+                  ->orWhere('certificate_number', 'like', "%{$search}%")
+                  ->orWhere('destination_country', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $policies = $query->latest()->paginate(10)->withQueryString();
 
         return view('frontend.customer.insurances.index', compact('policies'));
     }
