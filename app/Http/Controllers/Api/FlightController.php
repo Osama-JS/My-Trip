@@ -353,6 +353,15 @@ class FlightController extends Controller
             $result['AirRevalidateResponse']['AirRevalidateResult']['IsPassportMandatory'] = $isPassport ?? false;
         }
 
+        // Inject Inbound Fare Source Code if present (for Domestic Round-Trip)
+        $resultInbound = $result['AirRevalidateResponse']['AirRevalidateResultInbound'] ?? null;
+        if ($resultInbound) {
+            $inboundItin = $resultInbound['FareItineraries']['FareItinerary'] ?? ($resultInbound['FareItineraries'][0] ?? null);
+            if (isset($inboundItin['AirItineraryFareInfo']['FareSourceCode'])) {
+                $result['fare_source_code_inbound'] = $inboundItin['AirItineraryFareInfo']['FareSourceCode'];
+            }
+        }
+
         if ($isValid === true || $isValid === 'true' || $isValid === 'True') {
             return $this->apiResponse(false, __('Fare is valid.'), $result, null, 200);
         }

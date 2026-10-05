@@ -330,8 +330,12 @@
                         <span class="fr-price-currency">{{ $currency }}</span>
                     </div>
                     <span class="fr-price-note">{{ __('per person') }}</span>
+                    @php
+                        $inboundCode = $fareInfo['FareSourceCodeInbound'] ?? ($fareInfo['fare_source_code_inbound'] ?? ($itin['FareSourceCodeInbound'] ?? ($itin['fare_source_code_inbound'] ?? null)));
+                    @endphp
                     <a href="{{ route('flights.booking.form', array_merge($searchParams ?? [], [
                         'fare_source_code' => $fareInfo['FareSourceCode'],
+                        'fare_source_code_inbound' => $inboundCode,
                         'session_id' => $sessionId,
                         'total_amount' => $price,
                         'airline' => $validatingCarrier,

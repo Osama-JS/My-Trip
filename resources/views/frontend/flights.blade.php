@@ -28,6 +28,7 @@
                 </div>
 
                 <form action="{{ route('flights.results') }}" method="GET" id="mainSearchForm">
+                    <input type="hidden" name="journeyType" id="journeyTypeHidden" value="OneWay">
                     <div class="fe-search-row-v2">
                         {{-- From / To with Swap --}}
                         <div class="fe-input-group-v2 from-to-wrapper">
@@ -204,6 +205,8 @@
         journeyTypeInputs.forEach(input => {
             input.addEventListener('change', function() {
                 const isReturn = this.value === 'Return';
+                const hiddenInput = document.getElementById('journeyTypeHidden');
+                if (hiddenInput) hiddenInput.value = this.value;
                 returnDateGroup.style.display = isReturn ? 'flex' : 'none';
                 const returnInput = document.getElementById('returnDate');
                 if (isReturn) {
@@ -430,6 +433,13 @@
             const formData = new FormData(form);
             const params = new URLSearchParams(formData);
             params.append('ajax', '1');
+            params.set('journeyType', journeyType);
+
+            if (journeyType === 'Return' && retDate) {
+                params.set('returnDate', retDate);
+            } else {
+                params.delete('returnDate');
+            }
 
             // Add Select2 values manually
             const fromVal = document.getElementById('airport_from').value;

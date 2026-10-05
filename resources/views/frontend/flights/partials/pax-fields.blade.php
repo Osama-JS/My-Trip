@@ -18,7 +18,9 @@
             <div class="fe-form-group" style="width: 100%;">
                 <label class="fe-label mb-2">
                     {{ __('Upload') }} {{ $docTypeLabel }} {{ __('Image') }} 
-                    <span class="text-danger" style="color:red;">*</span>
+                    @if($isPassport)
+                        <span class="text-danger" style="color:red;">*</span>
+                    @endif
                     @if(!$isPassport)
                         <span style="font-weight:500;color:var(--gray-400);font-size:0.78rem;margin-inline-start:4px;">{{ __('(Passport is not mandatory for this flight, you can use National ID)') }}</span>
                     @endif
@@ -93,7 +95,7 @@
         <div class="fe-form-row three-cols">
             <div class="fe-form-group">
                 <label class="fe-label">{{ $isPassport ? __('Passport Number') : __('Passport / ID Number') }}</label>
-                <input type="text" name="passengers[{{ $index }}][passport_no]" class="fe-input" required value="{{ old("passengers.{$index}.passport_no", $savedPax['passport_number'] ?? '') }}" placeholder="A1234567">
+                <input type="text" name="passengers[{{ $index }}][passport_no]" class="fe-input" {{ $isPassport ? 'required' : '' }} value="{{ old("passengers.{$index}.passport_no", $savedPax['passport_number'] ?? '') }}" placeholder="{{ $isPassport ? 'A1234567' : 'A1234567 / ID' }}">
             </div>
             <div class="fe-form-group">
                 <label class="fe-label">{{ __('Nationality') }}</label>

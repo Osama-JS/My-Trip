@@ -239,22 +239,18 @@ class TraveloproService
      */
     private function formatItinerary(array $itineraries)
     {
-        // Ensure structure matches Travelopro expectation
-        // Example:
-        // [
-        //    [
-        //        "departureDate" => "2023-02-19",
-        //        "airportOriginCode" => "DEL",
-        //        "airportDestinationCode" => "BOM"
-        //    ]
-        // ]
         return array_map(function ($segment) {
-            return [
-                'departureDate' => $segment['departureDate'],
-                'returnDate' => $segment['returnDate'] ?? '', // Required for Return journeyType
-                'airportOriginCode' => (string)($segment['airportOriginCode'] ?? ''),
+            $item = [
+                'departureDate'          => $segment['departureDate'],
+                'airportOriginCode'      => (string)($segment['airportOriginCode'] ?? ''),
                 'airportDestinationCode' => (string)($segment['airportDestinationCode'] ?? ''),
             ];
+
+            if (!empty($segment['returnDate'])) {
+                $item['returnDate'] = $segment['returnDate'];
+            }
+
+            return $item;
         }, $itineraries);
     }
 
@@ -491,15 +487,28 @@ class TraveloproService
                 $result = $response->json();
                 
                 // Apply Profit Margin
-                $margin = floatval(\App\Models\Setting::get('flight_margin', 0));
+                $margin     = floatval(\App\Models\Setting::get('flight_margin', 0));
+                $marginType = \App\Models\Setting::get('flight_margin_type', 'percentage');
+
                 if ($margin > 0 && isset($result['AirRevalidateResponse']['AirRevalidateResult']['FareItineraries'])) {
                     $itineraries = &$result['AirRevalidateResponse']['AirRevalidateResult']['FareItineraries'];
                     
                     if (isset($itineraries['FareItinerary'])) {
-                        $this->applyMarginToItinerary($itineraries['FareItinerary'], $margin);
+                        $this->applyMarginToItinerary($itineraries['FareItinerary'], $margin, $marginType);
                     } else {
                         foreach ($itineraries as &$itinerary) {
-                            $this->applyMarginToItinerary($itinerary, $margin);
+                            $this->applyMarginToItinerary($itinerary, $margin, $marginType);
+                        }
+                    }
+                }
+
+                if ($margin > 0 && isset($result['AirRevalidateResponse']['AirRevalidateResultInbound']['FareItineraries'])) {
+                    $inboundItins = &$result['AirRevalidateResponse']['AirRevalidateResultInbound']['FareItineraries'];
+                    if (isset($inboundItins['FareItinerary'])) {
+                        $this->applyMarginToItinerary($inboundItins['FareItinerary'], $margin, $marginType);
+                    } else {
+                        foreach ($inboundItins as &$itinerary) {
+                            $this->applyMarginToItinerary($itinerary, $margin, $marginType);
                         }
                     }
                 }
@@ -538,18 +547,32 @@ class TraveloproService
     {
         Log::info('Travelopro Booking Request', ['data' => $data]);
 
+        $isPassportMandatory = false;
+        if (isset($data['IsPassportMandatory'])) {
+            if (is_bool($data['IsPassportMandatory'])) {
+                $isPassportMandatory = $data['IsPassportMandatory'];
+            } else {
+                $isPassportMandatory = (strtolower(strval($data['IsPassportMandatory'])) === 'true' || $data['IsPassportMandatory'] === '1' || $data['IsPassportMandatory'] === 1);
+            }
+        }
+
+        $bookingInfo = [
+            'flight_session_id'        => $data['flight_session_id'],
+            'fare_source_code'         => $data['fare_source_code'],
+            'IsPassportMandatory'      => $isPassportMandatory,
+            'areaCode'                 => $data['areaCode'] ?? '080',
+            'countryCode'              => $data['countryCode'] ?? '966',
+            'fareType'                 => $data['fareType'] ?? 'Private',
+        ];
+
+        if (!empty($data['fare_source_code_inbound'])) {
+            $bookingInfo['fare_source_code_inbound'] = $data['fare_source_code_inbound'];
+        }
+
         // NOTE: paxDetails must be a direct array (not double-wrapped) per Travelopro spec.
         // formatPaxDetails() already returns the correctly shaped array.
         $payload = [
-            'flightBookingInfo' => [
-                'flight_session_id'        => $data['flight_session_id'],
-                'fare_source_code'         => $data['fare_source_code'],
-                'IsPassportMandatory'      => $data['IsPassportMandatory'] ?? false,
-                'areaCode'                 => $data['areaCode'] ?? '080',
-                'countryCode'              => $data['countryCode'] ?? '966',
-                'fareType'                 => $data['fareType'] ?? 'Private',
-                'fare_source_code_inbound' => $data['fare_source_code_inbound'] ?? null,
-            ],
+            'flightBookingInfo' => $bookingInfo,
             'paxInfo' => [
                 'clientRef'     => $data['clientRef'] ?? uniqid('TR'),
                 'customerEmail' => $data['customerEmail'],

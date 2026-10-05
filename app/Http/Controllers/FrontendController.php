@@ -682,6 +682,11 @@ class FrontendController extends Controller
         $departDate = $request->get('departDate');
         $returnDate = $request->get('returnDate');
 
+        // Automatically infer Return if returnDate is present
+        if (!empty($returnDate) && $journeyType !== 'Return') {
+            $journeyType = 'Return';
+        }
+
         // Sanitize & enforce returnDate >= departDate for Return trips
         if ($journeyType === 'Return' && $returnDate && $departDate) {
             if ($returnDate < $departDate) {
@@ -689,25 +694,25 @@ class FrontendController extends Controller
             }
         }
 
-        // Prepare search request for Travelopro
-        $searchData = [
-            'journeyType' => $journeyType,
-            'class' => $request->get('class', 'Economy'),
-            'adults' => (int)$request->get('adults', 1),
-            'childs' => (int)$request->get('childs', 0),
-            'infants' => (int)$request->get('infants', 0),
-            'OriginDestinationInfo' => [
-                [
-                    'departureDate' => $departDate,
-                    'airportOriginCode' => $request->get('from'),
-                    'airportDestinationCode' => $request->get('to'),
-                ]
-            ]
+        $originDestInfo = [
+            'departureDate'          => $departDate,
+            'airportOriginCode'      => $request->get('from'),
+            'airportDestinationCode' => $request->get('to'),
         ];
 
-        if ($journeyType === 'Return' && $returnDate) {
-             $searchData['OriginDestinationInfo'][0]['returnDate'] = $returnDate;
+        if ($journeyType === 'Return' && !empty($returnDate)) {
+             $originDestInfo['returnDate'] = $returnDate;
         }
+
+        // Prepare search request for Travelopro
+        $searchData = [
+            'journeyType'           => $journeyType,
+            'class'                 => $request->get('class', 'Economy'),
+            'adults'                => (int)$request->get('adults', 1),
+            'childs'                => (int)$request->get('childs', 0),
+            'infants'               => (int)$request->get('infants', 0),
+            'OriginDestinationInfo' => [$originDestInfo]
+        ];
 
         $results = $this->traveloproService->searchFlights($searchData);
 
@@ -718,6 +723,7 @@ class FrontendController extends Controller
         }
 
         $params = $request->all();
+        $params['journeyType'] = $journeyType;
         if ($journeyType === 'Return' && $returnDate) {
             $params['returnDate'] = $returnDate;
         }
@@ -764,10 +770,15 @@ class FrontendController extends Controller
         }
 
         // Validate the fare before proceeding
-        $revalidate = $this->traveloproService->validateFare([
+        $revalidatePayload = [
             'session_id' => $request->get('session_id'),
             'fare_source_code' => $request->get('fare_source_code'),
-        ]);
+        ];
+        if ($request->filled('fare_source_code_inbound')) {
+            $revalidatePayload['fare_source_code_inbound'] = $request->get('fare_source_code_inbound');
+        }
+
+        $revalidate = $this->traveloproService->validateFare($revalidatePayload);
 
         if (isset($revalidate['status']) && $revalidate['status'] === 'error') {
             return redirect()->route('flights')->with('error', __('Fare is no longer available.'));
@@ -787,6 +798,9 @@ class FrontendController extends Controller
         if ($isPassport === null && isset($result['FareItineraries']['FareItinerary'][0]['IsPassportMandatory'])) {
             $isPassport = $result['FareItineraries']['FareItinerary'][0]['IsPassportMandatory'];
         }
+        if ($isPassport === null && isset($result['IsPassportMandatory'])) {
+            $isPassport = $result['IsPassportMandatory'];
+        }
         
         // If Travelopro returns null, manually check if it's an international flight
         if ($isPassport === null && isset($details['from']) && isset($details['to'])) {
@@ -803,7 +817,8 @@ class FrontendController extends Controller
             }
         }
         
-        $details['IsPassportMandatory'] = $isPassport ?? 'false';
+        // Normalize boolean string
+        $details['IsPassportMandatory'] = ($isPassport === true || $isPassport === 'true' || $isPassport === '1' || $isPassport === 1) ? 'true' : 'false';
         
         $details['visual_seat_map'] = \App\Models\Setting::get('visual_seat_map', '1');
 
@@ -815,6 +830,17 @@ class FrontendController extends Controller
         // IMPORTANT: Validate Fare returns a new FareSourceCode that MUST be used for ExtraServices and Booking!
         if (isset($result['FareItineraries']['FareItinerary']['AirItineraryFareInfo']['FareSourceCode'])) {
             $details['fare_source_code'] = $result['FareItineraries']['FareItinerary']['AirItineraryFareInfo']['FareSourceCode'];
+        }
+
+        // Check Inbound Fare Source Code for Domestic Round-Trip flights
+        $resultInbound = $revalidate['AirRevalidateResponse']['AirRevalidateResultInbound'] ?? null;
+        if ($resultInbound) {
+            $inboundItin = $resultInbound['FareItineraries']['FareItinerary'] ?? ($resultInbound['FareItineraries'][0] ?? null);
+            if (isset($inboundItin['AirItineraryFareInfo']['FareSourceCode'])) {
+                $details['fare_source_code_inbound'] = $inboundItin['AirItineraryFareInfo']['FareSourceCode'];
+            }
+        } elseif ($request->filled('fare_source_code_inbound')) {
+            $details['fare_source_code_inbound'] = $request->get('fare_source_code_inbound');
         }
 
         // Also check if there is a new SessionId
@@ -905,9 +931,9 @@ class FrontendController extends Controller
 
         if ($hasError || !$isSuccess || $hasErrors || empty($uniqueId)) {
             Log::warning('Flight Booking Rejected / Expired before payment: ' . json_encode($result));
-            $userFriendlyMsg = app()->getLocale() == 'ar'
+            $userFriendlyMsg = $errorMsg ?: (app()->getLocale() == 'ar'
                 ? 'عذراً، لم يعد هذا الحجز أو المقاعد متاحة لدى شركة الطيران نظراً لانتهاء صلاحية جلسة الحجز. يرجى إعادة البحث واختيار الرحلة مجدداً.'
-                : 'Sorry, this flight fare or seat availability has expired with the airline due to session timeout. Please search again.';
+                : 'Sorry, this flight fare or seat availability has expired with the airline due to session timeout. Please search again.');
 
             return back()->with('error', $userFriendlyMsg)->withInput();
         }

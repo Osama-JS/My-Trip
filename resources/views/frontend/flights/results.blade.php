@@ -310,8 +310,12 @@
                                         <span class="amount">{{ number_format($price, 2) }}</span>
                                         <span class="currency">{{ $currency }}</span>
                                     </div>
+                                    @php
+                                        $inboundCode = $fareInfo['FareSourceCodeInbound'] ?? ($fareInfo['fare_source_code_inbound'] ?? ($itin['FareSourceCodeInbound'] ?? ($itin['fare_source_code_inbound'] ?? null)));
+                                    @endphp
                                     <a href="{{ route('flights.booking.form', array_merge($searchParams, [
                                         'fare_source_code' => $fareInfo['FareSourceCode'], 
+                                        'fare_source_code_inbound' => $inboundCode,
                                         'session_id' => $results['AirSearchResponse']['session_id'] ?? ($results['AirSearchResponse']['AirSearchResult']['SessionId'] ?? ''), 
                                         'total_amount' => $price,
                                         'airline' => $validatingCarrier,
