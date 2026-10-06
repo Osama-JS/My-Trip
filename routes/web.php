@@ -73,6 +73,10 @@ Route::middleware('auth')->group(function () {
 // Dynamic Pages
 Route::get('/p/{slug}', [FrontendController::class, 'showPage'])->name('pages.show');
 
+// Public System Status Page
+Route::get('/status', [\App\Http\Controllers\PublicStatusController::class, 'index'])->name('system.status.public');
+Route::get('/status/data', [\App\Http\Controllers\PublicStatusController::class, 'data'])->name('system.status.public.data');
+
 
 // =============================================================================
 // WEB VIEW PAYMENT ROUTES
@@ -388,6 +392,26 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
 
     // Commissions & Profits
     Route::get('commissions', [\App\Http\Controllers\Admin\CommissionController::class, 'index'])->name('commissions.index');
+
+    // System Health, Monitoring & Maintenance Suite
+    Route::prefix('system')->name('system.')->group(function () {
+        Route::get('/health', [\App\Http\Controllers\Admin\SystemHealthController::class, 'index'])->name('health');
+        Route::get('/data', [\App\Http\Controllers\Admin\SystemHealthController::class, 'statusData'])->name('data');
+        Route::post('/actions/cache', [\App\Http\Controllers\Admin\SystemHealthController::class, 'executeAction'])->name('actions.cache');
+        Route::post('/actions/maintenance', [\App\Http\Controllers\Admin\SystemHealthController::class, 'toggleMaintenance'])->name('actions.maintenance');
+        Route::get('/logs', [\App\Http\Controllers\Admin\SystemHealthController::class, 'logs'])->name('logs');
+        Route::post('/logs/clear', [\App\Http\Controllers\Admin\SystemHealthController::class, 'clearLogs'])->name('logs.clear');
+        Route::post('/jobs/retry', [\App\Http\Controllers\Admin\SystemHealthController::class, 'retryFailedJobs'])->name('jobs.retry');
+        Route::post('/jobs/flush', [\App\Http\Controllers\Admin\SystemHealthController::class, 'flushFailedJobs'])->name('jobs.flush');
+
+        // Backups Management Hub
+        Route::post('/backups/create', [\App\Http\Controllers\Admin\SystemHealthController::class, 'createBackup'])->name('backups.create');
+        Route::get('/backups/download/{filename}', [\App\Http\Controllers\Admin\SystemHealthController::class, 'downloadBackup'])->name('backups.download');
+        Route::delete('/backups/delete/{filename}', [\App\Http\Controllers\Admin\SystemHealthController::class, 'deleteBackup'])->name('backups.delete');
+
+        // Third-Party APIs Benchmark
+        Route::post('/benchmark/run', [\App\Http\Controllers\Admin\SystemHealthController::class, 'runBenchmark'])->name('benchmark.run');
+    });
 });
 
 

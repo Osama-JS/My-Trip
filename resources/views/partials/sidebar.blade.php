@@ -155,6 +155,26 @@
                 </ul>
             </li>
 
+            {{-- ===== حالة النظام والمراقبة والصيانة ===== --}}
+            <li>
+                <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
+                    <i class="fas fa-heartbeat text-danger"></i>
+                    <span class="nav-text">{{ __('System & Maintenance') }}</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li>
+                        <a href="{{ route('admin.system.health') }}">
+                            <i class="fas fa-server text-success"></i>{{ __('Health & Operations Hub') }}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('system.status.public') }}" target="_blank">
+                            <i class="fas fa-external-link-alt text-info"></i>{{ __('Public Status Page') }}
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
             {{-- ===== الإعدادات والإدارة ===== --}}
             <li>
                 <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
