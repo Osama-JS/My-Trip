@@ -571,7 +571,7 @@ class TraveloproService
 
         // NOTE: paxDetails must be a direct array (not double-wrapped) per Travelopro spec.
         // formatPaxDetails() already returns the correctly shaped array.
-        $payload = [
+        $payload = array_merge($this->authPayload(), [
             'flightBookingInfo' => $bookingInfo,
             'paxInfo' => [
                 'clientRef'     => $data['clientRef'] ?? uniqid('TR'),
@@ -581,7 +581,7 @@ class TraveloproService
                 // FIX: Travelopro documentation requires paxDetails to be an array of objects
                 'paxDetails'    => [$this->formatPaxDetails($data['passengers'])],
             ],
-        ];
+        ]);
 
         $url = $this->endpoint('booking');
 
