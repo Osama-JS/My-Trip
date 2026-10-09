@@ -49,18 +49,21 @@ Route::prefix('v1')->group(function () {
     });
 });
 
-// Public Routes
+// Public Routes with Rate Limiting for Security
 Route::get('/app-settings', [AppSettingController::class, 'index']);
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
-Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
-Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
-Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
-// Phone Auth Routes (WhatsApp OTP)
-Route::post('/phone/request-otp', [AuthController::class, 'requestPhoneOtp']);
-Route::post('/phone/verify-otp', [AuthController::class, 'verifyPhoneOtp']);
+Route::middleware('throttle:15,1')->group(function () {
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+    Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
+    Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
+    Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+
+    // Phone Auth Routes (WhatsApp OTP)
+    Route::post('/phone/request-otp', [AuthController::class, 'requestPhoneOtp']);
+    Route::post('/phone/verify-otp', [AuthController::class, 'verifyPhoneOtp']);
+});
 
 // Automize / Meta Webhook
 Route::get('/webhooks/whatsapp', [\App\Http\Controllers\Api\WebhookController::class, 'verifyAutomize']);

@@ -100,20 +100,25 @@ class AuthController extends Controller
             return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
         }
 
+        $rawPhone = preg_replace('/[^0-9]/', '', (string)$request->phone);
+        $cleanPhone = ltrim($rawPhone, '0');
+        $countryCode = $request->country_code ? ('+' . ltrim($request->country_code, '+')) : null;
+
         $otp = rand(100000, 999999);
 
         $user = User::create([
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'country_code' => $request->country_code,
+            'email' => strtolower(trim($request->email)),
+            'phone' => $cleanPhone,
+            'country_code' => $countryCode,
             'city' => $request->city,
             'gender' => $request->gender,
             'date_of_birth' => $request->date_of_birth,
             'password' => Hash::make($request->password),
             'user_type' => User::TYPE_CUSTOMER,
-            'otp_code' => $otp,
+            'status' => 'active',
+            'otp_code' => (string)$otp,
             'otp_expires_at' => Carbon::now()->addMinutes(10),
         ]);
 
@@ -201,9 +206,17 @@ class AuthController extends Controller
             return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
         }
 
-        $user = User::where('email', $request->email)->first();
+        $user = User::where('email', strtolower(trim($request->email)))->first();
 
-        if ($user->otp_code !== $request->otp_code || $user->otp_expires_at->isPast()) {
+        if (!$user) {
+            return $this->apiResponse(true, __('User not found.'), null, null, 404);
+        }
+
+        if ($user->status === 'inactive' || $user->status === 'banned') {
+            return $this->apiResponse(true, __('Your account has been deactivated. Please contact support.'), null, null, 403);
+        }
+
+        if (empty($user->otp_code) || empty($user->otp_expires_at) || $user->otp_code !== (string)$request->otp_code || $user->otp_expires_at->isPast()) {
             return $this->apiResponse(true, __('Invalid or expired OTP code.'), null, null, 422);
         }
 
@@ -267,8 +280,12 @@ class AuthController extends Controller
                 return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
             }
 
-            $email = $request->email;
+            $email = strtolower(trim($request->email));
             $user = User::where('email', $email)->first();
+
+            if ($user && ($user->status === 'inactive' || $user->status === 'banned')) {
+                return $this->apiResponse(true, __('Your account has been deactivated. Please contact support.'), null, null, 403);
+            }
 
             $verificationId = (string) rand(100000, 999999);
 
@@ -311,9 +328,24 @@ class AuthController extends Controller
                 return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
             }
 
-            $phone = ltrim($request->phone, '0');
+            $rawPhone = preg_replace('/[^0-9]/', '', (string)$request->phone);
+            $cleanPhone = ltrim($rawPhone, '0');
             $countryCode = '+' . ltrim($request->country_code, '+');
-            $fullPhone = ltrim($countryCode, '+') . $phone;
+            $fullPhone = ltrim($countryCode, '+') . $cleanPhone;
+
+            // Search for existing user robustly
+            $user = User::where(function($q) use ($cleanPhone, $rawPhone) {
+                $q->where('phone', $cleanPhone)
+                  ->orWhere('phone', $rawPhone)
+                  ->orWhere('phone', '0' . $cleanPhone);
+            })->where(function($q) use ($countryCode) {
+                $q->where('country_code', $countryCode)
+                  ->orWhereNull('country_code');
+            })->first();
+
+            if ($user && ($user->status === 'inactive' || $user->status === 'banned')) {
+                return $this->apiResponse(true, __('Your account has been deactivated. Please contact support.'), null, null, 403);
+            }
             
             // Send WhatsApp OTP via Automize
             $whatsAppService = new WhatsAppService();
@@ -323,25 +355,23 @@ class AuthController extends Controller
                 return $this->apiResponse(true, __('Failed to send OTP. Please try again later.'), null, null, 500);
             }
 
-            $user = User::where('phone', $phone)->where('country_code', $countryCode)->first();
-
             if (!$user) {
                 // Create Guest User
                 $user = User::create([
-                    'phone' => $phone,
+                    'phone' => $cleanPhone,
                     'country_code' => $countryCode,
-                    'email' => $phone . '@guest.flyvio.com',
+                    'email' => $cleanPhone . '@guest.flyvio.com',
                     'first_name' => 'Guest',
                     'last_name' => 'User',
                     'password' => Hash::make(\Illuminate\Support\Str::random(16)),
                     'user_type' => User::TYPE_CUSTOMER,
                     'is_guest' => true,
-                    'otp_code' => $verificationId, // Store plain verification_id
+                    'otp_code' => (string)$verificationId,
                     'otp_expires_at' => Carbon::now()->addMinutes(10),
                     'status' => 'active'
                 ]);
             } else {
-                $user->otp_code = $verificationId; // Store plain verification_id
+                $user->otp_code = (string)$verificationId;
                 $user->otp_expires_at = Carbon::now()->addMinutes(10);
                 $user->save();
             }
@@ -389,17 +419,21 @@ class AuthController extends Controller
                 return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
             }
 
-            $user = User::where('email', $request->email)->first();
+            $user = User::where('email', strtolower(trim($request->email)))->first();
 
             if (!$user) {
                 return $this->apiResponse(true, __('User not found.'), null, null, 404);
             }
 
-            if (!$user->otp_code || !$user->otp_expires_at || $user->otp_expires_at->isPast()) {
+            if ($user->status === 'inactive' || $user->status === 'banned') {
+                return $this->apiResponse(true, __('Your account has been deactivated. Please contact support.'), null, null, 403);
+            }
+
+            if (empty($user->otp_code) || empty($user->otp_expires_at) || $user->otp_expires_at->isPast()) {
                 return $this->apiResponse(true, __('OTP expired or invalid.'), null, null, 422);
             }
 
-            if ($user->otp_code !== $request->otp_code) {
+            if ($user->otp_code !== (string)$request->otp_code) {
                 return $this->apiResponse(true, __('Invalid OTP.'), null, null, 422);
             }
         } else {
@@ -415,20 +449,33 @@ class AuthController extends Controller
                 return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
             }
 
-            $phone = ltrim($request->phone, '0');
+            $rawPhone = preg_replace('/[^0-9]/', '', (string)$request->phone);
+            $cleanPhone = ltrim($rawPhone, '0');
             $countryCode = '+' . ltrim($request->country_code, '+');
-            $user = User::where('phone', $phone)->where('country_code', $countryCode)->first();
+
+            $user = User::where(function($q) use ($cleanPhone, $rawPhone) {
+                $q->where('phone', $cleanPhone)
+                  ->orWhere('phone', $rawPhone)
+                  ->orWhere('phone', '0' . $cleanPhone);
+            })->where(function($q) use ($countryCode) {
+                $q->where('country_code', $countryCode)
+                  ->orWhereNull('country_code');
+            })->first();
 
             if (!$user) {
                 return $this->apiResponse(true, __('User not found.'), null, null, 404);
             }
 
-            if (!$user->otp_code || !$user->otp_expires_at || $user->otp_expires_at->isPast()) {
+            if ($user->status === 'inactive' || $user->status === 'banned') {
+                return $this->apiResponse(true, __('Your account has been deactivated. Please contact support.'), null, null, 403);
+            }
+
+            if (empty($user->otp_code) || empty($user->otp_expires_at) || $user->otp_expires_at->isPast()) {
                 return $this->apiResponse(true, __('OTP expired or invalid.'), null, null, 422);
             }
 
             $whatsAppService = new WhatsAppService();
-            $isApproved = $whatsAppService->checkVerification($user->otp_code, $request->otp_code);
+            $isApproved = $whatsAppService->checkVerification($user->otp_code, (string)$request->otp_code);
 
             if (!$isApproved) {
                 return $this->apiResponse(true, __('Invalid OTP.'), null, null, 422);
@@ -672,13 +719,17 @@ class AuthController extends Controller
             return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
         }
 
-        $user = User::where('email', $request->email)->first();
+        $user = User::where('email', strtolower(trim($request->email)))->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             return $this->apiResponse(true, __('Invalid login credentials.'), null, null, 401);
         }
 
-        if (!$user->email_verified_at) {
+        if ($user->status === 'inactive' || $user->status === 'banned') {
+            return $this->apiResponse(true, __('Your account has been deactivated. Please contact support.'), null, null, 403);
+        }
+
+        if (!$user->email_verified_at && !$user->phone_verified_at) {
             return $this->apiResponse(true, __('Please verify your account first.'), ['verified' => false], null, 403);
         }
 
@@ -740,8 +791,17 @@ class AuthController extends Controller
     )]
     public function checkToken(Request $request)
     {
+        $user = $request->user();
+
+        if (!$user || $user->status === 'inactive' || $user->status === 'banned') {
+            if ($user && $user->currentAccessToken()) {
+                $user->currentAccessToken()->delete();
+            }
+            return $this->apiResponse(true, __('Your account has been deactivated. Please contact support.'), null, null, 403);
+        }
+
         return $this->apiResponse(false, __('Token is valid.'), [
-            'user' => $request->user()
+            'user' => $user
         ]);
     }
 
@@ -789,8 +849,17 @@ class AuthController extends Controller
     )]
     public function profile(Request $request)
     {
+        $user = $request->user();
+
+        if (!$user || $user->status === 'inactive' || $user->status === 'banned') {
+            if ($user && $user->currentAccessToken()) {
+                $user->currentAccessToken()->delete();
+            }
+            return $this->apiResponse(true, __('Your account has been deactivated. Please contact support.'), null, null, 403);
+        }
+
         return $this->apiResponse(false, __('Profile retrieved successfully.'), [
-            'user' => $request->user()
+            'user' => $user
         ]);
     }
 
@@ -1055,9 +1124,17 @@ class AuthController extends Controller
             return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
         }
 
-        $user = User::where('email', $request->email)->first();
+        $user = User::where('email', strtolower(trim($request->email)))->first();
 
-        if ($user->otp_code !== $request->otp_code || Carbon::now()->gt($user->otp_expires_at)) {
+        if (!$user) {
+            return $this->apiResponse(true, __('User not found.'), null, null, 404);
+        }
+
+        if ($user->status === 'inactive' || $user->status === 'banned') {
+            return $this->apiResponse(true, __('Your account has been deactivated. Please contact support.'), null, null, 403);
+        }
+
+        if (empty($user->otp_code) || empty($user->otp_expires_at) || $user->otp_code !== (string)$request->otp_code || Carbon::now()->gt($user->otp_expires_at)) {
             return $this->apiResponse(true, __('Invalid or expired OTP code.'), null, null, 422);
         }
 
@@ -1066,7 +1143,7 @@ class AuthController extends Controller
         $user->otp_expires_at = null;
         $user->save();
 
-        // Optionally revoke all tokens
+        // Revoke all tokens on password reset
         $user->tokens()->delete();
 
         return $this->apiResponse(false, __('Password has been reset successfully.'));
@@ -1141,6 +1218,11 @@ class AuthController extends Controller
 
         $user->password = Hash::make($request->new_password);
         $user->save();
+
+        // Revoke all other active tokens on password change (except current session token)
+        if ($request->user()->currentAccessToken()) {
+            $user->tokens()->where('id', '!=', $request->user()->currentAccessToken()->id)->delete();
+        }
 
         return $this->apiResponse(false, __('Password changed successfully.'));
     }

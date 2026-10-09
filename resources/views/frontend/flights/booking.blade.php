@@ -266,7 +266,7 @@
                         <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                                 <span style="font-weight: 800; color: #1d4ed8; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px;">
-                                    <i class="fas fa-plane-departure"></i> {{ __('Outbound Flight') }}: {{ $details['from'] ?? '' }} ➔ {{ $details['to'] ?? '' }}
+                                    <i class="fas fa-plane-departure"></i> {{ __('Outbound Flight') }}: <span class="notranslate" translate="no">{{ $details['from'] ?? '' }}</span> ➔ <span class="notranslate" translate="no">{{ $details['to'] ?? '' }}</span>
                                 </span>
                                 <span style="font-size: 0.8rem; font-weight: 700; color: #475569; background: #f8fafc; padding: 2px 8px; border-radius: 6px;">
                                     <i class="far fa-calendar-alt me-1"></i> {{ $details['departDate'] ?? '' }}
@@ -275,13 +275,13 @@
                             @if(!empty($outboundSegments))
                                 @foreach($outboundSegments as $seg)
                                     <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; color: #334155; padding: 4px 0;">
-                                        <span><strong>{{ $seg['from'] }} ➔ {{ $seg['to'] }}</strong> @if(!empty($seg['flight_no']))<small class="text-muted">({{ $seg['flight_no'] }})</small>@endif</span>
+                                        <span><strong><span class="notranslate" translate="no">{{ $seg['from'] }}</span> ➔ <span class="notranslate" translate="no">{{ $seg['to'] }}</span></strong> @if(!empty($seg['flight_no']))<small class="text-muted notranslate" translate="no">({{ $seg['flight_no'] }})</small>@endif</span>
                                         <span class="fw-bold">{{ $seg['dep'] }} - {{ $seg['arr'] }}</span>
                                     </div>
                                 @endforeach
                             @else
                                 <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: #334155;">
-                                    <span><strong>{{ $details['from'] ?? '' }} ➔ {{ $details['to'] ?? '' }}</strong> ({{ $details['airline'] ?? '' }})</span>
+                                    <span><strong><span class="notranslate" translate="no">{{ $details['from'] ?? '' }}</span> ➔ <span class="notranslate" translate="no">{{ $details['to'] ?? '' }}</span></strong> ({{ $details['airline'] ?? '' }})</span>
                                     <span class="fw-bold">{{ $details['dep_time'] ?? '' }} - {{ $details['arr_time'] ?? '' }}</span>
                                 </div>
                             @endif
@@ -292,7 +292,7 @@
                             <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 12px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                                     <span style="font-weight: 800; color: #0369a1; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px;">
-                                        <i class="fas fa-plane-arrival"></i> {{ __('Return Flight') }}: {{ $details['to'] ?? '' }} ➔ {{ $details['from'] ?? '' }}
+                                        <i class="fas fa-plane-arrival"></i> {{ __('Return Flight') }}: <span class="notranslate" translate="no">{{ $details['to'] ?? '' }}</span> ➔ <span class="notranslate" translate="no">{{ $details['from'] ?? '' }}</span>
                                     </span>
                                     <span style="font-size: 0.8rem; font-weight: 700; color: #0284c7; background: #e0f2fe; padding: 2px 8px; border-radius: 6px;">
                                         <i class="far fa-calendar-check me-1"></i> {{ $details['returnDate'] ?? '' }}
@@ -301,13 +301,13 @@
                                 @if(!empty($returnSegments))
                                     @foreach($returnSegments as $seg)
                                         <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; color: #0f172a; padding: 4px 0;">
-                                            <span><strong>{{ $seg['from'] }} ➔ {{ $seg['to'] }}</strong> @if(!empty($seg['flight_no']))<small class="text-muted">({{ $seg['flight_no'] }})</small>@endif</span>
+                                            <span><strong><span class="notranslate" translate="no">{{ $seg['from'] }}</span> ➔ <span class="notranslate" translate="no">{{ $seg['to'] }}</span></strong> @if(!empty($seg['flight_no']))<small class="text-muted notranslate" translate="no">({{ $seg['flight_no'] }})</small>@endif</span>
                                             <span class="fw-bold">{{ $seg['dep'] }} - {{ $seg['arr'] }}</span>
                                         </div>
                                     @endforeach
                                 @else
                                     <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: #0f172a;">
-                                        <span><strong>{{ $details['to'] ?? '' }} ➔ {{ $details['from'] ?? '' }}</strong></span>
+                                        <span><strong><span class="notranslate" translate="no">{{ $details['to'] ?? '' }}</span> ➔ <span class="notranslate" translate="no">{{ $details['from'] ?? '' }}</span></strong></span>
                                         <span class="fw-bold">{{ __('Return Included') }}</span>
                                     </div>
                                 @endif

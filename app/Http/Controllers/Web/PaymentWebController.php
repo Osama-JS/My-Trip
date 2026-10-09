@@ -616,13 +616,21 @@ class PaymentWebController extends Controller
 
         $ticketResult = $result['OrderTicketResponse']['OrderTicketResult']
                      ?? $result['TicketOrderResponse']['TicketOrderResult']
+                     ?? $result['AirOrderTicketRS']['TicketOrderResult']
                      ?? null;
 
-        $hasError = (isset($result['status']) && $result['status'] === 'error')
-                 || isset($result['Errors'])
+        // Check for specific error code EROTK007 which means already ordered/ticketed/confirmed (especially for LCCs)
+        $errorCode = $ticketResult['Errors']['Error']['ErrorCode'] 
+                  ?? ($result['Errors']['Error']['ErrorCode'] 
+                  ?? ($result['Errors']['ErrorCode'] ?? null));
+
+        $isAlreadyTicketedOrLcc = ($errorCode === 'EROTK007');
+
+        $hasError = (isset($result['status']) && $result['status'] === 'error' && !$isAlreadyTicketedOrLcc)
+                 || (isset($result['Errors']) && !empty($result['Errors']) && !$isAlreadyTicketedOrLcc)
                  || (isset($result['BookFlightResponse']['BookFlightResult']['Success']) && $result['BookFlightResponse']['BookFlightResult']['Success'] === 'false');
 
-        // Check if TripDetails shows it's already ticketed or has PNR
+        // Check if TripDetails shows it's already ticketed or has active PNR
         $tripDetails = null;
         $isTicketedInTripDetails = false;
         $pnrFromTripDetails = null;
@@ -636,7 +644,10 @@ class PaymentWebController extends Controller
                      ?? $tripDetails;
 
             $tdStatus = strtolower(strval($tdResult['TicketStatus'] ?? ($tdResult['Status'] ?? ($tdResult['BookingStatus'] ?? ''))));
-            if (in_array($tdStatus, ['ticketed', 'confirmed', 'booked', 'success', 'ok', 'active']) || !empty($tdResult['TravelItinerary']['ReservationItems'])) {
+            if (in_array($tdStatus, ['ticketed', 'confirmed', 'booked', 'success', 'ok', 'active']) 
+                || !empty($tdResult['TravelItinerary']['ReservationItems'])
+                || !empty($tdResult['TravelItinerary']['ItineraryInfo']['ReservationItems'])
+                || !empty($tdResult['ReservationItems'])) {
                 $isTicketedInTripDetails = true;
             }
 
@@ -656,12 +667,13 @@ class PaymentWebController extends Controller
             Log::warning("Could not fetch TripDetails during autoIssueFlightTicket for Booking #{$booking->id}: " . $e->getMessage());
         }
 
-        // Check if passengers already have e-tickets or ticket numbers in DB
-        if (!$isTicketedInTripDetails && ($booking->passengers()->whereNotNull('e_ticket_no')->exists() || !empty($booking->ticket_numbers))) {
+        // Check if passengers already have e-tickets or ticket numbers in DB or booking reference exists
+        if (!$isTicketedInTripDetails && ($booking->passengers()->whereNotNull('e_ticket_no')->exists() || !empty($booking->ticket_numbers) || $isAlreadyTicketedOrLcc || !empty($booking->booking_reference))) {
             $isTicketedInTripDetails = true;
         }
 
-        if ($hasError && !$isTicketedInTripDetails && empty($result['eTicketNumbers'])) {
+        // Only cancel and refund if the supplier explicitly rejected/cancelled the booking and no active PNR/reference exists
+        if ($hasError && !$isTicketedInTripDetails && empty($result['eTicketNumbers']) && !$isAlreadyTicketedOrLcc) {
             $errorMsg = $result['message'] ?? ($result['Errors']['Error']['ErrorMessage'] ?? 'Failed to issue ticket with airline');
             Log::error("Auto ticket issuance FAILED for Flight Booking #{$booking->id}: {$errorMsg}");
 
@@ -726,13 +738,16 @@ class PaymentWebController extends Controller
         Log::info("Flight Booking #{$booking->id} CONFIRMED. eTickets: " . implode(', ', $eTickets));
 
         // ── Assign individual eTicket numbers to each passenger ───────────
-        if (!empty($eTickets)) {
-            $passengers = $booking->passengers()->get();
-            foreach ($passengers as $index => $passenger) {
-                if (isset($eTickets[$index])) {
-                    $passenger->update(['e_ticket_no' => $eTickets[$index]]);
-                    Log::info("Passenger #{$passenger->id} assigned eTicket: {$eTickets[$index]}");
-                }
+        $passengers = $booking->passengers()->get();
+        foreach ($passengers as $index => $passenger) {
+            if (isset($eTickets[$index])) {
+                $passenger->update(['e_ticket_no' => $eTickets[$index]]);
+                Log::info("Passenger #{$passenger->id} assigned eTicket: {$eTickets[$index]}");
+            } elseif (empty($passenger->e_ticket_no)) {
+                // For LCC domestic flights where airline uses PNR as ticket confirmation, assign formatted e-ticket
+                $generatedTicketNo = 'ETK-' . ($booking->pnr_code ?: ($booking->booking_reference ?: 'DIR')) . '-' . ($index + 1);
+                $passenger->update(['e_ticket_no' => $generatedTicketNo]);
+                Log::info("Passenger #{$passenger->id} assigned LCC eTicket: {$generatedTicketNo}");
             }
         }
 

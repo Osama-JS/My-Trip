@@ -979,14 +979,14 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
             </div>
             <div class="pass-airport-row" style="{{ $isRoundTrip ? 'margin-bottom: 16px;' : 'margin-bottom: 24px;' }}">
                 <div class="pass-airport-code">
-                    <h3>{{ strtoupper(substr($originCode, 0, 3)) }}</h3>
+                    <h3 class="notranslate" translate="no">{{ strtoupper(substr($originCode, 0, 3)) }}</h3>
                     <span style="font-size: 0.8rem; line-height: 1.2;">{{ $originName }}</span>
                 </div>
                 <div class="pass-path-line">
                     <i class="fas fa-plane"></i>
                 </div>
                 <div class="pass-airport-code dest-code">
-                    <h3>{{ strtoupper(substr($destCode, 0, 3)) }}</h3>
+                    <h3 class="notranslate" translate="no">{{ strtoupper(substr($destCode, 0, 3)) }}</h3>
                     <span style="font-size: 0.8rem; line-height: 1.2;">{{ $destName }}</span>
                 </div>
             </div>
@@ -999,14 +999,14 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
                     </div>
                     <div class="pass-airport-row" style="margin-bottom: 24px;">
                         <div class="pass-airport-code">
-                            <h3 style="color: #b45309;">{{ strtoupper(substr($destCode, 0, 3)) }}</h3>
+                            <h3 class="notranslate" translate="no" style="color: #b45309;">{{ strtoupper(substr($destCode, 0, 3)) }}</h3>
                             <span style="font-size: 0.8rem; line-height: 1.2;">{{ $destName }}</span>
                         </div>
                         <div class="pass-path-line">
                             <i class="fas fa-plane fa-flip-horizontal" style="color: #b45309;"></i>
                         </div>
                         <div class="pass-airport-code dest-code">
-                            <h3 style="color: #b45309;">{{ strtoupper(substr($originCode, 0, 3)) }}</h3>
+                            <h3 class="notranslate" translate="no" style="color: #b45309;">{{ strtoupper(substr($originCode, 0, 3)) }}</h3>
                             <span style="font-size: 0.8rem; line-height: 1.2;">{{ $originName }}</span>
                         </div>
                     </div>
@@ -1076,15 +1076,15 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
                             @endphp
                             <div class="mb-3 p-3 rounded" style="background: rgba(37, 99, 235, 0.04); border: 1px solid rgba(37,99,235,0.15);">
                                 <div style="font-weight: 800; color: var(--primary-blue); font-size: 0.9rem; margin-bottom: 8px;">
-                                    <i class="fas fa-plane-departure me-1"></i> {{ __('Flight :num', ['num' => $legIdx + 1]) }}: {{ $lDepCode }} <i class="fas fa-long-arrow-alt-right mx-1"></i> {{ $lArrCode }}
+                                    <i class="fas fa-plane-departure me-1"></i> {{ __('Flight :num', ['num' => $legIdx + 1]) }}: <span class="notranslate" translate="no">{{ strtoupper(substr($lDepCode, 0, 3)) }}</span> <i class="fas fa-long-arrow-alt-right mx-1"></i> <span class="notranslate" translate="no">{{ strtoupper(substr($lArrCode, 0, 3)) }}</span>
                                 </div>
                                 <div class="info-row" style="margin-bottom: 6px;">
                                     <span class="info-label">{{ __('Origin') }}</span>
-                                    <span class="info-value">{{ $lDepName }} ({{ $lDepCode }})</span>
+                                    <span class="info-value">{{ $lDepName }} (<span class="notranslate" translate="no">{{ strtoupper(substr($lDepCode, 0, 3)) }}</span>)</span>
                                 </div>
                                 <div class="info-row" style="margin-bottom: 6px;">
                                     <span class="info-label">{{ __('Destination') }}</span>
-                                    <span class="info-value">{{ $lArrName }} ({{ $lArrCode }})</span>
+                                    <span class="info-value">{{ $lArrName }} (<span class="notranslate" translate="no">{{ strtoupper(substr($lArrCode, 0, 3)) }}</span>)</span>
                                 </div>
                                 <div class="info-row" style="margin-bottom: 0;">
                                     <span class="info-label">{{ __('Departure') }}</span>
@@ -1098,15 +1098,15 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
                         {{-- Outbound Flight Summary --}}
                         <div class="mb-3 p-3 rounded" style="background: rgba(37, 99, 235, 0.04); border: 1px solid rgba(37,99,235,0.15);">
                             <div style="font-weight: 800; color: var(--primary-blue); font-size: 0.9rem; margin-bottom: 8px;">
-                                <i class="fas fa-plane-departure me-1"></i> {{ __('Outbound Journey') }}: {{ $originCode }} <i class="fas fa-long-arrow-alt-right mx-1"></i> {{ $destCode }}
+                                <i class="fas fa-plane-departure me-1"></i> {{ __('Outbound Journey') }}: <span class="notranslate" translate="no">{{ strtoupper(substr($originCode, 0, 3)) }}</span> <i class="fas fa-long-arrow-alt-right mx-1"></i> <span class="notranslate" translate="no">{{ strtoupper(substr($destCode, 0, 3)) }}</span>
                             </div>
                             <div class="info-row" style="margin-bottom: 6px;">
                                 <span class="info-label">{{ __('Origin') }}</span>
-                                <span class="info-value">{{ $originName }} ({{ $originCode }})</span>
+                                <span class="info-value">{{ $originName }} (<span class="notranslate" translate="no">{{ strtoupper(substr($originCode, 0, 3)) }}</span>)</span>
                             </div>
                             <div class="info-row" style="margin-bottom: 6px;">
                                 <span class="info-label">{{ __('Destination') }}</span>
-                                <span class="info-value">{{ $destName }} ({{ $destCode }})</span>
+                                <span class="info-value">{{ $destName }} (<span class="notranslate" translate="no">{{ strtoupper(substr($destCode, 0, 3)) }}</span>)</span>
                             </div>
                             <div class="info-row" style="margin-bottom: 0;">
                                 <span class="info-label">{{ __('Departure') }}</span>
@@ -1120,15 +1120,15 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
                         @if($isRoundTrip)
                         <div class="mb-3 p-3 rounded" style="background: rgba(245, 158, 11, 0.06); border: 1px solid rgba(245, 158, 11, 0.25);">
                             <div style="font-weight: 800; color: #b45309; font-size: 0.9rem; margin-bottom: 8px;">
-                                <i class="fas fa-plane-arrival me-1"></i> {{ __('Return Journey') }}: {{ $destCode }} <i class="fas fa-long-arrow-alt-right mx-1"></i> {{ $originCode }}
+                                <i class="fas fa-plane-arrival me-1"></i> {{ __('Return Journey') }}: <span class="notranslate" translate="no">{{ strtoupper(substr($destCode, 0, 3)) }}</span> <i class="fas fa-long-arrow-alt-right mx-1"></i> <span class="notranslate" translate="no">{{ strtoupper(substr($originCode, 0, 3)) }}</span>
                             </div>
                             <div class="info-row" style="margin-bottom: 6px;">
                                 <span class="info-label">{{ __('Origin') }}</span>
-                                <span class="info-value">{{ $destName }} ({{ $destCode }})</span>
+                                <span class="info-value">{{ $destName }} (<span class="notranslate" translate="no">{{ strtoupper(substr($destCode, 0, 3)) }}</span>)</span>
                             </div>
                             <div class="info-row" style="margin-bottom: 6px;">
                                 <span class="info-label">{{ __('Destination') }}</span>
-                                <span class="info-value">{{ $originName }} ({{ $originCode }})</span>
+                                <span class="info-value">{{ $originName }} (<span class="notranslate" translate="no">{{ strtoupper(substr($originCode, 0, 3)) }}</span>)</span>
                             </div>
                             <div class="info-row" style="margin-bottom: 0;">
                                 <span class="info-label">{{ __('Return Date') }}</span>
