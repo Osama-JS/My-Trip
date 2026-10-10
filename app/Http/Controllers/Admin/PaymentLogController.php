@@ -33,7 +33,7 @@ class PaymentLogController extends Controller
             $query->where('status', $request->status);
         }
 
-        $payments = $query->paginate(20);
+        $payments = $query->paginate(in_array((int) request('per_page'), [10, 20, 25, 50, 100]) ? (int) request('per_page') : 20)->withQueryString();
 
         return view('admin.payments.index', compact('payments'));
     }

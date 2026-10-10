@@ -58,7 +58,7 @@ class InsurancePolicyController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        $policies = $query->paginate(15)->withQueryString();
+        $policies = $query->paginate(in_array((int) request('per_page'), [10, 15, 25, 50, 100]) ? (int) request('per_page') : 15)->withQueryString();
 
         // Financial & Operational Metrics
         $totalPolicies = InsurancePolicy::count();

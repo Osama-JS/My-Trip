@@ -1,0 +1,239 @@
+/* ===================================================================
+   Admin v2 - Table toolbar, actions compactor, server pagination
+   =================================================================== */
+
+/* ---- Card header: title at start, tools group at the opposite end ---- */
+.card-header-flex {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+.v2-header-tools {
+    display: flex !important;
+    align-items: center;
+    gap: 0.6rem;
+    margin-inline-start: auto;
+    flex-wrap: wrap;
+}
+
+/* ---- Rows-per-page control ---- */
+.v2-per-page {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+.v2-per-page select.v2-per-page-select {
+    width: auto !important;
+    min-width: 64px;
+    height: 34px !important;
+    min-height: 34px !important;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-input);
+    color: var(--text-main);
+    cursor: pointer;
+}
+
+/* ---- Actions: kebab + popover menu ---- */
+.v2-actions-inline,
+.btn-action-group.v2-actions-inline {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    flex-wrap: nowrap;
+}
+td > .v2-actions-inline form,
+.v2-actions-inline > form { display: inline-flex; margin: 0; }
+
+/* ---- Standardized compact action icon button ---- */
+.v2-action-btn {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    padding: 0 !important;
+    border-radius: var(--radius-sm) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: var(--bg-input) !important;
+    color: var(--text-muted) !important;
+    border: 1px solid var(--border-color) !important;
+    cursor: pointer !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    text-decoration: none !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+.v2-action-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+.v2-action-btn i {
+    font-size: 0.85rem;
+    line-height: 1;
+}
+.v2-action-btn-view:hover {
+    background: var(--primary-light) !important;
+    color: var(--primary) !important;
+    border-color: rgba(var(--primary-rgb), 0.3) !important;
+}
+.v2-action-btn-edit:hover {
+    background: rgba(14, 165, 233, 0.12) !important;
+    color: #0284c7 !important;
+    border-color: rgba(14, 165, 233, 0.3) !important;
+}
+.v2-action-btn-delete:hover,
+.v2-action-btn-danger:hover {
+    background: var(--danger-light) !important;
+    color: var(--danger) !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
+}
+.v2-action-btn-invoice:hover {
+    background: rgba(245, 158, 11, 0.12) !important;
+    color: #d97706 !important;
+    border-color: rgba(245, 158, 11, 0.3) !important;
+}
+.v2-action-btn-key:hover {
+    background: rgba(245, 158, 11, 0.15) !important;
+    color: #d97706 !important;
+    border-color: rgba(245, 158, 11, 0.4) !important;
+}
+.v2-action-btn-activity:hover {
+    background: rgba(100, 116, 139, 0.15) !important;
+    color: #475569 !important;
+    border-color: rgba(100, 116, 139, 0.4) !important;
+}
+
+/* Also support legacy act-action-btn inside tables */
+.v2-table .act-action-btn {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    border-radius: var(--radius-sm) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    border: 1px solid var(--border-color) !important;
+    background: var(--bg-input) !important;
+    color: var(--text-muted) !important;
+    transition: all 0.2s ease !important;
+}
+.v2-table .act-action-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
+.v2-actions-more-wrap { position: relative; display: inline-flex; }
+.v2-actions-more {
+    width: 32px; height: 32px;
+    border-radius: var(--radius-sm);
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--bg-input);
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: all .2s ease;
+    padding: 0;
+}
+.v2-actions-more:hover,
+.v2-actions-more.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+    box-shadow: 0 4px 10px rgba(var(--primary-rgb), .3);
+}
+
+.v2-actions-menu {
+    display: none;
+    position: fixed;
+    z-index: 100000;
+    min-width: 190px;
+    max-width: 280px;
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: 0 14px 40px rgba(0, 0, 0, .22);
+    text-align: start;
+    animation: v2MenuIn .14s ease-out;
+}
+.v2-actions-menu.open { display: flex; }
+@keyframes v2MenuIn { from { opacity: 0; transform: translateY(-4px) scale(.98); } to { opacity: 1; transform: none; } }
+
+.v2-actions-menu > form { display: block !important; margin: 0; width: 100%; }
+
+.v2-table td .v2-actions-menu .v2-menu-item,
+.v2-actions-menu .v2-menu-item {
+    width: 100% !important;
+    height: 36px !important;
+    min-width: 0 !important;
+    min-height: 36px !important;
+    padding: 0 .7rem !important;
+    justify-content: flex-start !important;
+    gap: .65rem !important;
+    border-radius: var(--radius-sm) !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    transform: none !important;
+    font-size: .8rem !important;
+    font-weight: 600 !important;
+    color: var(--text-main) !important;
+    text-align: start;
+}
+.v2-actions-menu .v2-menu-item i { width: 16px; text-align: center; font-size: .85rem; }
+.v2-actions-menu .v2-menu-item .v2-act-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.v2-table td .v2-actions-menu .v2-menu-item:hover { background: var(--primary-light) !important; color: var(--primary) !important; }
+.v2-actions-menu .btn-action-danger,
+.v2-actions-menu .btn-action-delete,
+.v2-actions-menu .btn-danger,
+.v2-actions-menu [onclick*="delete"] i { color: var(--danger) !important; }
+.v2-table td .v2-actions-menu .btn-action-danger:hover,
+.v2-table td .v2-actions-menu .btn-action-delete:hover,
+.v2-table td .v2-actions-menu .btn-danger:hover { background: var(--danger-light) !important; color: var(--danger) !important; }
+
+/* ---- Footer / pagination (shared by JS table + server-side partial) ---- */
+.v2-table-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: .75rem;
+    padding: .85rem 1.25rem;
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-card);
+}
+.v2-pagination-nav { display: flex; align-items: center; gap: .3rem; flex-wrap: wrap; }
+.v2-page-btn {
+    min-width: 34px; height: 34px;
+    padding: 0 .55rem;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+    background: var(--bg-input);
+    color: var(--text-main);
+    font-size: .8rem; font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all .15s ease;
+}
+a.v2-page-btn:hover, button.v2-page-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+.v2-page-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: 0 4px 10px rgba(var(--primary-rgb), .3); }
+.v2-page-btn:disabled, .v2-page-btn.disabled { opacity: .45; cursor: not-allowed; pointer-events: none; }
+
+@media (max-width: 640px) {
+    .v2-table-footer { justify-content: center; }
+    .card-header-flex { flex-direction: column; align-items: stretch; }
+    .v2-header-tools { margin-inline-start: 0; justify-content: space-between; }
+}

@@ -40,9 +40,12 @@ class UserController extends Controller
                     <label class="form-check-label fw-medium text-dark small cursor-pointer" for="status_switch_' . $user->id . '">' . ($user->status === 'active' ? __('Active') : __('Inactive')) . '</label>
                 </div>';
 
-                $verifiedBadge = ($user->email_verified_at || $user->phone_verified_at)
-                    ? '<div class="d-flex align-items-center"><i class="fa fa-circle text-primary me-2" style="font-size: 8px;"></i> <span class="fw-medium text-dark">'.__('Verified').'</span></div>'
-                    : '<div class="d-flex align-items-center"><i class="fa fa-circle text-warning me-2" style="font-size: 8px;"></i> <span class="fw-medium text-dark">'.__('Unverified').'</span></div>';
+                $isVerified = ($user->email_verified_at || $user->phone_verified_at);
+                $verifiedBadge = '
+                <div class="form-check form-switch d-inline-flex align-items-center p-0 m-0">
+                    <input class="form-check-input ms-0 me-2" type="checkbox" role="switch" id="verify_switch_' . $user->id . '" ' . ($isVerified ? 'checked' : '') . ' onclick="verifyUser(' . $user->id . ')" style="width: 36px; height: 18px; cursor: pointer;">
+                    <label class="form-check-label fw-medium text-dark small cursor-pointer" for="verify_switch_' . $user->id . '">' . ($isVerified ? __('Verified') : __('Unverified')) . '</label>
+                </div>';
 
                 return [
                     'id' => $user->id,
@@ -62,10 +65,8 @@ class UserController extends Controller
                             <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 py-2" style="z-index: 1060;">
                                 <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="viewUser(' . $user->id . ')"><i class="fa fa-eye text-info me-3 w-15px"></i> '.__('View').'</a>
                                 <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="editUser(' . $user->id . ')"><i class="fas fa-pencil-alt text-primary me-3 w-15px"></i> '.__('Edit').'</a>
-                                <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="toggleUserStatus(' . $user->id . ')"><i class="fas fa-ban text-warning me-3 w-15px"></i> '.__('Toggle Status').'</a>
                                 <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="resetUserPassword(' . $user->id . ')"><i class="fa fa-key text-dark me-3 w-15px"></i> '.__('Reset Password').'</a>
-                                <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="' . route('admin.users.activity', $user->id) . '"><i class="fa fa-chart-line text-secondary me-3 w-15px"></i> '.__('Activity').'</a>
-                                <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="verifyUser(' . $user->id . ')"><i class="fas fa-check-circle text-success me-3 w-15px"></i> '.__('Verify Account').'</a>
+                                <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="verifyUser(' . $user->id . ')"><i class="fas fa-certificate text-success me-3 w-15px"></i> ' . ($isVerified ? __('Revoke Verification') : __('Verify Account')) . '</a>
                                 <div class="dropdown-divider my-1"></div>
                                 <a class="dropdown-item text-danger py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="deleteUser(' . $user->id . ')"><i class="fa fa-trash text-danger me-3 w-15px"></i> '.__('Delete').'</a>
                             </div>
@@ -110,12 +111,20 @@ class UserController extends Controller
             'total_bookings' => $totalBookingsCount,
             'confirmed_bookings' => $confirmedCount,
             'total_spent' => $totalSpent,
-            'favorites_count' => $user->favorites->count(),
-            'last_active' => $user->updated_at->diffForHumans(),
+            'favorites_count' => $user->favorites ? $user->favorites->count() : 0,
+            'total_searches' => $searchLogs->count(),
+            'last_active' => $user->updated_at ? $user->updated_at->diffForHumans() : '—',
             'success_rate' => $totalBookingsCount > 0 ? round(($confirmedCount / $totalBookingsCount) * 100) : 0,
         ];
 
-        return view('admin.users.activity', compact('user', 'searchLogs', 'stats'));
+        $bookings = collect()
+            ->concat($user->tripBookings)
+            ->concat($user->flightBookings)
+            ->concat($user->hotelBookings)
+            ->sortByDesc('created_at');
+        $searches = $searchLogs;
+
+        return view('admin.users.activity', compact('user', 'searchLogs', 'stats', 'bookings', 'searches'));
     }
 
 
@@ -253,9 +262,12 @@ class UserController extends Controller
                     <label class="form-check-label fw-medium text-dark small cursor-pointer" for="status_switch_' . $user->id . '">' . ($user->status === 'active' ? __('Active') : __('Inactive')) . '</label>
                 </div>';
 
-                $verifiedBadge = ($user->email_verified_at || $user->phone_verified_at)
-                    ? '<div class="d-flex align-items-center"><i class="fa fa-circle text-primary me-2" style="font-size: 8px;"></i> <span class="fw-medium text-dark">'.__('Verified').'</span></div>'
-                    : '<div class="d-flex align-items-center"><i class="fa fa-circle text-warning me-2" style="font-size: 8px;"></i> <span class="fw-medium text-dark">'.__('Unverified').'</span></div>';
+                $isVerified = ($user->email_verified_at || $user->phone_verified_at);
+                $verifiedBadge = '
+                <div class="form-check form-switch d-inline-flex align-items-center p-0 m-0">
+                    <input class="form-check-input ms-0 me-2" type="checkbox" role="switch" id="verify_switch_' . $user->id . '" ' . ($isVerified ? 'checked' : '') . ' onclick="verifySubscriber(' . $user->id . ')" style="width: 36px; height: 18px; cursor: pointer;">
+                    <label class="form-check-label fw-medium text-dark small cursor-pointer" for="verify_switch_' . $user->id . '">' . ($isVerified ? __('Verified') : __('Unverified')) . '</label>
+                </div>';
 
                 return [
                     'id' => $user->id,
@@ -275,10 +287,9 @@ class UserController extends Controller
                             <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 py-2" style="z-index: 1060;">
                                 <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="viewSubscriber(' . $user->id . ')"><i class="fa fa-eye text-info me-3 w-15px"></i> '.__('View').'</a>
                                 <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="editSubscriber(' . $user->id . ')"><i class="fas fa-pencil-alt text-primary me-3 w-15px"></i> '.__('Edit').'</a>
-                                <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="toggleSubscriberStatus(' . $user->id . ')"><i class="fas fa-ban text-warning me-3 w-15px"></i> '.__('Toggle Status').'</a>
                                 <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="resetSubscriberPassword(' . $user->id . ')"><i class="fa fa-key text-dark me-3 w-15px"></i> '.__('Reset Password').'</a>
                                 <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="' . route('admin.users.activity', $user->id) . '"><i class="fa fa-chart-line text-secondary me-3 w-15px"></i> '.__('Activity').'</a>
-                                <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="verifySubscriber(' . $user->id . ')"><i class="fas fa-check-circle text-success me-3 w-15px"></i> '.__('Verify Account').'</a>
+                                <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="verifySubscriber(' . $user->id . ')"><i class="fas fa-certificate text-success me-3 w-15px"></i> ' . ($isVerified ? __('Revoke Verification') : __('Verify Account')) . '</a>
                                 <div class="dropdown-divider my-1"></div>
                                 <a class="dropdown-item text-danger py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="deleteSubscriber(' . $user->id . ')"><i class="fa fa-trash text-danger me-3 w-15px"></i> '.__('Delete').'</a>
                             </div>
@@ -308,18 +319,32 @@ class UserController extends Controller
     }
 
     /**
-     * Manually verify a user's account
+     * Manually toggle a user's account verification
      */
     public function verify(User $user)
     {
-        $user->update([
-            'email_verified_at' => now(),
-            'phone_verified_at' => now(),
-        ]);
+        $isVerified = ($user->email_verified_at || $user->phone_verified_at);
+        if ($isVerified) {
+            $user->update([
+                'email_verified_at' => null,
+                'phone_verified_at' => null,
+            ]);
+            $msg = app()->getLocale() == 'ar' ? 'تم إلغاء توثيق الحساب بنجاح' : __('Account verification revoked successfully');
+            $newStatus = 'unverified';
+        } else {
+            $user->update([
+                'email_verified_at' => now(),
+                'phone_verified_at' => now(),
+            ]);
+            $msg = app()->getLocale() == 'ar' ? 'تم توثيق الحساب بنجاح' : __('Account manually verified successfully');
+            $newStatus = 'verified';
+        }
 
         return response()->json([
             'success' => true,
-            'message' => __('Account manually verified successfully')
+            'message' => $msg,
+            'status' => $newStatus,
+            'verified' => $newStatus
         ]);
     }
 }

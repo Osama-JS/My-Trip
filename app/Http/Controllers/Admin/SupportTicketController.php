@@ -40,7 +40,7 @@ class SupportTicketController extends Controller
             });
         }
 
-        $tickets = $query->paginate(15);
+        $tickets = $query->paginate(in_array((int) request('per_page'), [10, 15, 25, 50, 100]) ? (int) request('per_page') : 15)->withQueryString();
 
         return view('admin.support.index', compact('tickets'));
     }

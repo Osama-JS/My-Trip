@@ -30,7 +30,7 @@ class WalletController extends Controller
             });
         }
 
-        $wallets = $query->paginate(15);
+        $wallets = $query->paginate(in_array((int) request('per_page'), [10, 15, 25, 50, 100]) ? (int) request('per_page') : 15)->withQueryString();
         return view('admin.wallets.index', compact('wallets'));
     }
 

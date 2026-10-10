@@ -18,7 +18,9 @@ class ProfileController extends Controller
     {
         $user = $request->user();
         if ($user->isAdmin()) {
-            return view('admin.profile.edit', [
+            $version = session('admin_version', $request->cookie('admin_version', 'v2'));
+            $viewName = ($version === 'v2') ? 'admin_v2.profile.edit' : 'admin.profile.edit';
+            return view($viewName, [
                 'user' => $user,
             ]);
         }

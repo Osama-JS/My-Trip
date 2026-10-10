@@ -153,7 +153,25 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    
+    // Admin Version Switcher
+    Route::get('/switch-version/{version}', function ($version) {
+        if (in_array($version, ['v1', 'v2'])) {
+            session(['admin_version' => $version]);
+            cookie()->queue('admin_version', $version, 60 * 24 * 365);
+        }
+        if ($version === 'v2') {
+            return redirect()->route('admin.v2.dashboard');
+        }
+        return redirect()->route('admin.dashboard');
+    })->name('switch-version');
+
+    // Admin v2 Modern Dashboard Routes
+    Route::get('/v2', [App\Http\Controllers\Admin\V2\DashboardController::class, 'index'])->name('v2.dashboard');
+    Route::get('/v2/dashboard', [App\Http\Controllers\Admin\V2\DashboardController::class, 'index'])->name('v2.dashboard.index');
+
     Route::get('/global-search', [App\Http\Controllers\Admin\GlobalSearchController::class, 'search'])->name('global-search');
+    Route::get('/v2/global-search', [App\Http\Controllers\Admin\GlobalSearchController::class, 'search'])->name('v2.global-search');
     Route::post('/translate', [App\Http\Controllers\Admin\TranslationController::class, 'translate'])->name('translate');
 
     // User Management
@@ -183,6 +201,9 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
             Route::get('/profits', [BookingController::class, 'flightProfits'])->name('profits');
             Route::get('/profits/data', [BookingController::class, 'getFlightProfitsData'])->name('profits.data');
             Route::get('/ongoing', [BookingController::class, 'ongoingFlights'])->name('ongoing');
+            Route::get('/available', [BookingController::class, 'availableFlights'])->name('available');
+            Route::get('/airports', [BookingController::class, 'getAirports'])->name('airports');
+            Route::get('/airlines', [BookingController::class, 'getAirlines'])->name('airlines');
             Route::post('/search', [BookingController::class, 'searchFlights'])->name('search');
             Route::post('/validate', [BookingController::class, 'validateFare'])->name('validate');
             Route::post('/book', [BookingController::class, 'createBooking'])->name('book');
@@ -392,10 +413,12 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
 
     // Commissions & Profits
     Route::get('commissions', [\App\Http\Controllers\Admin\CommissionController::class, 'index'])->name('commissions.index');
+    Route::get('/status', [\App\Http\Controllers\PublicStatusController::class, 'index'])->name('status');
 
     // System Health, Monitoring & Maintenance Suite
     Route::prefix('system')->name('system.')->group(function () {
         Route::get('/health', [\App\Http\Controllers\Admin\SystemHealthController::class, 'index'])->name('health');
+        Route::get('/status', [\App\Http\Controllers\PublicStatusController::class, 'index'])->name('status');
         Route::get('/data', [\App\Http\Controllers\Admin\SystemHealthController::class, 'statusData'])->name('data');
         Route::post('/actions/cache', [\App\Http\Controllers\Admin\SystemHealthController::class, 'executeAction'])->name('actions.cache');
         Route::post('/actions/maintenance', [\App\Http\Controllers\Admin\SystemHealthController::class, 'toggleMaintenance'])->name('actions.maintenance');

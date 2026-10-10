@@ -55,7 +55,7 @@ class NotificationController extends Controller
             $query->whereDate('created_at', '<=', $request->to_date);
         }
 
-        $notifications = $query->paginate(25);
+        $notifications = $query->paginate(in_array((int) request('per_page'), [10, 25, 50, 100]) ? (int) request('per_page') : 25)->withQueryString();
 
         return response()->json([
             'data' => $notifications->map(function ($n) {

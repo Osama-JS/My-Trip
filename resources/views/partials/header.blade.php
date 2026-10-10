@@ -240,6 +240,13 @@
                 </div>
 
                 <ul class="navbar-nav header-right">
+                    <li class="nav-item d-flex align-items-center me-2">
+                        <a href="{{ route('admin.switch-version', 'v2') }}" class="btn btn-sm text-white rounded-pill px-3 shadow-sm d-flex align-items-center gap-2" style="background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%); border: none; font-size: 12px; font-weight: 700; height: 34px; text-decoration: none;">
+                            <i class="fas fa-sparkles text-warning"></i>
+                            <span>{{ app()->getLocale() == 'ar' ? 'لوحة التحكم v2 الجديدة ✨' : 'Try Admin v2 ✨' }}</span>
+                        </a>
+                    </li>
+
                     <li class="nav-item">
                         <a class="nav-link lang-switcher-btn" href="{{ route('home') }}" target="_blank" title="{{ app()->getLocale() == 'ar' ? 'زيارة الموقع الرئيسي' : 'Visit Main Website' }}">
                             <i class="fas fa-external-link-alt"></i>

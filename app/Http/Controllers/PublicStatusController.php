@@ -15,14 +15,19 @@ class PublicStatusController extends Controller
     }
 
     /**
-     * Display public system status page.
+     * Display system status page.
      */
-    public function index()
+    public function index(Request $request)
     {
         $health = $this->healthService->getFullHealthReport();
         $components = $this->getServiceComponents($health);
         $paymentMethods = $this->getPaymentMethodsStatus($health);
         $latencyData = $this->get24HourLatencyData($health);
+
+        // Always render modern Admin v2 layout when accessed by admin or via admin path
+        if ($request->is('admin*') || (auth()->check() && auth()->user()->isAdmin())) {
+            return view('admin_v2.system.status', compact('health', 'components', 'paymentMethods', 'latencyData'));
+        }
 
         return view('frontend.status', compact('health', 'components', 'paymentMethods', 'latencyData'));
     }
