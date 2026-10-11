@@ -360,37 +360,111 @@
     var editRoleUrl = "{{ route('admin.roles.edit', ':id') }}";
 </script>
 <script>
-    let roleTable = $('#roleTable').DataTable({
-        ajax: '{{ route('admin.roles.data') }}',
-        columns: [
-            { data: 'id' },
-            { data: 'name' },
-            { data: 'permissions' },
-            { data: 'permissions_count' },
-            { data: 'actions' }
-        ],
-        language: {
-            url: '{{ app()->getLocale() == 'ar' ? "//cdn.datatables.net/plug-ins/1.13.4/i18n/ar.json" : "" }}'
+    let roleTable;
+    let roleModal;
+
+    $(document).ready(function() {
+        roleTable = $('#roleTable').DataTable({
+            ajax: {
+                url: '{{ route('admin.roles.data') }}?v=' + new Date().getTime(),
+                cache: false
+            },
+            columns: [
+                { data: 'id' },
+                { data: 'name' },
+                { data: 'permissions' },
+                { data: 'permissions_count' },
+                { data: 'actions' }
+            ],
+            language: {
+                url: '{{ app()->getLocale() == 'ar' ? "//cdn.datatables.net/plug-ins/1.13.4/i18n/ar.json" : "" }}'
+            }
+        });
+
+        try {
+            roleModal = new bootstrap.Modal(document.getElementById('roleModal'));
+        } catch(e) {
+            console.error('Failed to initialize roleModal', e);
         }
-    });
 
-    const roleModal = new bootstrap.Modal(document.getElementById('roleModal'));
+        // Search permissions filter
+        $('#permissionSearch').on('input', function() {
+            const query = $(this).val().toLowerCase().trim();
+            let visibleGroups = 0;
 
-    // Dynamic counters and switch toggles updates
-    function updateGroupSelectionStats(groupKey) {
+            $('.permission-group-card').each(function() {
+                const groupCard = $(this);
+                let visibleItems = 0;
+
+                groupCard.find('.permission-item-col').each(function() {
+                    const item = $(this);
+                    const permName = item.attr('data-permission-name');
+                    const labelText = item.find('label').text().toLowerCase();
+
+                    if (permName.includes(query) || labelText.includes(query)) {
+                        item.removeClass('d-none');
+                        visibleItems++;
+                    } else {
+                        item.addClass('d-none');
+                    }
+                });
+
+                if (visibleItems > 0) {
+                    groupCard.removeClass('d-none');
+                    visibleGroups++;
+                } else {
+                    groupCard.addClass('d-none');
+                }
+            });
+
+            if (visibleGroups === 0) {
+                $('#noResults').removeClass('d-none');
+            } else {
+                $('#noResults').addClass('d-none');
+            }
+        });
+
+        $('#roleForm').on('submit', function(e) {
+            e.preventDefault();
+            const id = $('#role_id').val();
+            const updateId = updateRoleUrl.replace(':id', id);
+            const url = id ? updateId : addRoleUrl;
+            const method = id ? 'PUT' : 'POST';
+
+            $.ajax({
+                url: url,
+                method: method,
+                data: $(this).serialize(),
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire('{{ __('Success') }}', response.message, 'success');
+                        if (roleModal) roleModal.hide();
+                        roleTable.ajax.reload();
+                    }
+                },
+                error: function(xhr) {
+                    const errors = xhr.responseJSON.errors;
+                    let errorMsg = '';
+                    $.each(errors, function(key, value) {
+                        errorMsg += value[0] + '\n';
+                    });
+                    Swal.fire('{{ __('Error') }}', errorMsg || '{{ __('Something went wrong') }}', 'error');
+                }
+            });
+        });
+    }); // End of $(document).ready
+
+    // Global Functions
+    window.updateGroupSelectionStats = function(groupKey) {
         const groupCard = $(`.permission-group-card[data-group-name="${groupKey}"]`);
         const checkboxes = groupCard.find('.permission-checkbox');
         const total = checkboxes.length;
         const checked = checkboxes.filter(':checked').length;
 
-        // Update count badge
         groupCard.find('.selected-count').text(checked);
-
-        // Update group toggle switch state (checked only if all are checked)
         const groupSwitch = groupCard.find('.group-toggle-switch');
         groupSwitch.prop('checked', total === checked && total > 0);
 
-        // Update individual pills styling
         checkboxes.each(function() {
             const checkbox = $(this);
             const pill = checkbox.closest('.permission-pill');
@@ -402,25 +476,26 @@
         });
     }
 
-    function updateAllGroupsStats() {
+    window.updateAllGroupsStats = function() {
         $('.permission-group-card').each(function() {
             const groupKey = $(this).data('group-name');
-            updateGroupSelectionStats(groupKey);
+            window.updateGroupSelectionStats(groupKey);
         });
     }
 
-    function resetForm() {
+    window.resetForm = function() {
         $('#roleForm')[0].reset();
         $('#role_id').val('');
         $('.permission-checkbox').prop('checked', false);
         $('#permissionSearch').val('').trigger('input');
-        updateAllGroupsStats();
+        window.updateAllGroupsStats();
         $('#modalTitle').text('{{ __('Add Role') }}');
         $('#saveBtn').html('<i class="fa fa-save me-2"></i>{{ __('Save changes') }}');
     }
 
-    function editRole(id) {
-        url = editRoleUrl.replace(':id', id);
+    $(document).on('click', '.edit-role-btn', function() {
+        let id = $(this).data('id');
+        let url = editRoleUrl.replace(':id', id);
         $.get(url, function(data) {
             if (data.success) {
                 $('#role_id').val(data.role.id);
@@ -430,113 +505,22 @@
                     $(`input[value="${perm}"]`).prop('checked', true);
                 });
                 $('#permissionSearch').val('').trigger('input');
-                updateAllGroupsStats();
+                window.updateAllGroupsStats();
                 $('#modalTitle').text('{{ __('Edit Role') }}');
                 $('#saveBtn').html('<i class="fa fa-save me-2"></i>{{ __('Update') }}');
-                roleModal.show();
+                if (roleModal) roleModal.show();
             }
         });
-    }
+    });
 
-    // Toggle all permissions globally
-    function toggleAllPermissions(status) {
+    window.toggleAllPermissions = function(status) {
         $('.permission-checkbox').prop('checked', status);
         $('.group-toggle-switch').prop('checked', status);
-        updateAllGroupsStats();
+        window.updateAllGroupsStats();
     }
 
-    // Handle group toggle switches
-    $(document).on('change', '.group-toggle-switch', function() {
-        const groupKey = $(this).data('group-target');
-        const isChecked = $(this).is(':checked');
-        const groupCard = $(`.permission-group-card[data-group-name="${groupKey}"]`);
-        
-        groupCard.find('.permission-checkbox').prop('checked', isChecked);
-        updateGroupSelectionStats(groupKey);
-    });
-
-    // Handle individual permission checkbox changes
-    $(document).on('change', '.permission-checkbox', function() {
-        const groupKey = $(this).data('group');
-        updateGroupSelectionStats(groupKey);
-    });
-
-    // Toggle switch on clicking the parent permission pill
-    $(document).on('click', '.permission-pill', function(e) {
-        if ($(e.target).hasClass('permission-checkbox') || $(e.target).is('label')) {
-            return;
-        }
-        const checkbox = $(this).find('.permission-checkbox');
-        checkbox.prop('checked', !checkbox.is(':checked')).trigger('change');
-    });
-
-    // Search permissions filter
-    $('#permissionSearch').on('input', function() {
-        const query = $(this).val().toLowerCase().trim();
-        let visibleGroups = 0;
-
-        $('.permission-group-card').each(function() {
-            const groupCard = $(this);
-            let visibleItems = 0;
-
-            groupCard.find('.permission-item-col').each(function() {
-                const item = $(this);
-                const permName = item.attr('data-permission-name');
-                const labelText = item.find('label').text().toLowerCase();
-
-                if (permName.includes(query) || labelText.includes(query)) {
-                    item.removeClass('d-none');
-                    visibleItems++;
-                } else {
-                    item.addClass('d-none');
-                }
-            });
-
-            if (visibleItems > 0) {
-                groupCard.removeClass('d-none');
-                visibleGroups++;
-            } else {
-                groupCard.addClass('d-none');
-            }
-        });
-
-        if (visibleGroups === 0) {
-            $('#noResults').removeClass('d-none');
-        } else {
-            $('#noResults').addClass('d-none');
-        }
-    });
-
-    $('#roleForm').on('submit', function(e) {
-        e.preventDefault();
-        const id = $('#role_id').val();
-        const updateId = updateRoleUrl.replace(':id', id);
-        const url = id ? updateId : addRoleUrl;
-        const method = id ? 'PUT' : 'POST';
-
-        $.ajax({
-            url: url,
-            method: method,
-            data: $(this).serialize(),
-            success: function(response) {
-                if (response.success) {
-                    Swal.fire('{{ __('Success') }}', response.message, 'success');
-                    roleModal.hide();
-                    roleTable.ajax.reload();
-                }
-            },
-            error: function(xhr) {
-                const errors = xhr.responseJSON.errors;
-                let errorMsg = '';
-                $.each(errors, function(key, value) {
-                    errorMsg += value[0] + '\n';
-                });
-                Swal.fire('{{ __('Error') }}', errorMsg || '{{ __('Something went wrong') }}', 'error');
-            }
-        });
-    });
-
-    function deleteRole(id) {
+    $(document).on('click', '.delete-role-btn', function() {
+        let id = $(this).data('id');
         let url = "{{ route('admin.roles.destroy', ':id') }}";
         url = url.replace(':id', id);
         Swal.fire({
@@ -557,13 +541,36 @@
                     success: function(response) {
                         if (response.success) {
                             Swal.fire('{{ __('Deleted!') }}', response.message, 'success');
-                            roleTable.ajax.reload();
+                            if (roleTable) roleTable.ajax.reload();
                         }
                     }
                 });
             }
         });
-    }
+    });
+
+    // Global Document Event Listeners
+    $(document).on('change', '.group-toggle-switch', function() {
+        const groupKey = $(this).data('group-target');
+        const isChecked = $(this).is(':checked');
+        const groupCard = $(`.permission-group-card[data-group-name="${groupKey}"]`);
+        
+        groupCard.find('.permission-checkbox').prop('checked', isChecked);
+        window.updateGroupSelectionStats(groupKey);
+    });
+
+    $(document).on('change', '.permission-checkbox', function() {
+        const groupKey = $(this).data('group');
+        window.updateGroupSelectionStats(groupKey);
+    });
+
+    $(document).on('click', '.permission-pill', function(e) {
+        if ($(e.target).hasClass('permission-checkbox') || $(e.target).is('label')) {
+            return;
+        }
+        const checkbox = $(this).find('.permission-checkbox');
+        checkbox.prop('checked', !checkbox.is(':checked')).trigger('change');
+    });
 </script>
 @endpush
 

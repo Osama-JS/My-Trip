@@ -26,9 +26,11 @@
         </div>
 
         <div style="display: flex; gap: 0.6rem;">
+            @can('create users')
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal" onclick="resetForm()" style="background: var(--primary); border: none; border-radius: var(--radius-md); font-weight: 700;">
                 <i class="fa-solid fa-user-plus me-1"></i> {{ app()->getLocale() == 'ar' ? 'إضافة مستخدم جديد' : 'Add New User' }}
             </button>
+            @endcan
         </div>
     </div>
 
@@ -207,6 +209,16 @@
                                 </button>
                             </div>
                         </div>
+                        <div class="col-md-12 mt-3">
+                            <label class="form-label font-bold text-xs">{{ app()->getLocale() == 'ar' ? 'الأدوار والصلاحيات (Roles)' : 'Roles & Permissions' }}</label>
+                            <select name="roles[]" id="add_roles" class="form-select" multiple="multiple" style="width: 100%; height: 100px;">
+                                @if(isset($roles))
+                                    @foreach($roles as $role)
+                                        <option value="{{ $role->name }}">{{ $role->name }}</option>
+                                    @endforeach
+                                @endif
+                            </select>
+                        </div>
                         <div class="col-12 mt-3">
                             <div class="p-3 rounded-3 border d-flex align-items-center justify-content-between" style="background: var(--bg-input); border-color: var(--border-color) !important;">
                                 <div>
@@ -282,6 +294,16 @@
                                     <i class="fa-regular fa-eye"></i>
                                 </button>
                             </div>
+                        </div>
+                        <div class="col-md-12 mt-3">
+                            <label class="form-label font-bold text-xs">{{ app()->getLocale() == 'ar' ? 'الأدوار والصلاحيات (Roles)' : 'Roles & Permissions' }}</label>
+                            <select name="roles[]" id="edit_roles" class="form-select" multiple="multiple" style="width: 100%; height: 100px;">
+                                @if(isset($roles))
+                                    @foreach($roles as $role)
+                                        <option value="{{ $role->name }}">{{ $role->name }}</option>
+                                    @endforeach
+                                @endif
+                            </select>
                         </div>
                         <div class="col-12 mt-3">
                             <div class="p-3 rounded-3 border d-flex align-items-center justify-content-between" style="background: var(--bg-input); border-color: var(--border-color) !important;">
@@ -544,6 +566,7 @@
     function resetForm() {
         $('#addUserForm')[0].reset();
         $('#add_status').prop('checked', true);
+        $('#add_roles').val(null);
     }
 
     function togglePasswordVisibility(fieldId, button) {
@@ -628,6 +651,7 @@
                 $('#edit_phone').val(user.phone);
                 $('#edit_city').val(user.city);
                 $('#edit_password').val('');
+                $('#edit_roles').val(response.roles);
                 $('#edit_status').prop('checked', user.status === 'active');
                 $('#editUserModal').modal('show');
             }

@@ -8,8 +8,21 @@ use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\DB;
 
-class RoleController extends Controller
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
+
+class RoleController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:view roles', only: ['index', 'getData', 'show']),
+            new Middleware('permission:create roles', only: ['create', 'store']),
+            new Middleware('permission:edit roles', only: ['edit', 'update']),
+            new Middleware('permission:delete roles', only: ['destroy']),
+        ];
+    }
+
     public function index()
     {
         $permissions = Permission::all();
@@ -30,8 +43,8 @@ class RoleController extends Controller
                     'permissions_count' => '<span class="badge badge-info">' . $role->permissions->count() . '</span>',
                     'actions' => '
                         <div class="d-flex">
-                            <button onclick="editRole(' . $role->id . ')" class="btn btn-primary shadow btn-xs sharp me-1"><i class="fas fa-pencil-alt"></i></button>
-                            <button onclick="deleteRole(' . $role->id . ')" class="btn btn-danger shadow btn-xs sharp"><i class="fa fa-trash"></i></button>
+                            <button class="btn btn-primary shadow btn-xs sharp me-1 edit-role-btn" data-id="' . $role->id . '"><i class="fas fa-pencil-alt"></i></button>
+                            <button class="btn btn-danger shadow btn-xs sharp delete-role-btn" data-id="' . $role->id . '"><i class="fa fa-trash"></i></button>
                         </div>'
                 ];
             })

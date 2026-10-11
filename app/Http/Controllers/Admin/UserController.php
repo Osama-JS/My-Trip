@@ -9,8 +9,24 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
-class UserController extends Controller
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
+
+class UserController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:view users', only: ['index', 'show', 'getData']),
+            new Middleware('permission:create users', only: ['create', 'store']),
+            new Middleware('permission:edit users', only: ['edit', 'update', 'toggleStatus', 'resetPassword', 'verify']),
+            new Middleware('permission:delete users', only: ['destroy']),
+            
+            // Similarly for subscribers (which is essentially viewing/managing customers)
+            new Middleware('permission:view subscribers', only: ['subscribers', 'subscribersData']),
+        ];
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -22,7 +38,8 @@ class UserController extends Controller
             'inactive' => User::where('user_type', User::TYPE_ADMIN)->where('status', 'inactive')->count(),
             'unverified' => User::where('user_type', User::TYPE_ADMIN)->whereNull('email_verified_at')->count(),
         ];
-        return view('admin.users.index', compact('stats'));
+        $roles = \Spatie\Permission\Models\Role::all();
+        return view('admin.users.index', compact('stats', 'roles'));
     }
 
  /**
@@ -52,7 +69,8 @@ class UserController extends Controller
                     'photo' => '<img src="' . $user->profile_photo_url . '" class="rounded-circle shadow-sm border border-2 border-white" style="width: 40px; height: 40px; object-fit: cover;" alt="">',
                     'info' => '<div>
                                 <strong class="text-dark">' . $user->full_name . '</strong><br>
-                                <small class="text-muted">' . $user->email . '</small>
+                                <small class="text-muted">' . $user->email . '</small><br>
+                                ' . $user->roles->map(fn($r) => '<span class="badge bg-primary-subtle text-primary border border-primary border-opacity-10 mt-1">'.$r->name.'</span>')->implode(' ') . '
                             </div>',
                     'phone' => '<span class="text-muted">' . ($user->country_code ? $user->country_code . ' ' : '') . ($user->phone ?? '---') . '</span>',
                     'status' => $statusBadge,
@@ -136,6 +154,7 @@ class UserController extends Controller
         return response()->json([
             'success' => true,
             'user' => $user,
+            'roles' => $user->roles->pluck('name'),
             'photo_url' => $user->profile_photo_url,
             'created_at' => $user->created_at->format('Y-m-d H:i')
         ]);
@@ -152,11 +171,29 @@ class UserController extends Controller
             'country_code' => 'nullable|string|max:10',
             'password'     => 'required|min:8',
             'status'       => 'required|in:active,inactive',
+            'user_type'    => 'nullable|in:admin,customer',
+            'roles'        => 'nullable|array',
+            'roles.*'      => 'exists:roles,name'
         ]);
 
         $validated['password'] = Hash::make($request->password);
 
-        User::create($validated);
+        if ($request->has('user_type')) {
+            $validated['user_type'] = $request->input('user_type');
+        } else {
+            // Fallback for cached browsers: check referer URL
+            if (str_contains($request->headers->get('referer', ''), '/subscribers')) {
+                $validated['user_type'] = User::TYPE_CUSTOMER;
+            } else {
+                $validated['user_type'] = User::TYPE_ADMIN;
+            }
+        }
+
+        $user = User::create($validated);
+        
+        if ($request->has('roles')) {
+            $user->syncRoles($request->roles);
+        }
 
         // dd($request->all());
 
@@ -180,6 +217,8 @@ class UserController extends Controller
             'country_code' => 'nullable|string|max:10',
             'password' => 'nullable|min:8',
             'status' => 'required|in:active,inactive',
+            'roles' => 'nullable|array',
+            'roles.*' => 'exists:roles,name'
         ]);
 
         $data = $request->only(['first_name', 'last_name', 'email', 'phone', 'country_code', 'status', 'country', 'city', 'address', 'gender', 'date_of_birth']);
@@ -189,6 +228,12 @@ class UserController extends Controller
         }
 
         $user->update($data);
+        
+        if ($request->has('roles')) {
+            $user->syncRoles($request->roles);
+        } else {
+            $user->syncRoles([]);
+        }
 
         return response()->json([
             'success' => true,
