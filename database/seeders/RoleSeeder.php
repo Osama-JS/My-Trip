@@ -38,7 +38,13 @@ class RoleSeeder extends Seeder
             'view subscribers', 'manage subscribers',
             'view notifications', 'send notifications',
             'view questions', 'manage questions',
-            'manage settings',
+            'manage settings', 'view system_health', 'manage backups',
+            'view hotels', 'manage hotels', 'create hotels', 'edit hotels',
+            'view flights', 'manage flights', 'create flights', 'edit flights',
+            'view insurance', 'manage insurance', 'cancel insurance',
+            'view wallets', 'manage wallets',
+            'view support_tickets', 'manage support_tickets',
+            'view commissions', 'view reports',
         ]);
 
         // Manager gets operational permissions
@@ -49,6 +55,7 @@ class RoleSeeder extends Seeder
             'view bank_transfers',
             'view subscribers',
             'send notifications',
+            'view hotels', 'view flights', 'view support_tickets',
         ]);
     }
 }

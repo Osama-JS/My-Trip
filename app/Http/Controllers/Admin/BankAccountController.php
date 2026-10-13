@@ -7,9 +7,18 @@ use App\Models\BankAccount;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-class BankAccountController extends Controller
+class BankAccountController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:view payments|manage payments', only: ['index', 'getData', 'show']),
+            new Middleware('permission:manage payments', only: ['store', 'update', 'toggleActive', 'destroy']),
+        ];
+    }
     /**
      * Display a listing of the resource.
      */
@@ -83,10 +92,13 @@ class BankAccountController extends Controller
      */
     private function getActionButtons($account): string
     {
+        $user = auth()->user();
+        $canManage = $user && $user->can('manage payments');
+
         $showBtn = '<a href="' . route('admin.bank-accounts.show', $account->id) . '" class="btn btn-info btn-sm me-1" title="' . __('View Details') . '"><i class="fas fa-eye"></i></a>';
-        $editBtn = '<button class="btn btn-primary btn-sm me-1" onclick="editAccount(' . $account->id . ')" title="' . __('Edit') . '"><i class="fas fa-edit"></i></button>';
-        $toggleBtn = '<button class="btn btn-' . ($account->is_active ? 'warning' : 'success') . ' btn-sm me-1" onclick="toggleAccountStatus(' . $account->id . ')" title="' . ($account->is_active ? __('Deactivate') : __('Activate')) . '"><i class="fas fa-' . ($account->is_active ? 'ban' : 'check') . '"></i></button>';
-        $deleteBtn = '<button class="btn btn-danger btn-sm" onclick="deleteAccount(' . $account->id . ')" title="' . __('Delete') . '"><i class="fas fa-trash"></i></button>';
+        $editBtn = $canManage ? '<button class="btn btn-primary btn-sm me-1" onclick="editAccount(' . $account->id . ')" title="' . __('Edit') . '"><i class="fas fa-edit"></i></button>' : '';
+        $toggleBtn = $canManage ? '<button class="btn btn-' . ($account->is_active ? 'warning' : 'success') . ' btn-sm me-1" onclick="toggleAccountStatus(' . $account->id . ')" title="' . ($account->is_active ? __('Deactivate') : __('Activate')) . '"><i class="fas fa-' . ($account->is_active ? 'ban' : 'check') . '"></i></button>' : '';
+        $deleteBtn = $canManage ? '<button class="btn btn-danger btn-sm" onclick="deleteAccount(' . $account->id . ')" title="' . __('Delete') . '"><i class="fas fa-trash"></i></button>' : '';
 
         return '<div class="d-flex">' . $showBtn . $editBtn . $toggleBtn . $deleteBtn . '</div>';
     }

@@ -7,9 +7,18 @@ use App\Models\Wallet;
 use App\Models\User;
 use App\Services\WalletService;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-class WalletController extends Controller
+class WalletController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:view payments|manage payments', only: ['index', 'show']),
+            new Middleware('permission:manage payments', only: ['addTransaction']),
+        ];
+    }
     protected $walletService;
 
     public function __construct(WalletService $walletService)

@@ -10,10 +10,19 @@ use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-
-class BankTransferController extends Controller
+class BankTransferController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:view bank_transfers|manage payments', only: ['index', 'getData', 'show']),
+            new Middleware('permission:approve bank_transfers|manage payments', only: ['approve']),
+            new Middleware('permission:reject bank_transfers|manage payments', only: ['reject']),
+        ];
+    }
     public function index()
     {
         return view('admin.bank_transfers.index');

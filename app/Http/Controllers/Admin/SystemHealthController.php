@@ -12,9 +12,17 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-class SystemHealthController extends Controller
+class SystemHealthController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:manage settings'),
+        ];
+    }
     protected SystemHealthService $healthService;
     protected BackupService $backupService;
     protected ThirdPartyBenchmarkService $benchmarkService;

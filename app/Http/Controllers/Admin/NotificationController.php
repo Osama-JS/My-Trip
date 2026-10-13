@@ -9,9 +9,19 @@ use App\Models\User;
 use App\Models\Notification;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-class NotificationController extends Controller
+class NotificationController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:view notifications', only: ['index', 'getData', 'searchUsers']),
+            new Middleware('permission:send notifications', only: ['send']),
+            new Middleware('permission:delete notifications', only: ['destroy']),
+        ];
+    }
     protected NotificationService $notificationService;
 
     public function __construct(NotificationService $notificationService)

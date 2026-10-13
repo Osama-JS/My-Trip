@@ -9,9 +9,11 @@
         <li class="breadcrumb-item"><a href="javascript:void(0)">{{ __('Company') }}</a></li>
         <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ __('Companies') }}</a></li>
     </ol>
+    @canany(['manage companies'])
     <button type="button" class="btn btn-primary rounded-pill shadow-sm px-4" data-bs-toggle="modal" data-bs-target="#addCompanyModal" onclick="resetForm()">
          <i class="fa fa-plus me-2"></i> {{ __('Add Company') }}
-     </button>
+    </button>
+    @endcanany
 </div>
 @endsection
 

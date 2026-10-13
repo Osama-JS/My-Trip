@@ -8,9 +8,17 @@ use App\Models\TripBooking;
 use App\Models\Booking; // Flight bookings
 use App\Models\HotelBooking;
 use App\Models\Setting;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-class CommissionController extends Controller
+class CommissionController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:view payments|manage settings'),
+        ];
+    }
     public function index()
     {
         // 1. Fetch Global Margin Settings

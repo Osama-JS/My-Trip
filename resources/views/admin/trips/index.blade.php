@@ -8,9 +8,11 @@
         <li class="breadcrumb-item"><a href="javascript:void(0)">{{ __('Admin') }}</a></li>
         <li class="breadcrumb-item active"><a href="javascript:void(0)">{{ __('Trips') }}</a></li>
     </ol>
+    @canany(['create trips', 'manage trips'])
     <a href="{{ route('admin.trips.create') }}" class="btn btn-primary rounded-pill shadow-sm px-4">
          <i class="fa fa-plus me-2"></i> {{ __('Add New Trip') }}
     </a>
+    @endcanany
 </div>
 @endsection
 

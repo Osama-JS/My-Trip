@@ -7,9 +7,17 @@ use App\Models\Company;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-class CompanyAgentController extends Controller
+class CompanyAgentController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:manage companies|manage users'),
+        ];
+    }
     public function index(Company $company)
     {
         $countries = \App\Models\Country::active()->get();

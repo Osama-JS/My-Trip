@@ -7,9 +7,17 @@ use App\Models\Country;
 use App\Models\City;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-class CityController extends Controller
+class CityController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:manage locations|manage cities'),
+        ];
+    }
      /**
      * Display the cities management page.
      */
@@ -69,9 +77,12 @@ class CityController extends Controller
      */
     private function getActionButtons($city): string
     {
-        $editBtn = '<button class="btn btn-primary btn-sm me-1" onclick="editCity(' . $city->id . ')" title="' . __('Edit') . '"><i class="fas fa-edit"></i></button>';
-        $toggleBtn = '<button class="btn btn-' . ($city->active ? 'warning' : 'success') . ' btn-sm me-1" onclick="toggleCityStatus(' . $city->id . ')" title="' . __('Toggle Status') . '"><i class="fas fa-' . ($city->active ? 'ban' : 'check') . '"></i></button>';
-        $deleteBtn = '<button class="btn btn-danger btn-sm" onclick="deleteCity(' . $city->id . ')" title="' . __('Delete') . '"><i class="fas fa-trash"></i></button>';
+        $user = auth()->user();
+        $canManage = $user && ($user->can('manage locations') || $user->can('manage cities'));
+
+        $editBtn = $canManage ? '<button class="btn btn-primary btn-sm me-1" onclick="editCity(' . $city->id . ')" title="' . __('Edit') . '"><i class="fas fa-edit"></i></button>' : '';
+        $toggleBtn = $canManage ? '<button class="btn btn-' . ($city->active ? 'warning' : 'success') . ' btn-sm me-1" onclick="toggleCityStatus(' . $city->id . ')" title="' . __('Toggle Status') . '"><i class="fas fa-' . ($city->active ? 'ban' : 'check') . '"></i></button>' : '';
+        $deleteBtn = $canManage ? '<button class="btn btn-danger btn-sm" onclick="deleteCity(' . $city->id . ')" title="' . __('Delete') . '"><i class="fas fa-trash"></i></button>' : '';
 
         return '<div class="d-flex">' . $editBtn . $toggleBtn . $deleteBtn . '</div>';
     }

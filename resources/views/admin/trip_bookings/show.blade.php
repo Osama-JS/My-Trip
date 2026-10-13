@@ -98,14 +98,18 @@
                     <span class="state-chip {{ $stateChip }}"><i class="fas fa-circle" style="font-size:7px;"></i> {{ __($booking->booking_state) }}</span>
 
                     @if($booking->booking_state != \App\Models\TripBooking::STATE_CANCELLED)
+                        @canany(['cancel bookings', 'manage bookings'])
                         <button type="button" class="btn-action btn-action--red" data-bs-toggle="modal" data-bs-target="#cancelModal">
                             <i class="fas fa-times"></i> {{ __('Cancel Booking') }}
                         </button>
+                        @endcanany
                     @endif
                     @if($booking->canBeDeletedByAdmin())
+                        @canany(['delete bookings', 'manage bookings'])
                         <button type="button" class="btn-action btn-action--red" onclick="deleteBooking({{ $booking->id }})" title="{{ __('Delete Booking') }}">
                             <i class="fas fa-trash"></i> {{ __('Delete') }}
                         </button>
+                        @endcanany
                     @endif
                 </div>
             </div>
@@ -197,6 +201,7 @@
     <!-- Right Sidebar -->
     <div class="col-xl-3 col-lg-4">
         <!-- Update Booking State -->
+        @canany(['edit bookings', 'manage bookings'])
         <div class="detail-card">
             <div class="detail-card-header">
                 <h6 class="detail-card-title"><i class="fas fa-exchange-alt" style="color:#0284c7;"></i> {{ __('Update State') }}</h6>
@@ -219,6 +224,7 @@
                 </form>
             </div>
         </div>
+        @endcanany
 
         <!-- Customer Info -->
         <div class="detail-card">
@@ -396,16 +402,19 @@
                                 <a href="{{ $booking->ticket_url }}" target="_blank" class="btn btn-sm btn-outline-success">
                                     <i class="fas fa-eye me-1"></i> {{ __('View Ticket') }}
                                 </a>
+                                @canany(['send tickets', 'manage bookings'])
                                 <form action="{{ route('admin.trip-bookings.send-ticket', $booking->id) }}" method="POST" class="d-inline">
                                     @csrf
                                     <button type="submit" class="btn btn-sm btn-success">
                                         <i class="fas fa-paper-plane me-1"></i> {{ __('Send to Customer') }}
                                     </button>
                                 </form>
+                                @endcanany
                             </div>
                         </div>
                     @endif
 
+                    @canany(['upload tickets', 'manage bookings'])
                     <form action="{{ route('admin.trip-bookings.upload-ticket', $booking->id) }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <div class="mb-3">
@@ -422,6 +431,7 @@
                             <i class="fas fa-upload me-1"></i> {{ __('Upload & Save') }}
                         </button>
                     </form>
+                    @endcanany
                 </div>
             </div>
         @endif

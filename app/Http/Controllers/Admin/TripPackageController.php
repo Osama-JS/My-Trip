@@ -8,9 +8,17 @@ use App\Models\TripPackage;
 use App\Models\TripPackagePrice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-class TripPackageController extends Controller
+class TripPackageController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:edit trips|manage trips', only: ['store', 'update', 'destroy']),
+        ];
+    }
     /**
      * Store a new package for a trip.
      */
