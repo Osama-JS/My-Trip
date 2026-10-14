@@ -157,63 +157,131 @@
             page-break-inside: avoid;
         }
 
-        /* ── Flight Route Card ── */
+        /* ── Flight Route Card & Legs ── */
         .route-card {
-            background: #041741;
-            border-radius: 8px;
-            padding: 14px 16px 10px 16px;
             margin-bottom: 18px;
-            color: #ffffff;
             page-break-inside: avoid;
             width: 100%;
-            box-sizing: border-box;
         }
-        .airport-code {
-            font-size: 22px;
+        .flight-leg-box {
+            border: 1.5px solid #041741;
+            border-radius: 6px;
+            margin-bottom: 14px;
+            overflow: hidden;
+            background-color: #ffffff;
+            page-break-inside: avoid;
+        }
+        .flight-leg-header {
+            background-color: #041741;
+            color: #ffffff;
+            padding: 8px 14px;
+            border-bottom: 1.5px solid #041741;
+        }
+        .leg-title {
+            font-size: 10px;
             font-weight: 900;
             color: #ffffff;
-            letter-spacing: 1px;
-        }
-        .airport-label {
-            font-size: 8px;
-            color: rgba(255,255,255,0.45);
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 1.5px;
+        }
+        .leg-flight-badge {
+            background-color: #f2cb57;
+            color: #041741;
+            font-size: 10px;
+            font-weight: 900;
+            padding: 2px 8px;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+            display: inline-block;
+        }
+        .flight-route-body {
+            padding: 12px 14px 10px 14px;
+            background-color: #ffffff;
+        }
+        .airport-code {
+            font-size: 24px;
+            font-weight: 900;
+            color: #041741;
+            letter-spacing: 1.5px;
+            font-family: 'Courier New', monospace, 'Cairo';
         }
         .airport-city {
             font-size: 11px;
             font-weight: 700;
-            color: #ffffff;
-            margin-bottom: 3px;
+            color: #1e293b;
+            margin-top: 2px;
+            margin-bottom: 2px;
             word-wrap: break-word;
             overflow-wrap: break-word;
         }
+        .airport-label {
+            font-size: 8px;
+            font-weight: 800;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 3px;
+        }
         .airport-time {
             font-size: 10px;
-            color: #f2cb57;
-            font-weight: 700;
-            margin-top: 3px;
-        }
-        .flight-badge {
+            color: #041741;
+            font-weight: 800;
+            background-color: #f1f5f9;
+            padding: 3px 8px;
+            border-radius: 4px;
             display: inline-block;
-            color: #f2cb57;
-            font-size: 12px;
-            font-weight: 900;
-            letter-spacing: 1px;
+            margin-top: 2px;
+            border: 1px solid #e2e8f0;
+        }
+        .flight-mid-line {
+            font-size: 10px;
+            color: #94a3b8;
+            margin-bottom: 4px;
+        }
+        .flight-plane-icon {
+            display: inline-block;
+            vertical-align: middle;
+            margin: 0 4px;
+        }
+        .stops-badge-direct {
+            display: inline-block;
+            background-color: #ecfdf5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 9px;
+            font-weight: 800;
+        }
+        .stops-badge-transit {
+            display: inline-block;
+            background-color: #fffbeb;
+            color: #92400e;
+            border: 1px solid #fde68a;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 9px;
+            font-weight: 800;
+        }
+        .stops-layover-text {
+            font-size: 8px;
+            color: #64748b;
             margin-top: 3px;
+            font-weight: 600;
             word-wrap: break-word;
             overflow-wrap: break-word;
         }
         .baggage-strip {
-            border-top: 1px dashed rgba(255,255,255,0.15);
-            margin-top: 10px;
-            padding-top: 6px;
+            background-color: #f8fafc;
+            border-top: 1px dashed #d5d0c4;
+            padding: 7px 14px;
             text-align: center;
-            font-size: 10px;
-            color: rgba(255,255,255,0.6);
+            font-size: 9.5px;
+            color: #475569;
         }
         .baggage-strip strong {
-            color: #f2cb57;
+            color: #041741;
+            font-weight: 800;
         }
 
         /* ── Premium Tables ── */
@@ -355,27 +423,7 @@
             border-radius: 0 0 2px 2px;
         }
 
-        /* ── Leg Header ── */
-        .leg-header {
-            font-size: 10px;
-            color: #f2cb57;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 10px;
-            border-bottom: 1px dashed rgba(255,255,255,0.2);
-            padding-bottom: 5px;
-        }
 
-        /* ── Stops Info ── */
-        .stops-info {
-            font-size: 9px;
-            font-weight: 700;
-            margin-top: 4px;
-            line-height: 1.3;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-        }
 
     </style>
 </head>
@@ -698,7 +746,7 @@
             </div>
         </div>
 
-        <!-- ─── FLIGHT ROUTE CARD ─── -->
+        <!-- ─── FLIGHT ROUTE SECTION ─── -->
         <div class="route-card">
             @if(count($legs) > 0)
                 @php
@@ -726,6 +774,8 @@
                                 'from' => $depCity ?: $depCode,
                                 'to'   => $arrCity ?: $arrCode
                             ]);
+                        } else {
+                            $legHeaderTitle = __('Outbound Flight');
                         }
 
                         // Departure Date/Time calculation
@@ -779,83 +829,125 @@
                         }
                         $stopsCount = $segCount - 1;
                     @endphp
-                    @if(!empty($legHeaderTitle))
-                        <div class="leg-header" style="margin-top: {{ $legIndex > 0 ? '14px' : '0' }};">
-                            {{ $legHeaderTitle }}
+
+                    <div class="flight-leg-box">
+                        <!-- Leg Header Bar -->
+                        <div class="flight-leg-header">
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td width="70%" valign="middle" style="text-align: {{ app()->getLocale() == 'ar' ? 'right' : 'left' }};">
+                                        <span class="leg-title">
+                                            ✈ {{ $legHeaderTitle }}
+                                        </span>
+                                    </td>
+                                    <td width="30%" valign="middle" style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }};">
+                                        <span class="leg-flight-badge">{{ $flightNo }}</span>
+                                    </td>
+                                </tr>
+                            </table>
                         </div>
-                    @endif
-                    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 10px;">
-                        <tr>
-                            <td width="32%" align="center" valign="middle">
-                                <div class="airport-code">{{ $depCode }}</div>
-                                <div class="airport-city">{{ $depCity }}</div>
-                                <div class="airport-label">{{ __('Departure') }}</div>
-                                <div class="airport-time" dir="ltr">{{ $depDate }}</div>
-                            </td>
-                            <td width="36%" align="center" valign="middle">
-                                <div style="font-size: 10px; color: rgba(255,255,255,0.35); margin-bottom: 3px;">
-                                    ─────
-                                    <svg width="12" height="12" viewBox="0 0 24 24" style="vertical-align: middle; margin: 0 3px;">
-                                        <path fill="rgba(255,255,255,0.35)" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
-                                    </svg>
-                                    ─────
-                                </div>
-                                <div class="flight-badge">{{ $flightNo }}</div>
-                                @if($stopsCount > 0)
-                                    <div class="stops-info" style="color: #f2cb57;">
-                                        {{ $stopsCount }} {{ $stopsCount == 1 ? __('Stop') : __('Stops') }}
-                                        @if(!empty($layovers))
-                                            <br><span style="font-size: 8px; color: rgba(255,255,255,0.5);">({{ implode(', ', $layovers) }})</span>
+
+                        <!-- Leg Route Body -->
+                        <div class="flight-route-body">
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <!-- Departure Airport & Time -->
+                                    <td width="34%" align="center" valign="middle">
+                                        <div class="airport-code">{{ $depCode }}</div>
+                                        <div class="airport-city">{{ $depCity }}</div>
+                                        <div class="airport-label">{{ __('Departure') }}</div>
+                                        <div class="airport-time" dir="ltr">{{ $depDate }}</div>
+                                    </td>
+
+                                    <!-- Flight Transit / Stops -->
+                                    <td width="32%" align="center" valign="middle">
+                                        <div class="flight-mid-line">
+                                            ────
+                                            <svg width="14" height="14" viewBox="0 0 24 24" class="flight-plane-icon">
+                                                <path fill="#041741" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+                                            </svg>
+                                            ────
+                                        </div>
+                                        @if($stopsCount > 0)
+                                            <div class="stops-badge-transit">
+                                                {{ $stopsCount }} {{ $stopsCount == 1 ? __('Stop') : __('Stops') }}
+                                            </div>
+                                            @if(!empty($layovers))
+                                                <div class="stops-layover-text">({{ implode(', ', $layovers) }})</div>
+                                            @endif
+                                        @else
+                                            <div class="stops-badge-direct">
+                                                ✓ {{ __('Non-stop') }}
+                                            </div>
                                         @endif
-                                    </div>
-                                @else
-                                    <div class="stops-info" style="color: #34d399;">
-                                        {{ __('Non-stop') }}
-                                    </div>
-                                @endif
-                            </td>
-                            <td width="32%" align="center" valign="middle">
-                                <div class="airport-code">{{ $arrCode }}</div>
-                                <div class="airport-city">{{ $arrCity }}</div>
-                                <div class="airport-label">{{ __('Arrival') }}</div>
-                                <div class="airport-time" dir="ltr">{{ $arrDate }}</div>
-                            </td>
-                        </tr>
-                    </table>
-                    <div class="baggage-strip" style="margin-bottom: {{ $legIndex < $totalLegsCount - 1 ? '14px' : '0' }};">
-                        <svg width="10" height="10" viewBox="0 0 24 24" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 3px;">
-                            <path fill="rgba(255,255,255,0.6)" d="M17 6h-2V4c0-1.1-.9-2-2-2h-2c-1.1 0-2 .9-2 2v2H7c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zM10 4h4v2h-4V4zm7 15H7V8h10v11z"/>
-                            <path fill="rgba(255,255,255,0.6)" d="M9 10h2v7H9zm4 0h2v7h-2z"/>
-                        </svg>
-                        {{ __('Baggage Allowance') }}: <strong>{{ is_array($baggageInfo) ? implode(', ', $baggageInfo) : $baggageInfo }}</strong>
+                                    </td>
+
+                                    <!-- Arrival Airport & Time -->
+                                    <td width="34%" align="center" valign="middle">
+                                        <div class="airport-code">{{ $arrCode }}</div>
+                                        <div class="airport-city">{{ $arrCity }}</div>
+                                        <div class="airport-label">{{ __('Arrival') }}</div>
+                                        <div class="airport-time" dir="ltr">{{ $arrDate }}</div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <!-- Baggage Strip -->
+                        <div class="baggage-strip">
+                            <span style="color: #64748b; font-weight: 700;">🧳 {{ __('Baggage Allowance') }}:</span>
+                            <strong>{{ is_array($baggageInfo) ? implode(', ', $baggageInfo) : $baggageInfo }}</strong>
+                        </div>
                     </div>
                 @endforeach
             @else
                 <!-- FALLBACK FOR OLD BOOKINGS WITHOUT ITINERARY_DATA -->
-                <table width="100%">
-                    <tr>
-                        <td width="35%" align="center" valign="middle">
-                            <div class="airport-code">{{ $fb->origin ?? 'N/A' }}</div>
-                            <div class="airport-label">{{ __('Departure') }}</div>
-                            <div class="airport-time" dir="ltr">{{ $fb->departure_date ?? 'N/A' }}</div>
-                        </td>
-                        <td width="30%" align="center" valign="middle">
-                            <div style="font-size: 11px; color: rgba(255,255,255,0.35); margin-bottom: 4px;">
-                                ──────
-                                <svg width="14" height="14" viewBox="0 0 24 24" style="vertical-align: middle; margin: 0 4px;">
-                                    <path fill="rgba(255,255,255,0.35)" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
-                                </svg>
-                                ──────
-                            </div>
-                            <div class="flight-badge">{{ $fb->airline_name ?? 'N/A' }}</div>
-                        </td>
-                        <td width="35%" align="center" valign="middle">
-                            <div class="airport-code">{{ $fb->destination ?? 'N/A' }}</div>
-                            <div class="airport-label">{{ __('Arrival') }}</div>
-                            <div class="airport-time" dir="ltr">{{ $fb->return_date ?? $fb->departure_date ?? 'N/A' }}</div>
-                        </td>
-                    </tr>
-                </table>
+                <div class="flight-leg-box">
+                    <div class="flight-leg-header">
+                        <table width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td width="70%" valign="middle" style="text-align: {{ app()->getLocale() == 'ar' ? 'right' : 'left' }};">
+                                    <span class="leg-title">✈ {{ __('Flight Itinerary') }}</span>
+                                </td>
+                                <td width="30%" valign="middle" style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }};">
+                                    <span class="leg-flight-badge">{{ $fb->airline_name ?? 'Flight' }}</span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="flight-route-body">
+                        <table width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td width="35%" align="center" valign="middle">
+                                    <div class="airport-code">{{ $fb->origin ?? 'N/A' }}</div>
+                                    <div class="airport-label">{{ __('Departure') }}</div>
+                                    <div class="airport-time" dir="ltr">{{ $fb->departure_date ?? 'N/A' }}</div>
+                                </td>
+                                <td width="30%" align="center" valign="middle">
+                                    <div class="flight-mid-line">
+                                        ────
+                                        <svg width="14" height="14" viewBox="0 0 24 24" class="flight-plane-icon">
+                                            <path fill="#041741" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+                                        </svg>
+                                        ────
+                                    </div>
+                                    <div class="stops-badge-direct">{{ __('Scheduled Flight') }}</div>
+                                </td>
+                                <td width="35%" align="center" valign="middle">
+                                    <div class="airport-code">{{ $fb->destination ?? 'N/A' }}</div>
+                                    <div class="airport-label">{{ __('Arrival') }}</div>
+                                    <div class="airport-time" dir="ltr">{{ $fb->return_date ?? $fb->departure_date ?? 'N/A' }}</div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    @if($baggageInfo)
+                    <div class="baggage-strip">
+                        <span style="color: #64748b; font-weight: 700;">🧳 {{ __('Baggage Allowance') }}:</span>
+                        <strong>{{ is_array($baggageInfo) ? implode(', ', $baggageInfo) : $baggageInfo }}</strong>
+                    </div>
+                    @endif
+                </div>
             @endif
         </div>
 
@@ -911,7 +1003,7 @@
                             <tr>
                                 <td colspan="2" valign="top">
                                     <span class="info-label">{{ __('Total Amount') }}</span><br>
-                                    <span class="info-value" style="color: #d9a01c; font-size: 16px; font-weight: 900;">{{ number_format($booking->total_amount, 2) }} {{ $booking->currency }}</span>
+                                    <span class="info-value" style="color: #041741; font-size: 16px; font-weight: 900;">{{ number_format($booking->total_amount, 2) }} {{ $booking->currency }}</span>
                                 </td>
                             </tr>
                         </table>
