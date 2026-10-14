@@ -8,10 +8,17 @@ use App\Models\Trip;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-
-class BannerController extends Controller
+class BannerController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:manage banners'),
+        ];
+    }
      /**
      * Display the banners management page.
      */
@@ -62,9 +69,12 @@ class BannerController extends Controller
      */
     private function getActionButtons($banner): string
     {
-        $editBtn = '<button class="btn btn-primary btn-sm me-1" onclick="editBanner(' . $banner->id . ')" title="' . __('Edit') . '"><i class="fas fa-edit"></i></button>';
-        $toggleBtn = '<button class="btn btn-' . ($banner->active ? 'warning' : 'success') . ' btn-sm me-1" onclick="toggleBannerStatus(' . $banner->id . ')" title="' . __('Toggle Status') . '"><i class="fas fa-' . ($banner->active ? 'ban' : 'check') . '"></i></button>';
-        $deleteBtn = '<button class="btn btn-danger btn-sm" onclick="deleteBanner(' . $banner->id . ')" title="' . __('Delete') . '"><i class="fas fa-trash"></i></button>';
+        $user = auth()->user();
+        $canManage = $user && $user->can('manage banners');
+
+        $editBtn = $canManage ? '<button class="btn btn-primary btn-sm me-1" onclick="editBanner(' . $banner->id . ')" title="' . __('Edit') . '"><i class="fas fa-edit"></i></button>' : '';
+        $toggleBtn = $canManage ? '<button class="btn btn-' . ($banner->active ? 'warning' : 'success') . ' btn-sm me-1" onclick="toggleBannerStatus(' . $banner->id . ')" title="' . __('Toggle Status') . '"><i class="fas fa-' . ($banner->active ? 'ban' : 'check') . '"></i></button>' : '';
+        $deleteBtn = $canManage ? '<button class="btn btn-danger btn-sm" onclick="deleteBanner(' . $banner->id . ')" title="' . __('Delete') . '"><i class="fas fa-trash"></i></button>' : '';
 
         return '<div class="d-flex">' . $editBtn . $toggleBtn . $deleteBtn . '</div>';
     }

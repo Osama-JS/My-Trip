@@ -19,6 +19,7 @@
             </a>
         </li>
 
+        @can('view subscribers')
         <li class="menu-item {{ request()->is('admin/subscribers*') ? 'active' : '' }}">
             <a href="{{ route('admin.subscribers.index') }}" class="menu-link">
                 <i class="fa-solid fa-users menu-icon text-info"></i>
@@ -26,11 +27,13 @@
                 <span class="menu-badge badge-info">{{ \App\Models\User::count() }}</span>
             </a>
         </li>
+        @endcan
 
         <!-- 2. Bookings & Travel Services -->
         <li class="menu-category">{{ app()->getLocale() == 'ar' ? 'خدمات السفر والحجوزات' : 'Travel & Bookings' }}</li>
 
         <!-- Flights (Dropdown) -->
+        @canany(['view flights', 'manage flights'])
         <li class="menu-item has-submenu {{ request()->is('admin/bookings/flights*') ? 'open active' : '' }}">
             <a class="menu-link">
                 <i class="fa-solid fa-plane menu-icon text-primary"></i>
@@ -44,8 +47,10 @@
                 <li><a href="{{ route('admin.bookings.flights.profits') }}" class="menu-link {{ request()->routeIs('admin.bookings.flights.profits') ? 'active' : '' }}"><i class="fa-solid fa-dollar-sign text-success me-1"></i> {{ app()->getLocale() == 'ar' ? 'أرباح الطيران' : 'Flight Profits' }}</a></li>
             </ul>
         </li>
+        @endcanany
 
         <!-- Hotels (Dropdown) -->
+        @canany(['view hotels', 'manage hotels'])
         <li class="menu-item has-submenu {{ request()->is('admin/bookings/hotels*') ? 'open active' : '' }}">
             <a class="menu-link">
                 <i class="fa-solid fa-hotel menu-icon text-success"></i>
@@ -59,8 +64,10 @@
                 <li><a href="{{ route('admin.bookings.hotels.analytics') }}" class="menu-link {{ request()->routeIs('admin.bookings.hotels.analytics') ? 'active' : '' }}"><i class="fa-solid fa-chart-pie me-1"></i> {{ app()->getLocale() == 'ar' ? 'التحليلات' : 'Analytics' }}</a></li>
             </ul>
         </li>
+        @endcanany
 
         <!-- Tour Packages (Dropdown) -->
+        @canany(['view trips', 'manage trips', 'manage trip_categories'])
         <li class="menu-item has-submenu {{ request()->is('admin/trips*') || request()->is('admin/trip-*') ? 'open active' : '' }}">
             <a class="menu-link">
                 <i class="fa-solid fa-umbrella-beach menu-icon text-warning"></i>
@@ -76,8 +83,10 @@
                 <li><a href="{{ route('admin.trips.profits') }}" class="menu-link"><i class="fa-solid fa-dollar-sign text-success me-1"></i> {{ app()->getLocale() == 'ar' ? 'أرباح الجولات' : 'Tour Profits' }}</a></li>
             </ul>
         </li>
+        @endcanany
 
         <!-- Travel Insurance (Dropdown) -->
+        @canany(['manage bookings'])
         <li class="menu-item has-submenu {{ request()->is('admin/insurance*') ? 'open active' : '' }}">
             <a class="menu-link">
                 <i class="fa-solid fa-shield-halved menu-icon text-info"></i>
@@ -90,11 +99,13 @@
                 <li><a href="{{ route('admin.insurance.settings') }}" class="menu-link"><i class="fa-solid fa-cog me-1"></i> {{ app()->getLocale() == 'ar' ? 'إعدادات التأمين' : 'Insurance Settings' }}</a></li>
             </ul>
         </li>
+        @endcanany
 
         <!-- 3. Companies & B2B -->
         <li class="menu-category">{{ app()->getLocale() == 'ar' ? 'الشركات والوجهات' : 'Companies & Locations' }}</li>
 
         <!-- Companies (Dropdown) -->
+        @can('manage companies')
         <li class="menu-item has-submenu {{ request()->is('admin/companies*') || request()->is('admin/companycodes*') ? 'open active' : '' }}">
             <a class="menu-link">
                 <i class="fa-solid fa-briefcase menu-icon text-primary"></i>
@@ -107,8 +118,10 @@
                 <li><a href="{{ route('admin.companycodes.index') }}" class="menu-link"><i class="fa-solid fa-barcode me-1"></i> {{ app()->getLocale() == 'ar' ? 'أكواد الشركات' : 'Company Codes' }}</a></li>
             </ul>
         </li>
+        @endcan
 
         <!-- Locations (Dropdown) -->
+        @can('manage locations')
         <li class="menu-item has-submenu {{ request()->is('admin/countries*') || request()->is('admin/cities*') ? 'open active' : '' }}">
             <a class="menu-link">
                 <i class="fa-solid fa-location-dot menu-icon text-danger"></i>
@@ -120,8 +133,10 @@
                 <li><a href="{{ route('admin.cities.index') }}" class="menu-link"><i class="fa-solid fa-city me-1"></i> {{ app()->getLocale() == 'ar' ? 'المدن' : 'Cities' }}</a></li>
             </ul>
         </li>
+        @endcan
 
         <!-- 4. Financial Management -->
+        @canany(['view payments', 'manage payments', 'view bank_transfers'])
         <li class="menu-category">{{ app()->getLocale() == 'ar' ? 'الإدارة المالية' : 'Financial Management' }}</li>
 
         <li class="menu-item has-submenu {{ request()->is('admin/payments*') || request()->is('admin/bank-*') || request()->is('admin/wallets*') || request()->is('admin/support*') ? 'open active' : '' }}">
@@ -131,7 +146,10 @@
                 <i class="fa-solid fa-chevron-left menu-arrow"></i>
             </a>
             <ul class="submenu">
+                @canany(['view payments', 'manage payments'])
                 <li><a href="{{ route('admin.payments.index') }}" class="menu-link"><i class="fa-solid fa-money-bill-wave me-1"></i> {{ app()->getLocale() == 'ar' ? 'سجلات الدفع' : 'Payment Records' }}</a></li>
+                @endcanany
+                @canany(['view bank_transfers', 'approve bank_transfers'])
                 <li><a href="{{ route('admin.bank-accounts.index') }}" class="menu-link"><i class="fa-solid fa-university me-1"></i> {{ app()->getLocale() == 'ar' ? 'الحسابات البنكية' : 'Bank Accounts' }}</a></li>
                 <li>
                     <a href="{{ route('admin.bank-transfers.index') }}" class="menu-link">
@@ -142,6 +160,7 @@
                         @endif
                     </a>
                 </li>
+                @endcanany
                 <li><a href="{{ route('admin.wallets.index') }}" class="menu-link"><i class="fa-solid fa-wallet me-1"></i> {{ app()->getLocale() == 'ar' ? 'إدارة المحافظ' : 'Wallets Management' }}</a></li>
                 <li>
                     <a href="{{ route('admin.support.index') }}" class="menu-link">
@@ -154,8 +173,10 @@
                 </li>
             </ul>
         </li>
+        @endcanany
 
         <!-- 5. Access Control & Security -->
+        @canany(['manage users', 'view users', 'manage roles', 'view roles', 'manage permissions', 'view permissions'])
         <li class="menu-category">{{ app()->getLocale() == 'ar' ? 'الأمان والصلاحيات' : 'Access & Security' }}</li>
 
         <li class="menu-item has-submenu {{ request()->is('admin/users*') || request()->is('admin/roles*') || request()->is('admin/permissions*') ? 'open active' : '' }}">
@@ -165,13 +186,23 @@
                 <i class="fa-solid fa-chevron-left menu-arrow"></i>
             </a>
             <ul class="submenu">
+                @canany(['manage users', 'view users'])
                 <li><a href="{{ route('admin.users.index') }}" class="menu-link"><i class="fa-solid fa-users me-1"></i> {{ app()->getLocale() == 'ar' ? 'المستخدمين' : 'Users' }}</a></li>
+                @endcanany
+                
+                @canany(['manage roles', 'view roles'])
                 <li><a href="{{ route('admin.roles.index') }}" class="menu-link"><i class="fa-solid fa-user-shield me-1"></i> {{ app()->getLocale() == 'ar' ? 'الأدوار' : 'Roles' }}</a></li>
+                @endcanany
+                
+                @canany(['manage permissions', 'view permissions'])
                 <li><a href="{{ route('admin.permissions.index') }}" class="menu-link"><i class="fa-solid fa-key me-1"></i> {{ app()->getLocale() == 'ar' ? 'الصلاحيات' : 'Permissions' }}</a></li>
+                @endcanany
             </ul>
         </li>
+        @endcanany
 
         <!-- 6. Reports & System Logs -->
+        @can('manage settings')
         <li class="menu-category">{{ app()->getLocale() == 'ar' ? 'التقارير وسجلات النظام' : 'Reports & Logs' }}</li>
 
         <li class="menu-item has-submenu {{ request()->is('admin/reports*') ? 'open active' : '' }}">
@@ -198,8 +229,10 @@
                 <li><a href="{{ route('admin.system.status') }}" class="menu-link"><i class="fa-solid fa-tower-broadcast text-info me-1"></i> {{ app()->getLocale() == 'ar' ? 'حالة النظام والخدمات المباشرة' : 'Live System Status' }}</a></li>
             </ul>
         </li>
+        @endcan
 
         <!-- 8. Platform Administration & Settings -->
+        @canany(['manage settings', 'manage pages', 'manage questions', 'manage banners'])
         <li class="menu-category">{{ app()->getLocale() == 'ar' ? 'الإعدادات والإدارة' : 'Settings & Admin' }}</li>
 
         <li class="menu-item has-submenu {{ request()->is('admin/settings*') || request()->is('admin/pages*') || request()->is('admin/questions*') || request()->is('admin/commissions*') || request()->is('admin/banners*') ? 'open active' : '' }}">
@@ -209,13 +242,22 @@
                 <i class="fa-solid fa-chevron-left menu-arrow"></i>
             </a>
             <ul class="submenu">
+                @can('manage pages')
                 <li><a href="{{ route('admin.pages.index') }}" class="menu-link"><i class="fa-solid fa-file-lines me-1"></i> {{ app()->getLocale() == 'ar' ? 'إدارة الصفحات' : 'Manage Pages' }}</a></li>
+                @endcan
+                @can('manage questions')
                 <li><a href="{{ route('admin.questions.index') }}" class="menu-link"><i class="fa-solid fa-circle-question me-1"></i> {{ app()->getLocale() == 'ar' ? 'الأسئلة الشائعة' : 'Questions' }}</a></li>
+                @endcan
+                @can('manage settings')
                 <li><a href="{{ route('admin.settings.index') }}" class="menu-link"><i class="fa-solid fa-gear me-1"></i> {{ app()->getLocale() == 'ar' ? 'إعدادات المنصة' : 'Platform Settings' }}</a></li>
                 <li><a href="{{ route('admin.commissions.index') }}" class="menu-link"><i class="fa-solid fa-hand-holding-dollar me-1"></i> {{ app()->getLocale() == 'ar' ? 'عمولات المنصة' : 'Platform Commissions' }}</a></li>
+                @endcan
+                @can('manage banners')
                 <li><a href="{{ route('admin.banners.index') }}" class="menu-link"><i class="fa-solid fa-image me-1"></i> {{ app()->getLocale() == 'ar' ? 'البانرات الإعلانية' : 'Banners' }}</a></li>
+                @endcan
             </ul>
         </li>
+        @endcanany
 
         <!-- Switch to Legacy Admin Option -->
         <li style="margin-top: 1.5rem; padding: 0.5rem 0.75rem;">

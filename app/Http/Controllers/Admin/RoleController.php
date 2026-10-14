@@ -8,8 +8,21 @@ use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\DB;
 
-class RoleController extends Controller
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
+
+class RoleController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:view roles', only: ['index', 'getData', 'show']),
+            new Middleware('permission:create roles', only: ['create', 'store']),
+            new Middleware('permission:edit roles', only: ['edit', 'update']),
+            new Middleware('permission:delete roles', only: ['destroy']),
+        ];
+    }
+
     public function index()
     {
         $permissions = Permission::all();
@@ -18,21 +31,38 @@ class RoleController extends Controller
 
     public function getData()
     {
-        $roles = Role::with('permissions')->get();
+        $user = auth()->user();
+        $canEdit = $user && $user->can('edit roles');
+        $canDelete = $user && $user->can('delete roles');
+        $systemRoles = ['super-admin', 'admin', 'agent', 'company_manager', 'accountant', 'customer_service', 'data_entry', 'auditor'];
+
+        $roles = Role::with('permissions')->withCount('users')->get();
+
         return response()->json([
-            'data' => $roles->map(function($role) {
+            'data' => $roles->map(function ($role) use ($canEdit, $canDelete, $systemRoles) {
+                $isSuper = $role->name === 'super-admin';
+                $isSystem = in_array($role->name, $systemRoles);
+
+                $actions = '<div class="role-actions">';
+                $actions .= '<button type="button" class="role-action-btn role-action-btn--view view-role-perms-btn" data-id="' . $role->id . '" title="' . e(__('View Details')) . '"><i class="fas fa-eye"></i></button>';
+                if ($canEdit) {
+                    $actions .= '<button type="button" class="role-action-btn role-action-btn--edit edit-role-btn" data-id="' . $role->id . '" title="' . e(__('Edit')) . '"><i class="fas fa-pen"></i></button>';
+                }
+                if ($canDelete && !$isSuper) {
+                    $actions .= '<button type="button" class="role-action-btn role-action-btn--delete delete-role-btn" data-id="' . $role->id . '" title="' . e(__('Delete')) . '"><i class="fas fa-trash-alt"></i></button>';
+                }
+                $actions .= '</div>';
+
                 return [
                     'id' => $role->id,
-                    'name' => '<strong>' . $role->name . '</strong>',
-                    'permissions' => $role->permissions->map(function($permission) {
-                        return '<span class="badge badge-outline-primary me-1">' . $permission->name . '</span>';
-                    })->implode(''),
-                    'permissions_count' => '<span class="badge badge-info">' . $role->permissions->count() . '</span>',
-                    'actions' => '
-                        <div class="d-flex">
-                            <button onclick="editRole(' . $role->id . ')" class="btn btn-primary shadow btn-xs sharp me-1"><i class="fas fa-pencil-alt"></i></button>
-                            <button onclick="deleteRole(' . $role->id . ')" class="btn btn-danger shadow btn-xs sharp"><i class="fa fa-trash"></i></button>
-                        </div>'
+                    'name' => $role->name,
+                    'is_super' => $isSuper,
+                    'is_system' => $isSystem,
+                    'users_count' => (int) $role->users_count,
+                    'permissions' => $role->permissions->pluck('name')->values(),
+                    'permissions_count' => $role->permissions->count(),
+                    'created_at' => $role->created_at ? $role->created_at->format('Y-m-d') : '—',
+                    'actions' => $actions,
                 ];
             })
         ]);
@@ -105,6 +135,13 @@ class RoleController extends Controller
 
     public function destroy(Role $role)
     {
+        if ($role->name === 'super-admin') {
+            return response()->json([
+                'success' => false,
+                'message' => __('The super-admin role cannot be deleted.')
+            ], 422);
+        }
+
         try {
             $role->delete();
             return response()->json([

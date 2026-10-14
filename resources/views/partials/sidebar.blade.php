@@ -30,6 +30,7 @@
             </li>
 
             {{-- Flights --}}
+            @canany(['view flights', 'manage flights'])
             <li>
                 <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
                     <i class="fa fa-plane"></i>
@@ -41,8 +42,10 @@
                     <li><a href="{{ route('admin.bookings.flights.profits') }}"><i class="fa fa-dollar-sign text-success"></i>{{ __('Flight Profits') }}</a></li>
                 </ul>
             </li>
+            @endcanany
 
             {{-- Hotels --}}
+            @canany(['view hotels', 'manage hotels'])
             <li>
                 <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
                     <i class="fa fa-hotel"></i>
@@ -54,23 +57,33 @@
                     <li><a href="{{ route('admin.bookings.hotels.analytics') }}"><i class="fa fa-chart-pie"></i>{{ __('Analytics') }}</a></li>
                 </ul>
             </li>
+            @endcanany
 
             {{-- Tour Packages (Trips) --}}
+            @canany(['view trips', 'manage trips', 'manage trip_categories'])
             <li>
                 <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
                     <i class="flaticon-381-map"></i>
                     <span class="nav-text">{{ __('Tour Packages') }}</span>
                 </a>
                 <ul aria-expanded="false">
+                    @canany(['view trips', 'manage trips'])
                     <li><a href="{{ route('admin.trips.index') }}"><i class="fa fa-suitcase"></i>{{ __('Manage Tours') }}</a></li>
+                    @endcanany
+                    @canany(['manage trip_categories', 'manage trips'])
                     <li><a href="{{ route('admin.trip-categories.index') }}"><i class="fa fa-tags"></i>{{ __('Categories') }}</a></li>
+                    @endcanany
+                    @canany(['view bookings', 'manage bookings'])
                     <li><a href="{{ route('admin.trip-bookings.index') }}"><i class="fa fa-calendar-check"></i>{{ __('Tour Bookings') }}</a></li>
+                    @endcanany
                     <li><a href="{{ route('admin.trips.analytics') }}"><i class="fa fa-chart-pie"></i>{{ __('Tour Analytics') }}</a></li>
                     <li><a href="{{ route('admin.trips.profits') }}"><i class="fa fa-dollar-sign text-success"></i>{{ __('Tour Profits') }}</a></li>
                 </ul>
             </li>
+            @endcanany
 
             {{-- Travel Insurance --}}
+            @canany(['view insurance', 'manage insurance', 'manage settings'])
             <li>
                 <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
                     <i class="fa fa-shield-alt text-primary"></i>
@@ -82,8 +95,10 @@
                     <li><a href="{{ route('admin.insurance.settings') }}"><i class="fa fa-cog"></i>{{ __('Insurance Settings') }}</a></li>
                 </ul>
             </li>
+            @endcanany
 
             {{-- Companies --}}
+            @canany(['manage companies', 'manage company_codes'])
             <li>
                 <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
                     <i class="flaticon-381-briefcase"></i>
@@ -94,9 +109,10 @@
                     <li><a href="{{ route('admin.companycodes.index') }}"><i class="fa fa-barcode"></i>{{ __('Company Codes') }}</a></li>
                 </ul>
             </li>
-
+            @endcanany
 
             {{-- Locations --}}
+            @canany(['manage locations', 'manage countries', 'manage cities'])
             <li>
                 <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
                     <i class="flaticon-381-location"></i>
@@ -107,9 +123,10 @@
                     <li><a href="{{ route('admin.cities.index') }}"><i class="fa fa-city"></i>{{ __('Cities') }}</a></li>
                 </ul>
             </li>
-
+            @endcanany
 
             {{-- Financial Management --}}
+            @canany(['view payments', 'manage payments', 'view bank_transfers'])
             <li>
                 <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
                     <i class="flaticon-381-layer-1"></i>
@@ -123,9 +140,10 @@
                     <li><a href="{{ route('admin.support.index') }}"><i class="flaticon-381-help me-2" style="font-size: 14px;"></i>{{ __('Support Tickets') }}</a></li>
                 </ul>
             </li>
+            @endcanany
 
             {{-- Security & Access --}}
-            @can('view users')
+            @canany(['manage users', 'view users', 'manage roles', 'view roles', 'manage permissions', 'view permissions'])
             <li class="mega-menu-container">
                 <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
                     <i class="flaticon-381-lock"></i>
@@ -134,16 +152,21 @@
                     </span>
                 </a>
                 <ul aria-expanded="false">
+                    @canany(['view users', 'manage users'])
                     <li><a href="{{ route('admin.users.index') }}"><i class="fa fa-users "></i>{{ __('Users') }}</a></li>
+                    @endcanany
+                    @canany(['view roles', 'manage roles'])
                     <li><a href="{{ route('admin.roles.index') }}"><i class="fa fa-user-shield "></i>{{ __('Roles') }}</a></li>
-                    @can('view permissions')
+                    @endcanany
+                    @canany(['view permissions', 'manage permissions'])
                     <li><a href="{{ route('admin.permissions.index') }}"><i class="fa fa-key "></i>{{ __('Permissions') }}</a></li>
-                    @endcan
+                    @endcanany
                 </ul>
             </li>
-            @endcan
+            @endcanany
 
             {{-- Reports & Logs --}}
+            @canany(['manage settings', 'view dashboard', 'view reports'])
             <li>
                 <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
                     <i class="flaticon-043-menu"></i>
@@ -154,8 +177,10 @@
                     <li><a href="{{ route('admin.reports.search_logs') }}"><i class="fa fa-chart-bar "></i>{{ __('Search Statistics') }}</a></li>
                 </ul>
             </li>
+            @endcanany
 
             {{-- ===== حالة النظام والمراقبة والصيانة ===== --}}
+            @canany(['manage settings', 'view system_health'])
             <li>
                 <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
                     <i class="fas fa-heartbeat text-danger"></i>
@@ -174,24 +199,31 @@
                     </li>
                 </ul>
             </li>
+            @endcanany
 
             {{-- ===== الإعدادات والإدارة ===== --}}
+            @canany(['manage settings', 'manage pages', 'manage questions', 'manage banners'])
             <li>
                 <a class="has-arrow" href="javascript:void(0)" aria-expanded="false">
                     <i class="flaticon-381-settings-2"></i>
                     <span class="nav-text">{{ __('Settings & Administration') }}</span>
                 </a>
                 <ul aria-expanded="false">
+                    @can('manage pages')
                     <li>
                         <a href="{{ route('admin.pages.index') }}">
                             <i class="fa fa-file-alt"></i>{{ __('Manage Pages') }}
                         </a>
                     </li>
+                    @endcan
+                    @canany(['view questions', 'manage questions'])
                     <li>
                         <a href="{{ route('admin.questions.index') }}">
                             <i class="fa fa-question-circle"></i>{{ __('Questions') }}
                         </a>
                     </li>
+                    @endcan
+                    @can('manage settings')
                     <li>
                         <a href="{{ route('admin.settings.index') }}">
                             <i class="flaticon-381-settings-2"></i>{{ __('Platform Settings') }}
@@ -202,13 +234,17 @@
                             <i class="fas fa-hand-holding-usd"></i>{{ __('Platform Commissions') }}
                         </a>
                     </li>
+                    @endcan
+                    @can('manage banners')
                     <li>
                         <a href="{{ route('admin.banners.index') }}">
                             <i class="fa fa-image"></i>{{ __('Banners') }}
                         </a>
                     </li>
+                    @endcan
                 </ul>
             </li>
+            @endcanany
 
 
         </div>

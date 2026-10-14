@@ -6,10 +6,17 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\CompanyCodes;
 use App\Models\Company;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-
-class CompanyCodesController extends Controller
+class CompanyCodesController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:manage company_codes|manage companies'),
+        ];
+    }
    /**
      * Display a listing of the resource.
      */

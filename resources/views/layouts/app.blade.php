@@ -295,6 +295,7 @@
             flex-direction: column-reverse;
             align-items: center;
             gap: 10px;
+            z-index: 999999 !important;
         }
 
         /* ── Individual Toast ── */

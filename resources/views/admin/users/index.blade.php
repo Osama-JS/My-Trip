@@ -479,6 +479,22 @@
                                 </button>
                             </div>
                         </div>
+                        
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold text-muted small text-uppercase mb-2 d-flex align-items-center gap-2">
+                                <span class="d-inline-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-circle" style="width: 24px; height: 24px; font-size: 11px;">
+                                    <i class="fas fa-user-shield"></i>
+                                </span>
+                                {{ __('Role & Permissions') }}
+                            </label>
+                            <select name="roles[]" id="add_roles" class="form-select premium-input" multiple="multiple" style="width: 100%; height: 100px;">
+                                @if(isset($roles))
+                                    @foreach($roles as $role)
+                                        <option value="{{ $role->name }}">{{ $role->name }}</option>
+                                    @endforeach
+                                @endif
+                            </select>
+                        </div>
 
                         <!-- Account Status Card Toggle Box -->
                         <div class="col-12 mt-4">
@@ -592,6 +608,22 @@
                                     <i class="far fa-eye"></i>
                                 </button>
                             </div>
+                        </div>
+                        
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold text-muted small text-uppercase mb-2 d-flex align-items-center gap-2">
+                                <span class="d-inline-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-circle" style="width: 24px; height: 24px; font-size: 11px;">
+                                    <i class="fas fa-user-shield"></i>
+                                </span>
+                                {{ __('Role & Permissions') }}
+                            </label>
+                            <select name="roles[]" id="edit_roles" class="form-select premium-input" multiple="multiple" style="width: 100%; height: 100px;">
+                                @if(isset($roles))
+                                    @foreach($roles as $role)
+                                        <option value="{{ $role->name }}">{{ $role->name }}</option>
+                                    @endforeach
+                                @endif
+                            </select>
                         </div>
 
                         <!-- Account Status Card Toggle Box -->
@@ -720,6 +752,8 @@ $(document).ready(function() {
             width: '100%'
         });
 
+        // Roles select initialization removed temporarily to use native select
+
         // Instant filter search logic helper
         function performFilterSearch() {
             // Status
@@ -750,6 +784,7 @@ $(document).ready(function() {
             let statusVal = $('#add_status').is(':checked') ? 'active' : 'inactive';
             formData = formData.filter(item => item.name !== 'status');
             formData.push({name: 'status', value: statusVal});
+            formData.push({name: 'user_type', value: 'admin'});
 
             $.ajax({
                 url: "{{ parse_url(route('admin.users.store'), PHP_URL_PATH) }}",
@@ -862,6 +897,7 @@ function togglePasswordVisibility(fieldId, button) {
 function resetForm() {
     $('#addUserForm')[0].reset();
     $('#add_status').prop('checked', true);
+    $('#add_roles').val(null).trigger('change');
 }
 
 function verifyUser(id) {
@@ -990,6 +1026,7 @@ function editUser(id) {
             $('#edit_phone').val(user.phone);
             $('#edit_city').val(user.city);
             $('#edit_status').prop('checked', user.status === 'active');
+            $('#edit_roles').val(response.roles).trigger('change');
             $('#edit_password').val('');
             $('#editUserModal').modal('show');
         }

@@ -6,9 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Models\Trip;
 use App\Models\TripSeason;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-class TripSeasonController extends Controller
+class TripSeasonController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:edit trips|manage trips', only: ['store', 'update', 'destroy']),
+        ];
+    }
     /**
      * Store a new season for a trip.
      */

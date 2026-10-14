@@ -6,9 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Models\FlightApiLog;
 use App\Models\FlightSearchLog;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-class ReportController extends Controller
+class ReportController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:manage settings|view dashboard'),
+        ];
+    }
     /**
      * View API Logs (Travelopro)
      */

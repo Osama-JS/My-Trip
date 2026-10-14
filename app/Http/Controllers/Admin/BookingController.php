@@ -9,9 +9,30 @@ use Illuminate\Support\Facades\Log;
 use App\Models\FlightBooking;
 use App\Models\HotelBooking;
 use App\Models\Booking;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-class BookingController extends Controller
+class BookingController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:view bookings|manage bookings', only: ['index', 'show', 'invoice']),
+            new Middleware('permission:view flights|manage flights|view bookings|manage bookings', only: [
+                'flightBookings', 'getFlightData', 'flightAnalytics', 'flightProfits', 'getFlightProfitsData',
+                'ongoingFlights', 'availableFlights', 'getAirports', 'getAirlines', 'showFlight'
+            ]),
+            new Middleware('permission:create flights|manage flights|manage bookings', only: [
+                'searchFlights', 'validateFare', 'createBooking'
+            ]),
+            new Middleware('permission:view hotels|manage hotels|view bookings|manage bookings', only: [
+                'hotelBookings', 'getHotelData', 'hotelProfits', 'getHotelProfitsData', 'hotelAnalytics', 'showHotel'
+            ]),
+            new Middleware('permission:edit hotels|manage hotels|manage bookings', only: [
+                'getPaidHotelBookings', 'retryHotelSupplierBooking', 'forceConfirmHotelBooking'
+            ]),
+        ];
+    }
     protected $traveloproService;
 
     public function __construct(TraveloproService $traveloproService)

@@ -10,9 +10,17 @@ use App\Models\Trip;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-class GlobalSearchController extends Controller
+class GlobalSearchController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:view dashboard'),
+        ];
+    }
     public function search(Request $request)
     {
         $query = trim($request->get('q', ''));

@@ -93,9 +93,11 @@
                             <i class="fas fa-search subs-search-icon"></i>
                             <input type="text" id="custom-search" class="subs-search-input" placeholder="{{ __('Search...') }}">
                         </div>
+                        @canany(['manage locations', 'manage cities'])
                         <button type="button" class="btn btn-primary btn-sm px-4 rounded-pill" data-bs-toggle="modal" data-bs-target="#addCityModal">
                             <i class="fa fa-plus me-2"></i> {{ __('Add City') }}
                         </button>
+                        @endcanany
                     </div>
                 </div>
                 <div class="card-body p-0 pt-2">

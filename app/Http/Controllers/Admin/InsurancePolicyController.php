@@ -12,9 +12,18 @@ use App\Services\InvoiceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-class InsurancePolicyController extends Controller
+class InsurancePolicyController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:view bookings|manage bookings|manage settings', only: ['index', 'show', 'profits', 'downloadPdf']),
+            new Middleware('permission:manage settings|manage bookings', only: ['settings', 'updateSettings', 'testConnection', 'cancel']),
+        ];
+    }
     protected SitataInsuranceService $insuranceService;
 
     public function __construct(SitataInsuranceService $insuranceService)

@@ -687,6 +687,7 @@ $(document).ready(function() {
         let statusVal = $('#add_status').is(':checked') ? 'active' : 'inactive';
         formData = formData.filter(item => item.name !== 'status');
         formData.push({name: 'status', value: statusVal});
+        formData.push({name: 'user_type', value: 'customer'});
         $.ajax({
             url: "{{ route('admin.users.store') }}",
             type: "POST",

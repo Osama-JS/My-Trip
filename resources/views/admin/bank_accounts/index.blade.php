@@ -78,9 +78,11 @@
                             <i class="fas fa-search subs-search-icon"></i>
                             <input type="text" id="custom-search" class="subs-search-input" placeholder="{{ __('Search...') }}">
                         </div>
+                        @canany(['manage payments'])
                         <button class="btn btn-primary btn-sm px-4 rounded-pill" data-bs-toggle="modal" data-bs-target="#addAccountModal">
                             <i class="fas fa-plus-circle me-1"></i> {{ __('Add Account') }}
                         </button>
+                        @endcanany
                     </div>
                 </div>
                 <div class="card-body p-0 pt-2">

@@ -226,6 +226,7 @@
             <div class="premium-card" style="animation-delay:0.25s">
                 <div class="premium-card-body">
                     @if($transfer->status === 'pending')
+                        @canany(['approve bank_transfers', 'manage payments'])
                         <form id="approveTransferForm"
                               action="{{ route('admin.bank-transfers.approve', $transfer->id) }}"
                               method="POST"
@@ -236,10 +237,13 @@
                                 <i class="fas fa-check-circle"></i> {{ __('Approve Transfer') }}
                             </button>
                         </form>
+                        @endcanany
 
+                        @canany(['reject bank_transfers', 'manage payments'])
                         <button type="button" class="action-btn-reject mb-3" data-bs-toggle="modal" data-bs-target="#rejectModal">
                             <i class="fas fa-times-circle"></i> {{ __('Reject Transfer') }}
                         </button>
+                        @endcanany
                     @endif
 
                     <a href="{{ route('admin.trip-bookings.show', $transfer->trip_booking_id) }}" class="action-btn-booking mb-3">

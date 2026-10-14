@@ -6,9 +6,17 @@ use App\Models\Page;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-class PageController extends Controller
+class PageController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:manage pages'),
+        ];
+    }
     /**
      * Display a listing of the pages.
      */

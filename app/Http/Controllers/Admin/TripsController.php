@@ -15,9 +15,21 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 use App\Models\TripItinerary;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-class TripsController extends Controller
+class TripsController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:view trips|manage trips', only: ['index', 'getData', 'show', 'stats', 'pricing', 'getImages']),
+            new Middleware('permission:create trips|manage trips', only: ['create', 'store', 'imagestore']),
+            new Middleware('permission:edit trips|manage trips', only: ['edit', 'update', 'toggleStatus', 'renew', 'setPrimaryImage']),
+            new Middleware('permission:delete trips|manage trips', only: ['destroy', 'imagedestroy']),
+            new Middleware('permission:manage trip_itinerary|manage trips', only: ['itinerary', 'storeItinerary', 'destroyItinerary', 'updateItinerary', 'reorderItinerary']),
+        ];
+    }
     public function index()
     {
         $trips = Trip::all();
@@ -105,44 +117,71 @@ class TripsController extends Controller
 
         $trips = $query->latest()->get();
 
+        $user = auth()->user();
+        $canEdit = $user && $user->can('edit trips|manage trips');
+        $canDelete = $user && $user->can('delete trips|manage trips');
+        $canItinerary = $user && $user->can('manage trip_itinerary|manage trips');
+        $canUploadImages = $user && $user->can('create trips|manage trips');
+
         return response()->json([
-            'data' => $trips->map(function ($trip) {
+            'data' => $trips->map(function ($trip) use ($canEdit, $canDelete, $canItinerary, $canUploadImages) {
                 $isExpired = $trip->expiry_date && $trip->expiry_date < now()->format('Y-m-d');
 
-                $actionButtons = '<div class="d-flex align-items-center gap-1">
+                $actionButtons = '<div class="d-flex align-items-center gap-1">';
+
+                if ($canEdit) {
+                    $actionButtons .= '
                         <a href="'.route('admin.trips.edit', $trip->id).'" class="act-action-btn" title="'.__('Edit').'">
                             <i class="fas fa-edit"></i>
-                        </a>
+                        </a>';
+                }
+
+                if ($canItinerary) {
+                    $actionButtons .= '
                         <a href="'.route('admin.trips.itinerary', $trip->id).'" class="act-action-btn" style="color: #0ea5e9; background: rgba(14,165,233,0.1);" title="'.__('Itinerary').'">
                             <i class="fas fa-list-ul"></i>
-                        </a>
+                        </a>';
+                }
+
+                if ($canUploadImages) {
+                    $actionButtons .= '
                         <button class="act-action-btn" style="color: #64748b; background: rgba(100,116,139,0.1); border:none;" onclick="openImageUpload('.$trip->id.', \''.addslashes($trip->title).'\')" title="'.__('Upload Images').'">
                             <i class="fas fa-camera"></i>
-                        </button>
-                        <a href="'.route('admin.trips.stats', $trip->id).'" class="act-action-btn" style="color: #8b5cf6; background: rgba(139,92,246,0.1);" title="'.__('Statistics').'">
-                            <i class="fas fa-chart-line"></i>
-                        </a>
-                        <a href="'.route('admin.trips.pricing', $trip->id).'" class="act-action-btn act-action-btn--gold" title="'.__('Pricing & Packages').'">
-                            <i class="fas fa-tags"></i>
-                        </a>';
-
-                if ($isExpired) {
-                    $actionButtons .= '
-                        <button class="act-action-btn" style="color: #10b981; background: rgba(16,185,129,0.1); border:none;" onclick="renewTrip('.$trip->id.')" title="'.__('Renew Trip').'">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>';
-                } else {
-                    $actionButtons .= '
-                        <button class="act-action-btn" style="color: #f59e0b; background: rgba(245,158,11,0.1); border:none;" onclick="toggleTripStatus('.$trip->id.')" title="'.__('Toggle Status').'">
-                            <i class="fas fa-ban"></i>
                         </button>';
                 }
 
                 $actionButtons .= '
+                        <a href="'.route('admin.trips.stats', $trip->id).'" class="act-action-btn" style="color: #8b5cf6; background: rgba(139,92,246,0.1);" title="'.__('Statistics').'">
+                            <i class="fas fa-chart-line"></i>
+                        </a>';
+
+                if ($canEdit) {
+                    $actionButtons .= '
+                        <a href="'.route('admin.trips.pricing', $trip->id).'" class="act-action-btn act-action-btn--gold" title="'.__('Pricing & Packages').'">
+                            <i class="fas fa-tags"></i>
+                        </a>';
+
+                    if ($isExpired) {
+                        $actionButtons .= '
+                            <button class="act-action-btn" style="color: #10b981; background: rgba(16,185,129,0.1); border:none;" onclick="renewTrip('.$trip->id.')" title="'.__('Renew Trip').'">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>';
+                    } else {
+                        $actionButtons .= '
+                            <button class="act-action-btn" style="color: #f59e0b; background: rgba(245,158,11,0.1); border:none;" onclick="toggleTripStatus('.$trip->id.')" title="'.__('Toggle Status').'">
+                                <i class="fas fa-ban"></i>
+                            </button>';
+                    }
+                }
+
+                if ($canDelete) {
+                    $actionButtons .= '
                         <button class="act-action-btn" style="color: #ef4444; background: rgba(239,68,68,0.1); border:none;" onclick="deleteTrip('.$trip->id.')" title="'.__('Delete').'">
                             <i class="fas fa-trash"></i>
-                        </button>
-                    </div>';
+                        </button>';
+                }
+
+                $actionButtons .= '</div>';
 
                 return [
                     'title_ar' => $trip->title_ar ?? '---',

@@ -8,9 +8,18 @@ use App\Models\TicketMessage;
 use App\Models\Notification;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-class SupportTicketController extends Controller
+class SupportTicketController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:view questions|manage questions|manage settings', only: ['index', 'show']),
+            new Middleware('permission:manage questions|manage settings', only: ['reply', 'updateStatus', 'assign']),
+        ];
+    }
     protected NotificationService $notificationService;
 
     public function __construct(NotificationService $notificationService)

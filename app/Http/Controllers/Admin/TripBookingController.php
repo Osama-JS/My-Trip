@@ -10,9 +10,21 @@ use Illuminate\Support\Facades\Storage;
 use App\Notifications\TicketUploadedNotification;
 use App\Services\NotificationService;
 use App\Models\Notification;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-class TripBookingController extends Controller
+class TripBookingController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:view bookings|manage bookings', only: ['index', 'getData', 'show', 'analytics', 'profits', 'getProfitsData']),
+            new Middleware('permission:edit bookings|manage bookings', only: ['updateStatus', 'updateBookingState']),
+            new Middleware('permission:upload tickets|manage bookings', only: ['uploadTicket']),
+            new Middleware('permission:send tickets|manage bookings', only: ['sendTicket']),
+            new Middleware('permission:delete bookings|manage bookings', only: ['destroy']),
+        ];
+    }
     protected $notificationService;
 
     public function __construct(NotificationService $notificationService)

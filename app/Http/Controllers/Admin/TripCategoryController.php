@@ -5,9 +5,18 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\TripCategory;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-class TripCategoryController extends Controller
+class TripCategoryController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:view trips|manage trip_categories|manage trips', only: ['index', 'show', 'getData', 'getAll']),
+            new Middleware('permission:manage trip_categories|manage trips', only: ['store', 'update', 'destroy']),
+        ];
+    }
     public function index()
     {
         $stats = [
@@ -69,22 +78,29 @@ class TripCategoryController extends Controller
     public function getData(Request $request)
     {
         $categories = TripCategory::latest()->get();
+        $canManage = auth()->user() && auth()->user()->can('manage trip_categories|manage trips');
 
         return response()->json([
-            'data' => $categories->map(function($category, $index) {
+            'data' => $categories->map(function($category, $index) use ($canManage) {
+                $actions = '<div class="d-flex align-items-center gap-1">';
+                if ($canManage) {
+                    $actions .= '
+                        <button type="button" class="act-action-btn" onclick="editCategory(' . $category->id . ')" title="'.__('Edit').'">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button type="button" class="act-action-btn" style="color: #ef4444; background: rgba(239,68,68,0.1); border:none;" onclick="deleteCategory(' . $category->id . ')" title="'.__('Delete').'">
+                            <i class="fas fa-trash"></i>
+                        </button>';
+                } else {
+                    $actions .= '<span class="text-muted small">---</span>';
+                }
+                $actions .= '</div>';
+
                 return [
                     'id' => $index + 1,
                     'name_ar' => '<strong class="text-dark">' . $category->name_ar . '</strong>',
                     'name_en' => '<strong class="text-dark">' . $category->name_en . '</strong>',
-                    'actions' => '
-                        <div class="d-flex align-items-center gap-1">
-                            <button type="button" class="act-action-btn" onclick="editCategory(' . $category->id . ')" title="'.__('Edit').'">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button type="button" class="act-action-btn" style="color: #ef4444; background: rgba(239,68,68,0.1); border:none;" onclick="deleteCategory(' . $category->id . ')" title="'.__('Delete').'">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>'
+                    'actions' => $actions
                 ];
             })
         ]);

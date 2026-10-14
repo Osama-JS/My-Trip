@@ -50,8 +50,8 @@ class PermissionSeeder extends Seeder
             'view notifications', 'send notifications', 'delete notifications',
             'view questions', 'manage questions',
 
-            // System Settings
-            'manage settings', 'view dashboard',
+            // System Settings & Maintenance
+            'manage settings', 'view dashboard', 'view system_health', 'manage backups',
 
             // Hotel Management
             'manage hotels',
@@ -66,6 +66,18 @@ class PermissionSeeder extends Seeder
             'create flights',
             'edit flights',
             'delete flights',
+
+            // Travel Insurance
+            'view insurance', 'manage insurance', 'cancel insurance',
+
+            // Wallets & Transactions
+            'view wallets', 'manage wallets',
+
+            // Support Tickets
+            'view support_tickets', 'manage support_tickets',
+
+            // Reports & Commissions
+            'view commissions', 'view reports',
         ];
 
         foreach ($permissions as $permission) {
