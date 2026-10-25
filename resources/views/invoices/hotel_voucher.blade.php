@@ -496,29 +496,82 @@
                 </tr>
             </thead>
             <tbody>
-                @php $guestIndex = 0; @endphp
-                @if($booking->pax_details && is_array($booking->pax_details))
+                @php 
+                    $guestIndex = 0; 
+                    $passengers = $booking->passengers ?? collect();
+                @endphp
+                @if($passengers->isNotEmpty())
+                    @foreach($passengers as $pax)
+                        @php 
+                            $guestIndex++; 
+                            $isChild = strtolower($pax->passenger_type ?? '') === 'child';
+                            $displayName = trim($pax->name);
+                            if ($isChild) {
+                                if (preg_match('/^(mr|mr\.)\s+/i', $displayName)) {
+                                    $displayName = preg_replace('/^(mr|mr\.)\s+/i', 'Master ', $displayName);
+                                } elseif (preg_match('/^(ms|ms\.)\s+/i', $displayName)) {
+                                    $displayName = preg_replace('/^(ms|ms\.)\s+/i', 'Miss ', $displayName);
+                                }
+                            }
+                        @endphp
+                        <tr>
+                            <td style="text-align: center; color:#9ca3af; font-weight:700;">{{ str_pad($guestIndex, 2, '0', STR_PAD_LEFT) }}</td>
+                            <td style="text-align: center; font-weight: 700; color: #041741;">1</td>
+                            <td style="font-weight: 700; color: #1a1f36;">{{ $displayName }}</td>
+                            <td><span class="pax-badge">{{ __(ucfirst(strtolower($pax->passenger_type))) }}</span></td>
+                        </tr>
+                    @endforeach
+                @elseif($booking->pax_details && is_array($booking->pax_details))
                     @foreach($booking->pax_details as $room)
-                        @php $passengers = $booking->passengers; @endphp
-                        @if($passengers->isNotEmpty())
-                            @foreach($passengers as $pax)
-                                @php $guestIndex++; @endphp
+                        @if(isset($room['pax']) && is_array($room['pax']))
+                            @foreach($room['pax'] as $pax)
+                                @php 
+                                    $guestIndex++; 
+                                    $isChild = ($pax['type'] ?? 'AD') === 'CH';
+                                    $title = $pax['Title'] ?? '';
+                                    if ($isChild) {
+                                        if (in_array(strtoupper($title), ['MR', 'MR.'])) {
+                                            $title = 'Master';
+                                        } elseif (in_array(strtoupper($title), ['MS', 'MS.'])) {
+                                            $title = 'Miss';
+                                        }
+                                    }
+                                @endphp
                                 <tr>
                                     <td style="text-align: center; color:#9ca3af; font-weight:700;">{{ str_pad($guestIndex, 2, '0', STR_PAD_LEFT) }}</td>
-                                    <td style="text-align: center; font-weight: 700; color: #041741;">{{ $room['room_no'] ?? 1 }}</td>
-                                    <td style="font-weight: 700; color: #1a1f36;">{{ $pax->name }}</td>
-                                    <td><span class="pax-badge">{{ __(ucfirst(strtolower($pax->passenger_type))) }}</span></td>
+                                    <td style="text-align: center; font-weight: 700; color: #041741;">{{ $room['room_no'] ?? $loop->parent->iteration }}</td>
+                                    <td style="font-weight: 700; color: #1a1f36;">{{ $title ? $title . ' ' : '' }}{{ $pax['FirstName'] ?? '' }} {{ $pax['LastName'] ?? '' }}</td>
+                                    <td><span class="pax-badge">{{ $isChild ? __('Child') : __('Adult') }}</span></td>
                                 </tr>
                             @endforeach
-                        @else
-                            @if(isset($room['pax']))
-                                @foreach($room['pax'] as $pax)
+                        @elseif(isset($room['adult']) || isset($room['child']))
+                            @if(isset($room['adult']['firstName']))
+                                @foreach($room['adult']['firstName'] as $ai => $afn)
                                     @php $guestIndex++; @endphp
                                     <tr>
                                         <td style="text-align: center; color:#9ca3af; font-weight:700;">{{ str_pad($guestIndex, 2, '0', STR_PAD_LEFT) }}</td>
                                         <td style="text-align: center; font-weight: 700; color: #041741;">{{ $room['room_no'] ?? $loop->parent->iteration }}</td>
-                                        <td style="font-weight: 700; color: #1a1f36;">{{ $pax['Title'] ?? '' }} {{ $pax['FirstName'] ?? '' }} {{ $pax['LastName'] ?? '' }}</td>
-                                        <td><span class="pax-badge">{{ ($pax['type'] ?? 'AD') === 'CH' ? __('Child') : __('Adult') }}</span></td>
+                                        <td style="font-weight: 700; color: #1a1f36;">{{ $room['adult']['title'][$ai] ?? 'Mr' }} {{ $afn }} {{ $room['adult']['lastName'][$ai] ?? '' }}</td>
+                                        <td><span class="pax-badge">{{ __('Adult') }}</span></td>
+                                    </tr>
+                                @endforeach
+                            @endif
+                            @if(isset($room['child']['firstName']))
+                                @foreach($room['child']['firstName'] as $ci => $cfn)
+                                    @php 
+                                        $guestIndex++; 
+                                        $cTitle = $room['child']['title'][$ci] ?? 'Master';
+                                        if (in_array(strtoupper($cTitle), ['MR', 'MR.'])) {
+                                            $cTitle = 'Master';
+                                        } elseif (in_array(strtoupper($cTitle), ['MS', 'MS.'])) {
+                                            $cTitle = 'Miss';
+                                        }
+                                    @endphp
+                                    <tr>
+                                        <td style="text-align: center; color:#9ca3af; font-weight:700;">{{ str_pad($guestIndex, 2, '0', STR_PAD_LEFT) }}</td>
+                                        <td style="text-align: center; font-weight: 700; color: #041741;">{{ $room['room_no'] ?? $loop->parent->iteration }}</td>
+                                        <td style="font-weight: 700; color: #1a1f36;">{{ $cTitle }} {{ $cfn }} {{ $room['child']['lastName'][$ci] ?? '' }}</td>
+                                        <td><span class="pax-badge">{{ __('Child') }}</span></td>
                                     </tr>
                                 @endforeach
                             @endif

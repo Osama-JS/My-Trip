@@ -131,9 +131,20 @@
                 </thead>
                 <tbody>
                     @forelse($hotel->passengers ?? [] as $guest)
+                        @php
+                            $isChild = strtolower($guest->passenger_type ?? '') === 'child';
+                            $title = $guest->title ?? '';
+                            if ($isChild) {
+                                if (in_array(strtoupper($title), ['MR', 'MR.'])) {
+                                    $title = 'Master';
+                                } elseif (in_array(strtoupper($title), ['MS', 'MS.'])) {
+                                    $title = 'Miss';
+                                }
+                            }
+                        @endphp
                         <tr>
                             <td>{{ $loop->iteration }}</td>
-                            <td><strong style="color: #041741;">{{ $guest->title }} {{ $guest->first_name }} {{ $guest->last_name }}</strong></td>
+                            <td><strong style="color: #041741;">{{ $title }} {{ $guest->first_name }} {{ $guest->last_name }}</strong></td>
                             <td><span class="badge bg-light text-dark border">{{ ucfirst($guest->passenger_type) }}</span></td>
                         </tr>
                     @empty

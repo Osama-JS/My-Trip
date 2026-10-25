@@ -853,10 +853,22 @@ body.dark-mode .callout-danger {
                                     {{-- Web Format --}}
                                     @if(isset($room['pax']) && is_array($room['pax']))
                                         @foreach($room['pax'] as $pax)
+                                            @php
+                                                $isChild = ($pax['type'] ?? 'AD') === 'CH';
+                                                $title = $pax['Title'] ?? $pax['title'] ?? '';
+                                                if ($isChild) {
+                                                    if (in_array(strtoupper($title), ['MR', 'MR.'])) {
+                                                        $title = 'Master';
+                                                    } elseif (in_array(strtoupper($title), ['MS', 'MS.'])) {
+                                                        $title = 'Miss';
+                                                    }
+                                                }
+                                                $fullName = trim(($title ? $title . ' ' : '') . ($pax['FirstName'] ?? $pax['firstName'] ?? '') . ' ' . ($pax['LastName'] ?? $pax['lastName'] ?? ''));
+                                            @endphp
                                             <div class="guest-chip">
-                                                <i class="fas {{ ($pax['type'] ?? 'AD') === 'CH' ? 'fa-child' : 'fa-user' }}"></i>
-                                                <span>{{ trim(($pax['Title'] ?? $pax['title'] ?? '') . ' ' . ($pax['FirstName'] ?? $pax['firstName'] ?? '') . ' ' . ($pax['LastName'] ?? $pax['lastName'] ?? '')) }}</span>
-                                                <small>({{ ($pax['type'] ?? 'AD') === 'CH' ? __('Child') : __('Adult') }})</small>
+                                                <i class="fas {{ $isChild ? 'fa-child' : 'fa-user' }}"></i>
+                                                <span>{{ $fullName }}</span>
+                                                <small>({{ $isChild ? __('Child') : __('Adult') }})</small>
                                             </div>
                                         @endforeach
                                     @endif
@@ -874,9 +886,17 @@ body.dark-mode .callout-danger {
 
                                     @if(isset($room['child']) && isset($room['child']['firstName']) && is_array($room['child']['firstName']))
                                         @foreach($room['child']['firstName'] as $index => $fName)
+                                            @php
+                                                $cTitle = $room['child']['title'][$index] ?? 'Master';
+                                                if (in_array(strtoupper($cTitle), ['MR', 'MR.'])) {
+                                                    $cTitle = 'Master';
+                                                } elseif (in_array(strtoupper($cTitle), ['MS', 'MS.'])) {
+                                                    $cTitle = 'Miss';
+                                                }
+                                            @endphp
                                             <div class="guest-chip">
                                                 <i class="fas fa-child"></i>
-                                                <span>{{ trim(($room['child']['title'][$index] ?? '') . ' ' . $fName . ' ' . ($room['child']['lastName'][$index] ?? '')) }}</span>
+                                                <span>{{ trim($cTitle . ' ' . $fName . ' ' . ($room['child']['lastName'][$index] ?? '')) }}</span>
                                                 <small>({{ __('Child') }})</small>
                                             </div>
                                         @endforeach
@@ -888,9 +908,20 @@ body.dark-mode .callout-danger {
                         <div class="room-group">
                             <div class="guest-chips">
                                 @foreach($booking->passengers as $pax)
+                                    @php
+                                        $isChild = $pax->passenger_type === 'child';
+                                        $displayName = trim($pax->name);
+                                        if ($isChild) {
+                                            if (preg_match('/^(mr|mr\.)\s+/i', $displayName)) {
+                                                $displayName = preg_replace('/^(mr|mr\.)\s+/i', 'Master ', $displayName);
+                                            } elseif (preg_match('/^(ms|ms\.)\s+/i', $displayName)) {
+                                                $displayName = preg_replace('/^(ms|ms\.)\s+/i', 'Miss ', $displayName);
+                                            }
+                                        }
+                                    @endphp
                                     <div class="guest-chip">
-                                        <i class="fas {{ $pax->passenger_type === 'child' ? 'fa-child' : 'fa-user' }}"></i>
-                                        <span>{{ trim($pax->name) }}</span>
+                                        <i class="fas {{ $isChild ? 'fa-child' : 'fa-user' }}"></i>
+                                        <span>{{ $displayName }}</span>
                                         <small>({{ __($pax->passenger_type) }})</small>
                                     </div>
                                 @endforeach

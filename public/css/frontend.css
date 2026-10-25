@@ -2220,3 +2220,53 @@ ul, ol { list-style: none; }
     padding: 14px 18px;
 }
 
+/* ══════════════════════════════════════════════════════
+   GLOBAL RTL SUPPORT
+   ══════════════════════════════════════════════════════ */
+html[dir="rtl"],
+body[dir="rtl"],
+body.rtl {
+    direction: rtl;
+    text-align: right;
+}
+
+html[dir="ltr"],
+body[dir="ltr"],
+body.ltr {
+    direction: ltr;
+    text-align: left;
+}
+
+html[dir="rtl"] .fe-input,
+html[dir="rtl"] .fe-select,
+html[dir="rtl"] .fe-label,
+html[dir="rtl"] select,
+html[dir="rtl"] textarea {
+    text-align: right;
+    direction: rtl;
+}
+
+html[dir="rtl"] input[type="email"],
+html[dir="rtl"] input[type="tel"],
+html[dir="rtl"] input[name*="phone"],
+html[dir="rtl"] input[name*="email"],
+html[dir="rtl"] .fe-input-ltr {
+    direction: ltr !important;
+    text-align: left !important;
+}
+
+html[dir="rtl"] .fe-booking-grid {
+    direction: rtl;
+}
+
+html[dir="rtl"] .fe-booking-main {
+    direction: rtl;
+    text-align: right;
+}
+
+html[dir="rtl"] .fe-booking-sidebar {
+    direction: rtl;
+    text-align: right;
+}
+
+

@@ -860,6 +860,20 @@
     .fe-safe-footer { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 20px; font-size: 0.65rem; font-weight: 800; color: #10b981; }
 
     /* RTL OVERRIDES */
+    html[dir="rtl"] .fe-booking-grid,
+    body[dir="rtl"] .fe-booking-grid {
+        direction: rtl;
+    }
+    html[dir="rtl"] .fe-booking-main,
+    body[dir="rtl"] .fe-booking-main {
+        direction: rtl;
+        text-align: right;
+    }
+    html[dir="rtl"] .fe-booking-sidebar,
+    body[dir="rtl"] .fe-booking-sidebar {
+        direction: rtl;
+        text-align: right;
+    }
     [dir="rtl"] .fe-input-icon i { left: auto; right: 18px; }
     [dir="rtl"] .fe-input-icon input { padding: 0 45px 0 16px; }
 

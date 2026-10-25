@@ -2,15 +2,27 @@
  * Admin v2 Unified Notifications & Alerts Engine
  */
 const Notify = {
+    // Helper to get unified Toastr options respecting layout and direction
+    _getToastrOptions: function (duration = 4500) {
+        const isRtl = document.documentElement.getAttribute('dir') === 'rtl' || document.documentElement.lang === 'ar';
+        return {
+            closeButton: true,
+            progressBar: true,
+            positionClass: isRtl ? 'toast-top-left' : 'toast-top-right',
+            timeOut: duration.toString(),
+            extendedTimeOut: '1500',
+            rtl: isRtl,
+            showDuration: '250',
+            hideDuration: '250',
+            showMethod: 'fadeIn',
+            hideMethod: 'fadeOut'
+        };
+    },
+
     // 1. Toastr Notifications
     success: function (message, title = 'نجاح') {
         if (typeof toastr !== 'undefined') {
-            toastr.options = {
-                closeButton: true,
-                progressBar: true,
-                positionClass: document.documentElement.getAttribute('dir') === 'rtl' ? 'toast-top-left' : 'toast-top-right',
-                timeOut: '4000'
-            };
+            toastr.options = this._getToastrOptions(4000);
             toastr.success(message, title);
         } else {
             alert(message);
@@ -19,12 +31,7 @@ const Notify = {
 
     error: function (message, title = 'خطأ') {
         if (typeof toastr !== 'undefined') {
-            toastr.options = {
-                closeButton: true,
-                progressBar: true,
-                positionClass: document.documentElement.getAttribute('dir') === 'rtl' ? 'toast-top-left' : 'toast-top-right',
-                timeOut: '5000'
-            };
+            toastr.options = this._getToastrOptions(5500);
             toastr.error(message, title);
         } else {
             alert(message);
@@ -33,12 +40,14 @@ const Notify = {
 
     info: function (message, title = 'تنبيه') {
         if (typeof toastr !== 'undefined') {
+            toastr.options = this._getToastrOptions(4500);
             toastr.info(message, title);
         }
     },
 
     warning: function (message, title = 'تحذير') {
         if (typeof toastr !== 'undefined') {
+            toastr.options = this._getToastrOptions(5000);
             toastr.warning(message, title);
         }
     },

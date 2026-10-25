@@ -237,3 +237,17 @@ a.v2-page-btn:hover, button.v2-page-btn:hover:not(:disabled) { border-color: var
     .card-header-flex { flex-direction: column; align-items: stretch; }
     .v2-header-tools { margin-inline-start: 0; justify-content: space-between; }
 }
+
+/* Dark mode specific enhancements for tables.css */
+[data-theme="dark"] .v2-action-btn-activity:hover {
+    color: #cbd5e1 !important;
+}
+[data-theme="dark"] .v2-actions-more {
+    background: var(--bg-input);
+    color: #cbd5e1;
+    border-color: var(--border-color);
+}
+[data-theme="dark"] .v2-pagination-info {
+    color: #94a3b8 !important;
+}
+

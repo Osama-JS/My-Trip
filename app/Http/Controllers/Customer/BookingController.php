@@ -72,6 +72,19 @@ class BookingController extends Controller
             });
         }
 
+        $today = now()->toDateString();
+        if ($dateFrom && $dateFrom > $today) {
+            $dateFrom = $today;
+        }
+        if ($dateTo && $dateTo > $today) {
+            $dateTo = $today;
+        }
+        if ($dateFrom && $dateTo && $dateFrom > $dateTo) {
+            $temp = $dateFrom;
+            $dateFrom = $dateTo;
+            $dateTo = $temp;
+        }
+
         if ($dateFrom) {
             $query->whereDate('booking_date', '>=', $dateFrom);
         }
@@ -116,6 +129,19 @@ class BookingController extends Controller
             });
         }
 
+        $today = now()->toDateString();
+        if ($dateFrom && $dateFrom > $today) {
+            $dateFrom = $today;
+        }
+        if ($dateTo && $dateTo > $today) {
+            $dateTo = $today;
+        }
+        if ($dateFrom && $dateTo && $dateFrom > $dateTo) {
+            $temp = $dateFrom;
+            $dateFrom = $dateTo;
+            $dateTo = $temp;
+        }
+
         if ($dateFrom) {
             $query->whereDate('created_at', '>=', $dateFrom);
         }
@@ -154,6 +180,19 @@ class BookingController extends Controller
                   ->orWhere('reference_num', 'like', "%{$search}%")
                   ->orWhere('supplier_confirmation_num', 'like', "%{$search}%");
             });
+        }
+
+        $today = now()->toDateString();
+        if ($dateFrom && $dateFrom > $today) {
+            $dateFrom = $today;
+        }
+        if ($dateTo && $dateTo > $today) {
+            $dateTo = $today;
+        }
+        if ($dateFrom && $dateTo && $dateFrom > $dateTo) {
+            $temp = $dateFrom;
+            $dateFrom = $dateTo;
+            $dateTo = $temp;
         }
 
         if ($dateFrom) {

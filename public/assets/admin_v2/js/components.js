@@ -894,9 +894,192 @@
     }
 
     /* =========================================================================
-       4. AUTO INITIALIZATION ON READY
+       4. UNIVERSAL BUTTON LOADING & ANTI-DOUBLE-SUBMIT ENGINE (ButtonLoader)
+       ========================================================================= */
+    const ButtonLoader = {
+        isLoading: function (btn) {
+            if (!btn) return false;
+            return btn.classList.contains('is-loading') || btn.getAttribute('data-is-loading') === 'true';
+        },
+
+        start: function (btn, customText) {
+            if (!btn || this.isLoading(btn)) return false;
+
+            // Save original HTML and attributes
+            const originalHtml = btn.innerHTML;
+            btn.setAttribute('data-original-html', originalHtml);
+            btn.setAttribute('data-is-loading', 'true');
+            btn.setAttribute('aria-busy', 'true');
+            btn.classList.add('is-loading');
+
+            // Lock button width to prevent layout shifting
+            const rect = btn.getBoundingClientRect();
+            if (rect && rect.width > 0) {
+                btn.style.minWidth = rect.width + 'px';
+            }
+
+            const isAr = document.documentElement.lang === 'ar' || document.documentElement.getAttribute('dir') === 'rtl';
+            const spinner = `<i class="fa-solid fa-circle-notch fa-spin ${isAr ? 'ms-2' : 'me-2'}" style="font-size: 0.9em; vertical-align: middle;"></i>`;
+
+            let label = '';
+            if (customText) {
+                label = customText;
+            } else {
+                const rawText = btn.textContent ? btn.textContent.trim().replace(/\s+/g, ' ') : '';
+                if (rawText && rawText.length > 0 && rawText.length <= 30) {
+                    label = rawText;
+                } else {
+                    label = isAr ? 'جارٍ الحفظ...' : 'Saving...';
+                }
+            }
+
+            btn.innerHTML = `${spinner}<span>${label}</span>`;
+            btn.disabled = true;
+
+            // Safety watchdog timeout (15s) so buttons never stay stuck
+            if (btn._loaderTimeout) clearTimeout(btn._loaderTimeout);
+            btn._loaderTimeout = setTimeout(function () {
+                ButtonLoader.stop(btn);
+            }, 15000);
+
+            return true;
+        },
+
+        stop: function (btn) {
+            if (!btn) return;
+            if (btn._loaderTimeout) {
+                clearTimeout(btn._loaderTimeout);
+                delete btn._loaderTimeout;
+            }
+
+            if (btn.hasAttribute('data-original-html')) {
+                btn.innerHTML = btn.getAttribute('data-original-html');
+                btn.removeAttribute('data-original-html');
+            }
+
+            btn.removeAttribute('data-is-loading');
+            btn.removeAttribute('aria-busy');
+            btn.classList.remove('is-loading');
+            btn.disabled = false;
+            btn.style.minWidth = '';
+        },
+
+        stopAll: function (container) {
+            const root = container 
+                ? (typeof container === 'string' ? document.querySelector(container) : container) 
+                : document;
+            if (!root) return;
+            const loadingButtons = root.querySelectorAll('.is-loading, [data-is-loading="true"]');
+            loadingButtons.forEach(function (btn) {
+                ButtonLoader.stop(btn);
+            });
+        },
+
+        init: function () {
+            if (this._initialized) return;
+            this._initialized = true;
+
+            let lastClickedSubmitBtn = null;
+            let lastClickTime = 0;
+
+            // Track any clicked submit button
+            document.addEventListener('click', function (e) {
+                const btn = e.target.closest('button, input[type="submit"]');
+                if (!btn) return;
+
+                const isSubmit = btn.type === 'submit' || 
+                                 btn.getAttribute('type') === 'submit' || 
+                                 btn.classList.contains('btn-submit') ||
+                                 btn.hasAttribute('form');
+
+                if (isSubmit) {
+                    lastClickedSubmitBtn = btn;
+                    lastClickTime = Date.now();
+                }
+            }, true);
+
+            // Intercept form submission globally across Admin v2
+            document.addEventListener('submit', function (e) {
+                const form = e.target;
+                if (!form || form.tagName !== 'FORM') return;
+
+                // Identify submit button
+                let submitBtn = e.submitter || 
+                    (lastClickedSubmitBtn && (form.contains(lastClickedSubmitBtn) || lastClickedSubmitBtn.getAttribute('form') === form.id) && (Date.now() - lastClickTime < 1500) ? lastClickedSubmitBtn : null) ||
+                    form.querySelector('button[type="submit"]:not([disabled])') ||
+                    form.querySelector('button[type="submit"]') ||
+                    (form.id ? document.querySelector(`button[type="submit"][form="${form.id}"]`) : null);
+
+                if (!submitBtn) return;
+
+                // If already in loading state, block duplicate submission!
+                if (ButtonLoader.isLoading(submitBtn)) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    return false;
+                }
+
+                // Check native HTML5 form validity:
+                if (typeof form.checkValidity === 'function' && !form.checkValidity()) {
+                    return;
+                }
+
+                // Activate button loading state
+                ButtonLoader.start(submitBtn);
+
+                form._activeSubmitBtn = submitBtn;
+                submitBtn._parentForm = form;
+            }, true);
+
+            // If an input fails validation, immediately release submit button
+            document.addEventListener('invalid', function (e) {
+                const input = e.target;
+                const form = input.closest('form');
+                if (form && form._activeSubmitBtn) {
+                    ButtonLoader.stop(form._activeSubmitBtn);
+                    delete form._activeSubmitBtn;
+                }
+            }, true);
+
+            // Global jQuery AJAX listener to release buttons on AJAX completion
+            const jQueryInstance = getJQuery();
+            if (jQueryInstance) {
+                jQueryInstance(document).ajaxComplete(function (event, xhr, settings) {
+                    // Release any active form submit buttons
+                    document.querySelectorAll('form').forEach(function (form) {
+                        if (form._activeSubmitBtn) {
+                            ButtonLoader.stop(form._activeSubmitBtn);
+                            delete form._activeSubmitBtn;
+                        }
+                    });
+                    // Release any stray loading buttons
+                    ButtonLoader.stopAll();
+                });
+            }
+
+            // Restore buttons if modal is closed
+            document.addEventListener('hidden.bs.modal', function (e) {
+                if (e.target) {
+                    ButtonLoader.stopAll(e.target);
+                }
+            });
+
+            // Restore buttons on back/forward browser cache navigation
+            window.addEventListener('pageshow', function () {
+                ButtonLoader.stopAll();
+            });
+        }
+    };
+
+    window.ButtonLoader = ButtonLoader;
+
+    /* =========================================================================
+       5. AUTO INITIALIZATION ON READY
        ========================================================================= */
     function onReady() {
+        // Initialize Universal Button Loader Engine
+        window.ButtonLoader.init();
+
         // Initialize Select2
         window.initSelect2();
 

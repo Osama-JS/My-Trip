@@ -517,9 +517,13 @@ class FrontendController extends Controller
                 if (empty($child['firstName']) || empty($child['lastName'])) {
                      return back()->with('error', __('Please enter first and last name for all children in Room :n', ['n' => $i]))->withInput();
                 }
+                $childTitle = $child['title'] ?? 'Master';
+                if (in_array(strtoupper($childTitle), ['MR', 'MR.'])) {
+                    $childTitle = 'Master';
+                }
                 $roomPax['pax'][] = [
                     'type' => 'CH',
-                    'Title' => $child['title'] ?? 'Mr',
+                    'Title' => $childTitle,
                     'FirstName' => $child['firstName'] ?? '',
                     'LastName' => $child['lastName'] ?? '',
                     'Age' => (int) ($child['age'] ?? 0),
@@ -614,12 +618,16 @@ class FrontendController extends Controller
                 $roomPax = $room['pax'] ?? [];
                 foreach ($roomPax as $pax) {
                     $type = (isset($pax['type']) && $pax['type'] == 'CH') ? 'child' : 'adult';
+                    $title = $pax['Title'] ?? ($type === 'child' ? 'Master' : 'Mr');
+                    if ($type === 'child' && in_array(strtoupper($title), ['MR', 'MR.'])) {
+                        $title = 'Master';
+                    }
                     \App\Models\BookingPassenger::create([
                         'hotel_booking_id' => $hotelBooking->id,
-                        'name'             => ($pax['Title'] ?? 'Mr') . ' ' . ($pax['FirstName'] ?? '') . ' ' . ($pax['LastName'] ?? ''),
+                        'name'             => $title . ' ' . ($pax['FirstName'] ?? '') . ' ' . ($pax['LastName'] ?? ''),
                         'first_name'       => $pax['FirstName'] ?? '',
                         'last_name'        => $pax['LastName'] ?? '',
-                        'title'            => $pax['Title'] ?? 'Mr',
+                        'title'            => $title,
                         'passenger_type'   => $type,
                     ]);
                 }

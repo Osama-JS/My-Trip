@@ -1874,4 +1874,393 @@ span.flatpickr-weekday {
     color: #94a3b8 !important;
 }
 
+/* ===================================================================
+   Admin v2 - Modern Unified Toastr Engine (Light & Dark Mode)
+   =================================================================== */
+#toast-container {
+    position: fixed !important;
+    z-index: 9999999 !important;
+    font-family: var(--font-main) !important;
+    pointer-events: none !important;
+}
+
+#toast-container > div {
+    pointer-events: auto !important;
+    position: relative !important;
+    overflow: hidden !important;
+    margin: 0 0 10px 0 !important;
+    width: 380px !important;
+    max-width: 92vw !important;
+    border-radius: var(--radius-md) !important;
+    opacity: 1 !important;
+    background-repeat: no-repeat !important;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease !important;
+    animation: v2ToastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
+@keyframes v2ToastIn {
+    0% {
+        opacity: 0;
+        transform: translateY(-12px) scale(0.96);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+#toast-container > div:hover {
+    transform: translateY(-2px) !important;
+}
+
+/* LTR layout & padding */
+#toast-container > div,
+[dir="ltr"] #toast-container > div {
+    direction: ltr !important;
+    text-align: left !important;
+    padding: 15px 22px 15px 56px !important;
+    background-position: 18px center !important;
+    background-size: 24px 24px !important;
+}
+
+/* RTL layout & padding */
+[dir="rtl"] #toast-container > div,
+#toast-container > div.rtl {
+    direction: rtl !important;
+    text-align: right !important;
+    padding: 15px 56px 15px 22px !important;
+    background-position: calc(100% - 18px) center !important;
+    background-size: 24px 24px !important;
+}
+
+/* Typography */
+#toast-container .toast-title {
+    font-weight: 700 !important;
+    font-size: 0.95rem !important;
+    margin-bottom: 3px !important;
+    line-height: 1.35 !important;
+    letter-spacing: -0.01em !important;
+}
+
+#toast-container .toast-message {
+    font-weight: 500 !important;
+    font-size: 0.85rem !important;
+    line-height: 1.55 !important;
+    word-break: break-word !important;
+}
+
+#toast-container .toast-message a,
+#toast-container .toast-message label {
+    font-weight: 600 !important;
+    text-decoration: underline !important;
+}
+
+/* Close Button */
+#toast-container .toast-close-button {
+    position: absolute !important;
+    top: 10px !important;
+    font-size: 1.25rem !important;
+    font-weight: 400 !important;
+    line-height: 1 !important;
+    text-shadow: none !important;
+    opacity: 0.6 !important;
+    transition: opacity 0.2s ease, transform 0.2s ease !important;
+    cursor: pointer !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+[dir="ltr"] #toast-container .toast-close-button,
+#toast-container .toast-close-button {
+    right: 12px !important;
+    left: auto !important;
+}
+
+[dir="rtl"] #toast-container .toast-close-button,
+#toast-container .rtl .toast-close-button {
+    left: 12px !important;
+    right: auto !important;
+}
+
+#toast-container .toast-close-button:hover {
+    opacity: 1 !important;
+    transform: scale(1.15) !important;
+}
+
+/* Progress bar */
+#toast-container .toast-progress {
+    position: absolute !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    height: 3.5px !important;
+    opacity: 0.85 !important;
+    border-radius: 0 0 var(--radius-md) var(--radius-md) !important;
+}
+
+/* --- LIGHT MODE THEME FOR TOASTS --- */
+:root:not([data-theme="dark"]) #toast-container > div,
+[data-theme="light"] #toast-container > div,
+html:not([data-theme="dark"]) #toast-container > div {
+    background-color: #ffffff !important;
+    border: 1px solid rgba(226, 232, 240, 0.95) !important;
+    box-shadow: 0 10px 25px -4px rgba(15, 23, 42, 0.1), 0 4px 6px -2px rgba(15, 23, 42, 0.05) !important;
+}
+:root:not([data-theme="dark"]) #toast-container > div:hover,
+[data-theme="light"] #toast-container > div:hover,
+html:not([data-theme="dark"]) #toast-container > div:hover {
+    box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.16) !important;
+}
+:root:not([data-theme="dark"]) #toast-container .toast-title,
+[data-theme="light"] #toast-container .toast-title,
+html:not([data-theme="dark"]) #toast-container .toast-title {
+    color: #0f172a !important;
+}
+:root:not([data-theme="dark"]) #toast-container .toast-message,
+[data-theme="light"] #toast-container .toast-message,
+html:not([data-theme="dark"]) #toast-container .toast-message {
+    color: #334155 !important;
+}
+:root:not([data-theme="dark"]) #toast-container .toast-close-button,
+[data-theme="light"] #toast-container .toast-close-button,
+html:not([data-theme="dark"]) #toast-container .toast-close-button {
+    color: #64748b !important;
+}
+
+/* --- DARK MODE THEME FOR TOASTS --- */
+[data-theme="dark"] #toast-container > div {
+    background-color: #1e293b !important;
+    border: 1px solid rgba(51, 65, 85, 0.9) !important;
+    box-shadow: 0 14px 35px -4px rgba(0, 0, 0, 0.75), 0 4px 10px -2px rgba(0, 0, 0, 0.45) !important;
+}
+[data-theme="dark"] #toast-container > div:hover {
+    box-shadow: 0 20px 42px -4px rgba(0, 0, 0, 0.9) !important;
+}
+[data-theme="dark"] #toast-container .toast-title {
+    color: #f8fafc !important;
+}
+[data-theme="dark"] #toast-container .toast-message {
+    color: #cbd5e1 !important;
+}
+[data-theme="dark"] #toast-container .toast-close-button {
+    color: #94a3b8 !important;
+}
+
+/* --- TYPE VARIANTS (SVG Icons & Accents) --- */
+/* 1. Success */
+#toast-container > .toast-success {
+    border-inline-start: 5px solid #10b981 !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2310b981' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 1 1-5.93-9.14'/%3E%3Cpolyline points='22 4 12 14.01 9 11.01'/%3E%3C/svg%3E") !important;
+}
+#toast-container > .toast-success .toast-progress {
+    background-color: #10b981 !important;
+}
+
+/* 2. Error */
+#toast-container > .toast-error {
+    border-inline-start: 5px solid #ef4444 !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23ef4444' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cline x1='15' y1='9' x2='9' y2='15'/%3E%3Cline x1='9' y1='9' x2='15' y2='15'/%3E%3C/svg%3E") !important;
+}
+#toast-container > .toast-error .toast-progress {
+    background-color: #ef4444 !important;
+}
+
+/* 3. Warning */
+#toast-container > .toast-warning {
+    border-inline-start: 5px solid #f59e0b !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23f59e0b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z'/%3E%3Cline x1='12' y1='9' x2='12' y2='13'/%3E%3Cline x1='12' y1='17' x2='12.01' y2='17'/%3E%3C/svg%3E") !important;
+}
+#toast-container > .toast-warning .toast-progress {
+    background-color: #f59e0b !important;
+}
+
+/* 4. Info */
+#toast-container > .toast-info {
+    border-inline-start: 5px solid #3b82f6 !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%233b82f6' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cline x1='12' y1='16' x2='12' y2='12'/%3E%3Cline x1='12' y1='8' x2='12.01' y2='8'/%3E%3C/svg%3E") !important;
+}
+#toast-container > .toast-info .toast-progress {
+    background-color: #3b82f6 !important;
+}
+
+/* ===================================================================
+   Admin v2 - Dark Mode Table Readability & High Contrast Overrides
+   =================================================================== */
+[data-theme="dark"] .table,
+[data-theme="dark"] .table-v2,
+[data-theme="dark"] .v2-table,
+[data-theme="dark"] table.dataTable,
+[data-theme="dark"] table {
+    --bs-table-color: var(--text-main) !important;
+    --bs-table-bg: transparent !important;
+    --bs-table-border-color: var(--border-color) !important;
+    --bs-table-striped-bg: rgba(255, 255, 255, 0.02) !important;
+    --bs-table-striped-color: var(--text-main) !important;
+    --bs-table-active-bg: var(--bg-active) !important;
+    --bs-table-active-color: var(--text-main) !important;
+    --bs-table-hover-bg: var(--bg-hover) !important;
+    --bs-table-hover-color: var(--text-main) !important;
+    color: var(--text-main) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* Table Cells & Rows */
+[data-theme="dark"] .table > :not(caption) > * > *,
+[data-theme="dark"] .table-v2 > :not(caption) > * > *,
+[data-theme="dark"] .v2-table > :not(caption) > * > *,
+[data-theme="dark"] .table-v2 td,
+[data-theme="dark"] .v2-table td,
+[data-theme="dark"] .table td,
+[data-theme="dark"] table td {
+    color: var(--text-main) !important;
+    border-bottom-color: var(--border-color) !important;
+    background-color: transparent;
+}
+
+[data-theme="dark"] .table th,
+[data-theme="dark"] .table-v2 th,
+[data-theme="dark"] .v2-table th,
+[data-theme="dark"] table th {
+    background-color: var(--bg-input) !important;
+    color: #cbd5e1 !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+[data-theme="dark"] .table tbody tr:hover td,
+[data-theme="dark"] .table-v2 tbody tr:hover td,
+[data-theme="dark"] .v2-table tbody tr:hover td,
+[data-theme="dark"] table tbody tr:hover td {
+    background-color: var(--bg-hover) !important;
+    color: var(--text-main) !important;
+}
+
+/* Dark Mode Typography in Tables */
+[data-theme="dark"] table strong,
+[data-theme="dark"] table b,
+[data-theme="dark"] .v2-table strong,
+[data-theme="dark"] .v2-table b,
+[data-theme="dark"] .table-v2 strong,
+[data-theme="dark"] .table-v2 b {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] table small,
+[data-theme="dark"] .v2-table small,
+[data-theme="dark"] .table-v2 small {
+    color: #94a3b8 !important;
+}
+
+/* In dark mode, all .text-dark (EXCEPT inside bright yellow warning badges/buttons) MUST become bright white */
+[data-theme="dark"] .text-dark:not(.badge-warning):not(.bg-warning):not(.btn-warning):not(.alert-warning),
+[data-theme="dark"] table .text-dark:not(.badge-warning):not(.bg-warning):not(.btn-warning),
+[data-theme="dark"] .v2-table .text-dark:not(.badge-warning):not(.bg-warning):not(.btn-warning),
+[data-theme="dark"] .table-v2 .text-dark:not(.badge-warning):not(.bg-warning):not(.btn-warning) {
+    color: #f8fafc !important;
+}
+
+/* Preserve dark text inside warning elements for contrast */
+[data-theme="dark"] .badge.bg-warning,
+[data-theme="dark"] .badge-warning.text-dark,
+[data-theme="dark"] .bg-warning.text-dark {
+    color: #0f172a !important;
+}
+
+/* Muted & Secondary text in dark mode */
+[data-theme="dark"] .text-muted,
+[data-theme="dark"] table .text-muted,
+[data-theme="dark"] .v2-table .text-muted,
+[data-theme="dark"] .table-v2 .text-muted {
+    color: #94a3b8 !important;
+}
+[data-theme="dark"] .text-secondary {
+    color: #94a3b8 !important;
+}
+
+/* Badges inside tables in dark mode */
+[data-theme="dark"] .badge.bg-light,
+[data-theme="dark"] td .badge.bg-light,
+[data-theme="dark"] .v2-table .badge.bg-light {
+    background-color: #1e293b !important;
+    color: #e2e8f0 !important;
+    border-color: #334155 !important;
+}
+
+/* Table form elements & labels in dark mode */
+[data-theme="dark"] table .form-check-label,
+[data-theme="dark"] .v2-table .form-check-label {
+    color: #e2e8f0 !important;
+}
+[data-theme="dark"] .form-check-input {
+    background-color: #1e293b;
+    border-color: #475569;
+}
+[data-theme="dark"] .form-check-input:checked {
+    background-color: var(--primary);
+    border-color: var(--primary);
+}
+
+/* Table Dropdown Menus in dark mode */
+[data-theme="dark"] .dropdown-menu {
+    background-color: var(--bg-card) !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7) !important;
+}
+[data-theme="dark"] .dropdown-item {
+    color: var(--text-main) !important;
+}
+[data-theme="dark"] .dropdown-item:hover,
+[data-theme="dark"] .dropdown-item:focus {
+    background-color: var(--bg-hover) !important;
+    color: var(--primary) !important;
+}
+[data-theme="dark"] .dropdown-divider {
+    border-top-color: var(--border-color) !important;
+}
+[data-theme="dark"] .btn-white {
+    background-color: var(--bg-input) !important;
+    color: var(--text-main) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* Table action buttons in dark mode */
+[data-theme="dark"] .v2-action-btn {
+    background: var(--bg-input) !important;
+    color: #cbd5e1 !important;
+    border-color: var(--border-color) !important;
+}
+[data-theme="dark"] .v2-actions-menu {
+    background: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.75) !important;
+}
+[data-theme="dark"] .v2-actions-menu .v2-menu-item {
+    color: var(--text-main) !important;
+}
+[data-theme="dark"] .v2-actions-menu .v2-menu-item:hover {
+    background: var(--primary-light) !important;
+    color: var(--primary) !important;
+}
+
+/* ===================================================================
+   Admin v2 - Universal Submit Button Loading State Styles
+   =================================================================== */
+.btn.is-loading,
+button.is-loading,
+input[type="submit"].is-loading {
+    pointer-events: none !important;
+    cursor: wait !important;
+    opacity: 0.82 !important;
+    filter: contrast(1.05);
+    position: relative !important;
+}
+
+.btn.is-loading .fa-spin,
+button.is-loading .fa-spin {
+    display: inline-block !important;
+    animation: fa-spin 0.85s infinite linear !important;
+}
+
+
+
 

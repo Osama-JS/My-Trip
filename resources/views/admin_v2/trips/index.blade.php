@@ -283,7 +283,7 @@
                 </div>
                 <div class="modal-footer border-t border-slate-100 dark:border-slate-800 pt-4" style="display: flex; justify-content: flex-end; gap: 0.75rem;">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('Close') }}</button>
-                    <button type="button" class="btn btn-primary" onclick="submitRenewal()">{{ __('Update Expiry Date') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ __('Update Expiry Date') }}</button>
                 </div>
             </form>
         </div>
@@ -507,6 +507,11 @@
         $('#new_expiry_date').val(currentExpiry);
         $('#renewTripModal').modal('show');
     };
+
+    $('#renewTripForm').on('submit', function(e) {
+        e.preventDefault();
+        submitRenewal();
+    });
 
     window.submitRenewal = function() {
         let id = $('#edit_id').val();

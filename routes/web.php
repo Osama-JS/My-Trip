@@ -391,8 +391,9 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     Route::post('bank-transfers/{id}/reject', [App\Http\Controllers\Admin\BankTransferController::class, 'reject'])->name('bank-transfers.reject');
 
 
-    // User Activity
+    // User Activity & Bookings Data
     Route::get('users/{id}/activity', [UserController::class, 'activity'])->name('users.activity');
+    Route::get('users/{id}/bookings-data', [UserController::class, 'getBookingsData'])->name('users.bookings.data');
 
 
 

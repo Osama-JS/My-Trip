@@ -10,6 +10,7 @@
         $q->whereNotNull('email_verified_at')->orWhereNotNull('phone_verified_at');
     })->count();
     $newThisMonth = \App\Models\User::where('user_type', \App\Models\User::TYPE_CUSTOMER)->whereMonth('created_at', now()->month)->count();
+    $countriesList = $countries ?? \App\Helpers\CountryHelper::getAllCountries();
 @endphp
 
 <div class="container-fluid p-0">
@@ -186,13 +187,19 @@
                             <label class="form-label font-bold text-xs">{{ app()->getLocale() == 'ar' ? 'البريد الإلكتروني' : 'Email Address' }} <span class="text-danger">*</span></label>
                             <input type="email" name="email" class="form-control" required placeholder="{{ app()->getLocale() == 'ar' ? 'name@example.com' : 'Enter email address' }}">
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label font-bold text-xs">{{ app()->getLocale() == 'ar' ? 'مفتاح الدولة' : 'Dial Code' }}</label>
-                            <input type="text" name="country_code" class="form-control" placeholder="+966">
+                        <div class="col-md-5">
+                            <label class="form-label font-bold text-xs">{{ app()->getLocale() == 'ar' ? 'مفتاح الدولة' : 'Dial Code' }} <span class="text-danger">*</span></label>
+                            <select name="country_code" id="add_country_code" class="form-select select2-country" style="width: 100%;">
+                                @foreach($countriesList as $c)
+                                    <option value="{{ $c['dial_code'] }}" {{ $c['dial_code'] === '+966' ? 'selected' : '' }}>
+                                        {{ $c['flag'] }} {{ $c['dial_code'] }} ({{ app()->getLocale() == 'ar' ? $c['name_ar'] : $c['name_en'] }})
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
-                        <div class="col-md-8">
+                        <div class="col-md-7">
                             <label class="form-label font-bold text-xs">{{ app()->getLocale() == 'ar' ? 'رقم الهاتف' : 'Phone Number' }}</label>
-                            <input type="text" name="phone" class="form-control" placeholder="{{ app()->getLocale() == 'ar' ? '501234567' : 'Enter phone number' }}">
+                            <input type="text" name="phone" id="add_phone" class="form-control" placeholder="501234567" dir="ltr" style="text-align: left;">
                         </div>
                         <div class="col-md-12">
                             <label class="form-label font-bold text-xs">{{ app()->getLocale() == 'ar' ? 'كلمة المرور' : 'Password' }} <span class="text-danger">*</span></label>
@@ -251,13 +258,19 @@
                             <label class="form-label font-bold text-xs">{{ app()->getLocale() == 'ar' ? 'البريد الإلكتروني' : 'Email Address' }} <span class="text-danger">*</span></label>
                             <input type="email" name="email" id="edit_email" class="form-control" required>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label font-bold text-xs">{{ app()->getLocale() == 'ar' ? 'مفتاح الدولة' : 'Dial Code' }}</label>
-                            <input type="text" name="country_code" id="edit_country_code" class="form-control">
+                        <div class="col-md-5">
+                            <label class="form-label font-bold text-xs">{{ app()->getLocale() == 'ar' ? 'مفتاح الدولة' : 'Dial Code' }} <span class="text-danger">*</span></label>
+                            <select name="country_code" id="edit_country_code" class="form-select select2-country" style="width: 100%;">
+                                @foreach($countriesList as $c)
+                                    <option value="{{ $c['dial_code'] }}">
+                                        {{ $c['flag'] }} {{ $c['dial_code'] }} ({{ app()->getLocale() == 'ar' ? $c['name_ar'] : $c['name_en'] }})
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
-                        <div class="col-md-8">
+                        <div class="col-md-7">
                             <label class="form-label font-bold text-xs">{{ app()->getLocale() == 'ar' ? 'رقم الهاتف' : 'Phone Number' }}</label>
-                            <input type="text" name="phone" id="edit_phone" class="form-control">
+                            <input type="text" name="phone" id="edit_phone" class="form-control" placeholder="501234567" dir="ltr" style="text-align: left;">
                         </div>
                         <div class="col-12 mt-3">
                             <div class="p-3 rounded-lg border d-flex align-items-center justify-content-between" style="background: var(--bg-input); border-color: var(--border-light) !important;">
@@ -346,8 +359,11 @@
                     <i class="fa-solid fa-circle-notch fa-spin fa-2x text-primary"></i>
                 </div>
             </div>
-            <div class="modal-footer border-top p-3">
+            <div class="modal-footer border-top p-3 d-flex justify-content-between align-items-center">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ app()->getLocale() == 'ar' ? 'إغلاق' : 'Close' }}</button>
+                <a href="#" id="viewSubscriberActivityBtn" class="btn btn-primary" style="font-weight: 700; border-radius: var(--radius-md);">
+                    <i class="fa-solid fa-receipt me-1"></i> {{ app()->getLocale() == 'ar' ? 'عرض سجل النشاط والحجوزات بالكامل' : 'Full Bookings & Activity' }}
+                </a>
             </div>
         </div>
     </div>
@@ -429,6 +445,31 @@
             Notify.info('{{ app()->getLocale() == "ar" ? "تم تحديث البيانات" : "Data refreshed" }}');
         });
 
+        // Initialize Select2 on country code dropdowns inside modals
+        $('#add_country_code').select2({
+            dropdownParent: $('#addSubscriberModal'),
+            width: '100%'
+        });
+
+        $('#edit_country_code').select2({
+            dropdownParent: $('#editSubscriberModal'),
+            width: '100%'
+        });
+
+        $('#addSubscriberModal').on('shown.bs.modal', function () {
+            $('#add_country_code').select2({
+                dropdownParent: $('#addSubscriberModal'),
+                width: '100%'
+            });
+        });
+
+        $('#editSubscriberModal').on('shown.bs.modal', function () {
+            $('#edit_country_code').select2({
+                dropdownParent: $('#editSubscriberModal'),
+                width: '100%'
+            });
+        });
+
         // 1. Add Subscriber Form
         $('#addSubscriberForm').on('submit', function(e) {
             e.preventDefault();
@@ -445,6 +486,7 @@
                     if (response.success) {
                         $('#addSubscriberModal').modal('hide');
                         $('#addSubscriberForm')[0].reset();
+                        $('#add_country_code').val('+966').trigger('change');
                         $('#add_status').prop('checked', true);
                         subscribersTable.reload();
                         Notify.success(response.message || '{{ app()->getLocale() == "ar" ? "تم إضافة المشترك بنجاح" : "Subscriber added successfully" }}');
@@ -543,46 +585,218 @@
         $.get(url, function(response) {
             if (response.success) {
                 const user = response.user;
+                const stats = response.stats || {};
+                const flights = stats.flights || { total: 0, completed: 0, failed: 0, pending: 0 };
+                const hotels  = stats.hotels  || { total: 0, completed: 0, failed: 0, pending: 0 };
+                const trips   = stats.trips   || { total: 0, completed: 0, failed: 0, pending: 0 };
+
+                // Status and verification badges
                 const statusBadge = user.status === 'active'
-                    ? `<span class="badge-v2 badge-success">{{ __("Active") }}</span>`
-                    : `<span class="badge-v2 badge-danger">{{ __("Inactive") }}</span>`;
+                    ? `<span class="badge-v2 badge-success"><i class="fa-solid fa-circle-check me-1"></i>{{ __("Active") }}</span>`
+                    : `<span class="badge-v2 badge-danger"><i class="fa-solid fa-circle-xmark me-1"></i>{{ __("Inactive") }}</span>`;
+
+                const verifyBadge = response.is_verified
+                    ? `<span class="badge-v2 badge-success"><i class="fa-solid fa-shield-halved me-1"></i>{{ app()->getLocale() == "ar" ? "موثق" : "Verified" }}</span>`
+                    : `<span class="badge-v2 badge-warning"><i class="fa-solid fa-shield-halved me-1"></i>{{ app()->getLocale() == "ar" ? "غير موثق" : "Unverified" }}</span>`;
+
                 const phoneVal = `${user.country_code ? user.country_code + ' ' : ''}${user.phone || '---'}`;
                 const locationVal = (user.city || user.country)
                     ? `${user.city || ''}${user.city && user.country ? ', ' : ''}${user.country || ''}`
                     : '---';
 
+                if (response.activity_url) {
+                    $('#viewSubscriberActivityBtn').attr('href', response.activity_url).show();
+                } else {
+                    $('#viewSubscriberActivityBtn').hide();
+                }
+
+                const totalSpentFormatted = Number(stats.total_spent || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
                 const html = `
-                    <div class="text-center pb-4 mb-4 border-bottom" style="border-color: var(--border-light) !important;">
-                        <div class="position-relative d-inline-block mb-3">
-                            <img src="${response.photo_url || '/images/default-avatar.png'}" class="rounded-circle border border-4 border-white shadow-sm" style="width:100px;height:100px;object-fit:cover;">
+                    <!-- Subscriber Header Info -->
+                    <div class="text-center pb-3 mb-3 border-bottom" style="border-color: var(--border-light) !important;">
+                        <div class="position-relative d-inline-block mb-2">
+                            <img src="${response.photo_url || '/images/default-avatar.png'}" 
+                                 class="rounded-circle border border-3 border-white shadow-sm" 
+                                 style="width: 80px; height: 80px; object-fit: cover;" alt="">
                         </div>
-                        <h4 class="fw-bold mb-1" style="color: var(--text-main);">${user.first_name || ''} ${user.last_name || ''}</h4>
+                        <h4 class="fw-bold mb-1" style="color: var(--text-main); font-size: 1.25rem;">${user.first_name || ''} ${user.last_name || ''}</h4>
                         <p class="text-muted mb-2 small"><i class="fa-regular fa-envelope me-1"></i> ${user.email}</p>
-                        ${statusBadge}
+                        <div class="d-flex justify-content-center gap-1 flex-wrap">
+                            ${statusBadge}
+                            ${verifyBadge}
+                            <span class="badge-v2 badge-primary">#${user.id}</span>
+                        </div>
                     </div>
+
+                    <!-- Summary Info Cards (Phone, Location, Joined, Spent) -->
+                    <div class="row g-2 mb-4">
+                        <div class="col-sm-6 col-md-3">
+                            <div class="p-2 px-3 rounded-lg border h-100" style="background: var(--bg-input); border-color: var(--border-light) !important;">
+                                <small class="text-muted d-block fw-bold mb-1 text-xs">
+                                    <i class="fa-solid fa-phone me-1 text-primary"></i> {{ __('Phone') }}
+                                </small>
+                                <span class="fw-bold text-sm" style="color: var(--text-main); font-family: monospace; direction: ltr; display: inline-block;">${phoneVal}</span>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="p-2 px-3 rounded-lg border h-100" style="background: var(--bg-input); border-color: var(--border-light) !important;">
+                                <small class="text-muted d-block fw-bold mb-1 text-xs">
+                                    <i class="fa-solid fa-location-dot me-1 text-danger"></i> {{ __('Location') }}
+                                </small>
+                                <span class="fw-bold text-sm" style="color: var(--text-main);">${locationVal}</span>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="p-2 px-3 rounded-lg border h-100" style="background: var(--bg-input); border-color: var(--border-light) !important;">
+                                <small class="text-muted d-block fw-bold mb-1 text-xs">
+                                    <i class="fa-solid fa-calendar me-1 text-info"></i> {{ __('Joined') }}
+                                </small>
+                                <span class="fw-bold text-sm" style="color: var(--text-main);">${response.created_at || '---'}</span>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="p-2 px-3 rounded-lg border h-100" style="background: var(--bg-input); border-color: var(--border-light) !important;">
+                                <small class="text-muted d-block fw-bold mb-1 text-xs">
+                                    <i class="fa-solid fa-sack-dollar me-1 text-success"></i> {{ app()->getLocale() == 'ar' ? 'إجمالي الإنفاق' : 'Total Spent' }}
+                                </small>
+                                <span class="fw-bold text-sm text-success">${totalSpentFormatted} <small style="font-size: 0.7rem;">SAR</small></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Booking Stats Title -->
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <h6 class="font-bold mb-0 text-sm" style="color: var(--text-main);">
+                            <i class="fa-solid fa-chart-pie me-1 text-primary"></i> {{ app()->getLocale() == 'ar' ? 'إحصائيات حجوزات المشترك' : 'Bookings Overview' }}
+                        </h6>
+                        <span class="text-muted text-xs">
+                            {{ app()->getLocale() == 'ar' ? 'إجمالي الحجوزات:' : 'Total bookings:' }} <strong>${stats.total_bookings || 0}</strong>
+                        </span>
+                    </div>
+
+                    <!-- 3 Simple Service Stat Cards (Flights, Hotels, Tours) -->
                     <div class="row g-3">
-                        <div class="col-md-6">
-                            <div class="p-3 rounded-lg border" style="background: var(--bg-input); border-color: var(--border-light) !important;">
-                                <small class="text-muted d-block fw-bold mb-1">{{ __('Phone') }}</small>
-                                <span class="font-bold" style="color: var(--text-main); font-family: monospace;">${phoneVal}</span>
+                        <!-- Flight Bookings Card -->
+                        <div class="col-md-4">
+                            <div class="p-3 rounded-lg border h-100 position-relative overflow-hidden" style="background: var(--bg-card); border-color: rgba(var(--primary-rgb), 0.25) !important;">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: rgba(var(--primary-rgb), 0.1); color: var(--primary);">
+                                            <i class="fa-solid fa-plane" style="font-size: 0.85rem;"></i>
+                                        </div>
+                                        <span class="font-bold text-sm" style="color: var(--text-main);">
+                                            {{ app()->getLocale() == 'ar' ? 'طيران' : 'Flights' }}
+                                        </span>
+                                    </div>
+                                    <span class="badge bg-primary rounded-pill px-2" style="font-size: 0.75rem;">
+                                        ${flights.total}
+                                    </span>
+                                </div>
+
+                                <div class="pt-2 border-top" style="border-color: var(--border-light) !important;">
+                                    <div class="d-flex justify-content-between align-items-center py-1 text-xs">
+                                        <span class="text-success fw-bold">
+                                            <i class="fa-solid fa-circle-check me-1"></i> {{ app()->getLocale() == 'ar' ? 'مؤكدة' : 'Confirmed' }}
+                                        </span>
+                                        <strong class="text-success">${flights.completed}</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center py-1 text-xs">
+                                        <span class="text-danger fw-bold">
+                                            <i class="fa-solid fa-circle-xmark me-1"></i> {{ app()->getLocale() == 'ar' ? 'ملغية' : 'Cancelled' }}
+                                        </span>
+                                        <strong class="text-danger">${flights.failed}</strong>
+                                    </div>
+                                    ${flights.pending > 0 ? `
+                                    <div class="d-flex justify-content-between align-items-center py-1 text-xs">
+                                        <span class="text-warning fw-bold">
+                                            <i class="fa-solid fa-clock me-1"></i> {{ app()->getLocale() == 'ar' ? 'معلقة' : 'Pending' }}
+                                        </span>
+                                        <strong class="text-warning">${flights.pending}</strong>
+                                    </div>` : ''}
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="p-3 rounded-lg border" style="background: var(--bg-input); border-color: var(--border-light) !important;">
-                                <small class="text-muted d-block fw-bold mb-1">{{ __('Location') }}</small>
-                                <span class="font-bold" style="color: var(--text-main);">${locationVal}</span>
+
+                        <!-- Hotel Bookings Card -->
+                        <div class="col-md-4">
+                            <div class="p-3 rounded-lg border h-100 position-relative overflow-hidden" style="background: var(--bg-card); border-color: rgba(16, 185, 129, 0.25) !important;">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: rgba(16, 185, 129, 0.1); color: #10b981;">
+                                            <i class="fa-solid fa-hotel" style="font-size: 0.85rem;"></i>
+                                        </div>
+                                        <span class="font-bold text-sm" style="color: var(--text-main);">
+                                            {{ app()->getLocale() == 'ar' ? 'فنادق' : 'Hotels' }}
+                                        </span>
+                                    </div>
+                                    <span class="badge bg-success rounded-pill px-2" style="font-size: 0.75rem;">
+                                        ${hotels.total}
+                                    </span>
+                                </div>
+
+                                <div class="pt-2 border-top" style="border-color: var(--border-light) !important;">
+                                    <div class="d-flex justify-content-between align-items-center py-1 text-xs">
+                                        <span class="text-success fw-bold">
+                                            <i class="fa-solid fa-circle-check me-1"></i> {{ app()->getLocale() == 'ar' ? 'مؤكدة' : 'Confirmed' }}
+                                        </span>
+                                        <strong class="text-success">${hotels.completed}</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center py-1 text-xs">
+                                        <span class="text-danger fw-bold">
+                                            <i class="fa-solid fa-circle-xmark me-1"></i> {{ app()->getLocale() == 'ar' ? 'ملغية' : 'Cancelled' }}
+                                        </span>
+                                        <strong class="text-danger">${hotels.failed}</strong>
+                                    </div>
+                                    ${hotels.pending > 0 ? `
+                                    <div class="d-flex justify-content-between align-items-center py-1 text-xs">
+                                        <span class="text-warning fw-bold">
+                                            <i class="fa-solid fa-clock me-1"></i> {{ app()->getLocale() == 'ar' ? 'معلقة' : 'Pending' }}
+                                        </span>
+                                        <strong class="text-warning">${hotels.pending}</strong>
+                                    </div>` : ''}
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="p-3 rounded-lg border" style="background: var(--bg-input); border-color: var(--border-light) !important;">
-                                <small class="text-muted d-block fw-bold mb-1">{{ __('Joined') }}</small>
-                                <span class="font-bold" style="color: var(--text-main);">${response.created_at || '---'}</span>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="p-3 rounded-lg border" style="background: var(--bg-input); border-color: var(--border-light) !important;">
-                                <small class="text-muted d-block fw-bold mb-1">{{ __('User ID') }}</small>
-                                <span class="font-bold text-primary font-mono">#${user.id}</span>
+
+                        <!-- Tour Packages Card -->
+                        <div class="col-md-4">
+                            <div class="p-3 rounded-lg border h-100 position-relative overflow-hidden" style="background: var(--bg-card); border-color: rgba(245, 158, 11, 0.25) !important;">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
+                                            <i class="fa-solid fa-suitcase" style="font-size: 0.85rem;"></i>
+                                        </div>
+                                        <span class="font-bold text-sm" style="color: var(--text-main);">
+                                            {{ app()->getLocale() == 'ar' ? 'باقات ورحلات' : 'Tour Packages' }}
+                                        </span>
+                                    </div>
+                                    <span class="badge bg-warning text-dark rounded-pill px-2" style="font-size: 0.75rem;">
+                                        ${trips.total}
+                                    </span>
+                                </div>
+
+                                <div class="pt-2 border-top" style="border-color: var(--border-light) !important;">
+                                    <div class="d-flex justify-content-between align-items-center py-1 text-xs">
+                                        <span class="text-success fw-bold">
+                                            <i class="fa-solid fa-circle-check me-1"></i> {{ app()->getLocale() == 'ar' ? 'مؤكدة' : 'Confirmed' }}
+                                        </span>
+                                        <strong class="text-success">${trips.completed}</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center py-1 text-xs">
+                                        <span class="text-danger fw-bold">
+                                            <i class="fa-solid fa-circle-xmark me-1"></i> {{ app()->getLocale() == 'ar' ? 'ملغية' : 'Cancelled' }}
+                                        </span>
+                                        <strong class="text-danger">${trips.failed}</strong>
+                                    </div>
+                                    ${trips.pending > 0 ? `
+                                    <div class="d-flex justify-content-between align-items-center py-1 text-xs">
+                                        <span class="text-warning fw-bold">
+                                            <i class="fa-solid fa-clock me-1"></i> {{ app()->getLocale() == 'ar' ? 'معلقة' : 'Pending' }}
+                                        </span>
+                                        <strong class="text-warning">${trips.pending}</strong>
+                                    </div>` : ''}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -604,8 +818,22 @@
                 $('#edit_first_name').val(user.first_name);
                 $('#edit_last_name').val(user.last_name);
                 $('#edit_email').val(user.email);
-                $('#edit_country_code').val(user.country_code);
-                $('#edit_phone').val(user.phone);
+
+                // Set country code in Select2 (standardized e.g. +966)
+                let cCode = response.clean_country_code || user.country_code || '+966';
+                if (!cCode.startsWith('+')) cCode = '+' + cCode;
+                $('#edit_country_code').val(cCode).trigger('change');
+
+                // Set clean phone (without merged country code)
+                let cleanPhone = response.clean_phone || user.phone || '';
+                let dialDigits = cCode.replace(/\D/g, '');
+                let phoneDigits = cleanPhone.replace(/\D/g, '');
+                if (dialDigits && phoneDigits.startsWith(dialDigits)) {
+                    phoneDigits = phoneDigits.substring(dialDigits.length);
+                }
+                phoneDigits = phoneDigits.replace(/^0+/, ''); // strip leading zero
+                $('#edit_phone').val(phoneDigits || cleanPhone);
+
                 $('#edit_status').prop('checked', user.status === 'active');
                 $('#editSubscriberModal').modal('show');
             }

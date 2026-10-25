@@ -11,6 +11,7 @@
               ->orWhereNotNull('phone_verified_at');
     })->count();
     $newThisMonth = \App\Models\User::whereMonth('created_at', now()->month)->count();
+    $countriesList = $countries ?? \App\Helpers\CountryHelper::getAllCountries();
 @endphp
 
 <div class="container-fluid p-0">
@@ -188,13 +189,19 @@
                             <label class="form-label font-bold text-xs">{{ app()->getLocale() == 'ar' ? 'البريد الإلكتروني' : 'Email Address' }} <span class="text-danger">*</span></label>
                             <input type="email" name="email" class="form-control" required placeholder="user@example.com">
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-5">
                             <label class="form-label font-bold text-xs">{{ app()->getLocale() == 'ar' ? 'مفتاح الدولة' : 'Dial Code' }}</label>
-                            <input type="text" name="country_code" class="form-control" placeholder="+966">
+                            <select name="country_code" id="add_country_code" class="form-select select2-country" style="width: 100%;">
+                                @foreach($countriesList as $c)
+                                    <option value="{{ $c['dial_code'] }}" {{ $c['dial_code'] === '+966' ? 'selected' : '' }}>
+                                        {{ $c['flag'] }} {{ $c['dial_code'] }} ({{ app()->getLocale() == 'ar' ? $c['name_ar'] : $c['name_en'] }})
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
-                        <div class="col-md-8">
+                        <div class="col-md-7">
                             <label class="form-label font-bold text-xs">{{ app()->getLocale() == 'ar' ? 'رقم الهاتف' : 'Phone Number' }}</label>
-                            <input type="text" name="phone" class="form-control" placeholder="501234567">
+                            <input type="text" name="phone" id="add_phone" class="form-control" placeholder="501234567" dir="ltr" style="text-align: left;">
                         </div>
                         <div class="col-md-12">
                             <label class="form-label font-bold text-xs">{{ app()->getLocale() == 'ar' ? 'المدينة' : 'City' }}</label>
@@ -274,13 +281,19 @@
                             <label class="form-label font-bold text-xs">{{ app()->getLocale() == 'ar' ? 'البريد الإلكتروني' : 'Email Address' }} <span class="text-danger">*</span></label>
                             <input type="email" name="email" id="edit_email" class="form-control" required>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-5">
                             <label class="form-label font-bold text-xs">{{ app()->getLocale() == 'ar' ? 'مفتاح الدولة' : 'Dial Code' }}</label>
-                            <input type="text" name="country_code" id="edit_country_code" class="form-control">
+                            <select name="country_code" id="edit_country_code" class="form-select select2-country" style="width: 100%;">
+                                @foreach($countriesList as $c)
+                                    <option value="{{ $c['dial_code'] }}">
+                                        {{ $c['flag'] }} {{ $c['dial_code'] }} ({{ app()->getLocale() == 'ar' ? $c['name_ar'] : $c['name_en'] }})
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
-                        <div class="col-md-8">
+                        <div class="col-md-7">
                             <label class="form-label font-bold text-xs">{{ app()->getLocale() == 'ar' ? 'رقم الهاتف' : 'Phone Number' }}</label>
-                            <input type="text" name="phone" id="edit_phone" class="form-control">
+                            <input type="text" name="phone" id="edit_phone" class="form-control" placeholder="501234567" dir="ltr" style="text-align: left;">
                         </div>
                         <div class="col-md-12">
                             <label class="form-label font-bold text-xs">{{ app()->getLocale() == 'ar' ? 'المدينة' : 'City' }}</label>
@@ -471,6 +484,31 @@
             Notify.info('{{ app()->getLocale() == "ar" ? "تم تحديث البيانات" : "Data refreshed" }}');
         });
 
+        // Initialize Select2 on country code dropdowns inside modals
+        $('#add_country_code').select2({
+            dropdownParent: $('#addUserModal'),
+            width: '100%'
+        });
+
+        $('#edit_country_code').select2({
+            dropdownParent: $('#editUserModal'),
+            width: '100%'
+        });
+
+        $('#addUserModal').on('shown.bs.modal', function () {
+            $('#add_country_code').select2({
+                dropdownParent: $('#addUserModal'),
+                width: '100%'
+            });
+        });
+
+        $('#editUserModal').on('shown.bs.modal', function () {
+            $('#edit_country_code').select2({
+                dropdownParent: $('#editUserModal'),
+                width: '100%'
+            });
+        });
+
         // 1. Add User Form
         $('#addUserForm').on('submit', function (e) {
             e.preventDefault();
@@ -565,6 +603,7 @@
 
     function resetForm() {
         $('#addUserForm')[0].reset();
+        $('#add_country_code').val('+966').trigger('change');
         $('#add_status').prop('checked', true);
         $('#add_roles').val(null);
     }
@@ -647,8 +686,22 @@
                 $('#edit_first_name').val(user.first_name);
                 $('#edit_last_name').val(user.last_name);
                 $('#edit_email').val(user.email);
-                $('#edit_country_code').val(user.country_code);
-                $('#edit_phone').val(user.phone);
+
+                // Set country code in Select2 (standardized e.g. +966)
+                let cCode = response.clean_country_code || user.country_code || '+966';
+                if (!cCode.startsWith('+')) cCode = '+' + cCode;
+                $('#edit_country_code').val(cCode).trigger('change');
+
+                // Set clean phone (without merged country code)
+                let cleanPhone = response.clean_phone || user.phone || '';
+                let dialDigits = cCode.replace(/\D/g, '');
+                let phoneDigits = cleanPhone.replace(/\D/g, '');
+                if (dialDigits && phoneDigits.startsWith(dialDigits)) {
+                    phoneDigits = phoneDigits.substring(dialDigits.length);
+                }
+                phoneDigits = phoneDigits.replace(/^0+/, ''); // strip leading zero
+                $('#edit_phone').val(phoneDigits || cleanPhone);
+
                 $('#edit_city').val(user.city);
                 $('#edit_password').val('');
                 $('#edit_roles').val(response.roles);

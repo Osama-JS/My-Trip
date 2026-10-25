@@ -36,7 +36,7 @@
         <div class="stat-card">
             <div class="stat-info">
                 <div class="stat-label">{{ app()->getLocale() == 'ar' ? 'إجمالي الحجوزات' : 'Total Bookings' }}</div>
-                <div class="stat-value">{{ number_format($stats['total_bookings'] ?? count($bookings ?? [])) }}</div>
+                <div class="stat-value" id="kpi-total-bookings">{{ number_format($stats['total_bookings'] ?? count($bookings ?? [])) }}</div>
                 <div class="stat-trend trend-up"><i class="fa-solid fa-receipt"></i> {{ app()->getLocale() == 'ar' ? 'كل الطلبات' : 'All orders' }}</div>
             </div>
             <div class="stat-icon icon-primary">
@@ -136,12 +136,13 @@
         <!-- Right: Bookings & Searches Tabs -->
         <div>
             <div class="admin-card p-0" style="overflow: hidden;">
-                <!-- Tab Navigation -->
+                <!-- Main Header Tab Navigation (Bookings vs Searches) -->
                 <div class="card-header-flex p-3 m-0" style="background: var(--bg-card); border-bottom: 1px solid var(--border-color);">
                     <ul class="nav nav-pills gap-2" role="tablist">
                         <li class="nav-item">
                             <button class="btn btn-sm btn-primary active" style="font-weight: 700; border-radius: var(--radius-md);" data-bs-toggle="pill" data-bs-target="#tab-bookings">
-                                <i class="fa-solid fa-receipt me-1"></i> {{ app()->getLocale() == 'ar' ? 'سجل الحجوزات' : 'Bookings' }} ({{ count($bookings ?? []) }})
+                                <i class="fa-solid fa-receipt me-1"></i> {{ app()->getLocale() == 'ar' ? 'سجل الحجوزات' : 'Bookings History' }}
+                                <span class="badge bg-white text-primary ms-1" id="main-badge-bookings">{{ $counts['all'] ?? count($bookings ?? []) }}</span>
                             </button>
                         </li>
                         <li class="nav-item">
@@ -152,75 +153,100 @@
                     </ul>
                 </div>
 
-                <div class="tab-content p-3">
-                    <!-- Bookings Tab -->
+                <div class="tab-content">
+                    <!-- ─── Bookings Main Tab ─── -->
                     <div class="tab-pane fade show active" id="tab-bookings">
-                        <div class="table-responsive">
-                            <table class="table-v2 v2-table w-100">
-                                <thead>
-                                    <tr>
-                                        <th>{{ app()->getLocale() == 'ar' ? 'رقم الحجز' : 'Ref' }}</th>
-                                        <th>{{ app()->getLocale() == 'ar' ? 'الخدمة' : 'Service' }}</th>
-                                        <th>{{ app()->getLocale() == 'ar' ? 'المبلغ' : 'Amount' }}</th>
-                                        <th>{{ app()->getLocale() == 'ar' ? 'الحالة' : 'Status' }}</th>
-                                        <th>{{ app()->getLocale() == 'ar' ? 'التاريخ' : 'Date' }}</th>
-                                        <th class="text-center">{{ app()->getLocale() == 'ar' ? 'عرض' : 'View' }}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse($bookings ?? [] as $b)
-                                    <tr>
-                                        <td>
-                                            <span style="font-family: monospace; font-weight: 700; color: var(--primary);">
-                                                #{{ $b->booking_reference ?? $b->reference_num ?? $b->id }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            @if(($b->type ?? '') === 'flight' || isset($b->flight_booking_id))
-                                                <span class="badge-v2 badge-primary"><i class="fa-solid fa-plane"></i> {{ app()->getLocale() == 'ar' ? 'طيران' : 'Flight' }}</span>
-                                            @elseif(isset($b->hotel_name))
-                                                <span class="badge-v2 badge-success"><i class="fa-solid fa-hotel"></i> {{ app()->getLocale() == 'ar' ? 'فندق' : 'Hotel' }}</span>
-                                            @else
-                                                <span class="badge-v2 badge-warning"><i class="fa-solid fa-suitcase"></i> {{ app()->getLocale() == 'ar' ? 'باقة' : 'Tour' }}</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            <strong style="color: var(--text-main);">{{ number_format($b->total_amount ?? $b->total_price ?? 0, 2) }} SAR</strong>
-                                        </td>
-                                        <td>
-                                            @if(in_array(strtolower($b->status ?? ''), ['confirmed', 'paid', 'completed']))
-                                                <span class="badge-v2 badge-success">{{ $b->status }}</span>
-                                            @elseif(in_array(strtolower($b->status ?? ''), ['pending', 'processing']))
-                                                <span class="badge-v2 badge-warning">{{ $b->status }}</span>
-                                            @else
-                                                <span class="badge-v2 badge-danger">{{ $b->status ?? 'Cancelled' }}</span>
-                                            @endif
-                                        </td>
-                                        <td>{{ $b->created_at->format('Y-m-d H:i') }}</td>
-                                        <td class="text-center">
-                                            @if(($b->type ?? '') === 'flight' || isset($b->flight_booking_id))
-                                                <a href="{{ route('admin.bookings.flights.show', $b->id) }}" class="btn-icon"><i class="fa-solid fa-eye text-primary"></i></a>
-                                            @elseif(isset($b->hotel_name))
-                                                <a href="{{ route('admin.bookings.hotels.show', $b->id) }}" class="btn-icon"><i class="fa-solid fa-eye text-success"></i></a>
-                                            @else
-                                                <a href="{{ route('admin.trip-bookings.show', $b->id) }}" class="btn-icon"><i class="fa-solid fa-eye text-warning"></i></a>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                    @empty
-                                    <tr>
-                                        <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">
-                                            {{ app()->getLocale() == 'ar' ? 'لا توجد حجوزات مسجلة لهذا المستخدم.' : 'No bookings found.' }}
-                                        </td>
-                                    </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
+
+                        <!-- Service Category Tabs (Sub-Tabs for Bookings) -->
+                        <div class="p-3 pb-2" style="border-bottom: 1px solid var(--border-color); background: var(--bg-card);">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    <button type="button" class="btn btn-sm btn-primary booking-subtab-btn" data-type="all" style="font-weight: 700; border-radius: var(--radius-md);">
+                                        <i class="fa-solid fa-layer-group me-1"></i> {{ app()->getLocale() == 'ar' ? 'جميع الحجوزات' : 'All Bookings' }}
+                                        <span class="badge bg-white text-primary ms-1" id="badge-count-all">{{ $counts['all'] ?? 0 }}</span>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary booking-subtab-btn" data-type="flights" style="font-weight: 700; border-radius: var(--radius-md);">
+                                        <i class="fa-solid fa-plane-departure me-1"></i> {{ app()->getLocale() == 'ar' ? 'حجوزات الطيران' : 'Flights' }}
+                                        <span class="badge bg-primary-subtle text-primary ms-1" id="badge-count-flights">{{ $counts['flights'] ?? 0 }}</span>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary booking-subtab-btn" data-type="hotels" style="font-weight: 700; border-radius: var(--radius-md);">
+                                        <i class="fa-solid fa-hotel me-1"></i> {{ app()->getLocale() == 'ar' ? 'حجوزات الفنادق' : 'Hotels' }}
+                                        <span class="badge bg-success-subtle text-success ms-1" id="badge-count-hotels">{{ $counts['hotels'] ?? 0 }}</span>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary booking-subtab-btn" data-type="trips" style="font-weight: 700; border-radius: var(--radius-md);">
+                                        <i class="fa-solid fa-suitcase me-1"></i> {{ app()->getLocale() == 'ar' ? 'الباقات والرحلات' : 'Tours & Trips' }}
+                                        <span class="badge bg-warning-subtle text-warning ms-1" id="badge-count-trips">{{ $counts['trips'] ?? 0 }}</span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
+
+                        <!-- AJAX Filter & Search Bar -->
+                        <div class="p-3" style="background: var(--bg-input, #f8fafc); border-bottom: 1px solid var(--border-color);">
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                {{-- Search Input with Debounce --}}
+                                <div style="flex: 1; min-width: 220px; position: relative;">
+                                    <i class="fa-solid fa-magnifying-glass" style="position: absolute; inset-inline-start: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.8rem;"></i>
+                                    <input type="text" id="bookingSearchInput" class="form-control form-control-sm" 
+                                           style="padding-inline-start: 2rem; border-radius: var(--radius-md); background: #ffffff;" 
+                                           placeholder="{{ app()->getLocale() == 'ar' ? 'بحث برقم الحجز، الوجهة، الفندق، خط الطيران...' : 'Search by reference, route, hotel, airline...' }}">
+                                </div>
+
+                                {{-- Status Filter Dropdown --}}
+                                <div style="min-width: 140px;">
+                                    <select id="bookingStatusSelect" class="form-select form-select-sm" style="border-radius: var(--radius-md); font-weight: 600; background-color: #ffffff;">
+                                        <option value="all">{{ app()->getLocale() == 'ar' ? 'جميع الحالات' : 'All Statuses' }}</option>
+                                        <option value="confirmed">{{ app()->getLocale() == 'ar' ? 'مؤكد / مسدد' : 'Confirmed / Paid' }}</option>
+                                        <option value="pending">{{ app()->getLocale() == 'ar' ? 'معلق / قيد المعالجة' : 'Pending' }}</option>
+                                        <option value="cancelled">{{ app()->getLocale() == 'ar' ? 'ملغي / مسترجع' : 'Cancelled' }}</option>
+                                    </select>
+                                </div>
+
+                                {{-- Date From --}}
+                                <div class="d-flex align-items-center gap-1">
+                                    <span class="text-muted small" style="white-space: nowrap;">{{ app()->getLocale() == 'ar' ? 'من:' : 'From:' }}</span>
+                                    <input type="date" id="bookingDateFrom" class="form-control form-control-sm" style="width: auto; border-radius: var(--radius-md); background: #ffffff;">
+                                </div>
+
+                                {{-- Date To --}}
+                                <div class="d-flex align-items-center gap-1">
+                                    <span class="text-muted small" style="white-space: nowrap;">{{ app()->getLocale() == 'ar' ? 'إلى:' : 'To:' }}</span>
+                                    <input type="date" id="bookingDateTo" class="form-control form-control-sm" style="width: auto; border-radius: var(--radius-md); background: #ffffff;">
+                                </div>
+
+                                {{-- Reset Filters Button --}}
+                                <button type="button" id="btnResetFilters" class="btn btn-sm btn-outline-secondary" style="border-radius: var(--radius-md); white-space: nowrap;" title="{{ app()->getLocale() == 'ar' ? 'إعادة ضبط الفلاتر' : 'Reset Filters' }}">
+                                    <i class="fa-solid fa-rotate-left me-1"></i> {{ app()->getLocale() == 'ar' ? 'إعادة ضبط' : 'Reset' }}
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Dynamic Table Container with Loader -->
+                        <div id="bookingsContainerWrapper" style="position: relative; min-height: 280px;">
+                            <!-- Loading Spinner Overlay -->
+                            <div id="bookingsLoader" style="display: none; position: absolute; inset: 0; background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(2px); z-index: 20; align-items: center; justify-content: center;">
+                                <div class="text-center">
+                                    <div class="spinner-border text-primary" role="status" style="width: 2.2rem; height: 2.2rem;">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <div class="mt-2 text-muted fw-bold small">{{ app()->getLocale() == 'ar' ? 'جارٍ تحميل البيانات...' : 'Loading bookings...' }}</div>
+                                </div>
+                            </div>
+
+                            <!-- Rendered Table & Pagination via Partial -->
+                            <div id="bookingsTableContainer">
+                                @include('admin_v2.users.partials.bookings_table', [
+                                    'bookings' => $initialBookings ?? (new \Illuminate\Pagination\LengthAwarePaginator([], 0, 10)),
+                                    'type' => 'all',
+                                    'user' => $user
+                                ])
+                            </div>
+                        </div>
+
                     </div>
 
-                    <!-- Searches Tab -->
-                    <div class="tab-pane fade" id="tab-searches">
+                    <!-- ─── Searches Tab ─── -->
+                    <div class="tab-pane fade p-3" id="tab-searches">
                         <div class="table-responsive">
                             <table class="table-v2 w-100">
                                 <thead>
@@ -263,3 +289,190 @@
 
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const bookingsDataUrl = "{{ route('admin.users.bookings.data', $user->id) }}";
+
+    // AJAX State
+    let state = {
+        type: 'all',
+        status: 'all',
+        search: '',
+        date_from: '',
+        date_to: '',
+        page: 1,
+        per_page: 10
+    };
+
+    const loader = document.getElementById('bookingsLoader');
+    const tableContainer = document.getElementById('bookingsTableContainer');
+    const searchInput = document.getElementById('bookingSearchInput');
+    const statusSelect = document.getElementById('bookingStatusSelect');
+    const dateFromInput = document.getElementById('bookingDateFrom');
+    const dateToInput = document.getElementById('bookingDateTo');
+    const resetBtn = document.getElementById('btnResetFilters');
+    const subTabBtns = document.querySelectorAll('.booking-subtab-btn');
+
+    function showLoader() {
+        if (loader) loader.style.display = 'flex';
+    }
+
+    function hideLoader() {
+        if (loader) loader.style.display = 'none';
+    }
+
+    let searchTimer = null;
+
+    function fetchBookings() {
+        showLoader();
+
+        const params = new URLSearchParams({
+            type: state.type,
+            status: state.status,
+            search: state.search,
+            date_from: state.date_from,
+            date_to: state.date_to,
+            page: state.page,
+            per_page: state.per_page
+        });
+
+        fetch(`${bookingsDataUrl}?${params.toString()}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Network error: ' + response.status);
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                if (tableContainer) {
+                    tableContainer.innerHTML = data.html;
+                }
+
+                // Update badge counts dynamically
+                if (data.counts) {
+                    const badgeAll = document.getElementById('badge-count-all');
+                    const badgeFlights = document.getElementById('badge-count-flights');
+                    const badgeHotels = document.getElementById('badge-count-hotels');
+                    const badgeTrips = document.getElementById('badge-count-trips');
+                    const mainBadge = document.getElementById('main-badge-bookings');
+
+                    if (badgeAll) badgeAll.textContent = data.counts.all ?? 0;
+                    if (badgeFlights) badgeFlights.textContent = data.counts.flights ?? 0;
+                    if (badgeHotels) badgeHotels.textContent = data.counts.hotels ?? 0;
+                    if (badgeTrips) badgeTrips.textContent = data.counts.trips ?? 0;
+                    if (mainBadge) mainBadge.textContent = data.counts.all ?? 0;
+                }
+            }
+        })
+        .catch(err => {
+            console.error('Fetch bookings error:', err);
+        })
+        .finally(() => {
+            hideLoader();
+        });
+    }
+
+    // Sub-tab button switching
+    subTabBtns.forEach(btn => {
+        btn.addEventListener('click', function () {
+            const requestedType = this.getAttribute('data-type');
+            if (state.type === requestedType) return;
+
+            state.type = requestedType;
+            state.page = 1;
+
+            // Update button styles
+            subTabBtns.forEach(b => {
+                b.classList.remove('btn-primary');
+                b.classList.add('btn-outline-secondary');
+            });
+            this.classList.remove('btn-outline-secondary');
+            this.classList.add('btn-primary');
+
+            fetchBookings();
+        });
+    });
+
+    // Search input with debounce (350ms)
+    if (searchInput) {
+        searchInput.addEventListener('input', function () {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => {
+                state.search = searchInput.value.trim();
+                state.page = 1;
+                fetchBookings();
+            }, 350);
+        });
+    }
+
+    // Status filter dropdown
+    if (statusSelect) {
+        statusSelect.addEventListener('change', function () {
+            state.status = statusSelect.value;
+            state.page = 1;
+            fetchBookings();
+        });
+    }
+
+    // Date From Filter
+    if (dateFromInput) {
+        dateFromInput.addEventListener('change', function () {
+            state.date_from = dateFromInput.value;
+            state.page = 1;
+            fetchBookings();
+        });
+    }
+
+    // Date To Filter
+    if (dateToInput) {
+        dateToInput.addEventListener('change', function () {
+            state.date_to = dateToInput.value;
+            state.page = 1;
+            fetchBookings();
+        });
+    }
+
+    // Reset Filters Button
+    if (resetBtn) {
+        resetBtn.addEventListener('click', function () {
+            state.search = '';
+            state.status = 'all';
+            state.date_from = '';
+            state.date_to = '';
+            state.page = 1;
+
+            if (searchInput) searchInput.value = '';
+            if (statusSelect) statusSelect.value = 'all';
+            if (dateFromInput) dateFromInput.value = '';
+            if (dateToInput) dateToInput.value = '';
+
+            fetchBookings();
+        });
+    }
+
+    // Delegated pagination click
+    if (tableContainer) {
+        tableContainer.addEventListener('click', function (e) {
+            const pageBtn = e.target.closest('.booking-page-btn');
+            if (pageBtn && !pageBtn.disabled) {
+                const targetPage = parseInt(pageBtn.getAttribute('data-page'), 10);
+                if (targetPage && targetPage !== state.page) {
+                    state.page = targetPage;
+                    fetchBookings();
+                    const wrapper = document.getElementById('bookingsContainerWrapper');
+                    if (wrapper) {
+                        wrapper.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+@endpush

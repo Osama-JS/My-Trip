@@ -611,11 +611,11 @@
                 </div>
                 <div class="filter-group">
                     <label class="filter-label">{{ __('From Date') }}</label>
-                    <input type="date" name="date_from" class="filter-input" value="{{ request('date_from') }}">
+                    <input type="date" id="filter_date_from" name="date_from" class="filter-input" value="{{ request('date_from') }}" max="{{ date('Y-m-d') }}">
                 </div>
                 <div class="filter-group">
                     <label class="filter-label">{{ __('To Date') }}</label>
-                    <input type="date" name="date_to" class="filter-input" value="{{ request('date_to') }}">
+                    <input type="date" id="filter_date_to" name="date_to" class="filter-input" value="{{ request('date_to') }}" max="{{ date('Y-m-d') }}" @if(request('date_from')) min="{{ request('date_from') }}" @endif>
                 </div>
             </div>
             <div class="filter-actions">
@@ -789,6 +789,88 @@ function toggleAdvancedFilters() {
         panel.style.display = 'none';
     }
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const dateFromInput = document.getElementById('filter_date_from');
+    const dateToInput = document.getElementById('filter_date_to');
+    const filterForm = document.getElementById('filterForm');
+    const today = new Date().toISOString().split('T')[0];
+
+    if (!dateFromInput || !dateToInput) return;
+
+    dateFromInput.max = dateToInput.value && dateToInput.value < today ? dateToInput.value : today;
+    dateToInput.max = today;
+    if (dateFromInput.value) {
+        dateToInput.min = dateFromInput.value;
+    }
+
+    function showDateAlert(msg) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'warning',
+                title: '{{ app()->getLocale() == "ar" ? "تنبيه بخصوص التاريخ" : "Invalid Date Selection" }}',
+                text: msg,
+                confirmButtonText: '{{ app()->getLocale() == "ar" ? "حسناً" : "OK" }}',
+                confirmButtonColor: '#2563eb'
+            });
+        } else {
+            alert(msg);
+        }
+    }
+
+    dateFromInput.addEventListener('change', function() {
+        if (this.value > today) {
+            this.value = today;
+            showDateAlert('{{ app()->getLocale() == "ar" ? "لا يمكن اختيار تاريخ في المستقبل" : "Future dates are not allowed" }}');
+        }
+        if (this.value) {
+            dateToInput.min = this.value;
+            if (dateToInput.value && dateToInput.value < this.value) {
+                dateToInput.value = this.value;
+            }
+        } else {
+            dateToInput.removeAttribute('min');
+        }
+    });
+
+    dateToInput.addEventListener('change', function() {
+        if (this.value > today) {
+            this.value = today;
+            showDateAlert('{{ app()->getLocale() == "ar" ? "لا يمكن اختيار تاريخ في المستقبل" : "Future dates are not allowed" }}');
+        }
+        if (this.value) {
+            dateFromInput.max = this.value < today ? this.value : today;
+            if (dateFromInput.value && dateFromInput.value > this.value) {
+                dateFromInput.value = this.value;
+            }
+        } else {
+            dateFromInput.max = today;
+        }
+    });
+
+    if (filterForm) {
+        filterForm.addEventListener('submit', function(e) {
+            const fromVal = dateFromInput.value;
+            const toVal = dateToInput.value;
+
+            if (fromVal && fromVal > today) {
+                e.preventDefault();
+                showDateAlert('{{ app()->getLocale() == "ar" ? "تاريخ البداية (من) لا يمكن أن يكون في المستقبل" : "From Date cannot be in the future" }}');
+                return false;
+            }
+            if (toVal && toVal > today) {
+                e.preventDefault();
+                showDateAlert('{{ app()->getLocale() == "ar" ? "تاريخ النهاية (إلى) لا يمكن أن يكون في المستقبل" : "To Date cannot be in the future" }}');
+                return false;
+            }
+            if (fromVal && toVal && toVal < fromVal) {
+                e.preventDefault();
+                showDateAlert('{{ app()->getLocale() == "ar" ? "تاريخ النهاية (إلى) لا يمكن أن يكون أصغر من تاريخ البداية (من)" : "To Date cannot be earlier than From Date" }}');
+                return false;
+            }
+        });
+    }
+});
 </script>
 
 @endsection

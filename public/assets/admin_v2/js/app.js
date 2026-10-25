@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function setTheme(theme) {
         htmlElement.setAttribute('data-theme', theme);
+        htmlElement.setAttribute('data-bs-theme', theme);
         localStorage.setItem('admin_v2_theme', theme);
         
         if (themeToggleBtn) {

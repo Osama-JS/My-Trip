@@ -4,10 +4,14 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Booking;
+use App\Models\HotelBooking;
+use App\Models\TripBooking;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -39,7 +43,8 @@ class UserController extends Controller implements HasMiddleware
             'unverified' => User::where('user_type', User::TYPE_ADMIN)->whereNull('email_verified_at')->count(),
         ];
         $roles = \Spatie\Permission\Models\Role::all();
-        return view('admin.users.index', compact('stats', 'roles'));
+        $countries = \App\Helpers\CountryHelper::getAllCountries();
+        return view('admin.users.index', compact('stats', 'roles', 'countries'));
     }
 
  /**
@@ -77,13 +82,13 @@ class UserController extends Controller implements HasMiddleware
                     'verified' => $verifiedBadge,
                     'actions' => auth()->user()->can('manage users') ? '
                         <div class="dropdown">
-                            <button type="button" class="btn btn-white btn-sm rounded-circle border shadow-sm" data-bs-toggle="dropdown" data-bs-boundary="viewport" aria-expanded="false" style="width:32px; height:32px; padding:0; display:inline-flex; align-items:center; justify-content:center; background-color:#ffffff !important; border-color:#e2e8f0 !important;">
-                                <i class="fas fa-ellipsis-v text-muted"></i>
+                            <button type="button" class="btn btn-sm rounded-circle border shadow-sm" data-bs-toggle="dropdown" data-bs-boundary="viewport" aria-expanded="false" style="width:32px; height:32px; padding:0; display:inline-flex; align-items:center; justify-content:center; background-color: var(--bg-card) !important; border-color: var(--border-color) !important; color: var(--text-muted) !important;">
+                                <i class="fas fa-ellipsis-v"></i>
                             </button>
                             <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 py-2" style="z-index: 1060;">
                                 <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="viewUser(' . $user->id . ')"><i class="fa fa-eye text-info me-3 w-15px"></i> '.__('View').'</a>
                                 <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="editUser(' . $user->id . ')"><i class="fas fa-pencil-alt text-primary me-3 w-15px"></i> '.__('Edit').'</a>
-                                <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="resetUserPassword(' . $user->id . ')"><i class="fa fa-key text-dark me-3 w-15px"></i> '.__('Reset Password').'</a>
+                                <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="resetUserPassword(' . $user->id . ')"><i class="fa fa-key text-warning me-3 w-15px"></i> '.__('Reset Password').'</a>
                                 <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="verifyUser(' . $user->id . ')"><i class="fas fa-certificate text-success me-3 w-15px"></i> ' . ($isVerified ? __('Revoke Verification') : __('Verify Account')) . '</a>
                                 <div class="dropdown-divider my-1"></div>
                                 <a class="dropdown-item text-danger py-2 px-3 d-flex align-items-center" href="javascript:void(0);" onclick="deleteUser(' . $user->id . ')"><i class="fa fa-trash text-danger me-3 w-15px"></i> '.__('Delete').'</a>
@@ -108,10 +113,10 @@ class UserController extends Controller implements HasMiddleware
 
         $searchLogs = \App\Models\FlightSearchLog::where('user_id', $id)->latest()->limit(50)->get();
 
-        // Calculate Stats
-        $confirmedTrips = $user->tripBookings->where('status', 'confirmed');
-        $confirmedFlights = $user->flightBookings->where('status', 'confirmed');
-        $confirmedHotels = $user->hotelBookings->where('status', 'confirmed');
+        // Calculate Stats (only confirmed and paid bookings)
+        $confirmedTrips = $user->tripBookings->whereIn('status', ['confirmed', 'paid', 'completed']);
+        $confirmedFlights = $user->flightBookings->whereIn('status', ['confirmed', 'paid', 'completed']);
+        $confirmedHotels = $user->hotelBookings->whereIn('status', ['confirmed', 'paid', 'completed']);
 
         $totalSpent = $confirmedTrips->sum('total_price') + 
                       $confirmedFlights->sum('total_amount') + 
@@ -142,7 +147,169 @@ class UserController extends Controller implements HasMiddleware
             ->sortByDesc('created_at');
         $searches = $searchLogs;
 
-        return view('admin.users.activity', compact('user', 'searchLogs', 'stats', 'bookings', 'searches'));
+        // Categorized live counts for tabs
+        $counts = [
+            'flights' => $user->flightBookings->count(),
+            'hotels'  => $user->hotelBookings->count(),
+            'trips'   => $user->tripBookings->count(),
+        ];
+        $counts['all'] = $counts['flights'] + $counts['hotels'] + $counts['trips'];
+
+        // Initial paginator for 'all' tab
+        $flightsInitial = $user->flightBookings->map(function ($b) { $b->booking_type = 'flight'; return $b; });
+        $hotelsInitial  = $user->hotelBookings->map(function ($b) { $b->booking_type = 'hotel'; return $b; });
+        $tripsInitial   = $user->tripBookings->map(function ($b) { $b->booking_type = 'trip'; return $b; });
+
+        $mergedInitial = $flightsInitial->concat($hotelsInitial)->concat($tripsInitial)->sortByDesc('created_at')->values();
+        $initialBookings = new LengthAwarePaginator(
+            $mergedInitial->slice(0, 10)->values(),
+            $mergedInitial->count(),
+            10,
+            1,
+            ['path' => route('admin.users.bookings.data', $user->id)]
+        );
+
+        return view('admin.users.activity', compact('user', 'searchLogs', 'stats', 'bookings', 'searches', 'counts', 'initialBookings'));
+    }
+
+    /**
+     * Get paginated and filtered bookings data for user activity (AJAX)
+     */
+    public function getBookingsData(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $type = $request->get('type', 'all'); // all, flights, hotels, trips
+        $status = $request->get('status', 'all');
+        $search = trim($request->get('search', ''));
+        $dateFrom = $request->get('date_from');
+        $dateTo = $request->get('date_to');
+        $perPage = max(5, min(100, (int) $request->get('per_page', 10)));
+        $page = max(1, (int) $request->get('page', 1));
+
+        // Common filter applier
+        $applyFilters = function ($query, $serviceType) use ($status, $dateFrom, $dateTo, $search) {
+            if ($status && $status !== 'all') {
+                if ($status === 'confirmed') {
+                    $query->whereIn('status', ['confirmed', 'paid', 'completed', 'active']);
+                } elseif ($status === 'pending') {
+                    $query->whereIn('status', ['pending', 'processing', 'awaiting_payment']);
+                } elseif ($status === 'cancelled') {
+                    $query->whereIn('status', ['cancelled', 'failed', 'rejected', 'refunded']);
+                } else {
+                    $query->where('status', $status);
+                }
+            }
+            if ($dateFrom) {
+                $query->whereDate('created_at', '>=', $dateFrom);
+            }
+            if ($dateTo) {
+                $query->whereDate('created_at', '<=', $dateTo);
+            }
+
+            if ($search) {
+                if ($serviceType === 'flight') {
+                    $query->where(function ($q) use ($search) {
+                        $q->where('booking_reference', 'like', "%{$search}%")
+                          ->orWhere('airline_name', 'like', "%{$search}%")
+                          ->orWhere('pnr_code', 'like', "%{$search}%")
+                          ->orWhereHas('flightBooking', function ($fq) use ($search) {
+                              $fq->where('origin', 'like', "%{$search}%")
+                                 ->orWhere('destination', 'like', "%{$search}%")
+                                 ->orWhere('flight_number', 'like', "%{$search}%");
+                          })
+                          ->orWhereHas('passengers', function ($pq) use ($search) {
+                              $pq->where('first_name', 'like', "%{$search}%")
+                                 ->orWhere('last_name', 'like', "%{$search}%");
+                          });
+                    });
+                } elseif ($serviceType === 'hotel') {
+                    $query->where(function ($q) use ($search) {
+                        $q->where('reference_num', 'like', "%{$search}%")
+                          ->orWhere('hotel_name', 'like', "%{$search}%")
+                          ->orWhere('city_name', 'like', "%{$search}%")
+                          ->orWhere('room_name', 'like', "%{$search}%");
+                    });
+                } elseif ($serviceType === 'trip') {
+                    $query->where(function ($q) use ($search) {
+                        $q->where('id', 'like', "%{$search}%")
+                          ->orWhereHas('trip', function ($tq) use ($search) {
+                              $tq->where('title', 'like', "%{$search}%")
+                                 ->orWhere('destination', 'like', "%{$search}%");
+                          });
+                    });
+                }
+            }
+        };
+
+        // Base queries
+        $flightsQuery = Booking::where('user_id', $user->id)->with(['flightBooking', 'passengers']);
+        $applyFilters($flightsQuery, 'flight');
+
+        $hotelsQuery = HotelBooking::where('user_id', $user->id);
+        $applyFilters($hotelsQuery, 'hotel');
+
+        $tripsQuery = TripBooking::where('user_id', $user->id)->with('trip');
+        $applyFilters($tripsQuery, 'trip');
+
+        // Dynamic counts for each tab under current search / date filters
+        $counts = [
+            'flights' => (clone $flightsQuery)->count(),
+            'hotels'  => (clone $hotelsQuery)->count(),
+            'trips'   => (clone $tripsQuery)->count(),
+        ];
+        $counts['all'] = $counts['flights'] + $counts['hotels'] + $counts['trips'];
+
+        // Paginate according to type
+        if ($type === 'flights') {
+            $bookings = $flightsQuery->orderBy('created_at', 'desc')->paginate($perPage, ['*'], 'page', $page);
+        } elseif ($type === 'hotels') {
+            $bookings = $hotelsQuery->orderBy('created_at', 'desc')->paginate($perPage, ['*'], 'page', $page);
+        } elseif ($type === 'trips') {
+            $bookings = $tripsQuery->orderBy('created_at', 'desc')->paginate($perPage, ['*'], 'page', $page);
+        } else {
+            // 'all': merge the 3 sets, sort by created_at DESC, and wrap in LengthAwarePaginator
+            $flights = $flightsQuery->orderBy('created_at', 'desc')->get()->map(function ($b) {
+                $b->booking_type = 'flight';
+                return $b;
+            });
+            $hotels = $hotelsQuery->orderBy('created_at', 'desc')->get()->map(function ($b) {
+                $b->booking_type = 'hotel';
+                return $b;
+            });
+            $trips = $tripsQuery->orderBy('created_at', 'desc')->get()->map(function ($b) {
+                $b->booking_type = 'trip';
+                return $b;
+            });
+
+            $merged = $flights->concat($hotels)->concat($trips)->sortByDesc('created_at')->values();
+            $total = $merged->count();
+            $items = $merged->slice(($page - 1) * $perPage, $perPage)->values();
+
+            $bookings = new LengthAwarePaginator(
+                $items,
+                $total,
+                $perPage,
+                $page,
+                ['path' => route('admin.users.bookings.data', $user->id)]
+            );
+        }
+
+        $html = view('admin_v2.users.partials.bookings_table', compact('bookings', 'type', 'user'))->render();
+
+        return response()->json([
+            'success' => true,
+            'type' => $type,
+            'html' => $html,
+            'counts' => $counts,
+            'meta' => [
+                'current_page' => $bookings->currentPage(),
+                'last_page'    => $bookings->lastPage(),
+                'total'        => $bookings->total(),
+                'from'         => $bookings->firstItem() ?? 0,
+                'to'           => $bookings->lastItem() ?? 0,
+            ]
+        ]);
     }
 
 
@@ -151,12 +318,67 @@ class UserController extends Controller implements HasMiddleware
      */
     public function show(User $user)
     {
+        // Flight stats
+        $flightBookings = $user->flightBookings;
+        $flightCompleted = $flightBookings->whereIn('status', ['confirmed', 'paid', 'completed'])->count();
+        $flightFailed    = $flightBookings->whereIn('status', ['cancelled', 'failed', 'rejected', 'refunded'])->count();
+        $flightPending   = $flightBookings->whereIn('status', ['pending', 'processing', 'awaiting_payment'])->count();
+
+        // Hotel stats
+        $hotelBookings = $user->hotelBookings;
+        $hotelCompleted = $hotelBookings->whereIn('status', ['confirmed', 'paid', 'completed'])->count();
+        $hotelFailed    = $hotelBookings->whereIn('status', ['cancelled', 'failed', 'rejected', 'refunded'])->count();
+        $hotelPending   = $hotelBookings->whereIn('status', ['pending', 'processing', 'awaiting_payment'])->count();
+
+        // Trip stats
+        $tripBookings = $user->tripBookings;
+        $tripCompleted = $tripBookings->whereIn('status', ['confirmed', 'paid', 'completed'])->count();
+        $tripFailed    = $tripBookings->whereIn('status', ['cancelled', 'failed', 'rejected', 'refunded'])->count();
+        $tripPending   = $tripBookings->whereIn('status', ['pending', 'processing', 'awaiting_payment'])->count();
+
+        $totalSpent = $flightBookings->whereIn('status', ['confirmed', 'paid', 'completed'])->sum('total_amount')
+                    + $hotelBookings->whereIn('status', ['confirmed', 'paid', 'completed'])->sum('total_price')
+                    + $tripBookings->whereIn('status', ['confirmed', 'paid', 'completed'])->sum('total_price');
+
+        $isVerified = ($user->email_verified_at || $user->phone_verified_at);
+
+        // Separate country code and phone cleanly so they never appear merged in the edit modal
+        $split = \App\Helpers\CountryHelper::splitPhone($user->phone, $user->country_code);
+        $user->country_code = $split['country_code'];
+        $user->phone = $split['phone'];
+
         return response()->json([
             'success' => true,
             'user' => $user,
+            'clean_phone' => $split['phone'],
+            'clean_country_code' => $split['country_code'],
+            'is_verified' => (bool) $isVerified,
             'roles' => $user->roles->pluck('name'),
             'photo_url' => $user->profile_photo_url,
-            'created_at' => $user->created_at->format('Y-m-d H:i')
+            'created_at' => $user->created_at->format('Y-m-d H:i'),
+            'activity_url' => route('admin.users.activity', $user->id),
+            'stats' => [
+                'total_spent'    => (float) $totalSpent,
+                'total_bookings' => $flightBookings->count() + $hotelBookings->count() + $tripBookings->count(),
+                'flights' => [
+                    'total'     => $flightBookings->count(),
+                    'completed' => $flightCompleted,
+                    'failed'    => $flightFailed,
+                    'pending'   => $flightPending,
+                ],
+                'hotels' => [
+                    'total'     => $hotelBookings->count(),
+                    'completed' => $hotelCompleted,
+                    'failed'    => $hotelFailed,
+                    'pending'   => $hotelPending,
+                ],
+                'trips' => [
+                    'total'     => $tripBookings->count(),
+                    'completed' => $tripCompleted,
+                    'failed'    => $tripFailed,
+                    'pending'   => $tripPending,
+                ],
+            ]
         ]);
     }
 
@@ -167,7 +389,7 @@ class UserController extends Controller implements HasMiddleware
             'first_name'   => 'required|string|max:100',
             'last_name'    => 'required|string|max:100',
             'email'        => 'required|email|unique:users,email',
-            'phone'        => 'nullable|string|unique:users,phone',
+            'phone'        => 'nullable|string',
             'country_code' => 'nullable|string|max:10',
             'password'     => 'required|min:8',
             'status'       => 'required|in:active,inactive',
@@ -175,6 +397,10 @@ class UserController extends Controller implements HasMiddleware
             'roles'        => 'nullable|array',
             'roles.*'      => 'exists:roles,name'
         ]);
+
+        $split = \App\Helpers\CountryHelper::splitPhone($request->phone, $request->country_code);
+        $validated['country_code'] = $split['country_code'];
+        $validated['phone'] = $split['phone'];
 
         $validated['password'] = Hash::make($request->password);
 
@@ -194,8 +420,6 @@ class UserController extends Controller implements HasMiddleware
         if ($request->has('roles')) {
             $user->syncRoles($request->roles);
         }
-
-        // dd($request->all());
 
         return response()->json([
             'success' => true,
@@ -222,6 +446,10 @@ class UserController extends Controller implements HasMiddleware
         ]);
 
         $data = $request->only(['first_name', 'last_name', 'email', 'phone', 'country_code', 'status', 'country', 'city', 'address', 'gender', 'date_of_birth']);
+
+        $split = \App\Helpers\CountryHelper::splitPhone($request->phone, $request->country_code);
+        $data['country_code'] = $split['country_code'];
+        $data['phone'] = $split['phone'];
 
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
@@ -289,7 +517,8 @@ class UserController extends Controller implements HasMiddleware
      */
     public function subscribers()
     {
-        return view('admin.subscribers.index');
+        $countries = \App\Helpers\CountryHelper::getAllCountries();
+        return view('admin.subscribers.index', compact('countries'));
     }
 
     /**

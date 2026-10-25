@@ -38,7 +38,7 @@
     @stack('styles')
 </head>
 
-<body class="frontend-body">
+<body class="frontend-body {{ $locale == 'ar' ? 'rtl' : 'ltr' }}" dir="{{ $locale == 'ar' ? 'rtl' : 'ltr' }}">
 
     {{-- ═══ HEADER ═══ --}}
     <header class="fe-header" id="feHeader">

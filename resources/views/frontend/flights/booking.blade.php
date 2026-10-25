@@ -1326,6 +1326,156 @@
     .select2-container--default .select2-results__option--highlighted[aria-selected] {
         background-color: var(--primary) !important;
     }
+
+    /* ══════════════════════════════════════════════════════
+       FLIGHT BOOKING RTL RULES
+       ══════════════════════════════════════════════════════ */
+    html[dir="rtl"] .fe-booking-grid,
+    body[dir="rtl"] .fe-booking-grid {
+        direction: rtl;
+    }
+
+    html[dir="rtl"] .fe-booking-main,
+    body[dir="rtl"] .fe-booking-main {
+        direction: rtl;
+        text-align: right;
+    }
+
+    html[dir="rtl"] .fe-booking-sidebar,
+    body[dir="rtl"] .fe-booking-sidebar {
+        direction: rtl;
+        text-align: right;
+    }
+
+    /* Cards & Headers in RTL */
+    html[dir="rtl"] .fe-booking-card {
+        text-align: right;
+        direction: rtl;
+    }
+
+    html[dir="rtl"] .fe-booking-card[style*="border-left"] {
+        border-left: none !important;
+        border-right: 4px solid var(--primary) !important;
+        background: linear-gradient(to left, #ffffff, #f8fafc) !important;
+    }
+
+    html[dir="rtl"] .fe-card-header {
+        direction: rtl;
+        text-align: right;
+    }
+
+    html[dir="rtl"] .fe-card-body {
+        direction: rtl;
+        text-align: right;
+    }
+
+    /* Labels, inputs, form rows */
+    html[dir="rtl"] .fe-form-row {
+        direction: rtl;
+    }
+
+    html[dir="rtl"] .fe-label {
+        text-align: right;
+        direction: rtl;
+    }
+
+    html[dir="rtl"] .fe-input {
+        text-align: right;
+        direction: rtl;
+    }
+
+    html[dir="rtl"] .fe-input[type="email"],
+    html[dir="rtl"] .fe-input[type="tel"],
+    html[dir="rtl"] #add_phone,
+    html[dir="rtl"] #phone,
+    html[dir="rtl"] .phone-input-field {
+        text-align: left !important;
+        direction: ltr !important;
+    }
+
+    /* Timer card */
+    html[dir="rtl"] .fe-session-timer-card {
+        direction: rtl;
+    }
+
+    /* Guest Auth Banner */
+    html[dir="rtl"] .fe-guest-auth-inner {
+        direction: rtl;
+    }
+
+    html[dir="rtl"] .fe-guest-auth-content {
+        text-align: right;
+    }
+
+    /* Insurance Cross-Sell Component */
+    html[dir="rtl"] .fe-insurance-card,
+    html[dir="rtl"] .fe-ins-header,
+    html[dir="rtl"] .fe-ins-titles,
+    html[dir="rtl"] .fe-ins-benefit-item,
+    html[dir="rtl"] .fe-ins-option-card {
+        direction: rtl;
+        text-align: right;
+    }
+
+    /* Flight Itinerary Route Visual in Summary Card */
+    html[dir="rtl"] .summary-route-visual {
+        direction: rtl;
+    }
+
+    html[dir="rtl"] .summary-route-visual .path i.fa-plane {
+        transform: rotate(-90deg) !important;
+    }
+
+    /* Summary Details in Sidebar */
+    html[dir="rtl"] .fe-summary-card,
+    html[dir="rtl"] .fe-summary-header,
+    html[dir="rtl"] .fe-summary-body,
+    html[dir="rtl"] .fe-summary-details {
+        direction: rtl;
+        text-align: right;
+    }
+
+    html[dir="rtl"] .fe-summary-item {
+        direction: rtl;
+    }
+
+    /* Extra Services Options */
+    html[dir="rtl"] .es-group-title {
+        direction: rtl;
+        text-align: right;
+    }
+
+    html[dir="rtl"] .es-option:has(input:checked)::after {
+        left: 10px;
+        right: auto;
+    }
+
+    html[dir="rtl"] .fe-guest-header {
+        direction: rtl;
+    }
+
+    /* Select2 dropdown arrow & alignment */
+    html[dir="rtl"] .select2-container--default .select2-selection--single {
+        direction: rtl;
+        text-align: right;
+    }
+
+    html[dir="rtl"] .select2-container--default .select2-selection--single .select2-selection__arrow {
+        left: 10px !important;
+        right: auto !important;
+    }
+
+    html[dir="rtl"] .select2-container--default .select2-selection--single .select2-selection__rendered {
+        padding-right: 16px !important;
+        padding-left: 36px !important;
+        text-align: right !important;
+        direction: rtl;
+    }
+
+    html[dir="rtl"] .select2-results__option {
+        text-align: right;
+        direction: rtl;
+    }
 </style>
 @endpush
 @push('scripts')

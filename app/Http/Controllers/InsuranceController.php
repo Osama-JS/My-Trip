@@ -76,12 +76,28 @@ class InsuranceController extends Controller
             });
         }
 
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
+        $dateFrom = $request->date_from;
+        $dateTo = $request->date_to;
+        $today = now()->toDateString();
+
+        if ($dateFrom && $dateFrom > $today) {
+            $dateFrom = $today;
+        }
+        if ($dateTo && $dateTo > $today) {
+            $dateTo = $today;
+        }
+        if ($dateFrom && $dateTo && $dateFrom > $dateTo) {
+            $temp = $dateFrom;
+            $dateFrom = $dateTo;
+            $dateTo = $temp;
         }
 
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
+        if ($dateFrom) {
+            $query->whereDate('created_at', '>=', $dateFrom);
+        }
+
+        if ($dateTo) {
+            $query->whereDate('created_at', '<=', $dateTo);
         }
 
         $policies = $query->latest()->paginate(10)->withQueryString();

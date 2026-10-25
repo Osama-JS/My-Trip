@@ -314,8 +314,8 @@
                                         <div class="fe-form-group">
                                             <label class="fe-label">{{ __('Title') }}</label>
                                             <select name="pax[{{ $roomIdx }}][child][{{ $c }}][title]" class="fe-input" required>
-                                                <option value="Mr">{{ __('Master') }}</option>
-                                                <option value="Ms">{{ __('Miss') }}</option>
+                                                <option value="Master" {{ old('pax.'.$roomIdx.'.child.'.$c.'.title') == 'Master' ? 'selected' : '' }}>{{ __('Master') }}</option>
+                                                <option value="Miss" {{ old('pax.'.$roomIdx.'.child.'.$c.'.title') == 'Miss' ? 'selected' : '' }}>{{ __('Miss') }}</option>
                                             </select>
                                         </div>
                                         <div class="fe-form-group">
@@ -789,6 +789,120 @@
         .fe-form-row, .fe-form-row-2 { grid-template-columns: 1fr; gap: 15px; }
         .fe-card-body, .fe-summary-header, .fe-summary-body { padding: 20px; }
         .fe-booking-header { padding: 60px 0 80px; }
+    }
+
+    /* ══════════════════════════════════════════════════════
+       HOTEL BOOKING RTL RULES
+       ══════════════════════════════════════════════════════ */
+    html[dir="rtl"] .fe-booking-grid,
+    body[dir="rtl"] .fe-booking-grid {
+        direction: rtl;
+    }
+
+    html[dir="rtl"] .fe-booking-main,
+    body[dir="rtl"] .fe-booking-main {
+        direction: rtl;
+        text-align: right;
+    }
+
+    html[dir="rtl"] .fe-booking-sidebar,
+    body[dir="rtl"] .fe-booking-sidebar {
+        direction: rtl;
+        text-align: right;
+    }
+
+    /* Cards & Headers in RTL */
+    html[dir="rtl"] .fe-booking-card {
+        text-align: right;
+        direction: rtl;
+    }
+
+    html[dir="rtl"] .fe-card-header {
+        direction: rtl;
+        text-align: right;
+    }
+
+    html[dir="rtl"] .fe-card-body {
+        direction: rtl;
+        text-align: right;
+    }
+
+    /* Guest titles and Form Rows */
+    html[dir="rtl"] .fe-guest-title {
+        text-align: right;
+        direction: rtl;
+    }
+
+    html[dir="rtl"] .fe-form-row,
+    html[dir="rtl"] .fe-form-row-2 {
+        direction: rtl;
+    }
+
+    html[dir="rtl"] .fe-label {
+        text-align: right;
+        direction: rtl;
+    }
+
+    html[dir="rtl"] .fe-input,
+    html[dir="rtl"] select.fe-input {
+        text-align: right;
+        direction: rtl;
+    }
+
+    html[dir="rtl"] .fe-input[type="email"],
+    html[dir="rtl"] .fe-input[type="tel"],
+    html[dir="rtl"] input[name*="phone"],
+    html[dir="rtl"] input[name*="email"] {
+        text-align: left !important;
+        direction: ltr !important;
+    }
+
+    /* Timer Card */
+    html[dir="rtl"] .fe-session-timer-card {
+        direction: rtl;
+    }
+
+    /* Insurance Cross-Sell Component */
+    html[dir="rtl"] .fe-insurance-card,
+    html[dir="rtl"] .fe-ins-header,
+    html[dir="rtl"] .fe-ins-titles,
+    html[dir="rtl"] .fe-ins-benefit-item,
+    html[dir="rtl"] .fe-ins-option-card {
+        direction: rtl;
+        text-align: right;
+    }
+
+    /* Summary Card in Sidebar */
+    html[dir="rtl"] .fe-summary-card,
+    html[dir="rtl"] .fe-summary-header,
+    html[dir="rtl"] .fe-summary-body,
+    html[dir="rtl"] .fe-summary-details,
+    html[dir="rtl"] .fe-summary-hotel,
+    html[dir="rtl"] .fe-summary-room {
+        direction: rtl;
+        text-align: right;
+    }
+
+    html[dir="rtl"] .fe-summary-item {
+        direction: rtl;
+    }
+
+    /* Select2 dropdown in RTL if present */
+    html[dir="rtl"] .select2-container--default .select2-selection--single {
+        direction: rtl;
+        text-align: right;
+    }
+
+    html[dir="rtl"] .select2-container--default .select2-selection--single .select2-selection__arrow {
+        left: 10px !important;
+        right: auto !important;
+    }
+
+    html[dir="rtl"] .select2-container--default .select2-selection--single .select2-selection__rendered {
+        padding-right: 16px !important;
+        padding-left: 36px !important;
+        text-align: right !important;
+        direction: rtl;
     }
 </style>
 @endpush
