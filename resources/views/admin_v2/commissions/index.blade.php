@@ -225,7 +225,7 @@
                                 @forelse($tripBookings ?? [] as $b)
                                     <tr>
                                         <td>
-                                            <a href="{{ route('admin.trip_bookings.show', $b->id) }}" class="font-bold text-primary">#{{ $b->id }}</a>
+                                            <a href="{{ route('admin.trip-bookings.show', $b->id) }}" class="font-bold text-primary">#{{ $b->id }}</a>
                                         </td>
                                         <td><strong>{{ Str::limit($b->trip->title ?? 'N/A', 30) }}</strong></td>
                                         <td>{{ $b->trip->company->name ?? ($b->trip->company->en_name ?? 'N/A') }}</td>

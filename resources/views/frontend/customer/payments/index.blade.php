@@ -589,7 +589,7 @@
                             </span>
                             @if($payment->transaction_id)
                                 <span class="bullet-sep">·</span>
-                                <span style="font-family: monospace; font-weight: 600;">Ref: #{{ $payment->transaction_id }}</span>
+                                <span style="font-family: monospace; font-weight: 600;">{{ __('Ref:') }} #{{ $payment->transaction_id }}</span>
                             @endif
                             <span class="bullet-sep">·</span>
                             <span>

@@ -367,6 +367,7 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     Route::post('trip-bookings/{id}/upload-ticket', [App\Http\Controllers\Admin\TripBookingController::class, 'uploadTicket'])->name('trip-bookings.upload-ticket');
     Route::post('trip-bookings/{id}/send-ticket', [App\Http\Controllers\Admin\TripBookingController::class, 'sendTicket'])->name('trip-bookings.send-ticket');
     Route::resource('trip-bookings', App\Http\Controllers\Admin\TripBookingController::class);
+    Route::get('trip-bookings/{id}', [App\Http\Controllers\Admin\TripBookingController::class, 'show'])->name('trip_bookings.show');
 
 
     // Notifications Management

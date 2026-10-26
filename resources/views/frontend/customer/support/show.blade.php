@@ -288,7 +288,7 @@
 
     // File selected display
     document.getElementById('fileInput')?.addEventListener('change', function() {
-        document.getElementById('fileSelected').innerText = this.files.length + ' ملفات';
+        document.getElementById('fileSelected').innerText = @json(__(':count files')).replace(':count', this.files.length);
     });
 
     // Rating stars

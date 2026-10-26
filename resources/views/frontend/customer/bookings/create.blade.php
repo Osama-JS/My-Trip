@@ -345,7 +345,7 @@
                             </div>
                             <div>
                                 <label class="field-label">{{ __('Nationality') }}</label>
-                                <input type="text" name="passengers[${passengerIndex}][nationality]" value="${prefill.nationality || ''}" required class="field-input" placeholder="Saudi">
+                                <input type="text" name="passengers[${passengerIndex}][nationality]" value="${prefill.nationality || ''}" required class="field-input" placeholder="{{ __('Saudi') }}">
                             </div>
                         </div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">

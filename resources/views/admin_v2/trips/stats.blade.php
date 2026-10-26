@@ -223,7 +223,7 @@
                                 @forelse($recentBookings as $booking)
                                     <tr>
                                         <td>
-                                            <a href="{{ route('admin.trip_bookings.show', $booking->id) }}" class="font-bold text-primary">#{{ $booking->id }}</a>
+                                            <a href="{{ route('admin.trip-bookings.show', $booking->id) }}" class="font-bold text-primary">#{{ $booking->id }}</a>
                                             <div class="small text-muted">{{ $booking->created_at->format('Y-m-d') }}</div>
                                         </td>
                                         <td>

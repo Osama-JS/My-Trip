@@ -669,7 +669,7 @@
                     <div class="ins-coverage-connector">
                         <div class="ins-coverage-plan">
                             <i class="fas fa-shield-alt" style="font-size: 0.65rem;"></i>
-                            {{ ucfirst($policy->coverage_type) }} Safe
+                            {{ __(':type Safe', ['type' => __(ucfirst($policy->coverage_type))]) }}
                         </div>
                         <div class="ins-coverage-line"></div>
                         <div class="ins-coverage-duration">{{ $policy->duration_days }} {{ __('Days') }}</div>
@@ -689,7 +689,7 @@
                     </div>
                     <div class="ins-meta-item">
                         <div class="meta-label"><i class="fas fa-layer-group me-1"></i>{{ __('Coverage Plan') }}</div>
-                        <div class="meta-value">{{ ucfirst($policy->coverage_type) }} Travel Safe</div>
+                        <div class="meta-value">{{ __(':type Travel Safe', ['type' => __(ucfirst($policy->coverage_type))]) }}</div>
                     </div>
                     <div class="ins-meta-item">
                         <div class="meta-label"><i class="fas fa-clock me-1"></i>{{ __('Duration') }}</div>

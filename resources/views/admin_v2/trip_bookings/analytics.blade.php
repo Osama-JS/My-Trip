@@ -235,7 +235,7 @@
                             @forelse($recentBookings ?? [] as $rb)
                                 <tr>
                                     <td>
-                                        <a href="{{ route('admin.trip_bookings.show', $rb->id) }}" class="font-bold text-primary">#TRIP-{{ str_pad($rb->id, 5, '0', STR_PAD_LEFT) }}</a>
+                                        <a href="{{ route('admin.trip-bookings.show', $rb->id) }}" class="font-bold text-primary">#TRIP-{{ str_pad($rb->id, 5, '0', STR_PAD_LEFT) }}</a>
                                     </td>
                                     <td>{{ optional($rb->trip)->title_ar ?? (optional($rb->trip)->title ?? (app()->getLocale() == 'ar' ? 'رحلة' : 'Tour')) }}</td>
                                     <td>{{ optional($rb->user)->full_name ?? (app()->getLocale() == 'ar' ? 'زائر' : 'Guest') }}</td>

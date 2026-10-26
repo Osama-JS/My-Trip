@@ -896,7 +896,7 @@
                                     <span class="info-label">{{ __('Transfer Receipt') }}</span>
                                     <div class="info-value">
                                         <a href="{{ asset('storage/' . $latestTransfer->receipt_image) }}" target="_blank">
-                                            <img src="{{ asset('storage/' . $latestTransfer->receipt_image) }}" class="receipt-thumb" alt="Receipt">
+                                            <img src="{{ asset('storage/' . $latestTransfer->receipt_image) }}" class="receipt-thumb" alt="{{ __('Receipt') }}">
                                         </a>
                                     </div>
                                 </div>

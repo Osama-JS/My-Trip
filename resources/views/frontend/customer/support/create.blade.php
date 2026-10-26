@@ -192,7 +192,7 @@
     document.getElementById('file_input').addEventListener('change', function() {
         const status = document.getElementById('file_status');
         if(this.files.length > 0) {
-            status.innerHTML = `<i class="fas fa-check-circle"></i> تم اختيار ${this.files.length} ملفات`;
+            status.innerHTML = `<i class="fas fa-check-circle"></i> ` + @json(__(':count files selected')).replace(':count', this.files.length);
         } else {
             status.innerHTML = '';
         }
