@@ -310,8 +310,12 @@
                                             </div>
                                         </div>
                                     </div>
-                                </div>
                             </div>
+                            @endif
+                        </div>
+                    </div>
+                @endfor
+
                 @if(\App\Models\Setting::get('insurance_enabled', '1') == '1')
                 {{-- ═══ TRAVEL INSURANCE CROSS-SELL COMPONENT (TOUR PACKAGES) ═══ --}}
                 <div class="fe-insurance-component" id="insuranceSection">

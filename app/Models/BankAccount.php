@@ -13,6 +13,10 @@ class BankAccount extends Model
         'bank_name',
         'iban',
         'beneficiary_name',
+        'account_number',
+        'swift_code',
+        'currency',
+        'branch',
         'logo_path',
         'is_active',
     ];

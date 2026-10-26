@@ -16,7 +16,7 @@
                     {{ $bank_account->bank_name }} <span style="color: var(--primary);">#{{ $bank_account->id }}</span>
                 </h1>
                 <span style="color: var(--text-muted); font-size: 0.8rem;">
-                    {{ $bank_account->account_name }} &bull; {{ $bank_account->iban }}
+                    {{ $bank_account->beneficiary_name }} &bull; {{ $bank_account->iban }}
                 </span>
             </div>
         </div>
@@ -79,9 +79,9 @@
         <!-- Left: Account Details Card -->
         <div>
             <div class="admin-card text-center mb-4">
-                @if($bank_account->logo)
+                @if($bank_account->logo_path)
                     <div style="width: 80px; height: 80px; border-radius: var(--radius-md); background: #fff; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; overflow: hidden; padding: 6px;">
-                        <img src="{{ asset('storage/' . $bank_account->logo) }}" alt="{{ $bank_account->bank_name }}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                        <img src="{{ asset('storage/' . $bank_account->logo_path) }}" alt="{{ $bank_account->bank_name }}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
                     </div>
                 @else
                     <div style="width: 64px; height: 64px; border-radius: var(--radius-md); background: rgba(37,99,235,0.1); color: var(--primary); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.75rem;">
@@ -90,7 +90,7 @@
                 @endif
 
                 <h4 style="font-weight: 800; color: var(--text-main); margin-bottom: 0.25rem;">{{ $bank_account->bank_name }}</h4>
-                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.75rem;">{{ $bank_account->account_name }}</p>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.75rem;">{{ $bank_account->beneficiary_name }}</p>
 
                 <div>
                     @if($bank_account->is_active)
@@ -104,9 +104,16 @@
 
                 <div style="text-align: start; font-size: 0.875rem; display: flex; flex-direction: column; gap: 0.75rem;">
                     <div>
-                        <span style="font-size: 0.75rem; color: var(--text-muted); display: block; font-weight: 700;">{{ app()->getLocale() == 'ar' ? 'رقم الحساب:' : 'Account Number:' }}</span>
-                        <strong style="font-family: monospace; font-size: 1rem; color: var(--text-main);">{{ $bank_account->account_number }}</strong>
+                        <span style="font-size: 0.75rem; color: var(--text-muted); display: block; font-weight: 700;">{{ app()->getLocale() == 'ar' ? 'اسم صاحب الحساب (المستفيد):' : 'Beneficiary Name:' }}</span>
+                        <strong style="font-size: 0.95rem; color: var(--text-main);">{{ $bank_account->beneficiary_name }}</strong>
                     </div>
+
+                    @if($bank_account->account_number)
+                    <div>
+                        <span style="font-size: 0.75rem; color: var(--text-muted); display: block; font-weight: 700;">{{ app()->getLocale() == 'ar' ? 'رقم الحساب البنكي:' : 'Account Number:' }}</span>
+                        <strong style="font-family: monospace; font-size: 0.95rem; color: var(--text-main);">{{ $bank_account->account_number }}</strong>
+                    </div>
+                    @endif
 
                     <div>
                         <span style="font-size: 0.75rem; color: var(--text-muted); display: block; font-weight: 700;">{{ app()->getLocale() == 'ar' ? 'رقم الآيبان (IBAN):' : 'IBAN:' }}</span>
@@ -116,7 +123,7 @@
                     @if($bank_account->swift_code)
                     <div>
                         <span style="font-size: 0.75rem; color: var(--text-muted); display: block; font-weight: 700;">{{ app()->getLocale() == 'ar' ? 'رمز السويفت (SWIFT):' : 'Swift Code:' }}</span>
-                        <strong style="font-family: monospace;">{{ $bank_account->swift_code }}</strong>
+                        <strong style="font-family: monospace; color: var(--text-main);">{{ $bank_account->swift_code }}</strong>
                     </div>
                     @endif
 

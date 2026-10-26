@@ -82,11 +82,12 @@
                 <thead>
                     <tr>
                         <th>{{ app()->getLocale() == 'ar' ? 'البنك والشعار' : 'Bank & Logo' }}</th>
-                        <th>{{ app()->getLocale() == 'ar' ? 'اسم صاحب الحساب' : 'Account Name' }}</th>
+                        <th>{{ app()->getLocale() == 'ar' ? 'اسم صاحب الحساب' : 'Beneficiary Name' }}</th>
                         <th>{{ app()->getLocale() == 'ar' ? 'رقم الحساب' : 'Account Number' }}</th>
                         <th>{{ app()->getLocale() == 'ar' ? 'رقم الآيبان (IBAN)' : 'IBAN' }}</th>
-                        <th>{{ app()->getLocale() == 'ar' ? 'الحالة' : 'Status' }}</th>
-                        <th class="text-center" style="width: 120px;">{{ app()->getLocale() == 'ar' ? 'الإجراءات' : 'Actions' }}</th>
+                        <th>{{ app()->getLocale() == 'ar' ? 'السويفت / العملة' : 'Swift / Currency' }}</th>
+                        <th class="text-center">{{ app()->getLocale() == 'ar' ? 'الحالة' : 'Status' }}</th>
+                        <th class="text-center" style="width: 140px;">{{ app()->getLocale() == 'ar' ? 'الإجراءات' : 'Actions' }}</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -115,12 +116,12 @@
                             <input type="text" name="bank_name" class="form-control" required placeholder="e.g. مصرف الراجحي">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label font-bold text-sm">{{ app()->getLocale() == 'ar' ? 'اسم صاحب الحساب / الشركة' : 'Account Beneficiary Name' }} <span class="text-danger">*</span></label>
-                            <input type="text" name="account_name" class="form-control" required placeholder="e.g. شركة ماي تريب للسياحة">
+                            <label class="form-label font-bold text-sm">{{ app()->getLocale() == 'ar' ? 'اسم صاحب الحساب (المستفيد)' : 'Beneficiary Name' }} <span class="text-danger">*</span></label>
+                            <input type="text" name="beneficiary_name" class="form-control" required placeholder="e.g. شركة ماي تريب للسياحة">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label font-bold text-sm">{{ app()->getLocale() == 'ar' ? 'رقم الحساب' : 'Account Number' }} <span class="text-danger">*</span></label>
-                            <input type="text" name="account_number" class="form-control" required>
+                            <label class="form-label font-bold text-sm">{{ app()->getLocale() == 'ar' ? 'رقم الحساب البنكي' : 'Account Number' }}</label>
+                            <input type="text" name="account_number" class="form-control font-mono" placeholder="e.g. 1234567890">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label font-bold text-sm">{{ app()->getLocale() == 'ar' ? 'رقم الآيبان الدولي (IBAN)' : 'IBAN' }} <span class="text-danger">*</span></label>
@@ -128,19 +129,27 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label font-bold text-sm">{{ app()->getLocale() == 'ar' ? 'كود السويفت (Swift Code)' : 'Swift Code' }}</label>
-                            <input type="text" name="swift_code" class="form-control font-mono">
+                            <input type="text" name="swift_code" class="form-control font-mono" placeholder="e.g. RJHISARI">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label font-bold text-sm">{{ app()->getLocale() == 'ar' ? 'العملة' : 'Currency' }}</label>
-                            <input type="text" name="currency" class="form-control" value="SAR">
+                            <input type="text" name="currency" class="form-control font-bold" value="SAR">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label font-bold text-sm">{{ app()->getLocale() == 'ar' ? 'الفرع' : 'Branch' }}</label>
-                            <input type="text" name="branch" class="form-control">
+                            <input type="text" name="branch" class="form-control" placeholder="e.g. فرع الرياض الرئيسي">
                         </div>
-                        <div class="col-12">
+                        <div class="col-md-6">
                             <label class="form-label font-bold text-sm">{{ app()->getLocale() == 'ar' ? 'شعار البنك (Logo)' : 'Bank Logo Image' }}</label>
                             <input type="file" name="logo" class="form-control" accept="image/*">
+                        </div>
+                        <div class="col-md-6 d-flex align-items-center mt-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="is_active" id="add_is_active" value="1" checked>
+                                <label class="form-check-label font-bold text-sm" for="add_is_active">
+                                    {{ app()->getLocale() == 'ar' ? 'تفعيل الحساب وعرضه للعملاء' : 'Active and visible to customers' }}
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -175,32 +184,41 @@
                             <input type="text" id="edit_bank_name" name="bank_name" class="form-control" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label font-bold text-sm">{{ app()->getLocale() == 'ar' ? 'اسم صاحب الحساب' : 'Beneficiary Name' }} <span class="text-danger">*</span></label>
-                            <input type="text" id="edit_account_name" name="account_name" class="form-control" required>
+                            <label class="form-label font-bold text-sm">{{ app()->getLocale() == 'ar' ? 'اسم صاحب الحساب (المستفيد)' : 'Beneficiary Name' }} <span class="text-danger">*</span></label>
+                            <input type="text" id="edit_beneficiary_name" name="beneficiary_name" class="form-control" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label font-bold text-sm">{{ app()->getLocale() == 'ar' ? 'رقم الحساب' : 'Account Number' }} <span class="text-danger">*</span></label>
-                            <input type="text" id="edit_account_number" name="account_number" class="form-control" required>
+                            <label class="form-label font-bold text-sm">{{ app()->getLocale() == 'ar' ? 'رقم الحساب البنكي' : 'Account Number' }}</label>
+                            <input type="text" id="edit_account_number" name="account_number" class="form-control font-mono">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label font-bold text-sm">{{ app()->getLocale() == 'ar' ? 'رقم الآيبان (IBAN)' : 'IBAN' }} <span class="text-danger">*</span></label>
                             <input type="text" id="edit_iban" name="iban" class="form-control font-mono" required>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label font-bold text-sm">{{ app()->getLocale() == 'ar' ? 'السويفت كود' : 'Swift Code' }}</label>
+                            <label class="form-label font-bold text-sm">{{ app()->getLocale() == 'ar' ? 'كود السويفت (Swift Code)' : 'Swift Code' }}</label>
                             <input type="text" id="edit_swift_code" name="swift_code" class="form-control font-mono">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label font-bold text-sm">{{ app()->getLocale() == 'ar' ? 'العملة' : 'Currency' }}</label>
-                            <input type="text" id="edit_currency" name="currency" class="form-control">
+                            <input type="text" id="edit_currency" name="currency" class="form-control font-bold">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label font-bold text-sm">{{ app()->getLocale() == 'ar' ? 'الفرع' : 'Branch' }}</label>
                             <input type="text" id="edit_branch" name="branch" class="form-control">
                         </div>
-                        <div class="col-12">
+                        <div class="col-md-6">
                             <label class="form-label font-bold text-sm">{{ app()->getLocale() == 'ar' ? 'تحديث الشعار (اختياري)' : 'Change Logo' }}</label>
                             <input type="file" name="logo" class="form-control" accept="image/*">
+                            <div id="current_logo_preview" class="mt-2"></div>
+                        </div>
+                        <div class="col-md-6 d-flex align-items-center mt-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="is_active" id="edit_is_active" value="1">
+                                <label class="form-check-label font-bold text-sm" for="edit_is_active">
+                                    {{ app()->getLocale() == 'ar' ? 'حساب نشط' : 'Active Account' }}
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -230,11 +248,27 @@ document.addEventListener('DOMContentLoaded', function() {
         perPage: 15,
         perPageOptions: [10, 25, 50, 100],
         columns: [
-            { data: 'bank_name', className: 'font-bold' },
-            { data: 'account_name' },
-            { data: 'account_number', className: 'font-mono' },
+            { data: 'bank_with_logo', className: 'font-bold' },
+            { data: 'beneficiary_name' },
+            { 
+                data: 'raw_account_number', 
+                className: 'font-mono',
+                render: function(data, type, row) {
+                    return data ? '<span class="text-main font-bold">' + data + '</span>' : '<span class="text-muted small">---</span>';
+                }
+            },
             { data: 'iban', className: 'font-mono' },
-            { data: 'is_active', className: 'text-center' },
+            { 
+                data: 'swift_code', 
+                className: 'font-mono',
+                render: function(data, type, row) {
+                    let parts = [];
+                    if (data) parts.push('<span class="badge bg-light text-dark">' + data + '</span>');
+                    if (row.currency) parts.push('<span class="badge bg-secondary">' + row.currency + '</span>');
+                    return parts.length ? parts.join(' ') : '<span class="text-muted small">---</span>';
+                }
+            },
+            { data: 'status', className: 'text-center' },
             { data: 'actions', orderable: false, searchable: false, className: 'text-center' }
         ]
     });
@@ -293,15 +327,26 @@ function resetAccountForm() {
 
 function editAccount(id) {
     $.get(`/admin/bank-accounts/${id}/edit`, function(data) {
-        $('#edit_bank_name').val(data.bank_name);
-        $('#edit_account_name').val(data.account_name);
-        $('#edit_account_number').val(data.account_number);
-        $('#edit_iban').val(data.iban);
-        $('#edit_swift_code').val(data.swift_code);
-        $('#edit_currency').val(data.currency);
-        $('#edit_branch').val(data.branch);
+        const acc = data.account || data;
+        $('#edit_bank_name').val(acc.bank_name);
+        $('#edit_beneficiary_name').val(acc.beneficiary_name || acc.account_name);
+        $('#edit_account_number').val(acc.account_number || '');
+        $('#edit_iban').val(acc.iban);
+        $('#edit_swift_code').val(acc.swift_code || '');
+        $('#edit_currency').val(acc.currency || 'SAR');
+        $('#edit_branch').val(acc.branch || '');
+        $('#edit_is_active').prop('checked', !!acc.is_active);
+
+        if (data.logo_url) {
+            $('#current_logo_preview').html('<img src="' + data.logo_url + '" alt="Bank Logo" width="45" height="45" class="rounded p-1 border">');
+        } else {
+            $('#current_logo_preview').empty();
+        }
+
         $('#editAccountForm').attr('action', `/admin/bank-accounts/${id}`);
         $('#editAccountModal').modal('show');
+    }).fail(function() {
+        Notify.error('{{ app()->getLocale() == "ar" ? "تعذر جلب بيانات الحساب" : "Failed to load account data" }}');
     });
 }
 

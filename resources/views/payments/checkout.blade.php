@@ -448,8 +448,16 @@
                         <div class="bank-info">
                             <span class="bank-name-label">{{ $account->bank_name }}</span>
                             <span class="bank-iban-label">{{ $account->iban }}</span>
-                            <div class="mt-2 d-flex gap-2 align-items-center">
+                            @if($account->account_number)
+                                <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 2px;">
+                                    {{ __('رقم الحساب:') }} <strong style="color: #fff; font-family: monospace;">{{ $account->account_number }}</strong>
+                                </div>
+                            @endif
+                            <div class="mt-2 d-flex gap-2 align-items-center flex-wrap">
                                 <span class="text-muted" style="font-size: 0.75rem;">{{ $account->beneficiary_name }}</span>
+                                @if($account->swift_code)
+                                    <span class="badge bg-secondary" style="font-size: 0.7rem; font-family: monospace;">SWIFT: {{ $account->swift_code }}</span>
+                                @endif
                                 <button type="button" class="copy-btn" onclick="copyIBAN('{{ $account->iban }}', this); event.stopPropagation();">
                                     <i class="far fa-copy"></i> نسخ الآيبان
                                 </button>
