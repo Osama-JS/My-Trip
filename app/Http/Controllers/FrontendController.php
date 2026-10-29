@@ -901,6 +901,52 @@ class FrontendController extends Controller
                 : 'Agent and Admin accounts are not permitted to make direct consumer bookings. Please use a customer account.');
         }
 
+        // Validate Passenger Passport Expiration Dates (Prevent expired passports)
+        $passengers = $request->input('passengers', []);
+        $isPassportMandatory = $request->input('IsPassportMandatory') === 'true' || $request->input('IsPassportMandatory') === '1' || $request->input('IsPassportMandatory') === true;
+        $departDateStr = $request->input('departDate');
+        $departDate = $departDateStr ? \Carbon\Carbon::parse($departDateStr)->startOfDay() : null;
+
+        if (is_array($passengers)) {
+            foreach ($passengers as $idx => $pax) {
+                $expiry = $pax['passport_expiry_date'] ?? ($pax['passport_expiry'] ?? null);
+                $paxNum = $idx + 1;
+                $paxName = trim(($pax['first_name'] ?? '') . ' ' . ($pax['last_name'] ?? ''));
+                $paxLabel = $paxName ? "($paxName)" : "#$paxNum";
+
+                if ($isPassportMandatory && empty($expiry)) {
+                    $msg = app()->getLocale() == 'ar'
+                        ? "يرجى إدخال تاريخ انتهاء جواز السفر للمسافر $paxLabel."
+                        : "Please enter the passport expiry date for passenger $paxLabel.";
+                    return back()->with('error', $msg)->withInput();
+                }
+
+                if (!empty($expiry)) {
+                    try {
+                        $expiryCarbon = \Carbon\Carbon::parse($expiry)->startOfDay();
+                        if ($expiryCarbon->isPast() || $expiryCarbon->isToday()) {
+                            $msg = app()->getLocale() == 'ar'
+                                ? "جواز السفر للمسافر $paxLabel منتهي الصلاحية ($expiry). لا يمكن إتمام الحجز بجواز سفر منتهي، يرجى إدخال تاريخ انتهاء ساري المفعول."
+                                : "Passport for passenger $paxLabel is expired ($expiry). Flight booking cannot be completed with an expired passport. Please enter a valid expiration date.";
+                            return back()->with('error', $msg)->withInput();
+                        }
+
+                        if ($departDate && $expiryCarbon->lt($departDate)) {
+                            $msg = app()->getLocale() == 'ar'
+                                ? "تاريخ انتهاء جواز السفر للمسافر $paxLabel ($expiry) ينتهي قبل موعد الرحلة ($departDateStr). يرجى تقديم جواز سفر سارٍ خلال فترة السفر."
+                                : "Passport for passenger $paxLabel expires ($expiry) before departure date ($departDateStr). Please provide a valid passport for travel.";
+                            return back()->with('error', $msg)->withInput();
+                        }
+                    } catch (\Exception $e) {
+                        $msg = app()->getLocale() == 'ar'
+                            ? "تاريخ انتهاء الجواز غير صالح للمسافر $paxLabel."
+                            : "Invalid passport expiry date for passenger $paxLabel.";
+                        return back()->with('error', $msg)->withInput();
+                    }
+                }
+            }
+        }
+
         // 1. Call Travelopro Create Booking
         $result = $this->traveloproService->createBooking($request->all());
 

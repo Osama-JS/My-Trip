@@ -3598,5 +3598,15 @@
     "الحجز مؤكد بنجاح.": "الحجز مؤكد بنجاح.",
     "تم تأكيد الحجز بنجاح.": "تم تأكيد الحجز بنجاح.",
     "تم تحديث حالة الحجز بنجاح.": "تم تحديث حالة الحجز بنجاح.",
-    "تم تحديث حالة الحجز.": "تم تحديث حالة الحجز."
+    "تم تحديث حالة الحجز.": "تم تحديث حالة الحجز.",
+    "Passport expiry date must be in the future and cannot be in the past.": "تاريخ انتهاء الجواز يجب أن يكون في المستقبل ولا يمكن أن يكون بالماضي.",
+    "The scanned passport is expired. Please enter a valid future expiration date.": "جواز السفر الممسوح منتهي الصلاحية. يرجى إدخال تاريخ انتهاء سارٍ في المستقبل.",
+    "Passport data extracted, but the passport is expired. Please enter a valid future expiration date.": "تم استخراج بيانات الجواز، ولكن جواز السفر منتهي الصلاحية. يرجى إدخال تاريخ انتهاء سارٍ في المستقبل.",
+    "Passport Expired": "جواز السفر منتهي الصلاحية",
+    "Please enter the passport expiry date for passenger": "يرجى إدخال تاريخ انتهاء جواز السفر للمسافر",
+    "Passport expiry date for passenger": "تاريخ انتهاء جواز السفر للمسافر",
+    "is expired. Please enter a valid future date.": "منتهي الصلاحية. يرجى إدخال تاريخ سارٍ في المستقبل.",
+    "Passport for passenger": "جواز السفر للمسافر",
+    "expires before the flight departure date": "ينتهي قبل موعد الرحلة",
+    "Please enter a valid passport date.": "يرجى إدخال تاريخ انتهاء سارٍ للجواز."
 }

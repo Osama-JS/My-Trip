@@ -2156,15 +2156,41 @@ $(document).ready(function() {
                         $('#hidden_dob_'+index).val(data.dob);
                         $('.ai-display-dob-'+index).text(data.dob);
                     }
+                    let isExpiredPassport = false;
                     if (data.passport_expiry_date) {
-                        const expInput = $('input[name="passengers['+index+'][passport_expiry_date]"]')[0];
-                        if (expInput && expInput._flatpickr) {
-                            expInput._flatpickr.setDate(data.passport_expiry_date);
+                        let expDate = new Date(data.passport_expiry_date);
+                        let today = new Date();
+                        today.setHours(0, 0, 0, 0);
+
+                        if (!isNaN(expDate.getTime()) && expDate <= today) {
+                            isExpiredPassport = true;
+                            // Do not accept expired date into field or hidden input
+                            const expInput = $('input[name="passengers['+index+'][passport_expiry_date]"]')[0];
+                            if (expInput) {
+                                if (expInput._flatpickr) {
+                                    expInput._flatpickr.clear();
+                                } else {
+                                    $(expInput).val('');
+                                }
+                                $(expInput).addClass('is-invalid');
+                            }
+                            $('#hidden_passport_expiry_'+index).val('');
+                            $('.ai-display-passport_expiry_date-'+index).html('<span class="text-danger fw-bold"><i class="fas fa-exclamation-triangle me-1"></i> ' + data.passport_expiry_date + ' ({{ __("Expired") }})</span>');
+                            $('.passport-expiry-error-'+index).show().text('{{ __("The scanned passport is expired. Please enter a valid future expiration date.") }}');
                         } else {
-                            $('input[name="passengers['+index+'][passport_expiry_date]"]').val(data.passport_expiry_date);
+                            const expInput = $('input[name="passengers['+index+'][passport_expiry_date]"]')[0];
+                            if (expInput && expInput._flatpickr) {
+                                expInput._flatpickr.setDate(data.passport_expiry_date);
+                            } else {
+                                $('input[name="passengers['+index+'][passport_expiry_date]"]').val(data.passport_expiry_date);
+                            }
+                            $('#hidden_passport_expiry_'+index).val(data.passport_expiry_date);
+                            $('.ai-display-passport_expiry_date-'+index).text(data.passport_expiry_date);
+                            if (expInput) {
+                                $(expInput).removeClass('is-invalid');
+                            }
+                            $('.passport-expiry-error-'+index).hide().text('');
                         }
-                        $('#hidden_passport_expiry_'+index).val(data.passport_expiry_date);
-                        $('.ai-display-passport_expiry_date-'+index).text(data.passport_expiry_date);
                     }
                     if (data.passport_issue_date) {
                         const issueInput = $('input[name="passengers['+index+'][passport_issue_date]"]')[0];
@@ -2210,12 +2236,29 @@ $(document).ready(function() {
                         }
                     }
                     
-                    if(typeof toastr !== 'undefined') {
-                        toastr.success('{{ __("Passport data extracted successfully.") }}');
-                    } else if(typeof Swal !== 'undefined') {
-                        Swal.fire({ icon: 'success', title: '{{ __("Success") }}', text: '{{ __("Passport data extracted successfully.") }}', toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
+                    if (isExpiredPassport) {
+                        let warnMsg = '{{ __("Passport data extracted, but the passport is expired. Please enter a valid future expiration date.") }}' + ' (' + data.passport_expiry_date + ')';
+                        if(typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: '{{ __("Passport Expired") }}',
+                                text: warnMsg,
+                                confirmButtonColor: '#f59e0b',
+                                confirmButtonText: '{{ __("OK") }}'
+                            });
+                        } else if(typeof toastr !== 'undefined') {
+                            toastr.warning(warnMsg);
+                        } else {
+                            alert(warnMsg);
+                        }
                     } else {
-                        alert('{{ __("Passport data extracted successfully.") }}');
+                        if(typeof toastr !== 'undefined') {
+                            toastr.success('{{ __("Passport data extracted successfully.") }}');
+                        } else if(typeof Swal !== 'undefined') {
+                            Swal.fire({ icon: 'success', title: '{{ __("Success") }}', text: '{{ __("Passport data extracted successfully.") }}', toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
+                        } else {
+                            alert('{{ __("Passport data extracted successfully.") }}');
+                        }
                     }
                 } else {
                     if(typeof toastr !== 'undefined') {
@@ -2314,23 +2357,145 @@ $(document).ready(function() {
         locale: "{{ app()->getLocale() }}",
     });
 
-    // Initialize Flatpickr for Passport Expiry (Future only)
+    // Initialize Flatpickr for Passport Expiry (Strictly future dates only)
+    const minExpiryDate = new Date();
+    minExpiryDate.setDate(minExpiryDate.getDate() + 1);
+    const minExpiryStr = minExpiryDate.toISOString().split('T')[0];
+
     flatpickr(".expiry-picker", {
         dateFormat: "Y-m-d",
-        minDate: "today",
+        minDate: minExpiryStr,
+        disableMobile: "true",
         locale: "{{ app()->getLocale() }}",
+        onChange: function(selectedDates, dateStr, instance) {
+            validateSingleExpiry($(instance.element));
+        },
+        onClose: function(selectedDates, dateStr, instance) {
+            validateSingleExpiry($(instance.element));
+        }
+    });
+
+    function validateSingleExpiry($input) {
+        if (!$input || !$input.length) return true;
+        let val = $input.val().trim();
+        let nameAttr = $input.attr('name') || '';
+        let match = nameAttr.match(/passengers\[(\d+)\]/);
+        let idx = match ? match[1] : '';
+        let $err = idx !== '' ? $('.passport-expiry-error-' + idx) : $input.siblings('.invalid-feedback');
+
+        if (!val) {
+            $input.removeClass('is-invalid');
+            if ($err.length) $err.hide().text('');
+            return true;
+        }
+
+        let inputDate = new Date(val);
+        let today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (isNaN(inputDate.getTime()) || inputDate <= today) {
+            $input.addClass('is-invalid');
+            let msg = '{{ __("Passport expiry date must be in the future and cannot be in the past.") }}';
+            if ($err.length) {
+                $err.text(msg).show();
+            }
+            if (idx !== '') {
+                $('#hidden_passport_expiry_' + idx).val('');
+            }
+            return false;
+        } else {
+            $input.removeClass('is-invalid');
+            if ($err.length) $err.hide().text('');
+            if (idx !== '') {
+                $('#hidden_passport_expiry_' + idx).val(val);
+                $('.ai-display-passport_expiry_date-' + idx).text(val);
+            }
+            return true;
+        }
+    }
+
+    $(document).on('change input blur', '.expiry-picker', function() {
+        validateSingleExpiry($(this));
     });
 
     // Initialize Flatpickr for Passport Issue Date (Past only)
     flatpickr(".issue-date-picker", {
         dateFormat: "Y-m-d",
         maxDate: "today",
+        disableMobile: "true",
         locale: "{{ app()->getLocale() }}",
     });
 
-    // Form Validation before submit (especially for AI extracted data)
+    // Helper to display submit error
+    function showSubmitError(msg) {
+        let errorContainer = $('#form-submit-error');
+        if (errorContainer.length === 0) {
+            $('.fe-booking-action').prepend('<div id="form-submit-error" class="alert alert-danger" style="border-radius: 12px; background-color: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 12px 16px; margin-bottom: 15px; text-align: center; font-weight: 700; box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.1);"><i class="fas fa-exclamation-circle me-2"></i> <span>' + msg + '</span></div>');
+        } else {
+            errorContainer.find('span').text(msg);
+            errorContainer.addClass('shake');
+            setTimeout(function() {
+                errorContainer.removeClass('shake');
+            }, 500);
+        }
+        $('html, body').animate({
+            scrollTop: $('.fe-booking-action').offset().top - 100
+        }, 500);
+    }
+
+    // Form Validation before submit (especially for AI extracted data & expired passport prevention)
     $('#flightBookingForm').on('submit', function(e) {
         let allowManualEdit = "{{ \App\Models\Setting::get('allow_manual_passport_edit', '1') }}";
+        let totalPax = {{ $totalPax }};
+        let isPassportMandatory = "{{ $details['IsPassportMandatory'] ?? 'false' }}" === "true" || "{{ $details['IsPassportMandatory'] ?? 'false' }}" === "1";
+        let today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        let flightDepartStr = "{{ $details['departDate'] ?? '' }}";
+        let flightDepartDate = flightDepartStr ? new Date(flightDepartStr) : null;
+        if (flightDepartDate) flightDepartDate.setHours(0, 0, 0, 0);
+
+        // 1. Validate Passport Expiry Date for ALL passengers (cannot be in past/expired)
+        for (let i = 0; i < totalPax; i++) {
+            let expInput = $('input[name="passengers[' + i + '][passport_expiry_date]"]');
+            let expVal = (expInput.length && expInput.val() ? expInput.val() : $('#hidden_passport_expiry_' + i).val()) || '';
+            expVal = expVal.trim();
+
+            if (isPassportMandatory && !expVal) {
+                e.preventDefault();
+                showSubmitError('{{ __("Please enter the passport expiry date for passenger") }} #' + (i + 1));
+                if (expInput.length && expInput.is(':visible')) {
+                    expInput.addClass('is-invalid').focus();
+                }
+                return false;
+            }
+
+            if (expVal) {
+                let expDate = new Date(expVal);
+                expDate.setHours(0, 0, 0, 0);
+
+                if (isNaN(expDate.getTime()) || expDate <= today) {
+                    e.preventDefault();
+                    let errMsg = '{{ __("Passport expiry date for passenger") }} #' + (i + 1) + ' (' + expVal + ') {{ __("is expired. Please enter a valid future date.") }}';
+                    showSubmitError(errMsg);
+                    if (expInput.length && expInput.is(':visible')) {
+                        expInput.addClass('is-invalid').focus();
+                    }
+                    return false;
+                }
+
+                if (flightDepartDate && expDate < flightDepartDate) {
+                    e.preventDefault();
+                    let errMsg = '{{ __("Passport for passenger") }} #' + (i + 1) + ' (' + expVal + ') {{ __("expires before the flight departure date") }} (' + flightDepartStr + '). {{ __("Please enter a valid passport date.") }}';
+                    showSubmitError(errMsg);
+                    if (expInput.length && expInput.is(':visible')) {
+                        expInput.addClass('is-invalid').focus();
+                    }
+                    return false;
+                }
+            }
+        }
+
         if (allowManualEdit !== '1') {
             let isValid = true;
             let totalPax = {{ $totalPax }};

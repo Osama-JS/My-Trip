@@ -124,14 +124,15 @@
         <div class="fe-form-row two-cols">
             <div class="fe-form-group">
                 <label class="fe-label">{{ $isPassport ? __('Passport Expiry Date') : __('Document Expiry Date') }}</label>
-                <input type="text" name="passengers[{{ $index }}][passport_expiry_date]" class="fe-input expiry-picker" {{ $isPassport ? 'required' : '' }} readonly value="{{ old("passengers.{$index}.passport_expiry_date", $savedPax['passport_expiry'] ?? '') }}" placeholder="YYYY-MM-DD">
+                <input type="text" name="passengers[{{ $index }}][passport_expiry_date]" class="fe-input expiry-picker" {{ $isPassport ? 'required' : '' }} readonly value="{{ old("passengers.{$index}.passport_expiry_date", $savedPax['passport_expiry'] ?? '') }}" placeholder="YYYY-MM-DD" min="{{ date('Y-m-d', strtotime('+1 day')) }}">
+                <div class="invalid-feedback passport-expiry-error-{{ $index }}" style="display: none; font-size: 0.8rem; font-weight: 600; color: #dc2626; margin-top: 4px;"></div>
             </div>
             <div class="fe-form-group" style="{{ $isPassport ? '' : 'display:none;' }}">
                 <label class="fe-label">
                     {{ __('Passport Issue Date') }}
                     <span style="font-weight:500;color:var(--gray-400);font-size:0.78rem;margin-inline-start:4px;">{{ __('(if required by airline)') }}</span>
                 </label>
-                <input type="text" name="passengers[{{ $index }}][passport_issue_date]" class="fe-input issue-date-picker" readonly placeholder="YYYY-MM-DD">
+                <input type="text" name="passengers[{{ $index }}][passport_issue_date]" class="fe-input issue-date-picker" readonly placeholder="YYYY-MM-DD" max="{{ date('Y-m-d') }}">
             </div>
         </div>
         @else
