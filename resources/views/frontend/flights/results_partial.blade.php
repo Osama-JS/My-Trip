@@ -337,6 +337,7 @@
                         'fare_source_code' => $fareInfo['FareSourceCode'],
                         'fare_source_code_inbound' => $inboundCode,
                         'session_id' => $sessionId,
+                        'fareType' => $fareInfo['FareType'] ?? ($itin['FareType'] ?? 'Private'),
                         'total_amount' => $price,
                         'airline' => $validatingCarrier,
                         'dep_time' => $firstDepTime,

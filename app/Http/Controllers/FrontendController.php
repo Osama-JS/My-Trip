@@ -812,8 +812,8 @@ class FrontendController extends Controller
         
         // If Travelopro returns null, manually check if it's an international flight
         if ($isPassport === null && isset($details['from']) && isset($details['to'])) {
-            $originAirport = \App\Models\Airport::where('code', $details['from'])->first();
-            $destAirport = \App\Models\Airport::where('code', $details['to'])->first();
+            $originAirport = \App\Models\Airport::where('airport_code', $details['from'])->first();
+            $destAirport = \App\Models\Airport::where('airport_code', $details['to'])->first();
             
             if ($originAirport && $destAirport) {
                 // If countries differ, it's international, so passport is mandatory
@@ -830,14 +830,29 @@ class FrontendController extends Controller
         
         $details['visual_seat_map'] = \App\Models\Setting::get('visual_seat_map', '1');
 
+        $validatedItin = $result['FareItineraries']['FareItinerary'] ?? ($result['FareItineraries'][0] ?? null);
+
         // Check if price changed
-        if (isset($result['FareItineraries']['FareItinerary']['AirItineraryFareInfo']['ItinTotalFares']['TotalFare']['Amount'])) {
+        if ($validatedItin && isset($validatedItin['AirItineraryFareInfo']['ItinTotalFares']['TotalFare']['Amount'])) {
+            $details['total_amount'] = $validatedItin['AirItineraryFareInfo']['ItinTotalFares']['TotalFare']['Amount'];
+        } elseif (isset($result['FareItineraries']['FareItinerary']['AirItineraryFareInfo']['ItinTotalFares']['TotalFare']['Amount'])) {
             $details['total_amount'] = $result['FareItineraries']['FareItinerary']['AirItineraryFareInfo']['ItinTotalFares']['TotalFare']['Amount'];
         }
 
         // IMPORTANT: Validate Fare returns a new FareSourceCode that MUST be used for ExtraServices and Booking!
-        if (isset($result['FareItineraries']['FareItinerary']['AirItineraryFareInfo']['FareSourceCode'])) {
+        if ($validatedItin && isset($validatedItin['AirItineraryFareInfo']['FareSourceCode'])) {
+            $details['fare_source_code'] = $validatedItin['AirItineraryFareInfo']['FareSourceCode'];
+        } elseif (isset($result['FareItineraries']['FareItinerary']['AirItineraryFareInfo']['FareSourceCode'])) {
             $details['fare_source_code'] = $result['FareItineraries']['FareItinerary']['AirItineraryFareInfo']['FareSourceCode'];
+        }
+
+        // Fare Type from revalidation or request
+        if ($validatedItin && isset($validatedItin['AirItineraryFareInfo']['FareType'])) {
+            $details['fareType'] = $validatedItin['AirItineraryFareInfo']['FareType'];
+        } elseif ($validatedItin && isset($validatedItin['FareType'])) {
+            $details['fareType'] = $validatedItin['FareType'];
+        } elseif ($request->filled('fareType')) {
+            $details['fareType'] = $request->get('fareType');
         }
 
         // Check Inbound Fare Source Code for Domestic Round-Trip flights
@@ -910,15 +925,33 @@ class FrontendController extends Controller
         if (is_array($passengers)) {
             foreach ($passengers as $idx => $pax) {
                 $expiry = $pax['passport_expiry_date'] ?? ($pax['passport_expiry'] ?? null);
+                $passportNo = trim($pax['passport_no'] ?? '');
+                $issueCountry = trim($pax['passport_issue_country'] ?? '');
                 $paxNum = $idx + 1;
                 $paxName = trim(($pax['first_name'] ?? '') . ' ' . ($pax['last_name'] ?? ''));
                 $paxLabel = $paxName ? "($paxName)" : "#$paxNum";
 
-                if ($isPassportMandatory && empty($expiry)) {
-                    $msg = app()->getLocale() == 'ar'
-                        ? "يرجى إدخال تاريخ انتهاء جواز السفر للمسافر $paxLabel."
-                        : "Please enter the passport expiry date for passenger $paxLabel.";
-                    return back()->with('error', $msg)->withInput();
+                if ($isPassportMandatory) {
+                    if (empty($passportNo)) {
+                        $msg = app()->getLocale() == 'ar'
+                            ? "يرجى إدخال رقم جواز السفر للمسافر $paxLabel."
+                            : "Please enter the passport number for passenger $paxLabel.";
+                        return back()->with('error', $msg)->withInput();
+                    }
+
+                    if (empty($issueCountry)) {
+                        $msg = app()->getLocale() == 'ar'
+                            ? "يرجى اختيار دولة إصدار جواز السفر للمسافر $paxLabel."
+                            : "Please select the passport issue country for passenger $paxLabel.";
+                        return back()->with('error', $msg)->withInput();
+                    }
+
+                    if (empty($expiry)) {
+                        $msg = app()->getLocale() == 'ar'
+                            ? "يرجى إدخال تاريخ انتهاء جواز السفر للمسافر $paxLabel."
+                            : "Please enter the passport expiry date for passenger $paxLabel.";
+                        return back()->with('error', $msg)->withInput();
+                    }
                 }
 
                 if (!empty($expiry)) {
@@ -956,6 +989,25 @@ class FrontendController extends Controller
         if (isset($result['status']) && $result['status'] === 'error') {
             $hasError = true;
             $errorMsg = $result['message'] ?? null;
+            if (!empty($result['error'])) {
+                $errorMsg .= ': ' . $result['error'];
+            }
+        }
+
+        // Top-level Errors object/array from Travelopro API
+        if (!empty($result['Errors'])) {
+            $hasError = true;
+            if (is_array($result['Errors'])) {
+                $errorMsg = $result['Errors']['ErrorMessage'] 
+                    ?? ($result['Errors'][0]['ErrorMessage'] 
+                    ?? ($result['Errors']['Error']['ErrorMessage'] 
+                    ?? null));
+                if (!$errorMsg) {
+                    $errorMsg = is_string($result['Errors']) ? $result['Errors'] : json_encode($result['Errors']);
+                }
+            } elseif (is_string($result['Errors']) && trim($result['Errors']) !== '') {
+                $errorMsg = trim($result['Errors']);
+            }
         }
 
         $bookingData = $result['BookFlightResponse'] ?? $result['CreateBookingResponse'] ?? $result['AirBookingResponse'] ?? null;
@@ -969,22 +1021,32 @@ class FrontendController extends Controller
                 : (strtolower(strval($bookingResult['Success'])) === 'true');
         }
 
-        // Validate non-empty Errors
+        // Validate non-empty Errors inside bookingResult
         $hasErrors = false;
         if (!empty($bookingResult['Errors'])) {
             if (is_array($bookingResult['Errors']) && count($bookingResult['Errors']) > 0) {
                 $hasErrors = true;
-                $errorMsg = $bookingResult['Errors']['Error']['ErrorMessage'] ?? $bookingResult['Errors']['ErrorMessage'] ?? json_encode($bookingResult['Errors']);
+                $extractedError = $bookingResult['Errors']['ErrorMessage'] 
+                    ?? ($bookingResult['Errors'][0]['ErrorMessage'] 
+                    ?? ($bookingResult['Errors'][0]['Errors']['ErrorMessage'] 
+                    ?? ($bookingResult['Errors']['Error']['ErrorMessage'] 
+                    ?? null)));
+                if ($extractedError) {
+                    $errorMsg = $extractedError;
+                } elseif (empty($errorMsg)) {
+                    $errorMsg = json_encode($bookingResult['Errors']);
+                }
             } elseif (is_string($bookingResult['Errors']) && trim($bookingResult['Errors']) !== '') {
                 $hasErrors = true;
-                $errorMsg = $bookingResult['Errors'];
+                $errorMsg = trim($bookingResult['Errors']);
             }
         }
 
         $uniqueId = $bookingResult['UniqueID'] ?? $bookingResult['uniqueID'] ?? null;
 
         if ($hasError || !$isSuccess || $hasErrors || empty($uniqueId)) {
-            Log::warning('Flight Booking Rejected / Expired before payment: ' . json_encode($result));
+            Log::warning('Flight Booking Rejected / Failed: ' . json_encode($result));
+            
             $userFriendlyMsg = $errorMsg ?: (app()->getLocale() == 'ar'
                 ? 'عذراً، لم يعد هذا الحجز أو المقاعد متاحة لدى شركة الطيران نظراً لانتهاء صلاحية جلسة الحجز. يرجى إعادة البحث واختيار الرحلة مجدداً.'
                 : 'Sorry, this flight fare or seat availability has expired with the airline due to session timeout. Please search again.');

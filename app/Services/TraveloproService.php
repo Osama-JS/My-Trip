@@ -86,10 +86,20 @@ class TraveloproService
      */
     private function httpClient(int $timeout = 120): \Illuminate\Http\Client\PendingRequest
     {
+        $verifySsl = env('TRAVELOPRO_VERIFY_SSL');
+        if ($verifySsl !== null) {
+            $verify = filter_var($verifySsl, FILTER_VALIDATE_BOOLEAN);
+        } else {
+            // In local development or testing environments where antivirus SSL inspection (e.g. Avast) intercepts traffic, verify => false
+            $verify = !app()->isLocal();
+        }
+
         $certPath = base_path('cacert.pem');
-        $options = file_exists($certPath)
-            ? ['verify' => $certPath]
-            : ['verify' => false];   // fallback only if file missing
+        if ($verify && file_exists($certPath)) {
+            $options = ['verify' => $certPath];
+        } else {
+            $options = ['verify' => $verify];
+        }
 
         return \Illuminate\Support\Facades\Http::withOptions($options)
             ->connectTimeout(120)
@@ -556,13 +566,27 @@ class TraveloproService
             }
         }
 
+        $rawPhone = $data['customerPhone'] ?? '';
+        $rawCountryCode = $data['countryCode'] ?? '';
+        $cleanPhone = preg_replace('/[^\d]/', '', $rawPhone);
+        $cleanCountryCode = preg_replace('/[^\d]/', '', $rawCountryCode);
+
+        if (empty($cleanCountryCode)) {
+            $cleanCountryCode = '966';
+        }
+
+        // If phone starts with country code, remove it from phone so it's not duplicated
+        if (!empty($cleanCountryCode) && str_starts_with($cleanPhone, $cleanCountryCode)) {
+            $cleanPhone = substr($cleanPhone, strlen($cleanCountryCode));
+        }
+
         $bookingInfo = [
             'flight_session_id'        => $data['flight_session_id'],
             'fare_source_code'         => $data['fare_source_code'],
             'IsPassportMandatory'      => $isPassportMandatory,
-            'areaCode'                 => $data['areaCode'] ?? '080',
-            'countryCode'              => $data['countryCode'] ?? '966',
-            'fareType'                 => $data['fareType'] ?? 'Private',
+            'areaCode'                 => preg_replace('/[^\d]/', '', $data['areaCode'] ?? '080') ?: '080',
+            'countryCode'              => $cleanCountryCode,
+            'fareType'                 => $data['fareType'] ?? ($data['fare_type'] ?? 'Private'),
         ];
 
         if (!empty($data['fare_source_code_inbound'])) {
@@ -575,11 +599,11 @@ class TraveloproService
             'flightBookingInfo' => $bookingInfo,
             'paxInfo' => [
                 'clientRef'     => $data['clientRef'] ?? uniqid('TR'),
-                'customerEmail' => $data['customerEmail'],
-                'customerPhone' => $data['customerPhone'],
+                'customerEmail' => $data['customerEmail'] ?? '',
+                'customerPhone' => $cleanPhone ?: $rawPhone,
                 'bookingNote'   => $data['bookingNote'] ?? '',
                 // FIX: Travelopro documentation requires paxDetails to be an array of objects
-                'paxDetails'    => [$this->formatPaxDetails($data['passengers'])],
+                'paxDetails'    => [$this->formatPaxDetails($data['passengers'] ?? [], $isPassportMandatory)],
             ],
         ]);
 
@@ -625,13 +649,14 @@ class TraveloproService
      * Format passenger details for booking.
      *
      * @param array $passengers
+     * @param bool $isPassportMandatory
      * @return array
      */
-    private function formatPaxDetails(array $passengers)
+    private function formatPaxDetails(array $passengers, bool $isPassportMandatory = false)
     {
         $formatted = [];
 
-        // Group passengers by type (adt, chd, inf)
+        // Group passengers by type (adult, child, infant)
         $groups = [
             'adult' => [],
             'child' => [],
@@ -639,7 +664,7 @@ class TraveloproService
         ];
 
         foreach ($passengers as $pax) {
-            $type = strtolower($pax['type']); // assuming type is passed as adult, child, infant
+            $type = strtolower($pax['type'] ?? 'adult');
             if (isset($groups[$type])) {
                 $groups[$type][] = $pax;
             }
@@ -654,15 +679,20 @@ class TraveloproService
                 'lastName'             => array_column($paxList, 'last_name'),
                 'dob'                  => array_column($paxList, 'dob'),
                 'nationality'          => array_column($paxList, 'nationality'),
-                'passportNo'           => array_column($paxList, 'passport_no'),
-                'passportIssueCountry' => array_column($paxList, 'passport_issue_country'),
-                'passportExpiryDate'   => array_column($paxList, 'passport_expiry_date'),
             ];
 
-            // ✅ P1: passportIssueDate — required when IsPassportFullDetailsMandatory=true
-            $issueDates = array_filter(array_column($paxList, 'passport_issue_date'));
-            if (!empty($issueDates)) {
-                $details['passportIssueDate'] = array_column($paxList, 'passport_issue_date');
+            // Only send passport fields if passport is mandatory OR if at least one non-empty passport number was provided
+            $passportNumbers = array_filter(array_map('trim', array_column($paxList, 'passport_no')));
+            if ($isPassportMandatory || !empty($passportNumbers)) {
+                $details['passportNo']           = array_column($paxList, 'passport_no');
+                $details['passportIssueCountry'] = array_column($paxList, 'passport_issue_country');
+                $details['passportExpiryDate']   = array_column($paxList, 'passport_expiry_date');
+
+                // passportIssueDate — sent if provided
+                $issueDates = array_filter(array_map('trim', array_column($paxList, 'passport_issue_date')));
+                if (!empty($issueDates)) {
+                    $details['passportIssueDate'] = array_column($paxList, 'passport_issue_date');
+                }
             }
 
             // Extra services (outbound/inbound) — sent when selected by user

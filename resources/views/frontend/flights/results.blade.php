@@ -317,6 +317,7 @@
                                         'fare_source_code' => $fareInfo['FareSourceCode'], 
                                         'fare_source_code_inbound' => $inboundCode,
                                         'session_id' => $results['AirSearchResponse']['session_id'] ?? ($results['AirSearchResponse']['AirSearchResult']['SessionId'] ?? ''), 
+                                        'fareType' => $fareInfo['FareType'] ?? ($itin['FareType'] ?? 'Private'),
                                         'total_amount' => $price,
                                         'airline' => $validatingCarrier,
                                         'dep_time' => $firstDepTime,

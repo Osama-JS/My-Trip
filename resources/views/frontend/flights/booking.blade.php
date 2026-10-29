@@ -186,6 +186,7 @@
         <input type="hidden" name="fare_source_code" value="{{ $details['fare_source_code'] ?? '' }}">
         <input type="hidden" name="fare_source_code_inbound" value="{{ $details['fare_source_code_inbound'] ?? '' }}">
         <input type="hidden" name="IsPassportMandatory" value="{{ $details['IsPassportMandatory'] ?? 'false' }}">
+        <input type="hidden" name="fareType" value="{{ $details['fareType'] ?? ($details['fare_type'] ?? 'Private') }}">
         <input type="hidden" name="total_amount" value="{{ $details['total_amount'] ?? 0 }}">
         <input type="hidden" name="from" value="{{ $details['from'] ?? '' }}">
         <input type="hidden" name="to" value="{{ $details['to'] ?? '' }}">
