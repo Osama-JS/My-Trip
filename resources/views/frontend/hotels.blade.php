@@ -43,7 +43,7 @@
                 </div>
 
                 {{-- Guests --}}
-                <div class="fe-search-col">
+                <div class="fe-search-col" style="position:relative;">
                     <label class="fe-search-label"><i class="fas fa-users"></i> {{ __('Rooms & Guests') }}</label>
                     <div class="fe-pax-input-wrapper" id="paxToggle">
                         <div class="fe-pax-summary">
@@ -343,6 +343,10 @@
     }
     .fe-search-input:focus { border-color: var(--primary); outline: none; background: white; }
 
+    .fe-search-col {
+        position: relative;
+    }
+
     /* PAX POPOVER */
     .fe-pax-input-wrapper {
         height: 54px;
@@ -358,30 +362,48 @@
     .fe-pax-summary { width: 100%; display: flex; justify-content: space-between; font-weight: 700; }
     .fe-pax-popover {
         position: absolute;
-        top: calc(100% + 10px);
-        right: 0;
-        width: 320px;
+        top: calc(100% + 8px);
+        inset-inline-start: 0;
+        left: 0;
+        right: auto;
+        width: 340px;
+        max-width: 90vw;
         background: white;
         border-radius: var(--radius-xl);
-        box-shadow: var(--shadow-2xl);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.15), 0 5px 15px rgba(0,0,0,0.08);
         padding: 24px;
         display: none;
         z-index: 1200;
-        border: 1px solid var(--gray-100);
+        border: 1px solid var(--gray-200);
+    }
+    [dir="rtl"] .fe-pax-popover,
+    html[lang="ar"] .fe-pax-popover {
+        left: auto;
+        right: 0;
+    }
+    .fe-pax-popover.active {
+        display: block;
+        animation: fePopoverFadeIn 0.2s ease;
+    }
+    @keyframes fePopoverFadeIn {
+        from { opacity: 0; transform: translateY(-6px); }
+        to { opacity: 1; transform: translateY(0); }
     }
     @media (max-width: 600px) {
         .fe-pax-popover {
             position: fixed;
             inset-inline-start: 16px;
             inset-inline-end: 16px;
-            right: auto;
+            left: 16px;
+            right: 16px;
             width: auto;
+            max-width: none;
             top: auto;
             bottom: 16px;
             border-radius: var(--radius-xl);
+            z-index: 2000;
         }
     }
-    .fe-pax-popover.active { display: block; }
     .fe-pax-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     .fe-pax-label strong { display: block; font-size: 1rem; color: var(--dark); }
     .fe-pax-label span { font-size: 0.75rem; color: var(--gray-500); }
@@ -789,7 +811,7 @@ $(document).ready(function() {
                         <div style="margin-bottom: 8px;">
                             <label style="font-size: 0.7rem; font-weight: 700; color: var(--gray-500);">{{ __("Child") }} ${j+1} {{ __("Age") }}</label>
                             <select name="occupancy[${roomNo-1}][child_age][]" class="fe-search-input" style="height: 34px; font-size: 0.8rem; padding: 0 8px;">
-                                ${Array(13).fill(0).map((_, idx) => `<option value="${idx}">${idx}</option>`).join('')}
+                                ${Array(13).fill(0).map((_, idx) => `<option value="${idx}">${idx === 0 ? '{{ app()->getLocale() == "ar" ? "أقل من سنة (رضيع)" : "< 1 year (Infant)" }}' : (idx + ' ' + (idx === 1 ? '{{ __("year") }}' : '{{ __("years") }}'))}</option>`).join('')}
                             </select>
                         </div>
                     `);
@@ -820,7 +842,7 @@ $(document).ready(function() {
                 for (let i = 0; i < val; i++) {
                     list.append(`
                         <select name="childAge[]" class="fe-search-input" style="height:40px; font-size:0.85rem">
-                            ${Array(13).fill(0).map((_, idx) => `<option value="${idx}">${idx} {{ __("years") }}</option>`).join('')}
+                            ${Array(13).fill(0).map((_, idx) => `<option value="${idx}">${idx === 0 ? '{{ app()->getLocale() == "ar" ? "أقل من سنة (رضيع)" : "< 1 year (Infant)" }}' : (idx + ' ' + (idx === 1 ? '{{ __("year") }}' : '{{ __("years") }}'))}</option>`).join('')}
                         </select>
                     `);
                 }

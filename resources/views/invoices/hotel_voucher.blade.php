@@ -374,6 +374,9 @@
         @php
             $qrData = "REF: " . ($booking->supplier_confirmation_num ?? $booking->reference_num) . "\nHOTEL: {$booking->hotel_name}\nGUEST: " . ($booking->user->name ?? 'Guest') . "\nCHECK-IN: " . $booking->check_in->format('d M Y');
             $qrDataEncoded = urlencode($qrData);
+            $insAmount = (float)($booking->insurance_amount ?? 0);
+            $policy = $booking->insurancePolicy;
+            $baseHotelPrice = max(0, (float)$booking->total_price - $insAmount);
         @endphp
 
         <!-- ─── HOTEL & REFERENCE BLOCK ─── -->
@@ -478,6 +481,11 @@
                         <td width="50%" style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }};" valign="top">
                             <span class="stay-info-strip-label">{{ __('Total Amount') }}</span><br>
                             <span style="color: #f2cb57; font-weight: 900; font-size: 16px;">{{ number_format($booking->total_price, 2) }} {{ $booking->currency }}</span>
+                            @if($insAmount > 0 || $policy)
+                                <div style="font-size: 7.5px; color: #a7f3d0; margin-top: 2px;">
+                                    🛡️ {{ __('Includes Travel Insurance: :amt :cur', ['amt' => number_format($insAmount, 2), 'cur' => $booking->currency]) }}
+                                </div>
+                            @endif
                         </td>
                     </tr>
                 </table>
@@ -499,6 +507,7 @@
                 @php 
                     $guestIndex = 0; 
                     $passengers = $booking->passengers ?? collect();
+                    $paxDetails = is_string($booking->pax_details ?? null) ? json_decode($booking->pax_details, true) : ($booking->pax_details ?? []);
                 @endphp
                 @if($passengers->isNotEmpty())
                     @foreach($passengers as $pax)
@@ -521,8 +530,8 @@
                             <td><span class="pax-badge">{{ __(ucfirst(strtolower($pax->passenger_type))) }}</span></td>
                         </tr>
                     @endforeach
-                @elseif($booking->pax_details && is_array($booking->pax_details))
-                    @foreach($booking->pax_details as $room)
+                @elseif(!empty($paxDetails) && is_array($paxDetails))
+                    @foreach($paxDetails as $room)
                         @if(isset($room['pax']) && is_array($room['pax']))
                             @foreach($room['pax'] as $pax)
                                 @php 
@@ -545,22 +554,44 @@
                                 </tr>
                             @endforeach
                         @elseif(isset($room['adult']) || isset($room['child']))
-                            @if(isset($room['adult']['firstName']))
-                                @foreach($room['adult']['firstName'] as $ai => $afn)
+                            @if(isset($room['adult']))
+                                @php
+                                    $adultFirstNames = isset($room['adult']['firstName']) 
+                                        ? (is_array($room['adult']['firstName']) ? $room['adult']['firstName'] : [$room['adult']['firstName']]) 
+                                        : [];
+                                    $adultLastNames = isset($room['adult']['lastName']) 
+                                        ? (is_array($room['adult']['lastName']) ? $room['adult']['lastName'] : [$room['adult']['lastName']]) 
+                                        : [];
+                                    $adultTitles = isset($room['adult']['title']) 
+                                        ? (is_array($room['adult']['title']) ? $room['adult']['title'] : [$room['adult']['title']]) 
+                                        : [];
+                                @endphp
+                                @foreach($adultFirstNames as $ai => $afn)
                                     @php $guestIndex++; @endphp
                                     <tr>
                                         <td style="text-align: center; color:#9ca3af; font-weight:700;">{{ str_pad($guestIndex, 2, '0', STR_PAD_LEFT) }}</td>
                                         <td style="text-align: center; font-weight: 700; color: #041741;">{{ $room['room_no'] ?? $loop->parent->iteration }}</td>
-                                        <td style="font-weight: 700; color: #1a1f36;">{{ $room['adult']['title'][$ai] ?? 'Mr' }} {{ $afn }} {{ $room['adult']['lastName'][$ai] ?? '' }}</td>
+                                        <td style="font-weight: 700; color: #1a1f36;">{{ $adultTitles[$ai] ?? 'Mr' }} {{ $afn }} {{ $adultLastNames[$ai] ?? '' }}</td>
                                         <td><span class="pax-badge">{{ __('Adult') }}</span></td>
                                     </tr>
                                 @endforeach
                             @endif
-                            @if(isset($room['child']['firstName']))
-                                @foreach($room['child']['firstName'] as $ci => $cfn)
+                            @if(isset($room['child']))
+                                @php
+                                    $childFirstNames = isset($room['child']['firstName']) 
+                                        ? (is_array($room['child']['firstName']) ? $room['child']['firstName'] : [$room['child']['firstName']]) 
+                                        : [];
+                                    $childLastNames = isset($room['child']['lastName']) 
+                                        ? (is_array($room['child']['lastName']) ? $room['child']['lastName'] : [$room['child']['lastName']]) 
+                                        : [];
+                                    $childTitles = isset($room['child']['title']) 
+                                        ? (is_array($room['child']['title']) ? $room['child']['title'] : [$room['child']['title']]) 
+                                        : [];
+                                @endphp
+                                @foreach($childFirstNames as $ci => $cfn)
                                     @php 
                                         $guestIndex++; 
-                                        $cTitle = $room['child']['title'][$ci] ?? 'Master';
+                                        $cTitle = $childTitles[$ci] ?? 'Master';
                                         if (in_array(strtoupper($cTitle), ['MR', 'MR.'])) {
                                             $cTitle = 'Master';
                                         } elseif (in_array(strtoupper($cTitle), ['MS', 'MS.'])) {
@@ -570,7 +601,7 @@
                                     <tr>
                                         <td style="text-align: center; color:#9ca3af; font-weight:700;">{{ str_pad($guestIndex, 2, '0', STR_PAD_LEFT) }}</td>
                                         <td style="text-align: center; font-weight: 700; color: #041741;">{{ $room['room_no'] ?? $loop->parent->iteration }}</td>
-                                        <td style="font-weight: 700; color: #1a1f36;">{{ $cTitle }} {{ $cfn }} {{ $room['child']['lastName'][$ci] ?? '' }}</td>
+                                        <td style="font-weight: 700; color: #1a1f36;">{{ $cTitle }} {{ $cfn }} {{ $childLastNames[$ci] ?? '' }}</td>
                                         <td><span class="pax-badge">{{ __('Child') }}</span></td>
                                     </tr>
                                 @endforeach
@@ -588,10 +619,51 @@
             </tbody>
         </table>
 
-        @php
-            $insAmount = (float)($booking->insurance_amount ?? 0);
-            $policy = $booking->insurancePolicy;
-        @endphp
+        <!-- ─── CHARGES & PAYMENT BREAKDOWN ─── -->
+        <div class="section-title">{{ __('Payment & Charges Breakdown') }}</div>
+        <table class="p-table" style="margin-bottom: 12px;">
+            <thead>
+                <tr>
+                    <th width="65%">{{ __('Description') }}</th>
+                    <th width="35%" style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }};">{{ __('Amount') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <div style="font-weight: 700; color: #1a1f36;">{{ __('Hotel Accommodation') }} ({{ $booking->check_in->diffInDays($booking->check_out) }} {{ __('Nights') }})</div>
+                        <div style="font-size: 9px; color: #9ca3af; margin-top: 2px;">
+                            {{ $booking->hotel_name }} · {{ $booking->room_name }} · {{ $booking->board_type ?? __('Room Only') }}
+                        </div>
+                    </td>
+                    <td style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }}; font-weight: 800; color: #1a1f36; font-size: 12px; vertical-align: middle;">
+                        {{ number_format($baseHotelPrice, 2) }} {{ $booking->currency }}
+                    </td>
+                </tr>
+                @if($insAmount > 0 || $policy)
+                <tr>
+                    <td>
+                        <div style="font-weight: 700; color: #1a1f36;">🛡️ {{ __('Comprehensive Travel & Medical Insurance') }}</div>
+                        <div style="font-size: 9px; color: #9ca3af; margin-top: 2px;">
+                            {{ __('Coverage Limit:') }} $500,000 USD · {{ __('Emergency Medical, Trip Delay, Baggage Protection') }}
+                        </div>
+                    </td>
+                    <td style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }}; font-weight: 800; color: #1a1f36; font-size: 12px; vertical-align: middle;">
+                        {{ number_format($insAmount, 2) }} {{ $booking->currency }}
+                    </td>
+                </tr>
+                @endif
+                <tr>
+                    <td style="background: #041741; color: #ffffff; font-size: 11px; font-weight: 700; padding: 10px 14px; text-transform: uppercase; letter-spacing: 1px;">
+                        {{ __('Total Paid') }}
+                    </td>
+                    <td style="background: #041741; color: #f2cb57; font-size: 15px; font-weight: 900; padding: 10px 14px; text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }};">
+                        {{ number_format($booking->total_price, 2) }} {{ $booking->currency }}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
         @if($insAmount > 0 || $policy)
         <!-- ─── TRAVEL INSURANCE BADGE ─── -->
         <div class="insurance-badge">

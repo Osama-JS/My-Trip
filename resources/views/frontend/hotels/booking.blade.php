@@ -306,9 +306,14 @@
                             {{-- Children --}}
                             @if($room['child'] > 0)
                                 @for($c = 1; $c <= $room['child']; $c++)
-                                    @php $childAge = $room['child_ages'][$c-1] ?? 0; @endphp
+                                    @php 
+                                        $childAge = $room['child_ages'][$c-1] ?? 0; 
+                                        $ageDisplay = ((int)$childAge === 0)
+                                            ? (app()->getLocale() == 'ar' ? 'أقل من سنة' : '< 1 year')
+                                            : $childAge . ' ' . ($childAge == 1 ? __('year') : __('years'));
+                                    @endphp
                                     <h4 class="fe-guest-title" style="margin-top: 30px;">
-                                        {{ __('Child') }} {{ $c }} ({{ __('Age') }}: {{ $childAge }})
+                                        {{ __('Child') }} {{ $c }} ({{ __('Age') }}: {{ $ageDisplay }})
                                     </h4>
                                     <div class="fe-form-row">
                                         <div class="fe-form-group">
@@ -942,6 +947,9 @@
                     $('#insurancePriceDisplay').text(res.unit_price.toFixed(2) + ' SAR');
                     $('#insuranceTotalOptionPrice').text('+ ' + res.selling_price.toFixed(2) + ' SAR');
                     $('#hiddenInsuranceQuoteId').val(res.quote_id);
+                    if ($('input[name="include_insurance"]:checked').val() == '1') {
+                        updateHotelGrandTotal();
+                    }
                 } else {
                     $('#insurancePriceDisplay').text('-- SAR');
                     $('#insuranceTotalOptionPrice').text('-- SAR');

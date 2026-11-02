@@ -946,6 +946,11 @@
         display: none;
         border: 1px solid var(--gray-100);
     }
+    [dir="rtl"] .fe-pax-popover,
+    html[lang="ar"] .fe-pax-popover {
+        right: auto;
+        left: 0;
+    }
     .fe-pax-popover.active { display: block; animation: fadeInUp 0.3s ease; }
     
     .pax-row {

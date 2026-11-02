@@ -584,6 +584,16 @@ class FrontendController extends Controller
         try {
             $includeInsurance = ($request->get('include_insurance') == '1');
             $insuranceAmount = $includeInsurance ? floatval($request->get('insurance_amount', 0)) : 0;
+            if ($includeInsurance && $insuranceAmount <= 0) {
+                try {
+                    $insuranceService = app(\App\Services\SitataInsuranceService::class);
+                    $paxCount = max(1, (int)$request->get('adults', 1) + (int)$request->get('childs', 0));
+                    $pricing = $insuranceService->calculatePricing(0, $paxCount);
+                    $insuranceAmount = floatval($pricing['selling_price'] ?? 0);
+                } catch (\Exception $e) {
+                    Log::warning('Fallback hotel insurance pricing failed: ' . $e->getMessage());
+                }
+            }
             $baseTotal = floatval($request->get('total_amount', 0));
             $finalTotal = $baseTotal + $insuranceAmount;
 
@@ -1077,6 +1087,23 @@ class FrontendController extends Controller
             $uniqueId = $bookingResult['UniqueID'] ?? $bookingResult['uniqueID'] ?? ('FLIGHT-' . strtoupper(uniqid()));
             $includeInsurance = ($request->get('include_insurance') == '1');
             $insuranceAmount = $includeInsurance ? floatval($request->get('insurance_amount', 0)) : 0;
+            if ($includeInsurance && $insuranceAmount <= 0) {
+                try {
+                    $insuranceService = app(\App\Services\SitataInsuranceService::class);
+                    $paxCount = max(1, count($request->input('passengers', [])));
+                    $pricing = $insuranceService->calculatePricing(0, $paxCount);
+                    $insuranceAmount = floatval($pricing['selling_price'] ?? 0);
+                } catch (\Exception $e) {
+                    Log::warning('Fallback flight insurance pricing failed: ' . $e->getMessage());
+                }
+            }
+
+            // Ensure total_amount incorporates insurance if not already added by client JS
+            $rawTotal = floatval($request->get('total_amount'));
+            if ($includeInsurance && $insuranceAmount > 0 && ($totalAmount - $providerPrice < $insuranceAmount) && ($totalAmount == $rawTotal)) {
+                // If insurance wasn't summed into totalAmount
+                $totalAmount = $rawTotal + $insuranceAmount;
+            }
 
             $booking = \App\Models\Booking::create([
                 'user_id' => auth()->id(),
