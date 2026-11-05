@@ -89,7 +89,9 @@ class PaymentController extends Controller
             case 'hotel':
                 return HotelBooking::with('user')->find($id);
             case 'flight':
-                return FlightBooking::with('user')->find($id);
+                return \App\Models\Booking::with(['user', 'flightBooking', 'passengers'])->find($id)
+                    ?? \App\Models\Booking::with(['user', 'flightBooking', 'passengers'])->whereHas('flightBooking', fn($q) => $q->where('id', $id))->first()
+                    ?? FlightBooking::with('user')->find($id)?->booking;
             case 'trip':
             default:
                 return TripBooking::with(['trip', 'user'])->find($id);
@@ -557,7 +559,8 @@ class PaymentController extends Controller
                 $booking = $this->resolveBooking($id, $type);
             } else {
                 // Fallback search by reference
-                $booking = FlightBooking::where('booking_reference', $bookingRef)->first();
+                $booking = \App\Models\Booking::where('booking_reference', $bookingRef)->first()
+                    ?? FlightBooking::where('id', $bookingRef)->first()?->booking;
             }
 
             if ($booking) {

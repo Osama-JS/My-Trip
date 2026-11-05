@@ -281,23 +281,31 @@ class TraveloproHotelService
             'nationality' => $data['residentNationality'] ?? 'SA',
         ];
 
-        // Format occupancy
+        // Format occupancy with strict capacity enforcement (Max 4 guests per room)
         $payload['occupancy'] = [];
         if (isset($data['distribution_mode']) && $data['distribution_mode'] === 'manual' && isset($data['occupancy'])) {
             foreach ($data['occupancy'] as $index => $roomData) {
-                $rChild = (int) ($roomData['child'] ?? 0);
-                $rAges = (isset($roomData['child_age']) && is_array($roomData['child_age'])) ? $roomData['child_age'] : [];
+                $rAdult = min(4, max(1, (int) ($roomData['adult'] ?? 1)));
+                $rChild = min(3, max(0, (int) ($roomData['child'] ?? 0)));
+                if ($rAdult + $rChild > 4) {
+                    $rChild = max(0, 4 - $rAdult);
+                }
+                $rAges = (isset($roomData['child_age']) && is_array($roomData['child_age'])) ? array_slice($roomData['child_age'], 0, $rChild) : [];
                 $payload['occupancy'][] = [
                     'room_no' => $index + 1,
-                    'adult' => (int) ($roomData['adult'] ?? 1),
+                    'adult' => $rAdult,
                     'child' => $rChild,
                     'child_age' => ($rChild > 0 && !empty($rAges)) ? array_values($rAges) : []
                 ];
             }
         } else {
-            $rooms = (int) ($data['rooms'] ?? 1);
-            $adults = (int) ($data['adults'] ?? 1);
-            $childs = (int) ($data['childs'] ?? 0);
+            $rooms = min(5, max(1, (int) ($data['rooms'] ?? 1)));
+            $maxAllowedGuests = $rooms * 4;
+            $adults = min($rooms * 4, max($rooms, (int) ($data['adults'] ?? 1)));
+            $childs = min($rooms * 3, max(0, (int) ($data['childs'] ?? 0)));
+            if ($adults + $childs > $maxAllowedGuests) {
+                $childs = max(0, $maxAllowedGuests - $adults);
+            }
             $childAge = (isset($data['childAge']) && is_array($data['childAge'])) ? $data['childAge'] : [];
 
             $remainingAdults = $adults;
@@ -306,11 +314,11 @@ class TraveloproHotelService
 
             for ($i = 1; $i <= $rooms; $i++) {
                 // Distribute adults
-                $roomAdults = ceil($remainingAdults / ($rooms - $i + 1));
+                $roomAdults = min(4, max(1, ceil($remainingAdults / ($rooms - $i + 1))));
                 $remainingAdults -= $roomAdults;
 
                 // Distribute children
-                $roomChilds = ceil($remainingChilds / ($rooms - $i + 1));
+                $roomChilds = min(max(0, 4 - $roomAdults), ceil($remainingChilds / ($rooms - $i + 1)));
                 $remainingChilds -= $roomChilds;
 
                 // Distribute child ages

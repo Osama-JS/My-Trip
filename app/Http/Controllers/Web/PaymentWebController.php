@@ -5,7 +5,8 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\TripBooking;
 use App\Models\HotelBooking;
-use App\Models\Booking as FlightBooking;
+use App\Models\Booking;
+use App\Models\FlightBooking;
 use App\Models\BankTransfer;
 use App\Models\BankAccount;
 use App\Services\HyperPayService;
@@ -132,7 +133,9 @@ class PaymentWebController extends Controller
             case 'hotel':
                 return HotelBooking::with('user')->where('id', $id)->first();
             case 'flight':
-                return FlightBooking::with(['user', 'flightBooking'])->where('id', $id)->first();
+                return Booking::with(['user', 'flightBooking', 'passengers'])->where('id', $id)->first()
+                    ?? Booking::with(['user', 'flightBooking', 'passengers'])->whereHas('flightBooking', fn($q) => $q->where('id', $id))->first()
+                    ?? FlightBooking::with(['user', 'booking.passengers'])->find($id)?->booking;
             case 'trip':
             default:
                 return TripBooking::with(['trip', 'user'])->where('id', $id)->first();
@@ -572,6 +575,14 @@ class PaymentWebController extends Controller
 
             if ($type === 'flight' && $booking->flightBooking) {
                 $dest = $booking->flightBooking->destination ?? 'GLOBAL';
+                if ($booking->flightBooking->departure_date) {
+                    $departureDate = \Carbon\Carbon::parse($booking->flightBooking->departure_date);
+                }
+                if ($booking->flightBooking->return_date) {
+                    $returnDate = \Carbon\Carbon::parse($booking->flightBooking->return_date);
+                } else {
+                    $returnDate = $departureDate->copy()->addDays(7);
+                }
             } elseif ($type === 'trip' && $booking->trip) {
                 $dest = $booking->trip->country?->iso ?? 'GLOBAL';
                 $departureDate = $booking->booking_date ?? now()->addDays(1);

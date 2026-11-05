@@ -81,7 +81,7 @@
                                 </div>
                                 <div class="fe-pax-counter">
                                     <button type="button" class="minus" data-type="adults">-</button>
-                                    <input type="number" id="inputAdults" name="adults" value="2" min="1" max="10" readonly>
+                                    <input type="number" id="inputAdults" name="adults" value="2" min="1" max="4" readonly>
                                     <button type="button" class="plus" data-type="adults">+</button>
                                 </div>
                             </div>
@@ -92,13 +92,16 @@
                                 </div>
                                 <div class="fe-pax-counter">
                                     <button type="button" class="minus" data-type="childs">-</button>
-                                    <input type="number" id="inputChilds" name="childs" value="0" min="0" max="10" readonly>
+                                    <input type="number" id="inputChilds" name="childs" value="0" min="0" max="3" readonly>
                                     <button type="button" class="plus" data-type="childs">+</button>
                                 </div>
                             </div>
                             <div id="childAges" style="margin-top: 15px; display: none; border-top: 1px dashed var(--gray-200); padding-top: 15px;">
                                 <label style="font-size: 0.8rem; font-weight: 800; display: block; margin-bottom: 10px;">{{ __('Child Ages') }}</label>
                                 <div id="childAgesList" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
+                            </div>
+                            <div class="pax-capacity-hint" style="font-size: 0.78rem; color: #64748b; margin-top: 14px; text-align: center; background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px 12px; border-radius: 8px;">
+                                <i class="fas fa-info-circle text-primary me-1"></i> {{ __('Maximum 4 guests allowed per room.') }}
                             </div>
                         </div>
 
@@ -403,6 +406,26 @@
             border-radius: var(--radius-xl);
             z-index: 2000;
         }
+    }
+
+    /* Toast Positioning: Bottom Left */
+    .fe-toast-bottom-left {
+        bottom: 24px !important;
+        left: 24px !important;
+        right: auto !important;
+        top: auto !important;
+        justify-content: flex-start !important;
+        align-items: flex-end !important;
+    }
+    .fe-toast-bottom-left .swal2-popup {
+        margin: 0 !important;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
+        border-radius: var(--radius-lg, 12px) !important;
+    }
+    [dir="rtl"] .fe-toast-bottom-left .swal2-popup,
+    html[lang="ar"] .fe-toast-bottom-left .swal2-popup {
+        direction: rtl !important;
+        text-align: right !important;
     }
     .fe-pax-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     .fe-pax-label strong { display: block; font-size: 1rem; color: var(--dark); }
@@ -752,21 +775,46 @@ $(document).ready(function() {
         updatePaxSummary();
     });
 
+    const MAX_GUESTS_PER_ROOM = 4;
+    const MAX_ADULTS_PER_ROOM = 4;
+    const MAX_CHILDS_PER_ROOM = 3;
+
+    function showCapacityWarning(msg) {
+        if (typeof Swal !== 'undefined') {
+            const isRtl = document.documentElement.dir === 'rtl' || '{{ app()->getLocale() }}' === 'ar';
+            Swal.fire({
+                toast: true,
+                position: isRtl ? 'bottom-end' : 'bottom-start',
+                icon: 'warning',
+                title: msg,
+                showConfirmButton: false,
+                timer: 2800,
+                customClass: {
+                    container: 'fe-toast-bottom-left',
+                    popup: isRtl ? 'swal2-rtl' : ''
+                }
+            });
+        }
+    }
+
     function renderManualRooms() {
         const container = $('#manualRoomsList');
-        const roomCount = parseInt($('#inputRooms').val());
+        const roomCount = parseInt($('#inputRooms').val()) || 1;
         container.empty();
 
         for (let i = 1; i <= roomCount; i++) {
             const roomHtml = `
                 <div class="fe-manual-room-box" style="margin-bottom: 20px; padding: 15px; background: var(--gray-50); border-radius: 12px; border: 1px solid var(--gray-100);">
-                    <h5 style="margin-bottom: 15px; font-weight: 800; font-size: 0.9rem; color: var(--primary);">{{ __("Room") }} ${i}</h5>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h5 style="margin: 0; font-weight: 800; font-size: 0.9rem; color: var(--primary);">{{ __("Room") }} ${i}</h5>
+                        <span style="font-size: 0.72rem; color: #94a3b8;">{{ __("Max 4 guests") }}</span>
+                    </div>
                     
                     <div class="fe-pax-row" style="margin-bottom: 12px;">
                         <div class="fe-pax-label"><strong>{{ __("Adults") }}</strong></div>
                         <div class="fe-pax-counter">
                             <button type="button" class="m-minus" data-room="${i}" data-type="adult">-</button>
-                            <input type="number" name="occupancy[${i-1}][adult]" class="m-adult-input" data-room="${i}" value="2" min="1" max="5" readonly>
+                            <input type="number" name="occupancy[${i-1}][adult]" class="m-adult-input" data-room="${i}" value="2" min="1" max="4" readonly>
                             <button type="button" class="m-plus" data-room="${i}" data-type="adult">+</button>
                         </div>
                     </div>
@@ -793,12 +841,25 @@ $(document).ready(function() {
         const input = counter.find('input');
         const type = $(this).data('type');
         const roomNo = $(this).data('room');
+        const roomBox = $(this).closest('.fe-manual-room-box');
+        const adultInput = roomBox.find('.m-adult-input');
+        const childInput = roomBox.find('.m-child-input');
+        let currentAdults = parseInt(adultInput.val()) || 1;
+        let currentChilds = parseInt(childInput.val()) || 0;
         let val = parseInt(input.val());
 
         if ($(this).hasClass('m-plus')) {
-            if (val < input.attr('max')) val++;
+            if (currentAdults + currentChilds >= MAX_GUESTS_PER_ROOM) {
+                showCapacityWarning('{{ __("Maximum 4 guests allowed per room.") }}');
+                return;
+            }
+            if (type === 'adult' && val >= MAX_ADULTS_PER_ROOM) return;
+            if (type === 'child' && val >= MAX_CHILDS_PER_ROOM) return;
+            val++;
         } else {
-            if (val > input.attr('min')) val--;
+            if (type === 'adult' && val <= 1) return; // Min 1 adult per room
+            if (type === 'child' && val <= 0) return;
+            val--;
         }
         input.val(val).trigger('change');
 
@@ -823,36 +884,107 @@ $(document).ready(function() {
         updatePaxSummary();
     });
 
+    function renderChildAgeDropdowns(count) {
+        const list = $('#childAgesList');
+        if (count > 0) {
+            $('#childAges').show();
+            list.empty();
+            for (let i = 0; i < count; i++) {
+                list.append(`
+                    <select name="childAge[]" class="fe-search-input" style="height:40px; font-size:0.85rem">
+                        ${Array(13).fill(0).map((_, idx) => `<option value="${idx}">${idx === 0 ? '{{ app()->getLocale() == "ar" ? "أقل من سنة (رضيع)" : "< 1 year (Infant)" }}' : (idx + ' ' + (idx === 1 ? '{{ __("year") }}' : '{{ __("years") }}'))}</option>`).join('')}
+                    </select>
+                `);
+            }
+        } else {
+            $('#childAges').hide();
+            list.empty();
+        }
+    }
+
     $('.plus, .minus').click(function() {
         const type = $(this).data('type');
         const input = $(this).siblings('input');
+        let rooms = parseInt($('#inputRooms').val()) || 1;
+        let adults = parseInt($('#inputAdults').val()) || 1;
+        let childs = parseInt($('#inputChilds').val()) || 0;
         let val = parseInt(input.val());
-        if ($(this).hasClass('plus')) {
-            if (val < input.attr('max')) val++;
-        } else {
-            if (val > input.attr('min')) val--;
-        }
-        input.val(val).trigger('change');
-        
-        if (type === 'childs') {
-            const list = $('#childAgesList');
-            if (val > 0) {
-                $('#childAges').show();
-                list.empty();
-                for (let i = 0; i < val; i++) {
-                    list.append(`
-                        <select name="childAge[]" class="fe-search-input" style="height:40px; font-size:0.85rem">
-                            ${Array(13).fill(0).map((_, idx) => `<option value="${idx}">${idx === 0 ? '{{ app()->getLocale() == "ar" ? "أقل من سنة (رضيع)" : "< 1 year (Infant)" }}' : (idx + ' ' + (idx === 1 ? '{{ __("year") }}' : '{{ __("years") }}'))}</option>`).join('')}
-                        </select>
-                    `);
-                }
+
+        if (type === 'rooms') {
+            if ($(this).hasClass('plus')) {
+                if (val < 5) val++;
             } else {
-                $('#childAges').hide();
+                if (val > 1) val--;
             }
-        }
-        
-        if (type === 'rooms' && $('#distributionMode').val() === 'manual') {
-            renderManualRooms();
+            input.val(val).trigger('change');
+            rooms = val;
+
+            // Recalculate dynamic boundaries for adults and children
+            $('#inputAdults').attr('min', rooms);
+            $('#inputAdults').attr('max', rooms * MAX_ADULTS_PER_ROOM);
+            $('#inputChilds').attr('max', rooms * MAX_CHILDS_PER_ROOM);
+
+            // Ensure at least 1 adult per room
+            if (adults < rooms) {
+                adults = rooms;
+                $('#inputAdults').val(adults);
+            }
+            // Ensure adults do not exceed max for the new room count
+            if (adults > rooms * MAX_ADULTS_PER_ROOM) {
+                adults = rooms * MAX_ADULTS_PER_ROOM;
+                $('#inputAdults').val(adults);
+            }
+            // Ensure total guests do not exceed room capacity
+            if (adults + childs > rooms * MAX_GUESTS_PER_ROOM) {
+                childs = Math.max(0, (rooms * MAX_GUESTS_PER_ROOM) - adults);
+                $('#inputChilds').val(childs);
+                renderChildAgeDropdowns(childs);
+            }
+
+            if ($('#distributionMode').val() === 'manual') {
+                renderManualRooms();
+            }
+        } else if (type === 'adults') {
+            const maxAdults = rooms * MAX_ADULTS_PER_ROOM;
+            const minAdults = rooms;
+
+            if ($(this).hasClass('plus')) {
+                if (val >= maxAdults) {
+                    showCapacityWarning('{{ __("Maximum 4 adults allowed per room.") }}');
+                    return;
+                }
+                if (val + childs >= rooms * MAX_GUESTS_PER_ROOM) {
+                    showCapacityWarning('{{ __("Maximum 4 guests allowed per room. Please add another room.") }}');
+                    return;
+                }
+                val++;
+            } else {
+                if (val <= minAdults) {
+                    showCapacityWarning('{{ __("At least 1 adult is required per room.") }}');
+                    return;
+                }
+                val--;
+            }
+            input.val(val).trigger('change');
+        } else if (type === 'childs') {
+            const maxChilds = rooms * MAX_CHILDS_PER_ROOM;
+
+            if ($(this).hasClass('plus')) {
+                if (val >= maxChilds) {
+                    showCapacityWarning('{{ __("Maximum 3 children allowed per room.") }}');
+                    return;
+                }
+                if (adults + val >= rooms * MAX_GUESTS_PER_ROOM) {
+                    showCapacityWarning('{{ __("Maximum 4 guests allowed per room. Please add another room.") }}');
+                    return;
+                }
+                val++;
+            } else {
+                if (val <= 0) return;
+                val--;
+            }
+            input.val(val).trigger('change');
+            renderChildAgeDropdowns(val);
         }
 
         updatePaxSummary();

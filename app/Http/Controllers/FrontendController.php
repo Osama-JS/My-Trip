@@ -1189,7 +1189,7 @@ class FrontendController extends Controller
                 'childs' => (int)$request->get('childs', 0),
                 'infants' => (int)$request->get('infants', 0),
                 'itinerary_data' => $itineraryPayload,
-                'total_amount' => $request->get('total_amount'),
+                'total_amount' => $totalAmount,
                 'currency' => 'SAR',
                 'extra_services' => $request->get('passengers', [])
             ]);
