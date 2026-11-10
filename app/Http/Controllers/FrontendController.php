@@ -772,6 +772,98 @@ class FrontendController extends Controller
     }
 
     /**
+     * Fetch Flight Fare Rules
+     */
+    public function getFareRules(Request $request)
+    {
+        $sessionId = $request->input('session_id');
+        $fareSourceCode = $request->input('fare_source_code');
+        $inboundCode = $request->input('fare_source_code_inbound');
+
+        if (empty($sessionId) || empty($fareSourceCode)) {
+            return response()->json([
+                'success' => false,
+                'message' => __('Session ID and Fare Source Code are required.')
+            ], 422);
+        }
+
+        try {
+            $result = $this->traveloproService->getFareRules([
+                'session_id' => $sessionId,
+                'fare_source_code' => $fareSourceCode,
+                'fare_source_code_inbound' => $inboundCode,
+            ]);
+
+            if (isset($result['status']) && $result['status'] === 'error') {
+                return response()->json([
+                    'success' => false,
+                    'message' => $result['message'] ?? __('Failed to retrieve fare rules.'),
+                    'details' => $result['details'] ?? null
+                ], 200);
+            }
+
+            // Extract the result node from possible Travelopro API response versions
+            $resNode = $result['FareRules1_1Response']['FareRules1_1Result'] 
+                    ?? ($result['FareRulesResponse']['FareRulesResult'] 
+                    ?? ($result['AirFareRulesResponse']['AirFareRulesResult'] 
+                    ?? $result));
+
+            // Extract BaggageInfos
+            $baggageList = [];
+            $rawBaggage = $resNode['BaggageInfos'] ?? [];
+            if (isset($rawBaggage['BaggageInfo'])) {
+                $rawBaggage = isset($rawBaggage['BaggageInfo'][0]) ? $rawBaggage['BaggageInfo'] : [$rawBaggage['BaggageInfo']];
+            }
+            if (is_array($rawBaggage)) {
+                foreach ($rawBaggage as $bItem) {
+                    $b = $bItem['BaggageInfo'] ?? $bItem;
+                    if (!empty($b) && is_array($b)) {
+                        $baggageList[] = [
+                            'flight_no' => $b['FlightNo'] ?? '',
+                            'departure' => $b['Departure'] ?? '',
+                            'arrival' => $b['Arrival'] ?? '',
+                            'baggage' => $b['Baggage'] ?? '',
+                        ];
+                    }
+                }
+            }
+
+            // Extract FareRules
+            $rulesList = [];
+            $rawRules = $resNode['FareRules'] ?? ($resNode['FareRule'] ?? ($resNode['RuleDetails'] ?? []));
+            if (isset($rawRules['FareRule'])) {
+                $rawRules = isset($rawRules['FareRule'][0]) ? $rawRules['FareRule'] : [$rawRules['FareRule']];
+            }
+            if (is_array($rawRules)) {
+                foreach ($rawRules as $rItem) {
+                    $r = $rItem['FareRule'] ?? $rItem;
+                    if (!empty($r) && is_array($r)) {
+                        $rulesList[] = [
+                            'airline' => $r['Airline'] ?? '',
+                            'city_pair' => $r['CityPair'] ?? '',
+                            'category' => $r['Category'] ?? 'GENERAL',
+                            'rules' => $r['Rules'] ?? ($r['RuleDetails'] ?? ($r['Text'] ?? '')),
+                        ];
+                    }
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $result,
+                'baggage_infos' => $baggageList,
+                'fare_rules' => $rulesList,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Frontend Fare Rules Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 200);
+        }
+    }
+
+    /**
      * Flight Booking Form
      */
     public function flightBookingForm(Request $request)
@@ -1064,47 +1156,44 @@ class FrontendController extends Controller
             return back()->with('error', $userFriendlyMsg)->withInput();
         }
 
-        // Calculate Profit Margin
-        $margin = floatval(\App\Models\Setting::get('flight_margin', 0));
-        $marginType = \App\Models\Setting::get('flight_margin_type', 'percentage');
-        $totalAmount = floatval($request->get('total_amount'));
-        
-        $profit = 0;
-        $providerPrice = $totalAmount;
-        if ($margin > 0) {
-            if ($marginType === 'fixed') {
-                $profit = $margin;
-                $providerPrice = $totalAmount - $profit;
-            } else {
-                // total = base * (1 + margin/100) => base = total / (1 + margin/100)
-                $providerPrice = $totalAmount / (1 + ($margin / 100));
-                $profit = $totalAmount - $providerPrice;
+        // 1. Calculate insurance amount
+        $includeInsurance = ($request->get('include_insurance') == '1');
+        $insuranceAmount = $includeInsurance ? floatval($request->get('insurance_amount', 0)) : 0;
+        if ($includeInsurance && $insuranceAmount <= 0) {
+            try {
+                $insuranceService = app(\App\Services\SitataInsuranceService::class);
+                $paxCount = max(1, count($request->input('passengers', [])));
+                $pricing = $insuranceService->calculatePricing(0, $paxCount);
+                $insuranceAmount = floatval($pricing['selling_price'] ?? 0);
+            } catch (\Exception $e) {
+                Log::warning('Fallback flight insurance pricing failed: ' . $e->getMessage());
             }
         }
 
-        // 2. Persist in local DB (Booking model)
+        // 2. Calculate flight base / provider price and total amount
+        $submittedTotal = floatval($request->get('total_amount'));
+        
+        // Calculate Profit Margin
+        $margin = floatval(\App\Models\Setting::get('flight_margin', 0));
+        $marginType = \App\Models\Setting::get('flight_margin_type', 'percentage');
+
+        $totalAmount = $submittedTotal;
+        $flightFare = max(0, $totalAmount - $insuranceAmount);
+        $providerPrice = $flightFare;
+        
+        $profit = 0;
+        if ($margin > 0) {
+            if ($marginType === 'fixed') {
+                $profit = $margin;
+                $providerPrice = max(0, $flightFare - $profit);
+            } else {
+                $providerPrice = $flightFare / (1 + ($margin / 100));
+                $profit = $flightFare - $providerPrice;
+            }
+        }
+
+        // 3. Persist in local DB (Booking model)
         try {
-            $uniqueId = $bookingResult['UniqueID'] ?? $bookingResult['uniqueID'] ?? ('FLIGHT-' . strtoupper(uniqid()));
-            $includeInsurance = ($request->get('include_insurance') == '1');
-            $insuranceAmount = $includeInsurance ? floatval($request->get('insurance_amount', 0)) : 0;
-            if ($includeInsurance && $insuranceAmount <= 0) {
-                try {
-                    $insuranceService = app(\App\Services\SitataInsuranceService::class);
-                    $paxCount = max(1, count($request->input('passengers', [])));
-                    $pricing = $insuranceService->calculatePricing(0, $paxCount);
-                    $insuranceAmount = floatval($pricing['selling_price'] ?? 0);
-                } catch (\Exception $e) {
-                    Log::warning('Fallback flight insurance pricing failed: ' . $e->getMessage());
-                }
-            }
-
-            // Ensure total_amount incorporates insurance if not already added by client JS
-            $rawTotal = floatval($request->get('total_amount'));
-            if ($includeInsurance && $insuranceAmount > 0 && ($totalAmount - $providerPrice < $insuranceAmount) && ($totalAmount == $rawTotal)) {
-                // If insurance wasn't summed into totalAmount
-                $totalAmount = $rawTotal + $insuranceAmount;
-            }
-
             $booking = \App\Models\Booking::create([
                 'user_id' => auth()->id(),
                 'booking_reference' => $uniqueId,

@@ -31,6 +31,7 @@ Route::get('/trips/{id}', [FrontendController::class, 'tripDetails'])->name('tri
 Route::get('/flights', [FrontendController::class, 'flights'])->name('flights');
 Route::get('/flights/results', [FrontendController::class, 'flightResults'])->name('flights.results');
 Route::get('/flights/revalidate', [FrontendController::class, 'flightRevalidate'])->name('flights.revalidate');
+Route::post('/flights/fare-rules', [FrontendController::class, 'getFareRules'])->name('flights.fare-rules');
 Route::get('/flights/booking', [FrontendController::class, 'flightBookingForm'])->name('flights.booking.form');
 Route::post('/flights/book', [FrontendController::class, 'processFlightBooking'])->name('flights.book.process');
 Route::get('/flights/book/resume', [FrontendController::class, 'resumeFlightBooking'])->name('flights.book.process.resume')->middleware('auth');

@@ -313,14 +313,36 @@
                         </div>
                     @endforeach
                     
-                    {{-- Baggage Allowance info bar --}}
-                    <div class="fr-card-perks" style="display: flex; align-items: center; gap: 15px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--gray-100); font-size: 0.78rem; color: var(--gray-600);">
-                        <span style="display: inline-flex; align-items: center; gap: 5px; color: #0f766e; font-weight: 700; background: #f0fdfa; padding: 3px 8px; border-radius: 5px; border: 1px solid #ccfbf1;">
-                            <i class="fas fa-suitcase-rolling"></i> {{ __('Baggage') }}: {{ $mainBaggageDisplay }}
-                        </span>
-                        <span style="display: inline-flex; align-items: center; gap: 5px; color: #475569;">
-                            <i class="fas fa-couch"></i> {{ $searchParams['class'] ?? 'Economy' }}
-                        </span>
+                    {{-- Baggage Allowance & Perks info bar --}}
+                    <div class="fr-card-perks" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--gray-100); font-size: 0.78rem; color: var(--gray-600);">
+                        <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                            <span style="display: inline-flex; align-items: center; gap: 5px; color: #0f766e; font-weight: 700; background: #f0fdfa; padding: 3px 8px; border-radius: 5px; border: 1px solid #ccfbf1;">
+                                <i class="fas fa-suitcase-rolling"></i> {{ __('Baggage') }}: {{ $mainBaggageDisplay }}
+                            </span>
+                            <span style="display: inline-flex; align-items: center; gap: 5px; color: #475569;">
+                                <i class="fas fa-couch"></i> {{ $searchParams['class'] ?? 'Economy' }}
+                            </span>
+                        </div>
+                        <button type="button" class="btn-fare-rules-trigger"
+                                data-session="{{ $sessionId }}" 
+                                data-fare-source="{{ $fareInfo['FareSourceCode'] }}"
+                                data-inbound="{{ $inboundCode ?? '' }}"
+                                data-airline="{{ $validatingCarrier }}"
+                                data-airline-name="{{ $firstSeg['MarketingAirlineName'] ?? $validatingCarrier }}"
+                                data-from="{{ $searchParams['from'] ?? '' }}"
+                                data-to="{{ $searchParams['to'] ?? '' }}"
+                                data-refundable="{{ $itineraryData['AirItineraryFareInfo']['IsRefundable'] ?? '' }}"
+                                data-change-allowed="{{ isset($firstFb['PenaltyDetails']['ChangeAllowed']) ? ($firstFb['PenaltyDetails']['ChangeAllowed'] ? 'true' : 'false') : '' }}"
+                                data-change-penalty="{{ $firstFb['PenaltyDetails']['ChangePenaltyAmount'] ?? '' }}"
+                                data-refund-allowed="{{ isset($firstFb['PenaltyDetails']['RefundAllowed']) ? ($firstFb['PenaltyDetails']['RefundAllowed'] ? 'true' : 'false') : '' }}"
+                                data-refund-penalty="{{ $firstFb['PenaltyDetails']['RefundPenaltyAmount'] ?? '' }}"
+                                data-baggage="{{ $mainBaggageDisplay }}"
+                                data-cabin-baggage="{{ $fbCabin ?? '' }}"
+                                data-fare-basis="{{ $firstFb['FareBasisCode'] ?? '' }}"
+                                title="{{ __('View ticket cancellation and refund rules') }}"
+                                style="background: #f0f9ff; border: 1px solid #bae6fd; color: #0284c7; font-weight: 700; border-radius: 6px; padding: 3px 9px; font-size: 0.75rem; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s;">
+                            <i class="fas fa-file-contract text-primary"></i> {{ __('Fare Rules') }}
+                        </button>
                     </div>
                 </div>
 

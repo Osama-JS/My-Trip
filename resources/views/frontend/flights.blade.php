@@ -188,6 +188,51 @@
             </div>
         </div>
     </div>
+
+    {{-- Global Fare Rules Modal for Flights --}}
+    <div class="fe-modal-overlay d-none" id="globalFareRulesModal" style="z-index: 10050;">
+        <div class="fe-modal-dialog">
+            <div class="fe-modal-content">
+                <div class="fe-modal-header">
+                    <div style="display: flex; align-items: center; gap: 14px;">
+                        <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; color: #38bdf8;">
+                            <i class="fas fa-file-contract"></i>
+                        </div>
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <h4 style="margin: 0; font-weight: 800; font-size: 1.2rem; color: white;">{{ __('Fare Rules & Ticket Policies') }}</h4>
+                                <span id="fareRulesAirlineBadge" class="badge" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); font-size: 0.75rem; padding: 3px 8px; border-radius: 6px;"></span>
+                            </div>
+                            <span id="fareRulesAirlineSubtitle" style="font-size: 0.8rem; color: #cbd5e1;">{{ __('Official airline cancellation, refund, and change terms') }}</span>
+                        </div>
+                    </div>
+                    <button type="button" class="fe-btn-close" onclick="closeFareRulesModal()" aria-label="{{ __('Close') }}"><i class="fas fa-times"></i></button>
+                </div>
+                
+                <div class="fe-modal-body">
+                    <div id="fareRulesModalLoader" style="padding: 40px 20px; text-align: center;">
+                        <div class="spinner-border text-primary" role="status" style="width: 2.5rem; height: 2.5rem; border-width: 3px;"></div>
+                        <p class="mt-3 text-muted fw-bold" style="font-size: 0.92rem;">{{ __('Loading official airline fare rules...') }}</p>
+                    </div>
+                    
+                    <div id="fareRulesModalBody" style="display: none;"></div>
+
+                    <div id="fareRulesModalError" style="display: none; padding: 35px 20px; text-align: center;">
+                        <i class="fas fa-exclamation-triangle mb-3" style="font-size: 2.5rem; color: #d97706;"></i>
+                        <h5 class="fw-bold text-dark" style="margin-bottom: 8px;">{{ __('Fare Rules Unavailable') }}</h5>
+                        <p class="text-muted" id="fareRulesErrorDesc" style="font-size: 0.88rem; max-width: 480px; margin: 0 auto;">{{ __('Unable to retrieve fare rules from the airline provider for this flight.') }}</p>
+                    </div>
+                </div>
+
+                <div class="fe-modal-footer">
+                    <span style="font-size: 0.78rem; color: #64748b; display: inline-flex; align-items: center; gap: 6px;">
+                        <i class="fas fa-shield-alt text-success"></i> {{ __('Verified Airline Tariff Rules') }}
+                    </span>
+                    <button type="button" class="fe-btn fe-btn-secondary" onclick="closeFareRulesModal()" style="padding: 8px 24px; font-weight: 700; border-radius: 8px;">{{ __('Close') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
@@ -554,13 +599,37 @@
             </div>`;
         }
 
-        // ─── Filters ───
-        function initFilters() {
-            const items = document.querySelectorAll('.flight-item');
-            if (!items.length) return;
+        // ─── High Performance Filters & Sorting ───
+        let cachedFlightItems = [];
+        let filterDebounceTimer = null;
 
+        function initFilters() {
+            const rawItems = document.querySelectorAll('.flight-item');
+            if (!rawItems.length) return;
+
+            // Cache all flight items once with pre-parsed numbers for zero-lag filtering
             const prices = [], durations = [];
-            items.forEach(i => { prices.push(+i.dataset.price); durations.push(+i.dataset.durationMin); });
+            cachedFlightItems = Array.from(rawItems).map((el, idx) => {
+                const p = parseFloat(el.dataset.price) || 0;
+                const d = parseInt(el.dataset.durationMin) || 0;
+                const s = parseInt(el.dataset.stops) || 0;
+                const a = el.dataset.airline || '';
+                const dep = el.dataset.depTime || '00:00';
+                const parts = dep.split(':');
+                const depM = (parseInt(parts[0], 10) || 0) * 60 + (parseInt(parts[1], 10) || 0);
+                
+                prices.push(p);
+                durations.push(d);
+                el.style.order = idx; // initial CSS flex order
+                return { el, price: p, duration: d, stops: s, airline: a, depTime: dep, depMinutes: depM };
+            });
+
+            // Prevent repeated animations after initial load
+            setTimeout(() => {
+                const list = document.getElementById('flightResultsList');
+                if (list) list.classList.add('fr-animated');
+            }, 600);
+
             const minP = Math.floor(Math.min(...prices)), maxP = Math.ceil(Math.max(...prices));
             const minD = Math.floor(Math.min(...durations)), maxD = Math.ceil(Math.max(...durations));
 
@@ -575,7 +644,7 @@
 
             // Build airlines list
             const airlines = {};
-            items.forEach(i => { const c = i.dataset.airline; airlines[c] = (airlines[c]||0)+1; });
+            cachedFlightItems.forEach(i => { airlines[i.airline] = (airlines[i.airline]||0)+1; });
             const ac = document.getElementById('frAirlinesContainer');
             ac.innerHTML = Object.keys(airlines).map(code => `
                 <label class="fr-check">
@@ -584,10 +653,17 @@
                     <span>${code} <small>(${airlines[code]})</small></span>
                 </label>`).join('');
 
-            pr.addEventListener('input', () => { document.getElementById('frPriceVal').textContent = pr.value + ' SAR'; applyFrFilters(); });
-            dr.addEventListener('input', () => { document.getElementById('frDurVal').textContent = Math.floor(dr.value/60) + 'h ' + (dr.value%60) + 'm'; applyFrFilters(); });
-            document.querySelectorAll('.fr-stop').forEach(i => i.addEventListener('change', applyFrFilters));
-            ac.addEventListener('change', applyFrFilters);
+            // Debounced slider events for ultra-smooth 60fps performance
+            pr.addEventListener('input', () => {
+                document.getElementById('frPriceVal').textContent = pr.value + ' SAR';
+                scheduleFrFilters();
+            });
+            dr.addEventListener('input', () => {
+                document.getElementById('frDurVal').textContent = Math.floor(dr.value/60) + 'h ' + (dr.value%60) + 'm';
+                scheduleFrFilters();
+            });
+            document.querySelectorAll('.fr-stop').forEach(i => i.addEventListener('change', scheduleFrFilters));
+            ac.addEventListener('change', scheduleFrFilters);
 
             window.resetFrFilters = function() {
                 pr.value = maxP; document.getElementById('frPriceVal').textContent = maxP + ' SAR';
@@ -597,22 +673,42 @@
             };
         }
 
+        function scheduleFrFilters() {
+            if (filterDebounceTimer) clearTimeout(filterDebounceTimer);
+            filterDebounceTimer = setTimeout(() => {
+                requestAnimationFrame(applyFrFilters);
+            }, 25);
+        }
+
         function applyFrFilters() {
-            const maxP = +document.getElementById('frPriceRange').value;
-            const maxD = +document.getElementById('frDurRange').value;
-            const stops = Array.from(document.querySelectorAll('.fr-stop')).filter(i => i.checked).map(i => +i.value);
-            const airlines = Array.from(document.querySelectorAll('.fr-airline')).filter(i => i.checked).map(i => i.value);
-            let visible = 0;
-            document.querySelectorAll('.flight-item').forEach(item => {
-                const p = +item.dataset.price, d = +item.dataset.durationMin;
-                const s = +item.dataset.stops, a = item.dataset.airline;
-                let matchStop = stops.includes(s) || (stops.includes(2) && s >= 2);
-                const show = p <= maxP && d <= maxD && matchStop && airlines.includes(a);
-                item.style.display = show ? '' : 'none';
-                if (show) visible++;
-            });
+            const pr = document.getElementById('frPriceRange');
+            const dr = document.getElementById('frDurRange');
+            if (!pr || !dr || !cachedFlightItems.length) return;
+
+            const maxP = parseFloat(pr.value);
+            const maxD = parseInt(dr.value);
+            const stopsSet = new Set(Array.from(document.querySelectorAll('.fr-stop:checked')).map(i => parseInt(i.value)));
+            const airlinesSet = new Set(Array.from(document.querySelectorAll('.fr-airline:checked')).map(i => i.value));
+            const hasTwoPlus = stopsSet.has(2);
+
+            let visibleCount = 0;
+            const len = cachedFlightItems.length;
+
+            for (let i = 0; i < len; i++) {
+                const item = cachedFlightItems[i];
+                const matchStop = stopsSet.has(item.stops) || (hasTwoPlus && item.stops >= 2);
+                const show = item.price <= maxP && item.duration <= maxD && matchStop && airlinesSet.has(item.airline);
+                
+                const curDisplay = item.el.style.display;
+                const newDisplay = show ? '' : 'none';
+                if (curDisplay !== newDisplay) {
+                    item.el.style.display = newDisplay;
+                }
+                if (show) visibleCount++;
+            }
+
             const cnt = document.querySelector('.fr-count-badge');
-            if (cnt) cnt.textContent = visible;
+            if (cnt) cnt.textContent = visibleCount;
         }
 
         // ─── Sort ───
@@ -624,11 +720,10 @@
                 btn.addEventListener('click', function() {
                     const sortKey = this.dataset.sort;
                     if (currentSortKey === sortKey) {
-                        // Toggle order if clicking the same active button
                         currentSortOrder = (currentSortOrder === 'asc') ? 'desc' : 'asc';
                     } else {
                         currentSortKey = sortKey;
-                        currentSortOrder = 'asc'; // Default to ascending for new field
+                        currentSortOrder = 'asc';
                     }
                     updateSortUI();
                     sortFlights(currentSortKey, currentSortOrder);
@@ -671,18 +766,317 @@
             }
         }
 
+        let lastSortedKey = 'price';
+        let lastSortedOrder = 'asc';
+
         function sortFlights(by, order) {
             const list = document.getElementById('flightResultsList');
-            if (!list) return;
-            const items = Array.from(list.querySelectorAll('.flight-item'));
-            items.sort((a, b) => {
-                let diff = 0;
-                if (by === 'price') diff = +a.dataset.price - +b.dataset.price;
-                else if (by === 'duration') diff = +a.dataset.durationMin - +b.dataset.durationMin;
-                else if (by === 'departure') diff = (a.dataset.depTime || '').localeCompare(b.dataset.depTime || '');
-                return (order === 'asc') ? diff : -diff;
+            if (!list || !cachedFlightItems.length) return;
+
+            // Disable entrance animation during sort
+            list.classList.add('fr-animated');
+
+            // Instant in-place reverse if only order direction was toggled
+            if (lastSortedKey === by && lastSortedOrder !== order) {
+                cachedFlightItems.reverse();
+            } else {
+                cachedFlightItems.sort((a, b) => {
+                    let diff = 0;
+                    if (by === 'price') diff = a.price - b.price;
+                    else if (by === 'duration') diff = a.duration - b.duration;
+                    else if (by === 'departure') diff = a.depMinutes - b.depMinutes;
+                    return (order === 'asc') ? diff : -diff;
+                });
+            }
+
+            lastSortedKey = by;
+            lastSortedOrder = order;
+
+            // Instantaneous CSS Flexbox order assignment: 0ms DOM reflow, 0 animation lag
+            const len = cachedFlightItems.length;
+            for (let i = 0; i < len; i++) {
+                cachedFlightItems[i].el.style.order = i;
+            }
+        }
+
+        // ─── Fare Rules Modal Interaction ───
+        window.closeFareRulesModal = function() {
+            const m = document.getElementById('globalFareRulesModal');
+            if (m) {
+                m.classList.remove('show');
+                setTimeout(() => m.classList.add('d-none'), 200);
+            }
+        };
+
+        // Close on backdrop click
+        document.addEventListener('click', function(e) {
+            const modal = document.getElementById('globalFareRulesModal');
+            if (modal && e.target === modal) {
+                closeFareRulesModal();
+            }
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeFareRulesModal();
+            }
+        });
+
+        $(document).on('click', '.btn-fare-rules-trigger', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const btn = $(this);
+            const cardData = {
+                sessionId: btn.data('session'),
+                fareSource: btn.data('fare-source'),
+                inbound: btn.data('inbound') || '',
+                airline: btn.data('airline') || '',
+                airlineName: btn.data('airline-name') || btn.data('airline') || '',
+                from: btn.data('from') || '',
+                to: btn.data('to') || '',
+                refundable: btn.data('refundable'),
+                changeAllowed: btn.data('change-allowed'),
+                changePenalty: btn.data('change-penalty') || '',
+                refundAllowed: btn.data('refund-allowed'),
+                refundPenalty: btn.data('refund-penalty') || '',
+                baggage: btn.data('baggage') || '',
+                cabinBaggage: btn.data('cabin-baggage') || '',
+                fareBasis: btn.data('fare-basis') || ''
+            };
+
+            const modal = document.getElementById('globalFareRulesModal');
+            if (!modal) return;
+
+            // Update Header
+            $('#fareRulesAirlineBadge').text(cardData.airline || '{{ __("Airline") }}');
+            let subText = cardData.airlineName || cardData.airline || '';
+            if (cardData.from && cardData.to) {
+                subText += ' (' + cardData.from + ' ➔ ' + cardData.to + ')';
+            }
+            subText += ' - {{ __("Official terms, penalties & cancellation rules") }}';
+            $('#fareRulesAirlineSubtitle').text(subText);
+
+            $('#fareRulesModalLoader').show();
+            $('#fareRulesModalBody').hide().empty();
+            $('#fareRulesModalError').hide();
+
+            modal.classList.remove('d-none');
+            setTimeout(() => modal.classList.add('show'), 10);
+
+            $.ajax({
+                url: '{{ route("flights.fare-rules") }}',
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    session_id: cardData.sessionId,
+                    fare_source_code: cardData.fareSource,
+                    fare_source_code_inbound: cardData.inbound
+                },
+                success: function(res) {
+                    $('#fareRulesModalLoader').hide();
+                    if (res && res.success) {
+                        renderFareRulesContent(res, cardData);
+                    } else {
+                        const msg = (res && res.message) ? res.message : '{{ __("Unable to retrieve fare rules from the airline provider for this flight.") }}';
+                        $('#fareRulesErrorDesc').text(msg);
+                        $('#fareRulesModalError').show();
+                    }
+                },
+                error: function() {
+                    $('#fareRulesModalLoader').hide();
+                    $('#fareRulesErrorDesc').text('{{ __("Unable to retrieve fare rules from the airline provider for this flight.") }}');
+                    $('#fareRulesModalError').show();
+                }
             });
-            items.forEach(i => list.appendChild(i));
+        });
+
+        function renderFareRulesContent(res, cardData) {
+            const container = $('#fareRulesModalBody');
+            container.empty();
+
+            const isRefundable = (cardData.refundable === 'Yes' || cardData.refundAllowed === true || cardData.refundAllowed === 'true');
+            const isNonRefundable = (cardData.refundable === 'No' || cardData.refundAllowed === false || cardData.refundAllowed === 'false');
+            const isChangeable = (cardData.changeAllowed === true || cardData.changeAllowed === 'true');
+            const isNonChangeable = (cardData.changeAllowed === false || cardData.changeAllowed === 'false');
+
+            // 1. Policy Overview Cards (Strictly based on Travelopro API search results)
+            let summaryHtml = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 22px;">
+                    <!-- Refundability Card -->
+                    <div style="background: ${isRefundable ? '#f0fdf4' : (isNonRefundable ? '#fff7ed' : '#f8fafc')}; border: 1.5px solid ${isRefundable ? '#bbf7d0' : (isNonRefundable ? '#fed7aa' : '#e2e8f0')}; border-radius: 12px; padding: 14px; display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 40px; height: 40px; border-radius: 10px; background: ${isRefundable ? '#22c55e' : (isNonRefundable ? '#ea580c' : '#64748b')}; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">
+                            <i class="fas ${isRefundable ? 'fa-check-circle' : (isNonRefundable ? 'fa-times-circle' : 'fa-info-circle')}"></i>
+                        </div>
+                        <div>
+                            <div style="font-weight: 800; font-size: 0.88rem; color: ${isRefundable ? '#15803d' : (isNonRefundable ? '#9a3412' : '#334155')};">
+                                ${isRefundable ? '{{ __("Refundable Ticket") }}' : (isNonRefundable ? '{{ __("Non-Refundable Ticket") }}' : '{{ __("Refund Policy") }}')}
+                            </div>
+                            <div style="font-size: 0.76rem; color: ${isRefundable ? '#166534' : (isNonRefundable ? '#c2410c' : '#64748b')}; font-weight: 600;">
+                                ${isRefundable ? (cardData.refundPenalty && cardData.refundPenalty !== '0.00' ? ('{{ __("Penalty Fee:") }} ' + cardData.refundPenalty + ' SAR') : '{{ __("Subject to airline conditions") }}') : (isNonRefundable ? '{{ __("No refund on cancellation") }}' : '{{ __("Subject to airline conditions") }}')}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Change / Reschedule Card -->
+                    <div style="background: ${isChangeable ? '#eff6ff' : (isNonChangeable ? '#fff7ed' : '#f8fafc')}; border: 1.5px solid ${isChangeable ? '#bfdbfe' : (isNonChangeable ? '#fed7aa' : '#e2e8f0')}; border-radius: 12px; padding: 14px; display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 40px; height: 40px; border-radius: 10px; background: ${isChangeable ? '#2563eb' : (isNonChangeable ? '#ea580c' : '#64748b')}; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">
+                            <i class="fas ${isChangeable ? 'fa-calendar-alt' : (isNonChangeable ? 'fa-calendar-times' : 'fa-calendar')}"></i>
+                        </div>
+                        <div>
+                            <div style="font-weight: 800; font-size: 0.88rem; color: ${isChangeable ? '#1d4ed8' : (isNonChangeable ? '#9a3412' : '#334155')};">
+                                ${isChangeable ? '{{ __("Flight Changes Permitted") }}' : (isNonChangeable ? '{{ __("Changes Restricted") }}' : '{{ __("Flight Changes") }}')}
+                            </div>
+                            <div style="font-size: 0.76rem; color: ${isChangeable ? '#1e40af' : (isNonChangeable ? '#c2410c' : '#64748b')}; font-weight: 600;">
+                                ${isChangeable ? (cardData.changePenalty && cardData.changePenalty !== '0.00' ? ('{{ __("Change Fee:") }} ' + cardData.changePenalty + ' SAR') : '{{ __("Subject to airline conditions") }}') : (isNonChangeable ? '{{ __("Non-changeable ticket") }}' : '{{ __("Subject to airline conditions") }}')}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Baggage Card -->
+                    <div style="background: #f0fdfa; border: 1.5px solid #99f6e4; border-radius: 12px; padding: 14px; display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 40px; height: 40px; border-radius: 10px; background: #0d9488; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">
+                            <i class="fas fa-suitcase-rolling"></i>
+                        </div>
+                        <div>
+                            <div style="font-weight: 800; font-size: 0.88rem; color: #0f766e;">
+                                {{ __("Baggage Allowance") }}: ${cardData.baggage || '{{ __("Per Airline Policy") }}'}
+                            </div>
+                            ${cardData.cabinBaggage ? `
+                            <div style="font-size: 0.76rem; color: #115e59; font-weight: 600;">
+                                {{ __("Cabin Baggage") }}: ${cardData.cabinBaggage}
+                            </div>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.append(summaryHtml);
+
+            // 2. Baggage Infos from Travelopro Provider API (Live response)
+            if (res.baggage_infos && res.baggage_infos.length > 0) {
+                let bagHtml = `
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+                        <div style="font-weight: 800; font-size: 0.9rem; color: #0f172a; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-plane-departure text-primary"></i>
+                            <span>{{ __("Sector Baggage Allowance") }} ({{ __("Official Provider Data") }})</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                `;
+                res.baggage_infos.forEach(b => {
+                    bagHtml += `
+                        <div style="background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <span style="font-weight: 800; color: #1e293b; font-size: 0.85rem;">${b.flight_no ? b.flight_no + ': ' : ''}${b.departure} ➔ ${b.arrival}</span>
+                            </div>
+                            <span class="badge" style="background: #0284c7; color: white; font-weight: 700; font-size: 0.8rem; padding: 4px 8px; border-radius: 6px;">
+                                <i class="fas fa-weight-hanging me-1"></i> ${b.baggage || cardData.baggage}
+                            </span>
+                        </div>
+                    `;
+                });
+                bagHtml += `</div></div>`;
+                container.append(bagHtml);
+            }
+
+            // 3. Airline Tariff Rules from Travelopro Provider API (Live response)
+            const validRules = (res.fare_rules || []).filter(r => r.rules && typeof r.rules === 'string' && r.rules.trim().length > 0);
+            if (validRules.length > 0) {
+                let rulesListHtml = '<div style="display: flex; flex-direction: column; gap: 14px;">';
+                validRules.forEach((r, idx) => {
+                    const title = r.category || r.city_pair || (`{{ __('Policy') }} #${idx + 1}`);
+                    const rawText = r.rules.trim();
+                    const formattedHtml = formatFareRuleText(rawText);
+                    const ruleCardId = 'fareRuleBlock_' + idx;
+
+                    rulesListHtml += `
+                        <div style="border: 1px solid #cbd5e1; border-radius: 12px; overflow: hidden; background: white; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+                            <div style="padding: 10px 16px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-weight: 800; font-size: 0.88rem; color: #0f172a;">
+                                        <i class="fas fa-file-alt text-primary me-1"></i> ${r.airline ? r.airline + ' - ' : ''}${r.city_pair ? r.city_pair + ' - ' : ''}${title}
+                                    </span>
+                                    ${cardData.fareBasis ? `<span class="badge bg-light text-secondary border font-monospace" style="font-size: 0.72rem;">${cardData.fareBasis}</span>` : ''}
+                                </div>
+                                <div>
+                                    <button type="button" class="btn btn-sm btn-light border py-1 px-2 btn-copy-fare-rule" data-rule-text="${encodeURIComponent(rawText)}" title="{{ __('Copy Rules') }}" style="font-size: 0.72rem; font-weight: 700; color: #475569;">
+                                        <i class="far fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Formatted View (Enhanced typography & table structure, 100% original text preserved) -->
+                            <div id="${ruleCardId}_formatted" class="fare-rule-view-formatted" style="padding: 16px; font-size: 0.84rem; color: #334155; line-height: 1.7; max-height: 400px; overflow-y: auto;">
+                                ${formattedHtml}
+                            </div>
+                        </div>
+                    `;
+                });
+                rulesListHtml += '</div>';
+                container.append(rulesListHtml);
+            } else {
+                // Absolutely NO generic assumed text. State clearly that the airline returned no detailed textual rules.
+                container.append(`
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 22px 20px; text-align: center; color: #64748b; margin-top: 15px;">
+                        <i class="fas fa-info-circle text-primary mb-2" style="font-size: 1.6rem;"></i>
+                        <div style="font-weight: 700; color: #334155; font-size: 0.9rem; margin-bottom: 4px;">
+                            {{ __("No textual fare rules were provided by the airline for this fare.") }}
+                        </div>
+                        <div style="font-size: 0.8rem; color: #64748b;">
+                            {{ __("The carrier did not return detailed rule paragraphs for this fare source.") }}
+                        </div>
+                    </div>
+                `);
+            }
+
+            container.show();
+        }
+
+        // Copy original fare rule text
+        $(document).on('click', '.btn-copy-fare-rule', function() {
+            const text = decodeURIComponent($(this).data('rule-text') || '');
+            if (navigator.clipboard && text) {
+                navigator.clipboard.writeText(text);
+                const icon = $(this).find('i');
+                icon.removeClass('fa-copy far').addClass('fa-check fas text-success');
+                setTimeout(() => icon.removeClass('fa-check fas text-success').addClass('far fa-copy'), 2000);
+            }
+        });
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function formatFareRuleText(rawText) {
+            if (!rawText || typeof rawText !== 'string') return '';
+            let content = rawText.trim();
+
+            const hasHtmlTags = /<table|<ul|<li|<fieldset|<legend|<br|<p\b|<div\b/i.test(content);
+
+            if (!hasHtmlTags) {
+                // Pure plain text: escape HTML entities, convert newlines to <br>
+                content = escapeHtml(content).replace(/\r?\n/g, '<br>');
+            } else {
+                // HTML already present: preserve tags, normalize newlines in text sections
+                content = content.replace(/(<\/(?:table|ul|ol|fieldset|legend|div|p|tr|td|th)>)\s*\r?\n/gi, '$1')
+                                 .replace(/\r?\n\s*(<(?:table|ul|ol|fieldset|legend|div|p|tr|td|th))/gi, '$1')
+                                 .replace(/\r?\n/g, '<br>');
+            }
+
+            // Replace repetitive dashes with a clean divider line
+            content = content.replace(/-{8,}/g, '<hr style="border: 0; border-top: 1px dashed #cbd5e1; margin: 12px 0;">');
+
+            // Style "NOTE -" with clean badge
+            content = content.replace(/\bNOTE\s*-\s*/gi, '<span class="badge" style="background: #e0f2fe; color: #0369a1; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-inline-end: 4px;">NOTE</span> ');
+
+            // Highlight "FAIL TO BOARD FEES"
+            content = content.replace(/\b(FAIL TO BOARD FEES\s+SAR\s+\d+)/gi, '<span class="badge" style="background: #fee2e2; color: #b91c1c; font-weight: 800; padding: 2px 7px; border-radius: 4px; font-size: 0.82rem;">$1</span>');
+
+            // Style GDS key-value tags (e.g. Booking Class: A, RateClass: ...)
+            content = content.replace(/\b(RateClass|FareClass|marketing Company|Booking Class|Origin|destination|ruleSectionLocalId|ruleCategoryCode)\s*:\s*([^\s<]+)/gi, '<span style="display:inline-flex; align-items:center; gap:4px; background:#f1f5f9; border:1px solid #e2e8f0; padding:2px 7px; border-radius:5px; font-size:0.75rem; margin:2px 3px;"><strong style="color:#64748b;">$1:</strong> <span style="color:#0f172a; font-weight:700;">$2</span></span>');
+
+            return content;
         }
     });
 </script>
@@ -1149,8 +1543,17 @@
     .fr-order-toggle-btn:hover { background: var(--primary); color: white; }
     .sort-dir-icon { transition: transform 0.2s ease; }
 
+    /* Results List Container for Instant 60FPS Sorting */
+    #flightResultsList {
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    #flightResultsList.fr-animated .fr-flight-card {
+        animation: none !important;
+    }
+
     /* Flight Card */
-    .fr-flight-card { display: grid; grid-template-columns: 100px 1fr 160px; background: white; border-radius: var(--radius-xl); border: 1.5px solid var(--gray-100); margin-bottom: var(--space-4); overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); animation: fadeInUp 0.5s both; }
+    .fr-flight-card { display: grid; grid-template-columns: 100px 1fr 160px; background: white; border-radius: var(--radius-xl); border: 1.5px solid var(--gray-100); margin-bottom: var(--space-4); overflow: hidden; transition: box-shadow 0.2s ease, transform 0.2s ease; animation: fadeInUp 0.5s both; }
     .fr-flight-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.08); border-color: var(--primary-200); }
     
     .fr-airline-col { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 20px; background: var(--gray-50); border-inline-end: 1px solid var(--gray-100); }
@@ -1207,5 +1610,101 @@
 
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ═══ FARE RULES & POLICIES MODAL ═══ */
+    .fe-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(15, 23, 42, 0.75);
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        z-index: 99999 !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: opacity 0.25s ease, visibility 0.25s ease;
+    }
+    .fe-modal-overlay.show {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+    }
+    .fe-modal-overlay.d-none {
+        display: none !important;
+    }
+    .fe-modal-dialog {
+        background: #ffffff;
+        border-radius: 20px;
+        width: 100%;
+        max-width: 820px;
+        max-height: 88vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.4);
+        transform: scale(0.95) translateY(10px);
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        overflow: hidden;
+    }
+    .fe-modal-overlay.show .fe-modal-dialog {
+        transform: scale(1) translateY(0);
+    }
+    .fe-modal-content {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        max-height: 88vh;
+        overflow: hidden;
+    }
+    .fe-modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 18px 24px;
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        color: #ffffff;
+        flex-shrink: 0;
+    }
+    .fe-modal-body {
+        padding: 24px;
+        overflow-y: auto;
+        flex: 1;
+        background: #ffffff;
+    }
+    .fe-modal-footer {
+        padding: 14px 24px;
+        background: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0;
+    }
+    .fe-btn-close {
+        background: rgba(255,255,255,0.15);
+        border: none;
+        color: #ffffff;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+    }
+    .fe-btn-close:hover {
+        background: rgba(239, 68, 68, 0.85);
+        color: #ffffff;
+    }
 </style>
 @endpush
