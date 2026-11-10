@@ -369,7 +369,13 @@
                         'baggage' => $mainBaggageDisplay,
                         'journeyType' => $isRoundTrip ? 'Return' : 'OneWay',
                         'returnDate' => $retDateVal,
-                        'segments' => $allSegmentsData
+                        'segments' => $allSegmentsData,
+                        'refundable' => $itineraryData['AirItineraryFareInfo']['IsRefundable'] ?? '',
+                        'change_allowed' => isset($firstFb['PenaltyDetails']['ChangeAllowed']) ? ($firstFb['PenaltyDetails']['ChangeAllowed'] ? 'true' : 'false') : '',
+                        'change_penalty' => $firstFb['PenaltyDetails']['ChangePenaltyAmount'] ?? '',
+                        'refund_allowed' => isset($firstFb['PenaltyDetails']['RefundAllowed']) ? ($firstFb['PenaltyDetails']['RefundAllowed'] ? 'true' : 'false') : '',
+                        'refund_penalty' => $firstFb['PenaltyDetails']['RefundPenaltyAmount'] ?? '',
+                        'fare_basis' => $firstFb['FareBasisCode'] ?? ''
                     ])) }}" class="fe-btn fe-btn-primary fr-select-btn">
                         {{ __('Select') }} <i class="fas fa-arrow-right"></i>
                     </a>

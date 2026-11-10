@@ -993,6 +993,56 @@ class FrontendController extends Controller
             }
         }
 
+        // Populate Refundability, Penalties, and Fare Basis from revalidation or request
+        if ($validatedItin) {
+            $fareInfo = $validatedItin['AirItineraryFareInfo'] ?? [];
+            if (!empty($fareInfo['IsRefundable'])) {
+                $details['refundable'] = $fareInfo['IsRefundable'];
+            }
+            
+            $fb = $fareInfo['FareBreakdown'] ?? [];
+            $firstFb = isset($fb[0]) ? $fb[0] : (isset($fb['FareBreakdown']) ? (isset($fb['FareBreakdown'][0]) ? $fb['FareBreakdown'][0] : $fb['FareBreakdown']) : $fb);
+            
+            if (isset($firstFb['PenaltyDetails'])) {
+                $pd = $firstFb['PenaltyDetails'];
+                if (isset($pd['RefundAllowed'])) {
+                    $details['refund_allowed'] = $pd['RefundAllowed'] ? 'true' : 'false';
+                }
+                if (isset($pd['RefundPenaltyAmount'])) {
+                    $details['refund_penalty'] = $pd['RefundPenaltyAmount'];
+                }
+                if (isset($pd['ChangeAllowed'])) {
+                    $details['change_allowed'] = $pd['ChangeAllowed'] ? 'true' : 'false';
+                }
+                if (isset($pd['ChangePenaltyAmount'])) {
+                    $details['change_penalty'] = $pd['ChangePenaltyAmount'];
+                }
+            }
+            if (!empty($firstFb['FareBasisCode'])) {
+                $details['fare_basis'] = $firstFb['FareBasisCode'];
+            }
+        }
+
+        // Fallbacks from request query params
+        if (empty($details['refundable']) && $request->filled('refundable')) {
+            $details['refundable'] = $request->get('refundable');
+        }
+        if (empty($details['refund_allowed']) && $request->filled('refund_allowed')) {
+            $details['refund_allowed'] = $request->get('refund_allowed');
+        }
+        if (empty($details['refund_penalty']) && $request->filled('refund_penalty')) {
+            $details['refund_penalty'] = $request->get('refund_penalty');
+        }
+        if (empty($details['change_allowed']) && $request->filled('change_allowed')) {
+            $details['change_allowed'] = $request->get('change_allowed');
+        }
+        if (empty($details['change_penalty']) && $request->filled('change_penalty')) {
+            $details['change_penalty'] = $request->get('change_penalty');
+        }
+        if (empty($details['fare_basis']) && $request->filled('fare_basis')) {
+            $details['fare_basis'] = $request->get('fare_basis');
+        }
+
         $countries = \App\Models\Country::all();
         
         return view('frontend.flights.booking', [

@@ -199,6 +199,12 @@
         <input type="hidden" name="arr_time" value="{{ $details['arr_time'] ?? '' }}">
         <input type="hidden" name="stops" value="{{ $details['stops'] ?? 0 }}">
         <input type="hidden" name="duration" value="{{ $details['duration'] ?? '' }}">
+        <input type="hidden" name="refundable" value="{{ $details['refundable'] ?? '' }}">
+        <input type="hidden" name="refund_allowed" value="{{ $details['refund_allowed'] ?? '' }}">
+        <input type="hidden" name="refund_penalty" value="{{ $details['refund_penalty'] ?? '' }}">
+        <input type="hidden" name="change_allowed" value="{{ $details['change_allowed'] ?? '' }}">
+        <input type="hidden" name="change_penalty" value="{{ $details['change_penalty'] ?? '' }}">
+        <input type="hidden" name="fare_basis" value="{{ $details['fare_basis'] ?? '' }}">
         @if(!empty($details['segments']) && is_array($details['segments']))
             @foreach($details['segments'] as $i => $seg)
                 <input type="hidden" name="segments[{{ $i }}][leg_index]" value="{{ $seg['leg_index'] ?? 0 }}">
@@ -638,6 +644,7 @@
                                             data-change-penalty="{{ $details['change_penalty'] ?? '' }}"
                                             data-refund-allowed="{{ $details['refund_allowed'] ?? '' }}"
                                             data-refund-penalty="{{ $details['refund_penalty'] ?? '' }}"
+                                            data-fare-basis="{{ $details['fare_basis'] ?? '' }}"
                                             style="background: #f0f9ff; border: 1px solid #bae6fd; color: #0284c7; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 0.78rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; width: 100%; justify-content: center; transition: all 0.2s;">
                                         <i class="fas fa-file-contract text-primary"></i> {{ __('Fare Rules & Cancellation Policy') }}
                                     </button>
