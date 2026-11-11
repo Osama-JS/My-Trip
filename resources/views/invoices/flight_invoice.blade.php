@@ -242,6 +242,11 @@
             display: inline-block;
             vertical-align: middle;
             margin: 0 4px;
+            transform: rotate(90deg);
+        }
+        [dir="rtl"] .flight-plane-icon,
+        html[dir="rtl"] .flight-plane-icon {
+            transform: rotate(-90deg);
         }
         .stops-badge-direct {
             display: inline-block;

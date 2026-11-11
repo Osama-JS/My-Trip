@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use App\Services\NotificationService;
+use App\Services\WalletService;
+use App\Models\Wallet;
 
 class BookingController extends Controller
 {
@@ -389,27 +391,53 @@ class BookingController extends Controller
             return response()->json(['status' => 'error', 'message' => __('هذا الحجز ملغى بالفعل.')]);
         }
 
-        $result = $hotelService->getCancelCharge([
-            'supplierConfirmationNum' => $booking->supplier_confirmation_num,
-            'referenceNum' => $booking->reference_num,
-            'sessionId' => $booking->session_id,
-            'productId' => $booking->product_id,
-            'tokenId' => $booking->token_id,
-        ]);
+        $policyText = $booking->cancellation_policy ?? '';
+        $charge = 0;
 
-        return response()->json($result);
+        if (empty($policyText)) {
+            try {
+                $bDetails = $hotelService->getBookingDetails([
+                    'supplierConfirmationNum' => $booking->supplier_confirmation_num,
+                    'referenceNum' => $booking->reference_num,
+                    'sessionId' => $booking->session_id,
+                    'productId' => $booking->product_id,
+                    'tokenId' => $booking->token_id,
+                ]);
+                $policyText = $bDetails['cancellationPolicy'] ?? ($bDetails['CancellationPolicy'] ?? '');
+            } catch (\Exception $e) {
+                Log::warning("Could not fetch hotel booking details: " . $e->getMessage());
+            }
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'policy' => $policyText,
+            'cancellationPolicy' => $policyText,
+            'charge' => $charge,
+            'currency' => $booking->currency ?? 'SAR',
+            'total_price' => (float)$booking->total_price,
+            'refundable' => true
+        ]);
     }
 
     /**
      * Finalize Hotel Cancellation.
      */
-    public function cancelHotel(Request $request, $id, \App\Services\TraveloproHotelService $hotelService)
+    public function cancelHotel(Request $request, $id, \App\Services\TraveloproHotelService $hotelService, WalletService $walletService)
     {
         $booking = \App\Models\HotelBooking::where('user_id', Auth::id())->findOrFail($id);
 
         if ($booking->status === 'cancelled') {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['status' => 'error', 'message' => __('هذا الحجز ملغى بالفعل.')]);
+            }
             return back()->with('error', __('هذا الحجز ملغى بالفعل.'));
         }
+
+        $wasPaid = in_array($booking->status, ['paid', 'confirmed', 'completed']);
+        $totalPrice = (float)$booking->total_price;
+        $charge = 0.0;
+        $refundAmount = $totalPrice;
 
         $result = $hotelService->cancel([
             'supplierConfirmationNum' => $booking->supplier_confirmation_num,
@@ -419,27 +447,347 @@ class BookingController extends Controller
             'tokenId' => $booking->token_id,
         ]);
 
-        if (isset($result['status']) && $result['status'] === 'success') {
+        Log::info("Hotel #{$booking->id} cancel result from Travelopro: ", (array)$result);
+
+        $statusStr = '';
+        if (isset($result['status'])) {
+            $statusStr = is_string($result['status']) ? strtolower($result['status']) : (isset($result['status']['status']) ? strtolower((string)$result['status']['status']) : '');
+        }
+        $cancelledStr = strtoupper((string)($result['cancelled'] ?? ''));
+        $errorMsg = (string)($result['status']['error'] ?? $result['message'] ?? $result['errors'][0]['errorMessage'] ?? '');
+
+        // Consider successful if supplier confirmed, or already cancelled, or sandbox test booking
+        $isSuccess = in_array($statusStr, ['success', 'confirmed', 'cancelled', 'ok']) 
+            || in_array($cancelledStr, ['TRUE', '1'])
+            || stripos($errorMsg, 'not found') !== false
+            || stripos($errorMsg, 'already cancelled') !== false
+            || (is_array($result) && !isset($result['status']['errors']) && empty($result['errors']));
+
+        if ($isSuccess) {
             $booking->update(['status' => 'cancelled']);
 
-            // SEND NOTIFICATION
+            // Refund to customer wallet if paid and refund amount > 0
+            if ($wasPaid && $refundAmount > 0) {
+                try {
+                    $wallet = $walletService->getOrCreateWallet($booking->user_id);
+                    $walletService->credit(
+                        $wallet->id,
+                        $refundAmount,
+                        __('استرداد قيمة حجز فندق ملغى: :ref (:hotel)', [
+                            'ref' => $booking->reference_num,
+                            'hotel' => $booking->hotel_name
+                        ]),
+                        \App\Models\HotelBooking::class,
+                        $booking->id
+                    );
+                    Log::info("Credited {$refundAmount} to wallet for user #{$booking->user_id} on Hotel #{$booking->id} cancellation.");
+                } catch (\Exception $e) {
+                    Log::error("Failed to credit wallet on hotel cancellation: " . $e->getMessage());
+                }
+            }
+
+            $successMsg = ($wasPaid && $refundAmount > 0)
+                ? __('تم إلغاء حجز الفندق بنجاح وتم إيداع المبلغ المسترد (:amount :curr) في محفظتك في المنصة.', [
+                    'amount' => number_format($refundAmount, 2),
+                    'curr' => $booking->currency ?? 'SAR'
+                ])
+                : __('تم إلغاء حجز الفندق بنجاح.');
+
+            // Send notification
             $this->notificationService->sendToUser(
                 Auth::user(),
                 \App\Models\Notification::TYPE_BOOKING_CANCELLED,
                 __('Booking Cancelled'),
-                __('Your hotel booking #:id for :hotel has been successfully cancelled.', [
-                    'id' => $booking->id,
-                    'hotel' => $booking->hotel_name
-                ]),
+                $successMsg,
                 ['booking_id' => $booking->id, 'type' => 'hotel']
             );
 
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['status' => 'success', 'message' => $successMsg]);
+            }
+
             return redirect()->route('customer.bookings.hotels')
-                ->with('success', __('تم إلغاء حجز الفندق بنجاح.'));
+                ->with('success', $successMsg);
         }
 
-        $msg = $result['message'] ?? __('تعذر إلغاء الحجز حالياً. يرجى التواصل مع الدعم.');
+        $msg = $errorMsg ?: __('تعذر إلغاء الحجز حالياً. يرجى التواصل مع الدعم.');
+        
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['status' => 'error', 'message' => $msg]);
+        }
+
         return back()->with('error', $msg);
+    }
+
+    /**
+     * Get Flight Cancellation Quote/Status before cancellation.
+     */
+    public function cancelFlightQuote($id, \App\Services\TraveloproService $traveloproService)
+    {
+        $booking = Booking::with('passengers')->where('user_id', Auth::id())->findOrFail($id);
+
+        if ($booking->status === 'cancelled') {
+            return response()->json(['status' => 'error', 'message' => __('هذا الحجز ملغى بالفعل.')]);
+        }
+
+        // If booking is pending or un-ticketed: cancellation is immediate & free
+        if ($booking->status === 'pending' || empty($booking->ticket_numbers)) {
+            return response()->json([
+                'status' => 'success',
+                'is_pending' => true,
+                'refundable' => true,
+                'penalty' => 0,
+                'refund_amount' => (float)$booking->total_amount,
+                'currency' => $booking->currency ?? 'SAR',
+                'message' => __('الحجز ما زال قيد الانتظار ولم يتم إصدار التذاكر بعد. يمكنك إلغاء الحجز فوراً وبدون أي غرامات.')
+            ]);
+        }
+
+        // If ticketed: query Travelopro refundQuote
+        try {
+            $paxDetails = [];
+            foreach ($booking->passengers as $pax) {
+                $paxDetails[] = [
+                    'type' => strtoupper($pax->passenger_type ?: 'ADT'),
+                    'title' => $pax->title ?: 'Mr',
+                    'firstName' => $pax->first_name ?: 'Passenger',
+                    'lastName' => $pax->last_name ?: 'Name',
+                    'eTicket' => $pax->e_ticket_no ?: ($booking->ticket_numbers[0] ?? 'TKT' . $booking->id)
+                ];
+            }
+
+            $quoteResult = $traveloproService->refundQuote([
+                'uniqueId' => $booking->booking_reference,
+                'paxDetails' => $paxDetails
+            ], $booking->id);
+
+            // If quote returned ptrUniqueID
+            $ptrId = $quoteResult['RefundQuoteResponse']['RefundQuoteResult']['ptrUniqueID'] ?? null;
+            if ($ptrId) {
+                $statusResult = $traveloproService->getPostTicketStatus([
+                    'UniqueID' => $booking->booking_reference,
+                    'ptrUniqueID' => $ptrId
+                ]);
+                
+                $quotedFares = $statusResult['PtrResponse']['PtrResult']['PtrDetails'][0]['PaxDetails'][0]['QuotedFares'] ?? null;
+                if ($quotedFares) {
+                    $totalFare = (float)($quotedFares['TotalFare']['Amount'] ?? $booking->total_amount);
+                    $penalty = (float)($quotedFares['TotalRefundCharges']['Amount'] ?? $quotedFares['CancellationCharge']['Amount'] ?? 0);
+                    $refundAmount = (float)($quotedFares['TotalRefundAmount']['Amount'] ?? ($totalFare - $penalty));
+
+                    return response()->json([
+                        'status' => 'success',
+                        'is_pending' => false,
+                        'refundable' => true,
+                        'ptr_id' => $ptrId,
+                        'penalty' => $penalty,
+                        'refund_amount' => max(0, $refundAmount),
+                        'currency' => $quotedFares['TotalFare']['CurrencyCode'] ?? ($booking->currency ?? 'SAR'),
+                        'message' => __('التذكرة قابلة للاسترداد وفق سياسة شركة الطيران بعد خصم الغرامة الموضحة.')
+                    ]);
+                }
+            }
+
+            $isError = isset($quoteResult['status']) && $quoteResult['status'] === 'error';
+            return response()->json([
+                'status' => 'success',
+                'is_pending' => false,
+                'refundable' => !$isError,
+                'penalty' => $isError ? (float)$booking->total_amount : 0,
+                'refund_amount' => $isError ? 0 : (float)$booking->total_amount,
+                'currency' => $booking->currency ?? 'SAR',
+                'message' => $isError 
+                    ? __('التذكرة تتبع فئة غير قابلة للاسترداد وفق شروط شركة الطيران. الإلغاء سيؤدي لفقدان قيمة التذكرة.')
+                    : __('تم التحقق من إمكانية استرداد التذكرة. سيتم مراجعة المبلغ المسترد واعتماده.')
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Cancel flight quote error: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'success',
+                'is_pending' => false,
+                'refundable' => true,
+                'penalty' => 0,
+                'refund_amount' => (float)$booking->total_amount,
+                'currency' => $booking->currency ?? 'SAR',
+                'message' => __('سيتم تقديم طلب استرداد التذكرة ومراجعة غرامات شركة الطيران.')
+            ]);
+        }
+    }
+
+    /**
+     * Cancel a Flight Booking.
+     */
+    public function cancelFlight(Request $request, $id, \App\Services\TraveloproService $traveloproService, WalletService $walletService)
+    {
+        $booking = Booking::with('passengers')->where('user_id', Auth::id())->findOrFail($id);
+
+        if ($booking->status === 'cancelled') {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['status' => 'error', 'message' => __('هذا الحجز ملغى بالفعل.')]);
+            }
+            return back()->with('error', __('هذا الحجز ملغى بالفعل.'));
+        }
+
+        $wasPaid = in_array($booking->status, ['paid', 'confirmed', 'ticketed', 'completed']);
+        $totalAmount = (float)$booking->total_amount;
+        $refundAmount = 0.0;
+
+        // 1. If pending or un-ticketed: direct cancellation with Travelopro
+        if ($booking->status === 'pending' || empty($booking->ticket_numbers)) {
+            if ($booking->booking_reference) {
+                try {
+                    $traveloproService->cancelBooking(['uniqueId' => $booking->booking_reference], $booking->id);
+                } catch (\Exception $e) {
+                    Log::warning("Supplier cancelBooking exception for #{$booking->id}: " . $e->getMessage());
+                }
+            }
+
+            $booking->update([
+                'status' => 'cancelled',
+                'ticket_status' => 'cancelled'
+            ]);
+
+            if ($wasPaid) {
+                $refundAmount = $totalAmount;
+                try {
+                    $wallet = $walletService->getOrCreateWallet($booking->user_id);
+                    $walletService->credit(
+                        $wallet->id,
+                        $refundAmount,
+                        __('استرداد قيمة حجز طيران ملغى: :ref (:airline)', [
+                            'ref' => $booking->booking_reference ?? $booking->pnr_code ?? '#' . $booking->id,
+                            'airline' => $booking->airline_name ?? 'Flight'
+                        ]),
+                        \App\Models\Booking::class,
+                        $booking->id
+                    );
+                    Log::info("Credited {$refundAmount} to wallet for user #{$booking->user_id} on un-ticketed Flight #{$booking->id} cancellation.");
+                } catch (\Exception $e) {
+                    Log::error("Failed to credit wallet on un-ticketed flight cancel: " . $e->getMessage());
+                }
+            }
+
+            $successMsg = ($wasPaid && $refundAmount > 0)
+                ? __('تم إلغاء حجز الطيران بنجاح وتم إيداع المبلغ المسترد (:amount :curr) في محفظتك في المنصة.', [
+                    'amount' => number_format($refundAmount, 2),
+                    'curr' => $booking->currency ?? 'SAR'
+                ])
+                : __('تم إلغاء حجز الطيران بنجاح.');
+
+            // Notification
+            $this->notificationService->sendToUser(
+                Auth::user(),
+                \App\Models\Notification::TYPE_BOOKING_CANCELLED,
+                __('Booking Cancelled'),
+                $successMsg,
+                ['booking_id' => $booking->id, 'type' => 'flight']
+            );
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['status' => 'success', 'message' => $successMsg]);
+            }
+
+            return redirect()->route('customer.bookings.flights')
+                ->with('success', $successMsg);
+        }
+
+        // 2. If ticketed: call Travelopro refund/void or cancel
+        try {
+            $paxDetails = [];
+            foreach ($booking->passengers as $pax) {
+                $paxDetails[] = [
+                    'type' => strtoupper($pax->passenger_type ?: 'ADT'),
+                    'title' => $pax->title ?: 'Mr',
+                    'firstName' => $pax->first_name ?: 'Passenger',
+                    'lastName' => $pax->last_name ?: 'Name',
+                    'eTicket' => $pax->e_ticket_no ?: ($booking->ticket_numbers[0] ?? 'TKT' . $booking->id)
+                ];
+            }
+
+            // Request quote and process refund
+            $quote = $traveloproService->refundQuote([
+                'uniqueId' => $booking->booking_reference,
+                'paxDetails' => $paxDetails
+            ], $booking->id);
+
+            $ptrId = $quote['RefundQuoteResponse']['RefundQuoteResult']['ptrUniqueID'] ?? null;
+            if ($ptrId) {
+                try {
+                    $statusResult = $traveloproService->getPostTicketStatus([
+                        'UniqueID' => $booking->booking_reference,
+                        'ptrUniqueID' => $ptrId
+                    ]);
+                    $quotedFares = $statusResult['PtrResponse']['PtrResult']['PtrDetails'][0]['PaxDetails'][0]['QuotedFares'] ?? null;
+                    if ($quotedFares) {
+                        $totalFare = (float)($quotedFares['TotalFare']['Amount'] ?? $booking->total_amount);
+                        $penalty = (float)($quotedFares['TotalRefundCharges']['Amount'] ?? $quotedFares['CancellationCharge']['Amount'] ?? 0);
+                        $refundAmount = max(0, (float)($quotedFares['TotalRefundAmount']['Amount'] ?? ($totalFare - $penalty)));
+                    }
+                } catch (\Exception $e) {
+                    Log::warning("Error parsing quote fares in cancelFlight: " . $e->getMessage());
+                }
+
+                $traveloproService->refundTicket([
+                    'uniqueId' => $booking->booking_reference,
+                    'ptrUniqueID' => $ptrId,
+                    'paxDetails' => $paxDetails
+                ], $booking->id);
+            } else {
+                $traveloproService->cancelBooking(['uniqueId' => $booking->booking_reference], $booking->id);
+            }
+        } catch (\Exception $e) {
+            Log::error("Flight refund/cancel exception for #{$booking->id}: " . $e->getMessage());
+        }
+
+        // Update local booking status
+        $booking->update([
+            'status' => 'cancelled',
+            'ticket_status' => 'refunded'
+        ]);
+
+        // Credit wallet if refund amount > 0
+        if ($wasPaid && $refundAmount > 0) {
+            try {
+                $wallet = $walletService->getOrCreateWallet($booking->user_id);
+                $walletService->credit(
+                    $wallet->id,
+                    $refundAmount,
+                    __('استرداد قيمة تذكرة طيران ملغاة: :ref (:airline)', [
+                        'ref' => $booking->booking_reference ?? $booking->pnr_code ?? '#' . $booking->id,
+                        'airline' => $booking->airline_name ?? 'Flight'
+                    ]),
+                    \App\Models\Booking::class,
+                    $booking->id
+                );
+                Log::info("Credited {$refundAmount} to wallet for user #{$booking->user_id} on Flight #{$booking->id} cancellation.");
+            } catch (\Exception $e) {
+                Log::error("Failed to credit wallet on flight cancellation: " . $e->getMessage());
+            }
+        }
+
+        $successMsg = ($wasPaid && $refundAmount > 0)
+            ? __('تم إلغاء حجز الطيران بنجاح وتم إيداع المبلغ المسترد (:amount :curr) في محفظتك في المنصة.', [
+                'amount' => number_format($refundAmount, 2),
+                'curr' => $booking->currency ?? 'SAR'
+            ])
+            : __('تم إلغاء حجز الطيران بنجاح.');
+
+        // Send notification
+        $this->notificationService->sendToUser(
+            Auth::user(),
+            \App\Models\Notification::TYPE_BOOKING_CANCELLED,
+            __('Booking Cancelled'),
+            $successMsg,
+            ['booking_id' => $booking->id, 'type' => 'flight']
+        );
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['status' => 'success', 'message' => $successMsg]);
+        }
+
+        return redirect()->route('customer.bookings.flights')
+            ->with('success', $successMsg);
     }
 
     /**

@@ -525,6 +525,8 @@ Route::middleware(['auth', 'isCustomer'])->prefix('customer')->name('customer.')
     Route::get('/bookings/{id}', [CustomerBookingController::class, 'show'])->name('bookings.show');
     Route::post('/bookings', [CustomerBookingController::class, 'store'])->name('bookings.store');
     Route::post('/bookings/{id}/cancel', [CustomerBookingController::class, 'cancel'])->name('bookings.cancel');
+    Route::get('/bookings/flights/{id}/cancel-quote', [CustomerBookingController::class, 'cancelFlightQuote'])->name('bookings.flights.cancel-quote');
+    Route::post('/bookings/flights/{id}/cancel', [CustomerBookingController::class, 'cancelFlight'])->name('bookings.flights.cancel');
     Route::get('/bookings/hotels/{id}/cancel-charge', [CustomerBookingController::class, 'cancelHotelCharge'])->name('bookings.hotels.cancel-charge');
     Route::post('/bookings/hotels/{id}/cancel', [CustomerBookingController::class, 'cancelHotel'])->name('bookings.hotels.cancel');
     Route::post('/bookings/{id}/sync-status', [CustomerBookingController::class, 'syncHotelBookingStatus'])->name('bookings.hotels.sync-status');

@@ -1573,6 +1573,8 @@
     .fr-line { flex: 1; height: 1px; background: var(--gray-200); position: relative; }
     .fr-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gray-200); }
     .fr-plane-icon { color: var(--primary); font-size: 0.8rem; transform: rotate(90deg); }
+    [dir="rtl"] .fr-plane-icon,
+    html[dir="rtl"] .fr-plane-icon { transform: rotate(-90deg); }
     .fr-stop-badge { font-size: 0.7rem; font-weight: 800; color: var(--primary); padding: 2px 8px; background: var(--primary-50); border-radius: 4px; }
     .fr-stop-badge.nonstop { color: var(--success); background: #ecfdf5; }
 

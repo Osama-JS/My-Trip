@@ -409,8 +409,8 @@
                         </td>
                         <td width="30%" valign="middle">
                             <div class="ref-box">
-                                <div class="ref-label">{{ __('Supplier Ref') }}</div>
-                                <div class="ref-value">{{ $booking->supplier_confirmation_num ?? __('Pending') }}</div>
+                                <div class="ref-label">{{ __('Booking Confirmation No.') }}</div>
+                                <div class="ref-value">{{ $booking->supplier_confirmation_num ?? ($booking->reference_num ?? __('Pending')) }}</div>
                                 <div class="ref-status">{{ __('Confirmed') }}</div>
                             </div>
                         </td>
@@ -421,8 +421,11 @@
                 <table width="100%" cellpadding="0" cellspacing="0">
                     <tr>
                         <td width="33%" valign="top">
-                            <span class="info-label">{{ __('Internal Ref') }}</span><br>
+                            <span class="info-label">{{ __('Booking Reference') }}</span><br>
                             <span class="info-value">{{ $booking->reference_num }}</span>
+                            @if(!empty($booking->supplier_confirmation_num))
+                                <br><span style="font-size: 8px; color: #64748b;">{{ __('Supplier Ref:') }} {{ $booking->supplier_confirmation_num }}</span>
+                            @endif
                         </td>
                         <td width="34%" align="center" valign="top">
                             <span class="info-label">{{ __('Room Type') }}</span><br>

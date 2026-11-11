@@ -31,7 +31,7 @@
             @if(!empty($searchParams['from']) && !empty($searchParams['to']))
                 <span class="fr-route">
                     <strong>{{ $searchParams['from'] }}</strong>
-                    <i class="fas fa-long-arrow-alt-right" style="margin:0 8px;color:var(--accent)"></i>
+                    <i class="fas fa-long-arrow-alt-{{ app()->isLocale('ar') ? 'left' : 'right' }}" style="margin:0 8px;color:var(--accent)"></i>
                     <strong>{{ $searchParams['to'] }}</strong>
                 </span>
             @endif
@@ -375,7 +375,7 @@
                         'change_penalty' => $firstFb['PenaltyDetails']['ChangePenaltyAmount'] ?? '',
                         'refund_allowed' => isset($firstFb['PenaltyDetails']['RefundAllowed']) ? ($firstFb['PenaltyDetails']['RefundAllowed'] ? 'true' : 'false') : '',
                         'refund_penalty' => $firstFb['PenaltyDetails']['RefundPenaltyAmount'] ?? '',
-                        'fare_basis' => $firstFb['FareBasisCode'] ?? ''
+                        'fare_basis' => is_array($firstFb['FareBasisCode'] ?? '') ? implode('/', array_filter($firstFb['FareBasisCode'])) : ($firstFb['FareBasisCode'] ?? '')
                     ])) }}" class="fe-btn fe-btn-primary fr-select-btn">
                         {{ __('Select') }} <i class="fas fa-arrow-right"></i>
                     </a>

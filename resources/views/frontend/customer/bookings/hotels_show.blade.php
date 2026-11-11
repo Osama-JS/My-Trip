@@ -549,6 +549,284 @@ body.dark-mode .callout-danger {
     transform: translateY(-2px);
 }
 
+/* ─── Ultra Modern Cancel Modal ─── */
+.cancel-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(8px);
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    animation: fadeInModal 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes fadeInModal {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+.cancel-modal-container {
+    background: #ffffff;
+    border-radius: 24px;
+    width: 100%;
+    max-width: 540px;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    animation: slideUpModal 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    position: relative;
+    transition: all 0.3s ease;
+}
+@keyframes slideUpModal {
+    from { transform: translateY(24px) scale(0.97); opacity: 0; }
+    to { transform: translateY(0) scale(1); opacity: 1; }
+}
+.modal-top-accent {
+    height: 5px;
+    width: 100%;
+    background: linear-gradient(90deg, #3b82f6 0%, #6366f1 100%);
+    transition: background 0.3s ease;
+}
+.cancel-modal-container.theme-danger .modal-top-accent {
+    background: linear-gradient(90deg, #ef4444 0%, #b91c1c 100%);
+}
+.cancel-modal-container.theme-success .modal-top-accent {
+    background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+}
+.cancel-modal-container.theme-info .modal-top-accent {
+    background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+}
+.cancel-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid #f1f5f9;
+    background: #ffffff;
+}
+.btn-close-modal {
+    background: #f1f5f9;
+    border: none;
+    font-size: 1.25rem;
+    color: #64748b;
+    cursor: pointer;
+    line-height: 1;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+.btn-close-modal:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+    transform: rotate(90deg);
+}
+.cancel-modal-body {
+    padding: 24px;
+    max-height: 72vh;
+    overflow-y: auto;
+}
+.cancel-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 18px 24px;
+    border-top: 1px solid #f1f5f9;
+    background: #f8fafc;
+}
+.btn-modal-cancel {
+    padding: 11px 22px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #475569;
+    font-weight: 700;
+    font-size: 0.92rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-modal-cancel:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+.btn-modal-confirm {
+    padding: 11px 24px;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.92rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+    transition: all 0.2s;
+}
+.btn-modal-confirm:hover:not(:disabled) {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.35);
+}
+.btn-modal-confirm:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+.modal-icon-badge {
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    background: rgba(239, 68, 68, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    transition: all 0.3s ease;
+}
+.cancel-modal-container.theme-danger .modal-icon-badge {
+    background: rgba(239, 68, 68, 0.12);
+    color: #dc2626;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.08);
+}
+.cancel-modal-container.theme-success .modal-icon-badge {
+    background: rgba(16, 185, 129, 0.12);
+    color: #059669;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.08);
+}
+.cancel-modal-container.theme-info .modal-icon-badge {
+    background: rgba(37, 99, 235, 0.12);
+    color: #2563eb;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
+}
+.btn-modal-support {
+    padding: 11px 22px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #ffffff !important;
+    font-weight: 700;
+    font-size: 0.92rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+    transition: all 0.2s;
+}
+.btn-modal-support:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
+}
+
+/* Danger / Warning Card Elements inside modal */
+.danger-hero-card {
+    background: linear-gradient(135deg, #fff1f2 0%, #fee2e2 100%);
+    border: 1px solid #fecaca;
+    border-inline-start: 5px solid #dc2626;
+    border-radius: 16px;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+    position: relative;
+}
+.danger-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 50px;
+    background: #b91c1c;
+    color: #ffffff;
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    box-shadow: 0 2px 8px rgba(185, 28, 28, 0.25);
+    margin-bottom: 12px;
+}
+.success-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 50px;
+    background: #059669;
+    color: #ffffff;
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    box-shadow: 0 2px 8px rgba(5, 150, 105, 0.25);
+    margin-bottom: 12px;
+}
+.info-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 50px;
+    background: #2563eb;
+    color: #ffffff;
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+    margin-bottom: 12px;
+}
+.pulse-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ffffff;
+    animation: dangerPulse 1.5s infinite;
+}
+@keyframes dangerPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(1.3); }
+}
+.price-breakdown-box {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 18px;
+}
+.price-breakdown-box.border-danger-soft {
+    border-color: #fecaca;
+    background: #fafaf9;
+}
+.price-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 0.92rem;
+}
+.price-row.total-row {
+    border-top: 1px dashed #e2e8f0;
+    padding-top: 12px;
+    margin-top: 6px;
+    font-size: 1.05rem;
+    font-weight: 800;
+}
+.protection-callout {
+    background: rgba(239, 68, 68, 0.05);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 14px;
+    padding: 14px 16px;
+    color: #991b1b;
+    font-size: 0.88rem;
+    line-height: 1.6;
+}
+
 /* ─── Timeline ─── */
 .timeline-v {
     display: flex;
@@ -1081,7 +1359,7 @@ body.dark-mode .callout-danger {
                 </div>
                 <div class="detail-card-body" style="padding: 20px;">
                     @if($booking->status !== 'cancelled')
-                        <button class="action-btn action-btn-danger-soft mb-3" id="btn-cancel-hotel" data-id="{{ $booking->id }}">
+                        <button class="action-btn action-btn-danger-soft mb-3" id="btn-cancel-hotel" data-id="{{ $booking->id }}" onclick="openHotelCancelModal()">
                             <i class="fas fa-times-circle"></i> {{ __('Request Cancellation') }}
                         </button>
                     @endif
@@ -1098,15 +1376,207 @@ body.dark-mode .callout-danger {
 
 <form id="form-cancel-hotel" action="{{ route('customer.bookings.hotels.cancel', $booking->id) }}" method="POST" style="display:none;">@csrf</form>
 
+{{-- Custom Hotel Cancellation Modal --}}
+<div id="hotelCancelModal" class="cancel-modal-overlay" style="display:none;" onclick="if(event.target===this) closeHotelCancelModal();">
+    <div class="cancel-modal-container" id="hotelModalContainer">
+        <div class="modal-top-accent" id="hotelModalAccent"></div>
+        <div class="cancel-modal-header">
+            <div class="d-flex align-items-center gap-2">
+                <div class="modal-icon-badge" id="hotelModalHeaderBadge">
+                    <i class="fas fa-hotel text-danger"></i>
+                </div>
+                <div>
+                    <h5 class="mb-0 fw-bold">{{ __('طلب إلغاء حجز الفندق') }}</h5>
+                    <small class="text-muted">{{ __('المرجع:') }} #{{ $booking->reference_num }}</small>
+                </div>
+            </div>
+            <button type="button" class="btn-close-modal" onclick="closeHotelCancelModal()">&times;</button>
+        </div>
+        <div class="cancel-modal-body">
+            {{-- Loading State --}}
+            <div id="hotelCancelLoading" class="text-center py-4">
+                <div class="spinner-border text-primary mb-3" role="status" style="width: 2.8rem; height: 2.8rem;"></div>
+                <h6 class="fw-bold mb-1">{{ __('جاري فحص سياسة وغرامات الإلغاء مع الفندق...') }}</h6>
+                <p class="text-muted small mb-0">{{ __('نتواصل مباشرة مع مزود الفندق للتحقق من التكلفة اللحظية...') }}</p>
+            </div>
+            {{-- Loaded Details Content --}}
+            <div id="hotelCancelContent" style="display:none;"></div>
+        </div>
+        <div class="cancel-modal-footer">
+            <button type="button" class="btn-modal-cancel" onclick="closeHotelCancelModal()">{{ __('إغلاق') }}</button>
+            <a href="https://wa.me/{{ \App\Models\Setting::get('whatsapp_number', '') }}?text={{ urlencode(__('مرحباً، أود الاستفسار بخصوص إلغاء حجز الفندق: ') . $booking->hotel_name . ' - ' . $booking->reference_num) }}" 
+               target="_blank" class="btn-modal-support" id="btnHotelSupport" style="display:none;">
+                <i class="fab fa-whatsapp me-1"></i> {{ __('تواصل مع الدعم عبر واتساب') }}
+            </a>
+            <button type="button" class="btn-modal-confirm" id="btnConfirmHotelCancel" style="display:none;" onclick="submitHotelCancel()">
+                <i class="fas fa-check-circle me-1"></i> {{ __('تأكيد إلغاء حجز الفندق') }}
+            </button>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
 <script>
-document.getElementById('btn-cancel-hotel')?.addEventListener('click', function() {
-    if (confirm('{{ __("Are you sure you want to request cancellation?") }}')) {
-        document.getElementById('form-cancel-hotel').submit();
-    }
-});
+function openHotelCancelModal() {
+    const modal = document.getElementById('hotelCancelModal');
+    const container = document.getElementById('hotelModalContainer');
+    const loading = document.getElementById('hotelCancelLoading');
+    const content = document.getElementById('hotelCancelContent');
+    const confirmBtn = document.getElementById('btnConfirmHotelCancel');
+    const supportBtn = document.getElementById('btnHotelSupport');
+    const headerBadge = document.getElementById('hotelModalHeaderBadge');
+
+    modal.style.display = 'flex';
+    container.className = 'cancel-modal-container';
+    loading.style.display = 'block';
+    content.style.display = 'none';
+    confirmBtn.style.display = 'none';
+    confirmBtn.disabled = true;
+    supportBtn.style.display = 'none';
+
+    fetch('{{ route("customer.bookings.hotels.cancel-charge", $booking->id) }}')
+        .then(res => res.json())
+        .then(data => {
+            loading.style.display = 'none';
+            content.style.display = 'block';
+
+            let policyText = data.cancellationPolicy || data.CancellationPolicy || data.policy || '';
+            let charge = data.charge !== undefined ? data.charge : (data.Charge !== undefined ? data.Charge : (data.cancelCharge !== undefined ? data.cancelCharge : null));
+            let currency = data.currency || '{{ $booking->currency ?? "SAR" }}';
+            let totalPrice = parseFloat('{{ (float)$booking->total_price }}');
+
+            let isFree = (charge === 0 || charge === '0' || (policyText && policyText.toLowerCase().includes('free')));
+            let isNonRefundable = (policyText && policyText.toLowerCase().includes('non-refundable')) || (charge !== null && parseFloat(charge) >= totalPrice && !isFree);
+
+            let html = '';
+
+            if (isNonRefundable) {
+                container.className = 'cancel-modal-container theme-danger';
+                if (headerBadge) headerBadge.innerHTML = '<i class="fas fa-ban text-danger"></i>';
+                html += `
+                    <div class="danger-hero-card">
+                        <div class="danger-status-badge">
+                            <span class="pulse-status-dot"></span>
+                            <span>{{ __('حجز فندقي غير قابل للإلغاء أو الاسترداد (NON-REFUNDABLE)') }}</span>
+                        </div>
+                        <h6 class="fw-bold text-danger mb-2 d-flex align-items-center gap-2">
+                            <i class="fas fa-exclamation-triangle"></i> {{ __('سياسة الفندق الصارمة:') }}
+                        </h6>
+                        <p class="mb-0 text-danger-emphasis" style="font-size:0.92rem; line-height: 1.6; font-weight: 500;">
+                            ${policyText || '{{ __("هذه الغرفة تتبع سياسة حجز غير قابلة للاسترجاع المالي نهائياً وفق شروط الفندق ومزود الخدمة.") }}'}
+                        </p>
+                    </div>
+
+                    <div class="price-breakdown-box border-danger-soft">
+                        <div class="price-row">
+                            <span class="text-muted">{{ __('إجمالي قيمة الحجز:') }}</span>
+                            <span class="fw-bold">${totalPrice.toFixed(2)} ${currency}</span>
+                        </div>
+                        <div class="price-row text-danger">
+                            <span>{{ __('غرامة الإلغاء المفروضة (100%):') }}</span>
+                            <span class="fw-bold">-${totalPrice.toFixed(2)} ${currency}</span>
+                        </div>
+                        <div class="price-row total-row text-danger">
+                            <span>{{ __('المبلغ المسترد للمحفظة:') }}</span>
+                            <span class="fw-bolder fs-5 text-danger">0.00 ${currency}</span>
+                        </div>
+                    </div>
+
+                    <div class="protection-callout">
+                        <div class="d-flex align-items-start gap-2">
+                            <i class="fas fa-lock fa-lg text-danger mt-1"></i>
+                            <div>
+                                <strong class="d-block mb-1 text-danger">{{ __('تم قفل الإلغاء الذاتي لحماية إقامتك ومبلغك:') }}</strong>
+                                {{ __('حرصاً على حماية حقوقك من خسارة تكلفة الغرفة دون أي مقابل مالي، تم إيقاف الإلغاء المباشر. إذا كانت لديك حالة طارئة، يرجى التواصل مع فريق الدعم الفني لمتابعة الحالة استثنائياً مع إدارة الفندق.') }}
+                            </div>
+                        </div>
+                    </div>`;
+
+                // Do NOT allow confirming cancellation
+                confirmBtn.style.display = 'none';
+                supportBtn.style.display = 'inline-flex';
+
+            } else {
+                container.className = 'cancel-modal-container theme-success';
+                if (headerBadge) headerBadge.innerHTML = '<i class="fas fa-check-circle text-success"></i>';
+
+                let refundAmount = (charge !== null) ? Math.max(0, totalPrice - parseFloat(charge)).toFixed(2) : totalPrice.toFixed(2);
+                let penaltyDisplay = isFree ? '0.00' : (charge !== null ? parseFloat(charge).toFixed(2) : '0.00');
+
+                html += `
+                    <div class="mb-3">
+                        <div class="success-status-badge">
+                            <span class="pulse-status-dot"></span>
+                            <span>${isFree ? '{{ __("إلغاء مجاني متاح (FREE CANCELLATION)") }}' : '{{ __("حجز قابل للإلغاء مع غرامة (REFUNDABLE)") }}'}</span>
+                        </div>
+                    </div>
+                    ${policyText ? `
+                    <div class="alert alert-success mb-3" style="font-size: 0.92rem; line-height: 1.6;">
+                        <i class="fas fa-info-circle me-1"></i>
+                        <strong>{{ __('سياسة الفندق المقررة للإلغاء:') }}</strong>
+                        <div class="mt-1">${policyText}</div>
+                    </div>` : ''}
+                    <div class="price-breakdown-box">
+                        <div class="price-row">
+                            <span class="text-muted">{{ __('إجمالي قيمة الحجز:') }}</span>
+                            <span class="fw-bold">${totalPrice.toFixed(2)} ${currency}</span>
+                        </div>
+                        <div class="price-row text-danger">
+                            <span>{{ __('رسوم / غرامة الإلغاء:') }}</span>
+                            <span class="fw-bold">${isFree ? '{{ __("مجاني (0.00)") }}' : '-' + penaltyDisplay + ' ' + currency}</span>
+                        </div>
+                        <div class="price-row total-row text-success">
+                            <span>{{ __('المبلغ المسترد لمحفظتك في المنصة:') }}</span>
+                            <span class="fw-bolder fs-5 text-success">${refundAmount} ${currency}</span>
+                        </div>
+                    </div>
+                    <div class="p-3 rounded-3 border border-success-subtle bg-success-subtle text-success small mb-0 mt-3" style="line-height: 1.6;">
+                        <i class="fas fa-wallet me-1"></i>
+                        {{ __('عند تأكيد الإلغاء، سيتم تحرير الغرفة فندقياً فوراً وإيداع المبلغ المسترد في محفظتك الإلكترونية بالمنصة لتتمكن من استخدامه في أي حجز آخر.') }}
+                    </div>`;
+
+                confirmBtn.style.display = 'inline-flex';
+                confirmBtn.disabled = false;
+                confirmBtn.className = 'btn-modal-confirm';
+                confirmBtn.innerHTML = '<i class="fas fa-check-circle me-1"></i> {{ __("تأكيد إلغاء حجز الفندق") }}';
+            }
+
+            content.innerHTML = html;
+        })
+        .catch(err => {
+            loading.style.display = 'none';
+            content.style.display = 'block';
+            content.innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    {{ __('تعذر التحقق من التكلفة مع الفندق حالياً. يرجى التواصل مع فريق الدعم للمساعدة.') }}
+                </div>`;
+            confirmBtn.style.display = 'none';
+            supportBtn.style.display = 'inline-flex';
+        });
+}
+
+function closeHotelCancelModal() {
+    const modal = document.getElementById('hotelCancelModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function submitHotelCancel() {
+    const btn = document.getElementById('btnConfirmHotelCancel');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> {{ __("جاري الإلغاء...") }}';
+    document.getElementById('form-cancel-hotel').submit();
+}
+
+var btnCancelHotel = document.getElementById('btn-cancel-hotel');
+if (btnCancelHotel) {
+    btnCancelHotel.addEventListener('click', function(e) {
+        e.preventDefault();
+        openHotelCancelModal();
+    });
+}
 
 function syncStatusNow(btn) {
     if (btn) {

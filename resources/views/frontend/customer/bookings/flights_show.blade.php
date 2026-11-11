@@ -129,7 +129,11 @@
     background: var(--bg-card);
     padding: 0 12px;
     z-index: 2;
-    transition: background-color 0.3s;
+    transition: background-color 0.3s, transform 0.2s;
+}
+[dir="rtl"] .pass-path-line i,
+html[dir="rtl"] .pass-path-line i {
+    transform: scaleX(-1);
 }
 
 .boarding-pass-stub-line {
@@ -480,6 +484,11 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
     padding: 0 10px;
     color: var(--primary-blue);
     font-size: 0.95rem;
+    transition: transform 0.2s;
+}
+[dir="rtl"] .seg-path i,
+html[dir="rtl"] .seg-path i {
+    transform: scaleX(-1);
 }
 .seg-path .path-dur {
     font-size: 0.72rem;
@@ -625,6 +634,314 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
     color: var(--primary-blue);
     background: rgba(37, 99, 235, 0.03);
     transform: translateY(-2px);
+}
+.action-btn-danger-soft {
+    background: rgba(239, 68, 68, 0.06);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.15);
+}
+.action-btn-danger-soft:hover {
+    background: #ef4444;
+    color: white;
+    transform: translateY(-2px);
+}
+.support-links {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border-color);
+}
+.support-links a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+.support-links a:hover {
+    color: var(--primary-blue);
+}
+
+/* ─── Ultra Modern Cancel Modal ─── */
+.cancel-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(8px);
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    animation: fadeInModal 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes fadeInModal {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+.cancel-modal-container {
+    background: #ffffff;
+    border-radius: 24px;
+    width: 100%;
+    max-width: 540px;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    animation: slideUpModal 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    position: relative;
+    transition: all 0.3s ease;
+}
+@keyframes slideUpModal {
+    from { transform: translateY(24px) scale(0.97); opacity: 0; }
+    to { transform: translateY(0) scale(1); opacity: 1; }
+}
+.modal-top-accent {
+    height: 5px;
+    width: 100%;
+    background: linear-gradient(90deg, #3b82f6 0%, #6366f1 100%);
+    transition: background 0.3s ease;
+}
+.cancel-modal-container.theme-danger .modal-top-accent {
+    background: linear-gradient(90deg, #ef4444 0%, #b91c1c 100%);
+}
+.cancel-modal-container.theme-success .modal-top-accent {
+    background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+}
+.cancel-modal-container.theme-info .modal-top-accent {
+    background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+}
+.cancel-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid #f1f5f9;
+    background: #ffffff;
+}
+.btn-close-modal {
+    background: #f1f5f9;
+    border: none;
+    font-size: 1.25rem;
+    color: #64748b;
+    cursor: pointer;
+    line-height: 1;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+.btn-close-modal:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+    transform: rotate(90deg);
+}
+.cancel-modal-body {
+    padding: 24px;
+    max-height: 72vh;
+    overflow-y: auto;
+}
+.cancel-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 18px 24px;
+    border-top: 1px solid #f1f5f9;
+    background: #f8fafc;
+}
+.btn-modal-cancel {
+    padding: 11px 22px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #475569;
+    font-weight: 700;
+    font-size: 0.92rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-modal-cancel:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+.btn-modal-confirm {
+    padding: 11px 24px;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.92rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+    transition: all 0.2s;
+}
+.btn-modal-confirm:hover:not(:disabled) {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.35);
+}
+.btn-modal-confirm:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+.modal-icon-badge {
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    background: rgba(239, 68, 68, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    transition: all 0.3s ease;
+}
+.cancel-modal-container.theme-danger .modal-icon-badge {
+    background: rgba(239, 68, 68, 0.12);
+    color: #dc2626;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.08);
+}
+.cancel-modal-container.theme-success .modal-icon-badge {
+    background: rgba(16, 185, 129, 0.12);
+    color: #059669;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.08);
+}
+.cancel-modal-container.theme-info .modal-icon-badge {
+    background: rgba(37, 99, 235, 0.12);
+    color: #2563eb;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
+}
+.btn-modal-support {
+    padding: 11px 22px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #ffffff !important;
+    font-weight: 700;
+    font-size: 0.92rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+    transition: all 0.2s;
+}
+.btn-modal-support:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
+}
+
+/* Danger / Warning Card Elements inside modal */
+.danger-hero-card {
+    background: linear-gradient(135deg, #fff1f2 0%, #fee2e2 100%);
+    border: 1px solid #fecaca;
+    border-inline-start: 5px solid #dc2626;
+    border-radius: 16px;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+    position: relative;
+}
+.danger-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 50px;
+    background: #b91c1c;
+    color: #ffffff;
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    box-shadow: 0 2px 8px rgba(185, 28, 28, 0.25);
+    margin-bottom: 12px;
+}
+.success-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 50px;
+    background: #059669;
+    color: #ffffff;
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    box-shadow: 0 2px 8px rgba(5, 150, 105, 0.25);
+    margin-bottom: 12px;
+}
+.info-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 50px;
+    background: #2563eb;
+    color: #ffffff;
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+    margin-bottom: 12px;
+}
+.pulse-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ffffff;
+    animation: dangerPulse 1.5s infinite;
+}
+@keyframes dangerPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(1.3); }
+}
+.price-breakdown-box {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 18px;
+}
+.price-breakdown-box.border-danger-soft {
+    border-color: #fecaca;
+    background: #fafaf9;
+}
+.price-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 0.92rem;
+}
+.price-row.total-row {
+    border-top: 1px dashed #e2e8f0;
+    padding-top: 12px;
+    margin-top: 6px;
+    font-size: 1.05rem;
+    font-weight: 800;
+}
+.protection-callout {
+    background: rgba(239, 68, 68, 0.05);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 14px;
+    padding: 14px 16px;
+    color: #991b1b;
+    font-size: 0.88rem;
+    line-height: 1.6;
 }
 
 /* ─── Timeline Card ─── */
@@ -963,7 +1280,7 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
                     </span>
                 @else
                     <span class="badge" style="background: rgba(255,255,255,0.15); color: #fff; padding: 6px 10px; border-radius: 8px; font-weight: 700; font-size: 0.75rem;">
-                        <i class="fas fa-long-arrow-alt-right me-1"></i> {{ __('One Way') }}
+                        <i class="fas fa-long-arrow-alt-{{ app()->isLocale('ar') ? 'left' : 'right' }} me-1"></i> {{ __('One Way') }}
                     </span>
                 @endif
             </div>
@@ -1003,7 +1320,7 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
                             <span style="font-size: 0.8rem; line-height: 1.2;">{{ $destName }}</span>
                         </div>
                         <div class="pass-path-line">
-                            <i class="fas fa-plane fa-flip-horizontal" style="color: #b45309;"></i>
+                            <i class="fas fa-plane" style="color: #b45309;"></i>
                         </div>
                         <div class="pass-airport-code dest-code">
                             <h3 class="notranslate" translate="no" style="color: #b45309;">{{ strtoupper(substr($originCode, 0, 3)) }}</h3>
@@ -1076,7 +1393,7 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
                             @endphp
                             <div class="mb-3 p-3 rounded" style="background: rgba(37, 99, 235, 0.04); border: 1px solid rgba(37,99,235,0.15);">
                                 <div style="font-weight: 800; color: var(--primary-blue); font-size: 0.9rem; margin-bottom: 8px;">
-                                    <i class="fas fa-plane-departure me-1"></i> {{ __('Flight :num', ['num' => $legIdx + 1]) }}: <span class="notranslate" translate="no">{{ strtoupper(substr($lDepCode, 0, 3)) }}</span> <i class="fas fa-long-arrow-alt-right mx-1"></i> <span class="notranslate" translate="no">{{ strtoupper(substr($lArrCode, 0, 3)) }}</span>
+                                    <i class="fas fa-plane-departure me-1"></i> {{ __('Flight :num', ['num' => $legIdx + 1]) }}: <span class="notranslate" translate="no">{{ strtoupper(substr($lDepCode, 0, 3)) }}</span> <i class="fas fa-long-arrow-alt-{{ app()->isLocale('ar') ? 'left' : 'right' }} mx-1"></i> <span class="notranslate" translate="no">{{ strtoupper(substr($lArrCode, 0, 3)) }}</span>
                                 </div>
                                 <div class="info-row" style="margin-bottom: 6px;">
                                     <span class="info-label">{{ __('Origin') }}</span>
@@ -1098,7 +1415,7 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
                         {{-- Outbound Flight Summary --}}
                         <div class="mb-3 p-3 rounded" style="background: rgba(37, 99, 235, 0.04); border: 1px solid rgba(37,99,235,0.15);">
                             <div style="font-weight: 800; color: var(--primary-blue); font-size: 0.9rem; margin-bottom: 8px;">
-                                <i class="fas fa-plane-departure me-1"></i> {{ __('Outbound Journey') }}: <span class="notranslate" translate="no">{{ strtoupper(substr($originCode, 0, 3)) }}</span> <i class="fas fa-long-arrow-alt-right mx-1"></i> <span class="notranslate" translate="no">{{ strtoupper(substr($destCode, 0, 3)) }}</span>
+                                <i class="fas fa-plane-departure me-1"></i> {{ __('Outbound Journey') }}: <span class="notranslate" translate="no">{{ strtoupper(substr($originCode, 0, 3)) }}</span> <i class="fas fa-long-arrow-alt-{{ app()->isLocale('ar') ? 'left' : 'right' }} mx-1"></i> <span class="notranslate" translate="no">{{ strtoupper(substr($destCode, 0, 3)) }}</span>
                             </div>
                             <div class="info-row" style="margin-bottom: 6px;">
                                 <span class="info-label">{{ __('Origin') }}</span>
@@ -1120,7 +1437,7 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
                         @if($isRoundTrip)
                         <div class="mb-3 p-3 rounded" style="background: rgba(245, 158, 11, 0.06); border: 1px solid rgba(245, 158, 11, 0.25);">
                             <div style="font-weight: 800; color: #b45309; font-size: 0.9rem; margin-bottom: 8px;">
-                                <i class="fas fa-plane-arrival me-1"></i> {{ __('Return Journey') }}: <span class="notranslate" translate="no">{{ strtoupper(substr($destCode, 0, 3)) }}</span> <i class="fas fa-long-arrow-alt-right mx-1"></i> <span class="notranslate" translate="no">{{ strtoupper(substr($originCode, 0, 3)) }}</span>
+                                <i class="fas fa-plane-arrival me-1"></i> {{ __('Return Journey') }}: <span class="notranslate" translate="no">{{ strtoupper(substr($destCode, 0, 3)) }}</span> <i class="fas fa-long-arrow-alt-{{ app()->isLocale('ar') ? 'left' : 'right' }} mx-1"></i> <span class="notranslate" translate="no">{{ strtoupper(substr($originCode, 0, 3)) }}</span>
                             </div>
                             <div class="info-row" style="margin-bottom: 6px;">
                                 <span class="info-label">{{ __('Origin') }}</span>
@@ -1475,6 +1792,70 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
                 </div>
             </div>
 
+            {{-- Manage Booking / Cancellation --}}
+            <div class="detail-card">
+                <div class="detail-card-header" style="padding: 16px 20px;">
+                    <h5><i class="fas fa-shield-alt"></i> {{ __('Manage Booking') }}</h5>
+                </div>
+                <div class="detail-card-body" style="padding: 20px;">
+                    @if($booking->status !== 'cancelled')
+                        <button class="action-btn action-btn-danger-soft mb-3" id="btn-cancel-flight" data-id="{{ $booking->id }}" onclick="openFlightCancelModal()">
+                            <i class="fas fa-times-circle"></i> {{ __('Request Cancellation') }}
+                        </button>
+                    @endif
+                    <div class="support-links">
+                        <a href="https://wa.me/{{ \App\Models\Setting::get('whatsapp_number', '') }}" target="_blank"><i class="fab fa-whatsapp" style="color: #25d366;"></i> {{ __('Contact Support') }}</a>
+                        <a href="#"><i class="fas fa-question-circle"></i> {{ __('Help Center') }}</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<form id="form-cancel-flight" action="{{ route('customer.bookings.flights.cancel', $booking->id) }}" method="POST" style="display:none;">@csrf</form>
+
+{{-- Custom Flight Cancellation Modal --}}
+<div id="flightCancelModal" class="cancel-modal-overlay" style="display:none;" onclick="if(event.target===this) closeFlightCancelModal();">
+    <div class="cancel-modal-container" id="flightModalContainer">
+        <div class="modal-top-accent" id="flightModalAccent"></div>
+        <div class="cancel-modal-header">
+            <div class="d-flex align-items-center gap-3">
+                <div class="modal-icon-badge" id="modalHeaderBadge">
+                    <i class="fas fa-plane-slash text-danger"></i>
+                </div>
+                <div>
+                    <h5 class="mb-0 fw-bold" id="modalTitleText">{{ __('طلب إلغاء حجز الطيران') }}</h5>
+                    <div class="d-flex align-items-center gap-2 mt-1">
+                        <span class="badge bg-light text-secondary border">{{ __('المرجع:') }} #{{ $booking->booking_reference }}</span>
+                        @if($booking->airline_name)
+                        <span class="badge bg-light text-secondary border">{{ $booking->airline_name }}</span>
+                        @endif
+                    </div>
+                </div>
+            </div>
+            <button type="button" class="btn-close-modal" onclick="closeFlightCancelModal()">&times;</button>
+        </div>
+        <div class="cancel-modal-body">
+            {{-- Loading State --}}
+            <div id="flightCancelLoading" class="text-center py-4">
+                <div class="spinner-border text-primary mb-3" role="status" style="width: 2.8rem; height: 2.8rem;"></div>
+                <h6 class="fw-bold mb-1">{{ __('جاري فحص شروط وتكلفة الإلغاء مع شركة الطيران...') }}</h6>
+                <p class="text-muted small mb-0">{{ __('نتواصل مباشرة مع نظام الحجز العالمي للتحقق من سياسة التذكرة...') }}</p>
+            </div>
+            {{-- Loaded Details Content --}}
+            <div id="flightCancelContent" style="display:none;"></div>
+        </div>
+        <div class="cancel-modal-footer">
+            <button type="button" class="btn-modal-cancel" onclick="closeFlightCancelModal()">{{ __('إغلاق') }}</button>
+            <a href="https://wa.me/{{ \App\Models\Setting::get('whatsapp_number', '') }}?text={{ urlencode(__('مرحباً، أود الاستفسار بخصوص إلغاء حجز الطيران رقم: ') . $booking->booking_reference) }}" 
+               target="_blank" class="btn-modal-support" id="btnFlightSupport" style="display:none;">
+                <i class="fab fa-whatsapp me-1"></i> {{ __('تواصل مع الدعم للمساعدة') }}
+            </a>
+            <button type="button" class="btn-modal-confirm" id="btnConfirmFlightCancel" style="display:none;" onclick="submitFlightCancel()">
+                <i class="fas fa-check-circle me-1"></i> {{ __('تأكيد إلغاء الحجز') }}
+            </button>
         </div>
     </div>
 </div>
@@ -1523,4 +1904,169 @@ body.dark-mode .ticket-tag, body.dark-mode .passport-tag {
 </script>
 @endpush
 @endif
+
+@push('scripts')
+<script>
+function openFlightCancelModal() {
+    const modal = document.getElementById('flightCancelModal');
+    const container = document.getElementById('flightModalContainer');
+    const loading = document.getElementById('flightCancelLoading');
+    const content = document.getElementById('flightCancelContent');
+    const confirmBtn = document.getElementById('btnConfirmFlightCancel');
+    const supportBtn = document.getElementById('btnFlightSupport');
+    const headerBadge = document.getElementById('modalHeaderBadge');
+
+    modal.style.display = 'flex';
+    container.className = 'cancel-modal-container theme-info';
+    loading.style.display = 'block';
+    content.style.display = 'none';
+    confirmBtn.style.display = 'none';
+    confirmBtn.disabled = true;
+    supportBtn.style.display = 'none';
+
+    fetch('{{ route("customer.bookings.flights.cancel-quote", $booking->id) }}')
+        .then(res => res.json())
+        .then(data => {
+            loading.style.display = 'none';
+            content.style.display = 'block';
+
+            let isNonRefundable = (!data.refundable || parseFloat(data.refund_amount || 0) <= 0) && !data.is_pending;
+            let html = '';
+
+            if (data.is_pending) {
+                container.className = 'cancel-modal-container theme-info';
+                if (headerBadge) headerBadge.innerHTML = '<i class="fas fa-info-circle text-primary"></i>';
+                html += `
+                    <div class="mb-3">
+                        <div class="info-status-badge">
+                            <span class="pulse-status-dot"></span>
+                            <span>{{ __('حجز غير مؤكد (PENDING)') }}</span>
+                        </div>
+                    </div>
+                    <div class="alert alert-info d-flex align-items-center gap-2 mb-3" style="font-size:0.92rem; line-height:1.6;">
+                        <i class="fas fa-info-circle fa-lg"></i>
+                        <div><strong>{{ __('إلغاء فوري مجاني:') }}</strong> {{ __('لم يتم إصدار التذاكر بعد من شركة الطيران. يمكنك إلغاء الحجز فوراً وبشكل مجاني بالكامل.') }}</div>
+                    </div>`;
+                confirmBtn.style.display = 'inline-flex';
+                confirmBtn.disabled = false;
+                confirmBtn.className = 'btn-modal-confirm';
+                confirmBtn.innerHTML = '<i class="fas fa-check-circle me-1"></i> {{ __("تأكيد إلغاء الحجز المجاني") }}';
+
+            } else if (isNonRefundable) {
+                container.className = 'cancel-modal-container theme-danger';
+                if (headerBadge) headerBadge.innerHTML = '<i class="fas fa-shield-alt text-danger"></i>';
+                html += `
+                    <div class="danger-hero-card">
+                        <div class="danger-status-badge">
+                            <span class="pulse-status-dot"></span>
+                            <span>{{ __('تذكرة غير قابلة للإلغاء أو الاسترداد (NON-REFUNDABLE)') }}</span>
+                        </div>
+                        <h6 class="fw-bold text-danger mb-2 d-flex align-items-center gap-2">
+                            <i class="fas fa-exclamation-triangle"></i> {{ __('قيود وشروط شركة الطيران الصارمة:') }}
+                        </h6>
+                        <p class="mb-0 text-danger-emphasis" style="font-size:0.92rem; line-height: 1.6; font-weight: 500;">
+                            ${data.message || '{{ __("هذه التذكرة تتبع فئة أسعار ترويجية غير قابلة للإلغاء أو الاسترجاع المالي نهائياً وفق شروط شركة الطيران.") }}'}
+                        </p>
+                    </div>
+
+                    <div class="price-breakdown-box border-danger-soft">
+                        <div class="price-row">
+                            <span class="text-muted">{{ __('قيمة التذكرة المدفوعة:') }}</span>
+                            <span class="fw-bold">${data.penalty} ${data.currency}</span>
+                        </div>
+                        <div class="price-row text-danger">
+                            <span>{{ __('غرامة الإلغاء المفروضة (100%):') }}</span>
+                            <span class="fw-bold">-${data.penalty} ${data.currency}</span>
+                        </div>
+                        <div class="price-row total-row text-danger">
+                            <span>{{ __('المبلغ المسترد للمحفظة / الحساب:') }}</span>
+                            <span class="fw-bolder fs-5 text-danger">0.00 ${data.currency}</span>
+                        </div>
+                    </div>
+
+                    <div class="protection-callout">
+                        <div class="d-flex align-items-start gap-2">
+                            <i class="fas fa-lock fa-lg text-danger mt-1"></i>
+                            <div>
+                                <strong class="d-block mb-1 text-danger">{{ __('تم قفل الإلغاء الذاتي لحماية تذكرتك ومقعدك:') }}</strong>
+                                {{ __('حرصاً على حماية حقوقك من خسارة قيمة التذكرة والمقاعد دون أي مقابل مالي، تم إيقاف الإلغاء المباشر. إذا كانت لديك حالة طارئة، يرجى التواصل مع فريق الدعم الفني لمتابعة الحالة استثنائياً مع شركة الطيران.') }}
+                            </div>
+                        </div>
+                    </div>`;
+                
+                // Do NOT allow confirming cancellation!
+                confirmBtn.style.display = 'none';
+                supportBtn.style.display = 'inline-flex';
+
+            } else {
+                container.className = 'cancel-modal-container theme-success';
+                if (headerBadge) headerBadge.innerHTML = '<i class="fas fa-undo-alt text-success"></i>';
+                html += `
+                    <div class="mb-3">
+                        <div class="success-status-badge">
+                            <span class="pulse-status-dot"></span>
+                            <span>{{ __('تذكرة قابلة للاسترداد (REFUNDABLE)') }}</span>
+                        </div>
+                    </div>
+                    <div class="alert alert-success mb-3" style="font-size: 0.92rem; line-height: 1.6;">
+                        <i class="fas fa-info-circle me-1"></i>
+                        <strong>{{ __('شروط الاسترداد المقررة من شركة الطيران:') }}</strong>
+                        <div class="mt-1">${data.message}</div>
+                    </div>
+                    <div class="price-breakdown-box">
+                        <div class="price-row text-danger">
+                            <span>{{ __('غرامة الإلغاء المقررة:') }}</span>
+                            <span class="fw-bold">-${data.penalty} ${data.currency}</span>
+                        </div>
+                        <div class="price-row total-row text-success">
+                            <span>{{ __('المبلغ المسترد لمحفظتك في المنصة:') }}</span>
+                            <span class="fw-bolder fs-5 text-success">${data.refund_amount} ${data.currency}</span>
+                        </div>
+                    </div>
+                    <div class="p-3 rounded-3 border border-success-subtle bg-success-subtle text-success small mb-0 mt-3" style="line-height: 1.6;">
+                        <i class="fas fa-wallet me-1"></i>
+                        {{ __('عند تأكيد الإلغاء، سيتم إلغاء التذكرة فوراً وإيداع المبلغ المسترد في محفظتك الإلكترونية بالمنصة لتتمكن من استخدامه في أي حجز آخر.') }}
+                    </div>`;
+                
+                confirmBtn.style.display = 'inline-flex';
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = '<i class="fas fa-check-circle me-1"></i> {{ __("تأكيد طلب الإلغاء والاسترداد") }}';
+            }
+
+            content.innerHTML = html;
+        })
+        .catch(err => {
+            loading.style.display = 'none';
+            content.style.display = 'block';
+            content.innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    {{ __('تعذر التحقق التلقائي من سياسة شركة الطيران حالياً. يرجى التواصل مع فريق الدعم للمساعدة.') }}
+                </div>`;
+            confirmBtn.style.display = 'none';
+            supportBtn.style.display = 'inline-flex';
+        });
+}
+
+function closeFlightCancelModal() {
+    const modal = document.getElementById('flightCancelModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function submitFlightCancel() {
+    const btn = document.getElementById('btnConfirmFlightCancel');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> {{ __("جاري الإلغاء...") }}';
+    document.getElementById('form-cancel-flight').submit();
+}
+
+var btnCancelFlight = document.getElementById('btn-cancel-flight');
+if (btnCancelFlight) {
+    btnCancelFlight.addEventListener('click', function(e) {
+        e.preventDefault();
+        openFlightCancelModal();
+    });
+}
+</script>
+@endpush
 @endsection

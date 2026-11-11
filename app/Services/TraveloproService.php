@@ -1028,7 +1028,8 @@ class TraveloproService
         Log::info('Travelopro Post-Ticket Status Request', ['data' => $data]);
 
         $payload = array_merge($this->authPayload(), [
-            'UniqueID' => $data['UniqueID'],
+            'UniqueID' => $data['UniqueID'] ?? $data['uniqueId'] ?? '',
+            'ptrUniqueID' => $data['ptrUniqueID'] ?? '',
         ]);
 
         $url = $this->endpoint('post_ticket_status');
@@ -1050,6 +1051,176 @@ class TraveloproService
         } catch (\Exception $e) {
             Log::error('Travelopro Post-Ticket Status Exception', ['message' => $e->getMessage()]);
             return ['status' => 'error', 'message' => 'Service unavailable'];
+        }
+    }
+
+    /**
+     * Request Refund Quote.
+     */
+    public function refundQuote(array $data, $bookingId = null): array
+    {
+        Log::info('Travelopro Refund Quote Request', ['UniqueID' => $data['uniqueId'] ?? $data['UniqueID'] ?? '']);
+
+        $payload = array_merge($this->authPayload(), [
+            'UniqueID' => $data['uniqueId'] ?? $data['UniqueID'] ?? '',
+            'remark' => $data['remark'] ?? 'Customer requested refund quote',
+            'paxDetails' => $data['paxDetails'] ?? [],
+        ]);
+
+        $url = $this->endpoint('refund_quote');
+        $startTime = microtime(true);
+
+        try {
+            $response = $this->httpClient(60)->post($url, $payload);
+            $executionTime = microtime(true) - $startTime;
+
+            $this->logApiTransaction('refundQuote', $url, 'POST', $payload, $response->json(), $response->status(), $executionTime, $bookingId);
+
+            if ($response->successful()) {
+                $result = $response->json();
+                $quoteResult = $result['RefundQuoteResponse']['RefundQuoteResult'] ?? $result['RefundResult'] ?? [];
+                $isSuccess = $quoteResult['Success'] ?? ($result['Success'] ?? 'false');
+
+                if ($isSuccess === 'true' || $isSuccess === true) {
+                    return $result;
+                }
+
+                $errorMessage = $quoteResult['Errors']['ErrorMessage'] ?? $result['Errors']['ErrorMessage'] ?? 'Refund quote failed.';
+                return ['status' => 'error', 'message' => $errorMessage, 'details' => $result];
+            }
+
+            return ['status' => 'error', 'message' => 'Failed to connect to supplier refund quote service'];
+        } catch (\Exception $e) {
+            Log::error('Travelopro Refund Quote Exception', ['message' => $e->getMessage()]);
+            return ['status' => 'error', 'message' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Process Refund Ticket.
+     */
+    public function refundTicket(array $data, $bookingId = null): array
+    {
+        Log::info('Travelopro Refund Ticket Request', ['UniqueID' => $data['uniqueId'] ?? $data['UniqueID'] ?? '']);
+
+        $payload = array_merge($this->authPayload(), [
+            'UniqueID' => $data['uniqueId'] ?? $data['UniqueID'] ?? '',
+            'ptrUniqueID' => $data['ptrUniqueID'] ?? '',
+            'remark' => $data['remark'] ?? 'Customer confirmed refund',
+            'paxDetails' => $data['paxDetails'] ?? [],
+        ]);
+
+        $url = $this->endpoint('refund_ticket');
+        $startTime = microtime(true);
+
+        try {
+            $response = $this->httpClient(60)->post($url, $payload);
+            $executionTime = microtime(true) - $startTime;
+
+            $this->logApiTransaction('refundTicket', $url, 'POST', $payload, $response->json(), $response->status(), $executionTime, $bookingId);
+
+            if ($response->successful()) {
+                $result = $response->json();
+                $refundResult = $result['RefundTicketResponse']['RefundTicketResult'] ?? $result['RefundResult'] ?? [];
+                $isSuccess = $refundResult['Success'] ?? ($result['Success'] ?? 'false');
+
+                if ($isSuccess === 'true' || $isSuccess === true) {
+                    return $result;
+                }
+
+                $errorMessage = $refundResult['Errors']['ErrorMessage'] ?? $result['Errors']['ErrorMessage'] ?? 'Refund ticket failed.';
+                return ['status' => 'error', 'message' => $errorMessage, 'details' => $result];
+            }
+
+            return ['status' => 'error', 'message' => 'Failed to process refund ticket with supplier'];
+        } catch (\Exception $e) {
+            Log::error('Travelopro Refund Ticket Exception', ['message' => $e->getMessage()]);
+            return ['status' => 'error', 'message' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Request Void Quote.
+     */
+    public function voidQuote(array $data, $bookingId = null): array
+    {
+        Log::info('Travelopro Void Quote Request', ['UniqueID' => $data['uniqueId'] ?? $data['UniqueID'] ?? '']);
+
+        $payload = array_merge($this->authPayload(), [
+            'UniqueID' => $data['uniqueId'] ?? $data['UniqueID'] ?? '',
+            'remark' => $data['remark'] ?? 'Customer requested void quote',
+            'paxDetails' => $data['paxDetails'] ?? [],
+        ]);
+
+        $url = $this->endpoint('void_quote');
+        $startTime = microtime(true);
+
+        try {
+            $response = $this->httpClient(60)->post($url, $payload);
+            $executionTime = microtime(true) - $startTime;
+
+            $this->logApiTransaction('voidQuote', $url, 'POST', $payload, $response->json(), $response->status(), $executionTime, $bookingId);
+
+            if ($response->successful()) {
+                $result = $response->json();
+                $voidResult = $result['VoidQuoteResponse']['VoidQuoteResult'] ?? $result['VoidResult'] ?? [];
+                $isSuccess = $voidResult['Success'] ?? ($result['Success'] ?? 'false');
+
+                if ($isSuccess === 'true' || $isSuccess === true) {
+                    return $result;
+                }
+
+                $errorMessage = $voidResult['Errors']['ErrorMessage'] ?? $result['Errors']['ErrorMessage'] ?? 'Void quote failed.';
+                return ['status' => 'error', 'message' => $errorMessage, 'details' => $result];
+            }
+
+            return ['status' => 'error', 'message' => 'Failed to connect to supplier void quote service'];
+        } catch (\Exception $e) {
+            Log::error('Travelopro Void Quote Exception', ['message' => $e->getMessage()]);
+            return ['status' => 'error', 'message' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Process Void Ticket.
+     */
+    public function voidTicket(array $data, $bookingId = null): array
+    {
+        Log::info('Travelopro Void Ticket Request', ['UniqueID' => $data['uniqueId'] ?? $data['UniqueID'] ?? '']);
+
+        $payload = array_merge($this->authPayload(), [
+            'UniqueID' => $data['uniqueId'] ?? $data['UniqueID'] ?? '',
+            'ptrUniqueID' => $data['ptrUniqueID'] ?? '',
+            'remark' => $data['remark'] ?? 'Customer confirmed void',
+            'paxDetails' => $data['paxDetails'] ?? [],
+        ]);
+
+        $url = $this->endpoint('void_ticket');
+        $startTime = microtime(true);
+
+        try {
+            $response = $this->httpClient(60)->post($url, $payload);
+            $executionTime = microtime(true) - $startTime;
+
+            $this->logApiTransaction('voidTicket', $url, 'POST', $payload, $response->json(), $response->status(), $executionTime, $bookingId);
+
+            if ($response->successful()) {
+                $result = $response->json();
+                $voidResult = $result['VoidTicketResponse']['VoidTicketResult'] ?? $result['VoidResult'] ?? [];
+                $isSuccess = $voidResult['Success'] ?? ($result['Success'] ?? 'false');
+
+                if ($isSuccess === 'true' || $isSuccess === true) {
+                    return $result;
+                }
+
+                $errorMessage = $voidResult['Errors']['ErrorMessage'] ?? $result['Errors']['ErrorMessage'] ?? 'Void ticket failed.';
+                return ['status' => 'error', 'message' => $errorMessage, 'details' => $result];
+            }
+
+            return ['status' => 'error', 'message' => 'Failed to process void ticket with supplier'];
+        } catch (\Exception $e) {
+            Log::error('Travelopro Void Ticket Exception', ['message' => $e->getMessage()]);
+            return ['status' => 'error', 'message' => $e->getMessage()];
         }
     }
 }

@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="{{ asset('css/frontend/app.css') }}?v={{ time() }}">
     <link href="{{ asset('icons/font-awesome/css/all.min.css') }}" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     @if(app()->getLocale() === 'ar')
     <link rel="stylesheet" href="{{ asset('css/frontend/rtl.css') }}">
     @endif
@@ -1758,45 +1759,55 @@
     </script>
 
     {{-- JS Dependencies --}}
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{{ asset('js/jquery.min.js') }}"></script>
+    <script>
+        if (typeof jQuery === 'undefined') {
+            document.write('<script src="https://code.jquery.com/jquery-3.6.0.min.js"><\/script>');
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
 
     <script>
-        $(document).ready(function() {
-            // Function to initialize Select2 with custom settings
-            function initSelect2() {
-                $('select.select2').each(function() {
-                    let $select = $(this);
-                    
-                    // Don't re-initialize if already done
-                    if ($select.hasClass('select2-hidden-accessible')) {
-                        return;
-                    }
-                    
-                    $select.select2({
-                        width: '100%',
-                        minimumResultsForSearch: 0, // always show search inside select
-                        dropdownParent: $select.parent(), // Prevents issues inside modals or sticky containers
-                        dir: $('html').attr('dir') || 'ltr', // Sync RTL direction from html lang
-                        language: {
-                            noResults: function() {
-                                return $('html').attr('dir') === 'rtl' ? "لا توجد نتائج" : "No results found";
-                            }
+        if (typeof $ !== 'undefined') {
+            $(document).ready(function() {
+                // Function to initialize Select2 with custom settings
+                function initSelect2() {
+                    if (typeof $.fn.select2 === 'undefined') return;
+                    $('select.select2').each(function() {
+                        let $select = $(this);
+                        
+                        // Don't re-initialize if already done
+                        if ($select.hasClass('select2-hidden-accessible')) {
+                            return;
                         }
+                        
+                        $select.select2({
+                            width: '100%',
+                            minimumResultsForSearch: 0, // always show search inside select
+                            dropdownParent: $select.parent(), // Prevents issues inside modals or sticky containers
+                            dir: $('html').attr('dir') || 'ltr', // Sync RTL direction from html lang
+                            language: {
+                                noResults: function() {
+                                    return $('html').attr('dir') === 'rtl' ? "لا توجد نتائج" : "No results found";
+                                }
+                            }
+                        });
                     });
-                });
-            }
+                }
 
-            // Initialize on load
-            initSelect2();
-
-            // Re-initialize when Bootstrap modals are opened or content changes dynamically
-            $(document).on('shown.bs.modal', function() {
+                // Initialize on load
                 initSelect2();
+
+                // Re-initialize when Bootstrap modals are opened or content changes dynamically
+                $(document).on('shown.bs.modal', function() {
+                    initSelect2();
+                });
             });
-        });
+        }
     </script>
 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @stack('scripts')
 </body>
 </html>

@@ -32,9 +32,18 @@ class TraveloproHotelService
      */
     private function httpClient(int $connectTimeout = 60, int $timeout = 120): \Illuminate\Http\Client\PendingRequest
     {
-        $options = file_exists($this->certPath)
-            ? ['verify' => $this->certPath]
-            : ['verify' => false]; // dev fallback only
+        $verifySsl = env('TRAVELOPRO_VERIFY_SSL');
+        if ($verifySsl !== null) {
+            $verify = filter_var($verifySsl, FILTER_VALIDATE_BOOLEAN);
+        } else {
+            $verify = !app()->isLocal();
+        }
+
+        if ($verify && file_exists($this->certPath)) {
+            $options = ['verify' => $this->certPath];
+        } else {
+            $options = ['verify' => $verify];
+        }
 
         return Http::withOptions($options)
             ->connectTimeout($connectTimeout)

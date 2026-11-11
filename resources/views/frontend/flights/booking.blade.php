@@ -199,12 +199,12 @@
         <input type="hidden" name="arr_time" value="{{ $details['arr_time'] ?? '' }}">
         <input type="hidden" name="stops" value="{{ $details['stops'] ?? 0 }}">
         <input type="hidden" name="duration" value="{{ $details['duration'] ?? '' }}">
-        <input type="hidden" name="refundable" value="{{ $details['refundable'] ?? '' }}">
-        <input type="hidden" name="refund_allowed" value="{{ $details['refund_allowed'] ?? '' }}">
-        <input type="hidden" name="refund_penalty" value="{{ $details['refund_penalty'] ?? '' }}">
-        <input type="hidden" name="change_allowed" value="{{ $details['change_allowed'] ?? '' }}">
-        <input type="hidden" name="change_penalty" value="{{ $details['change_penalty'] ?? '' }}">
-        <input type="hidden" name="fare_basis" value="{{ $details['fare_basis'] ?? '' }}">
+        <input type="hidden" name="refundable" value="{{ is_array($details['refundable'] ?? '') ? implode('/', $details['refundable']) : ($details['refundable'] ?? '') }}">
+        <input type="hidden" name="refund_allowed" value="{{ is_array($details['refund_allowed'] ?? '') ? implode('/', $details['refund_allowed']) : ($details['refund_allowed'] ?? '') }}">
+        <input type="hidden" name="refund_penalty" value="{{ is_array($details['refund_penalty'] ?? '') ? implode('/', $details['refund_penalty']) : ($details['refund_penalty'] ?? '') }}">
+        <input type="hidden" name="change_allowed" value="{{ is_array($details['change_allowed'] ?? '') ? implode('/', $details['change_allowed']) : ($details['change_allowed'] ?? '') }}">
+        <input type="hidden" name="change_penalty" value="{{ is_array($details['change_penalty'] ?? '') ? implode('/', $details['change_penalty']) : ($details['change_penalty'] ?? '') }}">
+        <input type="hidden" name="fare_basis" value="{{ is_array($details['fare_basis'] ?? '') ? implode('/', $details['fare_basis']) : ($details['fare_basis'] ?? '') }}">
         @if(!empty($details['segments']) && is_array($details['segments']))
             @foreach($details['segments'] as $i => $seg)
                 <input type="hidden" name="segments[{{ $i }}][leg_index]" value="{{ $seg['leg_index'] ?? 0 }}">
@@ -273,7 +273,7 @@
                         <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                                 <span style="font-weight: 800; color: #1d4ed8; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px;">
-                                    <i class="fas fa-plane-departure"></i> {{ __('Outbound Flight') }}: <span class="notranslate" translate="no">{{ $details['from'] ?? '' }}</span> ➔ <span class="notranslate" translate="no">{{ $details['to'] ?? '' }}</span>
+                                    <i class="fas fa-plane-departure"></i> {{ __('Outbound Flight') }}: <span class="notranslate" translate="no">{{ $details['from'] ?? '' }}</span> <i class="fas fa-long-arrow-alt-{{ app()->isLocale('ar') ? 'left' : 'right' }} mx-1"></i> <span class="notranslate" translate="no">{{ $details['to'] ?? '' }}</span>
                                 </span>
                                 <span style="font-size: 0.8rem; font-weight: 700; color: #475569; background: #f8fafc; padding: 2px 8px; border-radius: 6px;">
                                     <i class="far fa-calendar-alt me-1"></i> {{ $details['departDate'] ?? '' }}
@@ -282,13 +282,13 @@
                             @if(!empty($outboundSegments))
                                 @foreach($outboundSegments as $seg)
                                     <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; color: #334155; padding: 4px 0;">
-                                        <span><strong><span class="notranslate" translate="no">{{ $seg['from'] }}</span> ➔ <span class="notranslate" translate="no">{{ $seg['to'] }}</span></strong> @if(!empty($seg['flight_no']))<small class="text-muted notranslate" translate="no">({{ $seg['flight_no'] }})</small>@endif</span>
+                                        <span><strong><span class="notranslate" translate="no">{{ $seg['from'] }}</span> <i class="fas fa-long-arrow-alt-{{ app()->isLocale('ar') ? 'left' : 'right' }} mx-1"></i> <span class="notranslate" translate="no">{{ $seg['to'] }}</span></strong> @if(!empty($seg['flight_no']))<small class="text-muted notranslate" translate="no">({{ $seg['flight_no'] }})</small>@endif</span>
                                         <span class="fw-bold">{{ $seg['dep'] }} - {{ $seg['arr'] }}</span>
                                     </div>
                                 @endforeach
                             @else
                                 <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: #334155;">
-                                    <span><strong><span class="notranslate" translate="no">{{ $details['from'] ?? '' }}</span> ➔ <span class="notranslate" translate="no">{{ $details['to'] ?? '' }}</span></strong> ({{ $details['airline'] ?? '' }})</span>
+                                    <span><strong><span class="notranslate" translate="no">{{ $details['from'] ?? '' }}</span> <i class="fas fa-long-arrow-alt-{{ app()->isLocale('ar') ? 'left' : 'right' }} mx-1"></i> <span class="notranslate" translate="no">{{ $details['to'] ?? '' }}</span></strong> ({{ $details['airline'] ?? '' }})</span>
                                     <span class="fw-bold">{{ $details['dep_time'] ?? '' }} - {{ $details['arr_time'] ?? '' }}</span>
                                 </div>
                             @endif
@@ -299,7 +299,7 @@
                             <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 12px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                                     <span style="font-weight: 800; color: #0369a1; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px;">
-                                        <i class="fas fa-plane-arrival"></i> {{ __('Return Flight') }}: <span class="notranslate" translate="no">{{ $details['to'] ?? '' }}</span> ➔ <span class="notranslate" translate="no">{{ $details['from'] ?? '' }}</span>
+                                        <i class="fas fa-plane-arrival"></i> {{ __('Return Flight') }}: <span class="notranslate" translate="no">{{ $details['to'] ?? '' }}</span> <i class="fas fa-long-arrow-alt-{{ app()->isLocale('ar') ? 'left' : 'right' }} mx-1"></i> <span class="notranslate" translate="no">{{ $details['from'] ?? '' }}</span>
                                     </span>
                                     <span style="font-size: 0.8rem; font-weight: 700; color: #0284c7; background: #e0f2fe; padding: 2px 8px; border-radius: 6px;">
                                         <i class="far fa-calendar-check me-1"></i> {{ $details['returnDate'] ?? '' }}
@@ -308,13 +308,13 @@
                                 @if(!empty($returnSegments))
                                     @foreach($returnSegments as $seg)
                                         <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; color: #0f172a; padding: 4px 0;">
-                                            <span><strong><span class="notranslate" translate="no">{{ $seg['from'] }}</span> ➔ <span class="notranslate" translate="no">{{ $seg['to'] }}</span></strong> @if(!empty($seg['flight_no']))<small class="text-muted notranslate" translate="no">({{ $seg['flight_no'] }})</small>@endif</span>
+                                            <span><strong><span class="notranslate" translate="no">{{ $seg['from'] }}</span> <i class="fas fa-long-arrow-alt-{{ app()->isLocale('ar') ? 'left' : 'right' }} mx-1"></i> <span class="notranslate" translate="no">{{ $seg['to'] }}</span></strong> @if(!empty($seg['flight_no']))<small class="text-muted notranslate" translate="no">({{ $seg['flight_no'] }})</small>@endif</span>
                                             <span class="fw-bold">{{ $seg['dep'] }} - {{ $seg['arr'] }}</span>
                                         </div>
                                     @endforeach
                                 @else
                                     <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: #0f172a;">
-                                        <span><strong><span class="notranslate" translate="no">{{ $details['to'] ?? '' }}</span> ➔ <span class="notranslate" translate="no">{{ $details['from'] ?? '' }}</span></strong></span>
+                                        <span><strong><span class="notranslate" translate="no">{{ $details['to'] ?? '' }}</span> <i class="fas fa-long-arrow-alt-{{ app()->isLocale('ar') ? 'left' : 'right' }} mx-1"></i> <span class="notranslate" translate="no">{{ $details['from'] ?? '' }}</span></strong></span>
                                         <span class="fw-bold">{{ __('Return Included') }}</span>
                                     </div>
                                 @endif
@@ -563,7 +563,7 @@
                                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; padding-inline-start: 6px;">
                                                     <span style="font-weight: 700; color: var(--dark);">
                                                         {{ $seg['from'] ?? '' }} 
-                                                        <i class="fas fa-arrow-right" style="font-size:0.7rem; margin:0 4px; color: var(--gray-400);"></i> 
+                                                        <i class="fas fa-arrow-{{ app()->isLocale('ar') ? 'left' : 'right' }}" style="font-size:0.7rem; margin:0 4px; color: var(--gray-400);"></i> 
                                                         {{ $seg['to'] ?? '' }}
                                                         @if(!empty($seg['flight_no']))
                                                             <span style="font-size:0.7rem; font-weight:600; color:var(--gray-500); margin-inline-start:2px;">({{ $seg['flight_no'] }})</span>
@@ -583,7 +583,7 @@
                                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; padding-inline-start: 6px;">
                                                     <span style="font-weight: 700; color: var(--dark);">
                                                         {{ $seg['from'] ?? '' }} 
-                                                        <i class="fas fa-arrow-right" style="font-size:0.7rem; margin:0 4px; color: var(--gray-400);"></i> 
+                                                        <i class="fas fa-arrow-{{ app()->isLocale('ar') ? 'left' : 'right' }}" style="font-size:0.7rem; margin:0 4px; color: var(--gray-400);"></i> 
                                                         {{ $seg['to'] ?? '' }}
                                                         @if(!empty($seg['flight_no']))
                                                             <span style="font-size:0.7rem; font-weight:600; color:var(--gray-500); margin-inline-start:2px;">({{ $seg['flight_no'] }})</span>
@@ -639,12 +639,12 @@
                                             data-to="{{ $details['to'] ?? '' }}"
                                             data-baggage="{{ $details['baggage'] ?? '' }}"
                                             data-cabin-baggage=""
-                                            data-refundable="{{ $details['refundable'] ?? '' }}"
-                                            data-change-allowed="{{ $details['change_allowed'] ?? '' }}"
-                                            data-change-penalty="{{ $details['change_penalty'] ?? '' }}"
-                                            data-refund-allowed="{{ $details['refund_allowed'] ?? '' }}"
-                                            data-refund-penalty="{{ $details['refund_penalty'] ?? '' }}"
-                                            data-fare-basis="{{ $details['fare_basis'] ?? '' }}"
+                                            data-refundable="{{ is_array($details['refundable'] ?? '') ? implode('/', $details['refundable']) : ($details['refundable'] ?? '') }}"
+                                            data-change-allowed="{{ is_array($details['change_allowed'] ?? '') ? implode('/', $details['change_allowed']) : ($details['change_allowed'] ?? '') }}"
+                                            data-change-penalty="{{ is_array($details['change_penalty'] ?? '') ? implode('/', $details['change_penalty']) : ($details['change_penalty'] ?? '') }}"
+                                            data-refund-allowed="{{ is_array($details['refund_allowed'] ?? '') ? implode('/', $details['refund_allowed']) : ($details['refund_allowed'] ?? '') }}"
+                                            data-refund-penalty="{{ is_array($details['refund_penalty'] ?? '') ? implode('/', $details['refund_penalty']) : ($details['refund_penalty'] ?? '') }}"
+                                            data-fare-basis="{{ is_array($details['fare_basis'] ?? '') ? implode('/', $details['fare_basis']) : ($details['fare_basis'] ?? '') }}"
                                             style="background: #f0f9ff; border: 1px solid #bae6fd; color: #0284c7; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 0.78rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; width: 100%; justify-content: center; transition: all 0.2s;">
                                         <i class="fas fa-file-contract text-primary"></i> {{ __('Fare Rules & Cancellation Policy') }}
                                     </button>

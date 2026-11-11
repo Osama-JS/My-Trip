@@ -1043,6 +1043,13 @@ class FrontendController extends Controller
             $details['fare_basis'] = $request->get('fare_basis');
         }
 
+        // Sanitize string attributes: guarantee they are scalar strings and never arrays
+        foreach (['fare_basis', 'refundable', 'refund_allowed', 'refund_penalty', 'change_allowed', 'change_penalty', 'baggage', 'airline', 'flight_class', 'from', 'to'] as $key) {
+            if (isset($details[$key]) && is_array($details[$key])) {
+                $details[$key] = implode('/', array_filter($details[$key], 'is_scalar'));
+            }
+        }
+
         $countries = \App\Models\Country::all();
         
         return view('frontend.flights.booking', [

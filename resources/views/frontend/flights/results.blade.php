@@ -12,7 +12,7 @@
                     {{ __('Flight Search Results') }}
                 </h1>
                 <p style="font-size: var(--text-lg); opacity: 0.9; max-width: 600px; margin: 0 auto; color: white !important;">
-                    {{ $searchParams['from'] ?? '' }} <i class="fas fa-long-arrow-alt-right"></i> {{ $searchParams['to'] ?? '' }}
+                    {{ $searchParams['from'] ?? '' }} <i class="fas fa-long-arrow-alt-{{ app()->isLocale('ar') ? 'left' : 'right' }}"></i> {{ $searchParams['to'] ?? '' }}
                 </p>
             </div>
 
@@ -366,7 +366,7 @@
                                         'change_penalty' => $firstFb['PenaltyDetails']['ChangePenaltyAmount'] ?? '',
                                         'refund_allowed' => isset($firstFb['PenaltyDetails']['RefundAllowed']) ? ($firstFb['PenaltyDetails']['RefundAllowed'] ? 'true' : 'false') : '',
                                         'refund_penalty' => $firstFb['PenaltyDetails']['RefundPenaltyAmount'] ?? '',
-                                        'fare_basis' => $firstFb['FareBasisCode'] ?? ''
+                                        'fare_basis' => is_array($firstFb['FareBasisCode'] ?? '') ? implode('/', array_filter($firstFb['FareBasisCode'])) : ($firstFb['FareBasisCode'] ?? '')
                                     ])) }}" class="btn btn-primary btn-sm">
                                         {{ __('Select') }}
                                     </a>
@@ -999,6 +999,10 @@ document.addEventListener('DOMContentLoaded', function() {
     .path-viz i {
         color: var(--color-primary);
         font-size: 0.875rem;
+    }
+    [dir="rtl"] .path-viz i,
+    html[dir="rtl"] .path-viz i {
+        transform: scaleX(-1);
     }
     .leg-path .stops {
         font-size: 0.75rem;
