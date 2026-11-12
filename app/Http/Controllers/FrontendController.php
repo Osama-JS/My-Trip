@@ -696,6 +696,37 @@ class FrontendController extends Controller
      */
     public function flightResults(Request $request)
     {
+        $from = strtoupper(trim((string)$request->get('from', '')));
+        $to = strtoupper(trim((string)$request->get('to', '')));
+
+        if (empty($from) || empty($to)) {
+            $msg = app()->getLocale() == 'ar'
+                ? 'يرجى تحديد مطار المغادرة ومطار الوصول.'
+                : 'Please select both departure and arrival airports.';
+            if ($request->ajax() || $request->get('ajax') == '1') {
+                return view('frontend.flights.results_partial', [
+                    'results' => [],
+                    'searchParams' => $request->all(),
+                    'customErrorMessage' => $msg
+                ]);
+            }
+            return redirect()->route('flights')->with('error', $msg);
+        }
+
+        if ($from === $to) {
+            $msg = app()->getLocale() == 'ar'
+                ? 'لا يمكن أن تكون نقطة المغادرة ونقطة الوصول نفس المطار. يرجى اختيار وجهة مختلفة.'
+                : 'Departure and arrival airports cannot be the same. Please select different destinations.';
+            if ($request->ajax() || $request->get('ajax') == '1') {
+                return view('frontend.flights.results_partial', [
+                    'results' => [],
+                    'searchParams' => $request->all(),
+                    'customErrorMessage' => $msg
+                ]);
+            }
+            return redirect()->route('flights')->with('error', $msg);
+        }
+
         $journeyType = $request->get('journeyType', 'OneWay');
         $departDate = $request->get('departDate');
         $returnDate = $request->get('returnDate');

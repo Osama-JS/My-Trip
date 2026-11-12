@@ -314,6 +314,27 @@
                                     <div class="c-auto-code">${item.airport_code}</div>
                                 `;
                                 div.addEventListener('click', () => {
+                                    const otherHiddenId = (hiddenId === 'airport_from') ? 'airport_to' : 'airport_from';
+                                    const otherHidden = document.getElementById(otherHiddenId);
+                                    if (otherHidden && otherHidden.value && otherHidden.value.toUpperCase() === item.airport_code.toUpperCase()) {
+                                        const errorMsg = currentLocale === 'ar'
+                                            ? 'لا يمكن اختيار نفس المطار للمغادرة والوصول. يرجى اختيار مطار آخر.'
+                                            : 'Departure and arrival airports cannot be the same. Please select a different airport.';
+                                        if (typeof Swal !== 'undefined') {
+                                            Swal.fire({
+                                                icon: 'warning',
+                                                title: currentLocale === 'ar' ? 'تنبيه' : 'Notice',
+                                                text: errorMsg,
+                                                confirmButtonText: currentLocale === 'ar' ? 'حسناً' : 'OK',
+                                                confirmButtonColor: '#2563eb'
+                                            });
+                                        } else {
+                                            alert(errorMsg);
+                                        }
+                                        dropdown.style.display = 'none';
+                                        return;
+                                    }
+
                                     input.value = `${city} (${item.airport_code})`;
                                     hidden.value = item.airport_code;
                                     dropdown.style.display = 'none';
@@ -453,6 +474,47 @@
         form.addEventListener('submit', function(e) {
             e.preventDefault();
 
+            const fromInput = document.getElementById('airport_from');
+            const toInput   = document.getElementById('airport_to');
+            const fromVal   = fromInput ? fromInput.value.trim().toUpperCase() : '';
+            const toVal     = toInput   ? toInput.value.trim().toUpperCase() : '';
+
+            if (!fromVal || !toVal) {
+                const reqMsg = currentLocale === 'ar'
+                    ? 'يرجى تحديد مطار المغادرة ومطار الوصول.'
+                    : '{{ __("Please select both departure and arrival airports.") }}';
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: currentLocale === 'ar' ? 'تنبيه' : '{{ __("Notice") }}',
+                        text: reqMsg,
+                        confirmButtonText: currentLocale === 'ar' ? 'حسناً' : '{{ __("OK") }}',
+                        confirmButtonColor: '#2563eb'
+                    });
+                } else {
+                    alert(reqMsg);
+                }
+                return;
+            }
+
+            if (fromVal === toVal) {
+                const sameAirportMsg = currentLocale === 'ar'
+                    ? 'لا يمكن أن تكون نقطة المغادرة ونقطة الوصول نفس المطار. يرجى اختيار وجهة مختلفة.'
+                    : '{{ __("Departure and arrival airports cannot be the same. Please select different destinations.") }}';
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: currentLocale === 'ar' ? 'تنبيه' : '{{ __("Notice") }}',
+                        text: sameAirportMsg,
+                        confirmButtonText: currentLocale === 'ar' ? 'حسناً' : '{{ __("OK") }}',
+                        confirmButtonColor: '#2563eb'
+                    });
+                } else {
+                    alert(sameAirportMsg);
+                }
+                return;
+            }
+
             const journeyType = document.querySelector('input[name="journeyType"]:checked')?.value || 'OneWay';
             const depDate = document.getElementById('departDate').value;
             const retDate = document.getElementById('returnDate').value;
@@ -486,11 +548,9 @@
                 params.delete('returnDate');
             }
 
-            // Add Select2 values manually
-            const fromVal = document.getElementById('airport_from').value;
-            const toVal   = document.getElementById('airport_to').value;
-            if (fromVal) params.set('from', fromVal);
-            if (toVal)   params.set('to', toVal);
+            // Add airport values
+            params.set('from', fromVal);
+            params.set('to', toVal);
 
             // Scroll to results
             resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });

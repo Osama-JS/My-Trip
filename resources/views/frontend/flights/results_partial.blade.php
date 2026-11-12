@@ -12,7 +12,17 @@
     $sessionId = $results['AirSearchResponse']['session_id'] ?? ($results['AirSearchResponse']['AirSearchResult']['SessionId'] ?? '');
 @endphp
 
-@if(empty($itineraries))
+@if(!empty($customErrorMessage))
+    {{-- Validation Notice --}}
+    <div class="fr-no-results">
+        <div class="fr-no-results-icon" style="color: #ef4444;"><i class="fas fa-exclamation-triangle"></i></div>
+        <h3>{{ __('Notice') }}</h3>
+        <p style="color: #64748b; font-weight: 500;">{{ $customErrorMessage }}</p>
+        <a href="{{ route('flights') }}" class="fe-btn fe-btn-outline" style="margin-top:var(--space-4);">
+            <i class="fas fa-arrow-left"></i> {{ __('New Search') }}
+        </a>
+    </div>
+@elseif(empty($itineraries))
     {{-- No Results --}}
     <div class="fr-no-results">
         <div class="fr-no-results-icon"><i class="fas fa-plane-slash"></i></div>
