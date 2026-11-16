@@ -1067,6 +1067,294 @@ html[dir="rtl"] .seg-path i {
     gap: 10px;
     border: 1px solid rgba(239, 68, 68, 0.15);
 }
+
+/* ─── Premium Flight Itinerary Timeline & Nodes ─── */
+.itin-leg-card {
+    border-radius: 18px;
+    padding: 22px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    transition: all 0.3s ease;
+}
+.itin-leg-card:hover {
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.06);
+}
+.itin-leg-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-bottom: 16px;
+    border-bottom: 1.5px solid var(--border-color);
+    margin-bottom: 20px;
+}
+.itin-leg-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 850;
+    font-size: 1.05rem;
+}
+.itin-leg-badge {
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.itin-leg-badge.badge-direct {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.25);
+}
+.itin-leg-badge.badge-transit {
+    background: #fef3c7;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+body.dark-mode .itin-leg-badge.badge-transit {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+/* Timeline Layout */
+.itin-timeline {
+    position: relative;
+    padding-inline-start: 6px;
+}
+.itin-segment-block {
+    position: relative;
+    margin-bottom: 12px;
+}
+.itin-point-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    position: relative;
+    z-index: 2;
+}
+.itin-point-time {
+    min-width: 82px;
+    text-align: end;
+    flex-shrink: 0;
+}
+.itin-time-main {
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: var(--text-main);
+    line-height: 1.1;
+    letter-spacing: -0.3px;
+}
+.itin-time-sub {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-top: 3px;
+}
+.itin-point-node {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 4px solid var(--primary-blue);
+    flex-shrink: 0;
+    margin-top: 2px;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+}
+body.dark-mode .itin-point-node {
+    background: #1e293b;
+}
+.itin-point-node.node-dest {
+    border-color: #10b981;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15);
+}
+.itin-point-info {
+    flex: 1;
+    min-width: 0;
+}
+.itin-airport-city {
+    font-weight: 850;
+    font-size: 1.02rem;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.itin-code-pill {
+    background: rgba(37, 99, 235, 0.08);
+    color: var(--primary-blue);
+    font-weight: 900;
+    font-size: 0.8rem;
+    padding: 2px 8px;
+    border-radius: 6px;
+}
+.itin-airport-name {
+    font-size: 0.84rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    margin-top: 3px;
+}
+
+/* Flight Connector Card */
+.itin-connector-wrapper {
+    display: flex;
+    gap: 16px;
+    margin: 8px 0;
+    position: relative;
+}
+.itin-connector-time-spacer {
+    min-width: 82px;
+    flex-shrink: 0;
+}
+.itin-connector-line-col {
+    width: 22px;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    position: relative;
+}
+.itin-connector-line {
+    width: 3px;
+    background: linear-gradient(to bottom, var(--primary-blue) 0%, #10b981 100%);
+    border-radius: 2px;
+    min-height: 48px;
+}
+.itin-flight-badge-card {
+    flex: 1;
+    background: rgba(37, 99, 235, 0.035);
+    border: 1px solid rgba(37, 99, 235, 0.15);
+    border-radius: 14px;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 8px;
+    margin-top: 4px;
+}
+body.dark-mode .itin-flight-badge-card {
+    background: rgba(37, 99, 235, 0.08);
+    border-color: rgba(37, 99, 235, 0.22);
+}
+.itin-flight-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.itin-flight-airline {
+    font-weight: 850;
+    font-size: 0.92rem;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.itin-flight-chip {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    background: var(--bg-card);
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+}
+.itin-flight-duration {
+    font-weight: 850;
+    font-size: 0.85rem;
+    color: var(--primary-blue);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Layover Box */
+.itin-layover-wrapper {
+    display: flex;
+    gap: 16px;
+    margin: 16px 0;
+}
+.itin-layover-spacer {
+    min-width: 82px;
+    flex-shrink: 0;
+}
+.itin-layover-dot-col {
+    width: 22px;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.itin-layover-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #f59e0b;
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2);
+}
+.itin-layover-card {
+    flex: 1;
+    background: #fffbeb;
+    border: 1.5px dashed #fcd34d;
+    border-radius: 14px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+body.dark-mode .itin-layover-card {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.3);
+}
+.itin-layover-title {
+    font-weight: 850;
+    font-size: 0.92rem;
+    color: #b45309;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+body.dark-mode .itin-layover-title {
+    color: #fbbf24;
+}
+.itin-layover-sub {
+    font-size: 0.82rem;
+    color: #92400e;
+    font-weight: 600;
+}
+body.dark-mode .itin-layover-sub {
+    color: #fde68a;
+}
+
+/* Cancellation Report Dark Mode & High Contrast */
+body.dark-mode .cancellation-report-card {
+    background: #1e293b !important;
+    border-color: #7f1d1d !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4) !important;
+}
+body.dark-mode .cancellation-metric-wallet {
+    background: #064e3b !important;
+    border-color: #10b981 !important;
+}
+body.dark-mode .cancellation-metric-wallet .metric-amount,
+body.dark-mode .cancellation-metric-wallet .metric-title {
+    color: #ffffff !important;
+}
+body.dark-mode .cancellation-metric-wallet .metric-currency {
+    color: #6ee7b7 !important;
+}
+body.dark-mode .wallet-confirm-box {
+    background: rgba(16, 185, 129, 0.12) !important;
+    border-color: rgba(16, 185, 129, 0.3) !important;
+}
 </style>
 @endpush
 
@@ -1366,112 +1654,334 @@ html[dir="rtl"] .seg-path i {
         <div>
             
             {{-- Itinerary Card --}}
-            <div class="detail-card">
-                <div class="detail-card-header">
-                    <h5><i class="fas fa-plane-departure"></i> {{ __('Flight Itinerary') }}</h5>
-                    <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted);">{{ $booking->airline_name ?? __('Direct Flight') }}</span>
+            <div class="detail-card mb-4" style="border-radius: 20px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.04);">
+                <div class="detail-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; padding: 20px 24px; border-bottom: 1px solid var(--border-color);">
+                    <h5 style="margin: 0; font-size: 1.15rem; font-weight: 850; display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-route text-primary" style="font-size: 1.25rem;"></i> {{ __('تفاصيل ومسار الرحلة') }}
+                    </h5>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span class="badge" style="background: rgba(37, 99, 235, 0.08); color: var(--primary-blue); font-weight: 800; font-size: 0.82rem; padding: 6px 12px; border-radius: 8px;">
+                            <i class="fas fa-plane me-1"></i> {{ $booking->airline_name ?? __('طيران') }} ({{ $booking->airline_code ?? 'Flight' }})
+                        </span>
+                        @if($booking->flightBooking->flight_class)
+                            <span class="badge" style="background: rgba(16, 185, 129, 0.08); color: #10b981; font-weight: 800; font-size: 0.82rem; padding: 6px 12px; border-radius: 8px;">
+                                <i class="fas fa-chair me-1"></i> {{ $booking->flightBooking->flight_class }}
+                            </span>
+                        @endif
+                    </div>
                 </div>
-                <div class="detail-card-body">
-                    @if($totalLegsCount > 2)
-                        {{-- Multi-City Legs --}}
+                <div class="detail-card-body" style="padding: 24px;">
+                    @php
+                        $isAr = app()->isLocale('ar');
+                    @endphp
+
+                    @if(!empty($legs))
                         @foreach($legs as $legIdx => $legSegs)
                             @php
-                                $lFirst = $legSegs[0] ?? [];
-                                $lLast  = end($legSegs) ?: [];
-                                $lDepCode = $lFirst['DepartureAirportLocationCode'] ?? ($lFirst['DepartureAirport']['LocationCode'] ?? ($lFirst['from'] ?? 'N/A'));
-                                $lArrCode = $lLast['ArrivalAirportLocationCode'] ?? ($lLast['ArrivalAirport']['LocationCode'] ?? ($lLast['to'] ?? 'N/A'));
+                                $isReturnLeg = ($legIdx === 1 || ($totalLegsCount > 1 && $legIdx > 0));
+                                $stopsCount = max(0, count($legSegs) - 1);
+                                
+                                $firstSeg = $legSegs[0] ?? [];
+                                $lastSeg = end($legSegs) ?: [];
+                                
+                                $lDepCode = $firstSeg['DepartureAirportLocationCode'] ?? ($firstSeg['DepartureAirport']['LocationCode'] ?? ($firstSeg['from'] ?? 'N/A'));
+                                $lArrCode = $lastSeg['ArrivalAirportLocationCode'] ?? ($lastSeg['ArrivalAirport']['LocationCode'] ?? ($lastSeg['to'] ?? 'N/A'));
+                                
                                 $lDepAir = \App\Models\Airport::where('airport_code', $lDepCode)->first();
                                 $lArrAir = \App\Models\Airport::where('airport_code', $lArrCode)->first();
-                                $lDepName = $lDepAir ? ($lDepAir->city_name . ' - ' . $lDepAir->airport_name) : $lDepCode;
-                                $lArrName = $lArrAir ? ($lArrAir->city_name . ' - ' . $lArrAir->airport_name) : $lArrCode;
-
-                                $lDepTimeRaw = $lFirst['DepartureDateTime'] ?? ($lFirst['dep_datetime'] ?? null);
-                                $lDepTime = null;
-                                if ($lDepTimeRaw) {
-                                    try { $lDepTime = \Carbon\Carbon::parse($lDepTimeRaw); } catch (\Exception $e) {}
-                                }
+                                
+                                $lDepCity = ($isAr && !empty($lDepAir->city_name_ar)) ? $lDepAir->city_name_ar : ($lDepAir->city_name ?? $lDepCode);
+                                $lArrCity = ($isAr && !empty($lArrAir->city_name_ar)) ? $lArrAir->city_name_ar : ($lArrAir->city_name ?? $lArrCode);
+                                
+                                $legTitle = $isReturnLeg ? __('رحلة العودة (Return Flight)') : __('رحلة الذهاب (Outbound Flight)');
+                                $legColor = $isReturnLeg ? '#b45309' : 'var(--primary-blue)';
+                                $legBg = $isReturnLeg ? 'rgba(245, 158, 11, 0.04)' : 'rgba(37, 99, 235, 0.03)';
+                                $legBorder = $isReturnLeg ? 'rgba(245, 158, 11, 0.2)' : 'rgba(37, 99, 235, 0.15)';
                             @endphp
-                            <div class="mb-3 p-3 rounded" style="background: rgba(37, 99, 235, 0.04); border: 1px solid rgba(37,99,235,0.15);">
-                                <div style="font-weight: 800; color: var(--primary-blue); font-size: 0.9rem; margin-bottom: 8px;">
-                                    <i class="fas fa-plane-departure me-1"></i> {{ __('Flight :num', ['num' => $legIdx + 1]) }}: <span class="notranslate" translate="no">{{ strtoupper(substr($lDepCode, 0, 3)) }}</span> <i class="fas fa-long-arrow-alt-{{ app()->isLocale('ar') ? 'left' : 'right' }} mx-1"></i> <span class="notranslate" translate="no">{{ strtoupper(substr($lArrCode, 0, 3)) }}</span>
+
+                            <div class="itin-leg-card" style="background: {{ $legBg }}; border: 1.5px solid {{ $legBorder }};">
+                                {{-- Leg Header --}}
+                                <div class="itin-leg-header">
+                                    <div class="itin-leg-title" style="color: {{ $legColor }};">
+                                        <i class="fas {{ $isReturnLeg ? 'fa-plane-arrival' : 'fa-plane-departure' }}"></i>
+                                        <span>{{ $legTitle }}:</span>
+                                        <span class="notranslate" translate="no" style="font-weight: 900; letter-spacing: 0.5px;">{{ strtoupper(substr($lDepCode, 0, 3)) }}</span>
+                                        <i class="fas fa-long-arrow-alt-{{ $isAr ? 'left' : 'right' }} mx-1"></i>
+                                        <span class="notranslate" translate="no" style="font-weight: 900; letter-spacing: 0.5px;">{{ strtoupper(substr($lArrCode, 0, 3)) }}</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                        @if($stopsCount === 0)
+                                            <span class="itin-leg-badge badge-direct">
+                                                <i class="fas fa-check-circle"></i> {{ __('رحلة مباشرة بدون توقف') }}
+                                            </span>
+                                        @elseif($stopsCount === 1)
+                                            <span class="itin-leg-badge badge-transit">
+                                                <i class="fas fa-pause-circle"></i> {{ __('محطة توقف واحدة (ترانزيت)') }}
+                                            </span>
+                                        @else
+                                            <span class="itin-leg-badge badge-transit">
+                                                <i class="fas fa-pause-circle"></i> {{ __(':count محطات توقف', ['count' => $stopsCount]) }}
+                                            </span>
+                                        @endif
+                                    </div>
                                 </div>
-                                <div class="info-row" style="margin-bottom: 6px;">
-                                    <span class="info-label">{{ __('Origin') }}</span>
-                                    <span class="info-value">{{ $lDepName }} (<span class="notranslate" translate="no">{{ strtoupper(substr($lDepCode, 0, 3)) }}</span>)</span>
-                                </div>
-                                <div class="info-row" style="margin-bottom: 6px;">
-                                    <span class="info-label">{{ __('Destination') }}</span>
-                                    <span class="info-value">{{ $lArrName }} (<span class="notranslate" translate="no">{{ strtoupper(substr($lArrCode, 0, 3)) }}</span>)</span>
-                                </div>
-                                <div class="info-row" style="margin-bottom: 0;">
-                                    <span class="info-label">{{ __('Departure') }}</span>
-                                    <span class="info-value text-dark" style="font-weight: 900;">
-                                        {{ $lDepTime ? $lDepTime->format('d M Y, h:i A') : 'N/A' }}
-                                    </span>
+
+                                {{-- Timeline Segments --}}
+                                <div class="itin-timeline">
+                                    @foreach($legSegs as $sIdx => $seg)
+                                        @php
+                                            $sDepCode = $seg['DepartureAirportLocationCode'] ?? ($seg['DepartureAirport']['LocationCode'] ?? ($seg['from'] ?? 'N/A'));
+                                            $sArrCode = $seg['ArrivalAirportLocationCode'] ?? ($seg['ArrivalAirport']['LocationCode'] ?? ($seg['to'] ?? 'N/A'));
+                                            
+                                            $sDepAir = \App\Models\Airport::where('airport_code', $sDepCode)->first();
+                                            $sArrAir = \App\Models\Airport::where('airport_code', $sArrCode)->first();
+                                            
+                                            $sDepCity = ($isAr && !empty($sDepAir->city_name_ar)) ? $sDepAir->city_name_ar : ($sDepAir->city_name ?? $sDepCode);
+                                            $sArrCity = ($isAr && !empty($sArrAir->city_name_ar)) ? $sArrAir->city_name_ar : ($sArrAir->city_name ?? $sArrCode);
+                                            $sDepName = ($isAr && !empty($sDepAir->airport_name_ar)) ? $sDepAir->airport_name_ar : ($sDepAir->airport_name ?? '');
+                                            $sArrName = ($isAr && !empty($sArrAir->airport_name_ar)) ? $sArrAir->airport_name_ar : ($sArrAir->airport_name ?? '');
+
+                                            $sDepDtRaw = $seg['DepartureDateTime'] ?? ($seg['dep_datetime'] ?? null);
+                                            $sArrDtRaw = $seg['ArrivalDateTime'] ?? ($seg['arr_datetime'] ?? null);
+                                            $sDepDt = null; $sArrDt = null;
+                                            if ($sDepDtRaw) { try { $sDepDt = \Carbon\Carbon::parse($sDepDtRaw); } catch (\Exception $e) {} }
+                                            if ($sArrDtRaw) { try { $sArrDt = \Carbon\Carbon::parse($sArrDtRaw); } catch (\Exception $e) {} }
+                                            
+                                            $segDur = ($sDepDt && $sArrDt) ? $sDepDt->diff($sArrDt)->format($isAr ? '%hس %iد' : '%hh %im') : null;
+                                            $flNum = $seg['FlightNumber'] ?? ($seg['flight_number'] ?? null);
+                                            $airlineName = $seg['MarketingAirlineName'] ?? ($seg['MarketingAirlineCode'] ?? ($booking->airline_name ?? 'Flight'));
+                                            $baggage = $seg['Baggage'] ?? ($seg['baggage'] ?? null);
+                                            $layover = $seg['Layover'] ?? ($seg['layover'] ?? null);
+                                        @endphp
+
+                                        <div class="itin-segment-block">
+                                            {{-- Departure Row --}}
+                                            <div class="itin-point-row">
+                                                <div class="itin-point-time">
+                                                    <div class="itin-time-main">{{ $sDepDt ? $sDepDt->format('H:i') : '--:--' }}</div>
+                                                    <div class="itin-time-sub">{{ $sDepDt ? $sDepDt->translatedFormat('d M Y') : '' }}</div>
+                                                </div>
+                                                <div class="itin-point-node"></div>
+                                                <div class="itin-point-info">
+                                                    <div class="itin-airport-city">
+                                                        <span>{{ $sDepCity }}</span>
+                                                        <span class="itin-code-pill notranslate" translate="no">{{ strtoupper(substr($sDepCode, 0, 3)) }}</span>
+                                                    </div>
+                                                    @if($sDepName)
+                                                        <div class="itin-airport-name">{{ $sDepName }}</div>
+                                                    @endif
+                                                </div>
+                                            </div>
+
+                                            {{-- Flight Connector Row --}}
+                                            <div class="itin-connector-wrapper">
+                                                <div class="itin-connector-time-spacer"></div>
+                                                <div class="itin-connector-line-col">
+                                                    <div class="itin-connector-line"></div>
+                                                </div>
+                                                <div class="itin-flight-badge-card">
+                                                    <div class="itin-flight-meta">
+                                                        <div class="itin-flight-airline">
+                                                            <i class="fas fa-plane" style="color: var(--primary-blue);"></i>
+                                                            <span>{{ $airlineName }}</span>
+                                                            @if($flNum)
+                                                                <span class="notranslate" translate="no" style="font-weight: 900; color: var(--primary-blue);">{{ $flNum }}</span>
+                                                            @endif
+                                                        </div>
+                                                        @if($baggage)
+                                                            <div class="itin-flight-chip">
+                                                                <i class="fas fa-suitcase-rolling me-1 text-primary"></i> {{ __('وزن مسجل:') }} {{ $baggage }}
+                                                            </div>
+                                                        @endif
+                                                        <div class="itin-flight-chip">
+                                                            <i class="fas fa-chair me-1"></i> {{ $booking->flightBooking->flight_class ?? __('درجة اقتصادية') }}
+                                                        </div>
+                                                    </div>
+                                                    @if($segDur)
+                                                        <div class="itin-flight-duration">
+                                                            <i class="far fa-clock"></i>
+                                                            <span>{{ __('مدة الرحلة:') }} {{ $segDur }}</span>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            </div>
+
+                                            {{-- Arrival Row --}}
+                                            <div class="itin-point-row">
+                                                <div class="itin-point-time">
+                                                    <div class="itin-time-main">{{ $sArrDt ? $sArrDt->format('H:i') : '--:--' }}</div>
+                                                    <div class="itin-time-sub">{{ $sArrDt ? $sArrDt->translatedFormat('d M Y') : '' }}</div>
+                                                </div>
+                                                <div class="itin-point-node node-dest"></div>
+                                                <div class="itin-point-info">
+                                                    <div class="itin-airport-city">
+                                                        <span>{{ $sArrCity }}</span>
+                                                        <span class="itin-code-pill notranslate" translate="no" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">{{ strtoupper(substr($sArrCode, 0, 3)) }}</span>
+                                                    </div>
+                                                    @if($sArrName)
+                                                        <div class="itin-airport-name">{{ $sArrName }}</div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {{-- Transit / Layover Box (Between segments in same leg) --}}
+                                        @if(!$loop->last)
+                                            @php
+                                                $nextSeg = $legSegs[$sIdx + 1] ?? null;
+                                                $layoverTimeStr = $layover;
+                                                if (!$layoverTimeStr && $nextSeg && isset($nextSeg['DepartureDateTime']) && $sArrDt) {
+                                                    try {
+                                                        $nextDep = \Carbon\Carbon::parse($nextSeg['DepartureDateTime']);
+                                                        $layoverTimeStr = $sArrDt->diff($nextDep)->format($isAr ? '%hس %iد' : '%hh %im');
+                                                    } catch (\Exception $e) {}
+                                                }
+                                            @endphp
+                                            <div class="itin-layover-wrapper">
+                                                <div class="itin-layover-spacer"></div>
+                                                <div class="itin-layover-dot-col">
+                                                    <div class="itin-layover-dot"></div>
+                                                </div>
+                                                <div class="itin-layover-card">
+                                                    <div class="itin-layover-title">
+                                                        <i class="fas fa-mug-hot"></i>
+                                                        <span>{{ __('ترانزيت في') }} {{ $sArrCity }} (<span class="notranslate" translate="no">{{ strtoupper(substr($sArrCode, 0, 3)) }}</span>)</span>
+                                                    </div>
+                                                    <div class="itin-layover-sub">
+                                                        @if($layoverTimeStr)
+                                                            <i class="far fa-hourglass me-1"></i> {{ __('مدة الانتظار:') }} <strong style="font-size: 0.9rem;">{{ $layoverTimeStr }}</strong> • 
+                                                        @endif
+                                                        <span>{{ __('تغيير الطائرة في نفس المطار') }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endif
+                                    @endforeach
                                 </div>
                             </div>
                         @endforeach
                     @else
-                        {{-- Outbound Flight Summary --}}
-                        <div class="mb-3 p-3 rounded" style="background: rgba(37, 99, 235, 0.04); border: 1px solid rgba(37,99,235,0.15);">
-                            <div style="font-weight: 800; color: var(--primary-blue); font-size: 0.9rem; margin-bottom: 8px;">
-                                <i class="fas fa-plane-departure me-1"></i> {{ __('Outbound Journey') }}: <span class="notranslate" translate="no">{{ strtoupper(substr($originCode, 0, 3)) }}</span> <i class="fas fa-long-arrow-alt-{{ app()->isLocale('ar') ? 'left' : 'right' }} mx-1"></i> <span class="notranslate" translate="no">{{ strtoupper(substr($destCode, 0, 3)) }}</span>
-                            </div>
-                            <div class="info-row" style="margin-bottom: 6px;">
-                                <span class="info-label">{{ __('Origin') }}</span>
-                                <span class="info-value">{{ $originName }} (<span class="notranslate" translate="no">{{ strtoupper(substr($originCode, 0, 3)) }}</span>)</span>
-                            </div>
-                            <div class="info-row" style="margin-bottom: 6px;">
-                                <span class="info-label">{{ __('Destination') }}</span>
-                                <span class="info-value">{{ $destName }} (<span class="notranslate" translate="no">{{ strtoupper(substr($destCode, 0, 3)) }}</span>)</span>
-                            </div>
-                            <div class="info-row" style="margin-bottom: 0;">
-                                <span class="info-label">{{ __('Departure') }}</span>
-                                <span class="info-value text-dark" style="font-weight: 900;">
-                                    {{ $exactDepartureTime ? $exactDepartureTime->format('d M Y, h:i A') : ($booking->flightBooking->departure_date ? $booking->flightBooking->departure_date->format('d M Y') : 'N/A') }}
-                                </span>
-                            </div>
+                        {{-- Fallback if no legs parsed --}}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-1"></i> {{ __('لا توجد تفاصيل إضافية لمسار الرحلة.') }}
                         </div>
-
-                        {{-- Return Flight Summary (If Round Trip) --}}
-                        @if($isRoundTrip)
-                        <div class="mb-3 p-3 rounded" style="background: rgba(245, 158, 11, 0.06); border: 1px solid rgba(245, 158, 11, 0.25);">
-                            <div style="font-weight: 800; color: #b45309; font-size: 0.9rem; margin-bottom: 8px;">
-                                <i class="fas fa-plane-arrival me-1"></i> {{ __('Return Journey') }}: <span class="notranslate" translate="no">{{ strtoupper(substr($destCode, 0, 3)) }}</span> <i class="fas fa-long-arrow-alt-{{ app()->isLocale('ar') ? 'left' : 'right' }} mx-1"></i> <span class="notranslate" translate="no">{{ strtoupper(substr($originCode, 0, 3)) }}</span>
-                            </div>
-                            <div class="info-row" style="margin-bottom: 6px;">
-                                <span class="info-label">{{ __('Origin') }}</span>
-                                <span class="info-value">{{ $destName }} (<span class="notranslate" translate="no">{{ strtoupper(substr($destCode, 0, 3)) }}</span>)</span>
-                            </div>
-                            <div class="info-row" style="margin-bottom: 6px;">
-                                <span class="info-label">{{ __('Destination') }}</span>
-                                <span class="info-value">{{ $originName }} (<span class="notranslate" translate="no">{{ strtoupper(substr($originCode, 0, 3)) }}</span>)</span>
-                            </div>
-                            <div class="info-row" style="margin-bottom: 0;">
-                                <span class="info-label">{{ __('Return Date') }}</span>
-                                <span class="info-value text-dark" style="font-weight: 900; color: #b45309 !important;">
-                                    {{ $exactReturnTime ? $exactReturnTime->format('d M Y, h:i A') : 'N/A' }}
-                                </span>
-                            </div>
-                        </div>
-                        @endif
                     @endif
 
                     @if($exactDepartureTime && $exactDepartureTime->isFuture())
-                        <div class="info-row mt-3 p-3 rounded" style="background: rgba(16, 185, 129, 0.1); border-left: 4px solid var(--fd-success);">
-                            <span class="info-label text-success" style="font-weight: 800;"><i class="fas fa-stopwatch me-1"></i> {{ __('Time to Departure') }}</span>
-                            <span class="info-value fw-bold text-success" style="font-size: 1.2rem;">{{ $exactDepartureTime->diffForHumans(['parts' => 2, 'short' => false]) }}</span>
+                        <div class="info-row mt-3 p-3 rounded" style="background: rgba(16, 185, 129, 0.08); border-inline-start: 4px solid var(--fd-success); border-radius: 12px; display: flex; align-items: center; justify-content: space-between;">
+                            <span class="info-label text-success" style="font-weight: 800;"><i class="fas fa-stopwatch me-1"></i> {{ __('الوقت المتبقي على الإقلاع') }}</span>
+                            <span class="info-value fw-bold text-success" style="font-size: 1.15rem;">{{ $exactDepartureTime->diffForHumans(['parts' => 2, 'short' => false]) }}</span>
                         </div>
-                    @endif
-
-                    @if($booking->flightBooking->flight_class)
-                    <div class="info-row mt-2">
-                        <span class="info-label">{{ __('Cabin Class') }}</span>
-                        <span class="info-value">{{ $booking->flightBooking->flight_class }}</span>
-                    </div>
                     @endif
                 </div>
             </div>
+
+            {{-- Cancellation & Refund Details Card (Shown if booking is cancelled) --}}
+            @if($booking->status === 'cancelled')
+                @php
+                    $refAmount = (float)($booking->refund_amount ?? ($refundTransaction ? $refundTransaction->amount : 0.0));
+                    $cancelFee = (float)($booking->cancellation_fee ?? max(0, (float)$booking->total_amount - $refAmount));
+                    $cancelDate = $booking->cancelled_at ?? ($refundTransaction ? $refundTransaction->created_at : $booking->updated_at);
+                @endphp
+                <div class="detail-card cancellation-report-card" style="border: 2px solid #fecaca; background: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(239, 68, 68, 0.08); margin-bottom: 24px;">
+                    <div style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); padding: 18px 24px; border-bottom: 1.5px solid #fecaca; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                            <div style="width: 46px; height: 46px; border-radius: 14px; background: #ef4444; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);">
+                                <i class="fas fa-ban"></i>
+                            </div>
+                            <div>
+                                <h5 style="margin: 0; font-weight: 800; color: #991b1b; font-size: 1.15rem;">{{ __('تفاصيل إلغاء الحجز والاسترداد المالي') }}</h5>
+                                <span style="font-size: 0.8rem; color: #b91c1c; font-weight: 600;">
+                                    <i class="far fa-clock me-1"></i> {{ __('تاريخ الإلغاء:') }} {{ $cancelDate ? $cancelDate->format('d M Y, h:i A') : 'N/A' }}
+                                </span>
+                            </div>
+                        </div>
+                        <span class="badge" style="background: #dc2626; color: white; font-weight: 800; font-size: 0.82rem; padding: 7px 16px; border-radius: 30px; letter-spacing: 0.5px;">
+                            <i class="fas fa-times-circle me-1"></i> {{ __('ملغي ومسترد') }}
+                        </span>
+                    </div>
+
+                    <div style="padding: 24px;">
+                        {{-- 3-Stat Financial Grid --}}
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-bottom: 20px;">
+                            <!-- 1. Total Paid -->
+                            <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 16px;">
+                                <div style="font-size: 0.78rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+                                    <i class="fas fa-receipt text-primary"></i> {{ __('المبلغ الأصلي المدفوع') }}
+                                </div>
+                                <div style="font-size: 1.45rem; font-weight: 900; color: #0f172a;">
+                                    {{ number_format($booking->total_amount, 2) }} <span style="font-size: 0.85rem; font-weight: 700; color: #64748b;">{{ $booking->currency }}</span>
+                                </div>
+                                <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 4px;">{{ __('قيمة التذكرة والرسوم الكاملة') }}</div>
+                            </div>
+
+                            <!-- 2. Cancellation Penalty -->
+                            <div style="background: #fff7ed; border: 1.5px solid #fed7aa; border-radius: 14px; padding: 16px;">
+                                <div style="font-size: 0.78rem; font-weight: 700; color: #c2410c; text-transform: uppercase; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+                                    <i class="fas fa-hand-holding-usd text-warning"></i> {{ __('غرامة ورسوم الإلغاء') }}
+                                </div>
+                                <div style="font-size: 1.45rem; font-weight: 900; color: #ea580c;">
+                                    -{{ number_format($cancelFee, 2) }} <span style="font-size: 0.85rem; font-weight: 700; color: #c2410c;">{{ $booking->currency }}</span>
+                                </div>
+                                <div style="font-size: 0.75rem; color: #9a3412; margin-top: 4px;">{{ __('مخصومة وفق شروط وسياسة الطيران') }}</div>
+                            </div>
+
+                            <!-- 3. Refunded to Wallet (High Contrast & Crystal Clear) -->
+                            <div class="cancellation-metric-card cancellation-metric-wallet" style="background: #ffffff; border: 2.5px solid #10b981; border-radius: 16px; padding: 18px; box-shadow: 0 4px 18px rgba(16, 185, 129, 0.15);">
+                                <div class="metric-title" style="font-size: 0.8rem; font-weight: 850; color: #047857; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+                                    <span style="display: flex; align-items: center; gap: 6px;">
+                                        <i class="fas fa-wallet text-success" style="font-size: 1rem;"></i> {{ __('المبلغ المسترد للمحفظة') }}
+                                    </span>
+                                    <span class="badge" style="background: #dcfce7; color: #14532d; font-size: 0.72rem; font-weight: 850; padding: 4px 9px; border-radius: 6px; border: 1px solid #86efac;">
+                                        <i class="fas fa-check-circle me-1"></i> {{ __('تم الإيداع') }}
+                                    </span>
+                                </div>
+                                <div class="metric-amount" style="font-size: 1.65rem; font-weight: 950; color: #064e3b; letter-spacing: -0.5px; line-height: 1.2;">
+                                    +{{ number_format($refAmount, 2) }} <span class="metric-currency" style="font-size: 0.95rem; font-weight: 850; color: #047857;">{{ $booking->currency }}</span>
+                                </div>
+                                <div class="metric-sub" style="font-size: 0.8rem; font-weight: 750; color: #047857; margin-top: 6px; display: flex; align-items: center; gap: 6px;">
+                                    <i class="fas fa-arrow-circle-down text-success"></i> {{ __('أودع بنجاح في رصيد محفظتك بالمنصة') }}
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Wallet Status Confirmation Box --}}
+                        @if($refAmount > 0)
+                            <div class="wallet-confirm-box" style="background: #f0fdf4; border: 2px solid #86efac; border-radius: 16px; padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; box-shadow: 0 4px 16px rgba(16, 185, 129, 0.08);">
+                                <div style="display: flex; align-items: center; gap: 16px;">
+                                    <div style="width: 50px; height: 50px; border-radius: 14px; background: #059669; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.45rem; flex-shrink: 0; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);">
+                                        <i class="fas fa-check-double"></i>
+                                    </div>
+                                    <div>
+                                        <div style="font-weight: 900; color: #064e3b; font-size: 1.05rem; margin-bottom: 4px;">
+                                            {{ __('تم إيداع المبلغ المسترد في محفظتك الإلكترونية بنجاح') }}
+                                        </div>
+                                        <div style="font-size: 0.88rem; color: #166534; font-weight: 600; line-height: 1.5;">
+                                            {{ __('تمت إضافة مبلغ') }} <span style="font-size: 1.05rem; font-weight: 950; color: #064e3b; background: #dcfce7; padding: 2px 10px; border-radius: 6px; border: 1.5px solid #86efac;">{{ number_format($refAmount, 2) }} {{ $booking->currency }}</span> {{ __('إلى رصيد محفظتك الرقمية ويمكنك استخدامه فوراً في أي حجز جديد.') }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <a href="{{ route('customer.wallet.index') }}" class="btn btn-sm btn-success" style="padding: 10px 24px; border-radius: 12px; font-weight: 850; font-size: 0.9rem; white-space: nowrap; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);">
+                                    <i class="fas fa-wallet me-1"></i> {{ __('عرض المحفظة والرصيد') }}
+                                </a>
+                            </div>
+                        @else
+                            <div style="background: #fff7ed; border: 1.5px solid #fed7aa; border-radius: 14px; padding: 14px 18px; display: flex; align-items: center; gap: 12px;">
+                                <i class="fas fa-info-circle text-warning fs-4"></i>
+                                <div style="font-size: 0.86rem; color: #9a3412;">
+                                    <strong>{{ __('سياسة الاسترداد:') }}</strong> {{ __('خضعت هذه التذكرة لغرامة إلغاء بنسبة 100% وفق شروط شركة الطيران المعتمدة، لذا لم يتم إرجاع مبالغ مالية للمحفظة.') }}
+                                </div>
+                            </div>
+                        @endif
+
+                        @if(!empty($booking->cancellation_reason))
+                            <div style="margin-top: 14px; font-size: 0.82rem; color: #64748b; background: #f8fafc; padding: 10px 16px; border-radius: 10px; border: 1px solid #e2e8f0;">
+                                <strong style="color: #334155;"><i class="fas fa-info-circle text-primary me-1"></i> {{ __('ملاحظة الإلغاء:') }}</strong> {{ $booking->cancellation_reason }}
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            @endif
 
             {{-- Passengers Section --}}
             <div class="detail-card">
@@ -1686,6 +2196,16 @@ html[dir="rtl"] .seg-path i {
                         <span>{{ __('Taxes & Fees') }}</span>
                         <strong>0.00 {{ $booking->currency }}</strong>
                     </div>
+                    @if($booking->status === 'cancelled')
+                        <div class="row-info" style="color: #ea580c; font-weight: 700; border-top: 1px dashed #e2e8f0; padding-top: 8px; margin-top: 8px;">
+                            <span><i class="fas fa-hand-holding-usd me-1"></i> {{ __('غرامة الإلغاء') }}</span>
+                            <strong>-{{ number_format($cancelFee, 2) }} {{ $booking->currency }}</strong>
+                        </div>
+                        <div class="row-info" style="color: #15803d; font-weight: 800; font-size: 0.95rem; background: #f0fdf4; padding: 6px 10px; border-radius: 8px; margin-top: 6px; border: 1px solid #bbf7d0;">
+                            <span><i class="fas fa-wallet me-1"></i> {{ __('أودع بالمحفظة') }}</span>
+                            <strong>+{{ number_format($refAmount, 2) }} {{ $booking->currency }}</strong>
+                        </div>
+                    @endif
                 </div>
             </div>
 
@@ -1737,12 +2257,20 @@ html[dir="rtl"] .seg-path i {
                                 </a>
                             @endif
                         @elseif($booking->status === 'cancelled')
-                            <div class="expired-msg-sidebar">
-                                <i class="fas fa-times-circle"></i>
-                                <span>{{ __('هذا الحجز ملغي.') }}</span>
+                            <div class="expired-msg-sidebar" style="background: #fef2f2; border: 1.5px solid #fecaca; color: #991b1b; padding: 14px; border-radius: 12px; display: flex; align-items: center; gap: 10px;">
+                                <i class="fas fa-times-circle" style="color: #ef4444; font-size: 1.3rem; flex-shrink: 0;"></i>
+                                <div style="line-height: 1.4;">
+                                    <strong style="display: block; font-size: 0.88rem;">{{ __('هذا الحجز ملغي') }}</strong>
+                                    <span style="font-size: 0.76rem; color: #b91c1c;">{{ __('تمت تسوية الإلغاء واسترداد المبلغ') }}</span>
+                                </div>
                             </div>
-                            <a href="{{ route('customer.bookings.flights.quick-rebook', $booking->id) }}" class="action-btn action-btn-primary" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
-                                <i class="fas fa-sync-alt"></i> {{ __('إعادة الحجز السريع') }}
+                            @if($refAmount > 0)
+                                <a href="{{ route('customer.wallet.index') }}" class="action-btn action-btn-success" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                                    <i class="fas fa-wallet"></i> {{ __('عرض رصيد المحفظة (+:amount :curr)', ['amount' => number_format($refAmount, 2), 'curr' => $booking->currency]) }}
+                                </a>
+                            @endif
+                            <a href="{{ route('flights') }}" class="action-btn action-btn-outline">
+                                <i class="fas fa-search"></i> {{ __('بحث رحلة جديدة') }}
                             </a>
                         @elseif(in_array($booking->status, ['confirmed', 'paid', 'ticketed', 'completed']))
                             <a href="{{ route('customer.bookings.invoice', ['id' => $booking->id, 'type' => 'flight']) }}" class="action-btn action-btn-success" target="_blank">
@@ -1770,24 +2298,41 @@ html[dir="rtl"] .seg-path i {
                                 <small>{{ $booking->created_at->format('d M Y, H:i') }}</small>
                             </div>
                         </div>
-                        <div class="tl-item {{ in_array($booking->status, ['paid', 'confirmed', 'ticketed', 'completed']) ? 'done' : '' }}">
-                            <div class="tl-dot">
-                                <i class="fas {{ in_array($booking->status, ['paid', 'confirmed', 'ticketed', 'completed']) ? 'fa-check' : 'fa-credit-card' }}"></i>
+                        @if($booking->status === 'cancelled')
+                            <div class="tl-item done">
+                                <div class="tl-dot" style="background: #10b981; color: white;"><i class="fas fa-check"></i></div>
+                                <div class="tl-text">
+                                    <strong>{{ __('Payment Completed') }}</strong>
+                                    <small>{{ $booking->created_at->format('d M Y, H:i') }}</small>
+                                </div>
                             </div>
-                            <div class="tl-text">
-                                <strong>{{ __('Payment Verification') }}</strong>
-                                <small>{{ in_array($booking->status, ['paid', 'confirmed', 'ticketed', 'completed']) ? __('Completed') : __('Awaiting Payment') }}</small>
+                            <div class="tl-item done">
+                                <div class="tl-dot" style="background: #ef4444; color: white;"><i class="fas fa-ban"></i></div>
+                                <div class="tl-text">
+                                    <strong style="color: #b91c1c;">{{ __('Booking Cancelled & Refunded') }}</strong>
+                                    <small>{{ $cancelDate ? $cancelDate->format('d M Y, H:i') : '' }}</small>
+                                </div>
                             </div>
-                        </div>
-                        <div class="tl-item {{ in_array($booking->status, ['confirmed', 'paid', 'ticketed', 'completed']) ? 'done' : '' }}">
-                            <div class="tl-dot">
-                                <i class="fas {{ in_array($booking->status, ['confirmed', 'paid', 'ticketed', 'completed']) ? 'fa-check' : 'fa-plane' }}"></i>
+                        @else
+                            <div class="tl-item {{ in_array($booking->status, ['paid', 'confirmed', 'ticketed', 'completed']) ? 'done' : '' }}">
+                                <div class="tl-dot">
+                                    <i class="fas {{ in_array($booking->status, ['paid', 'confirmed', 'ticketed', 'completed']) ? 'fa-check' : 'fa-credit-card' }}"></i>
+                                </div>
+                                <div class="tl-text">
+                                    <strong>{{ __('Payment Verification') }}</strong>
+                                    <small>{{ in_array($booking->status, ['paid', 'confirmed', 'ticketed', 'completed']) ? __('Completed') : __('Awaiting Payment') }}</small>
+                                </div>
                             </div>
-                            <div class="tl-text">
-                                <strong>{{ __('Official Tickets Sent') }}</strong>
-                                <small>{{ in_array($booking->status, ['confirmed', 'paid', 'ticketed', 'completed']) ? __('Ready to fly') : __('Processing...') }}</small>
+                            <div class="tl-item {{ in_array($booking->status, ['confirmed', 'paid', 'ticketed', 'completed']) ? 'done' : '' }}">
+                                <div class="tl-dot">
+                                    <i class="fas {{ in_array($booking->status, ['confirmed', 'paid', 'ticketed', 'completed']) ? 'fa-check' : 'fa-plane' }}"></i>
+                                </div>
+                                <div class="tl-text">
+                                    <strong>{{ __('Official Tickets Sent') }}</strong>
+                                    <small>{{ in_array($booking->status, ['confirmed', 'paid', 'ticketed', 'completed']) ? __('Ready to fly') : __('Processing...') }}</small>
+                                </div>
                             </div>
-                        </div>
+                        @endif
                     </div>
                 </div>
             </div>

@@ -151,7 +151,7 @@ class BookingController extends Controller
             $query->whereDate('created_at', '<=', $dateTo);
         }
 
-        $bookings = $query->latest()->paginate(10);
+        $bookings = $query->with(['flightBooking', 'passengers', 'user'])->latest()->paginate(10);
         return view('frontend.customer.bookings.flights', compact('bookings'));
     }
 
@@ -204,7 +204,7 @@ class BookingController extends Controller
             $query->whereDate('check_in', '<=', $dateTo);
         }
 
-        $bookings = $query->latest()->paginate(10);
+        $bookings = $query->with('user')->latest()->paginate(10);
         return view('frontend.customer.bookings.hotels', compact('bookings'));
     }
 
@@ -268,26 +268,49 @@ class BookingController extends Controller
                 }
             }
 
-            return view('frontend.customer.bookings.flights_show', compact('booking', 'apiTripDetails'));
+            $refundTransaction = null;
+            if ($booking->status === 'cancelled') {
+                $refundTransaction = \App\Models\WalletTransaction::where('reference_type', \App\Models\Booking::class)
+                    ->where('reference_id', $booking->id)
+                    ->where('type', 'credit')
+                    ->latest()
+                    ->first();
+            }
+
+            return view('frontend.customer.bookings.flights_show', compact('booking', 'apiTripDetails', 'refundTransaction'));
         }
 
         if ($type === 'hotel') {
-            $booking = \App\Models\HotelBooking::where('user_id', Auth::id())
+            $booking = \App\Models\HotelBooking::with('user')->where('user_id', Auth::id())
                 ->findOrFail($id);
 
-            // AUTO-FINALIZE: If paid or having supplier ref, ensure finalized and confirmed
-            if ($booking->status === 'paid' || (!empty($booking->supplier_confirmation_num) && $booking->status !== 'confirmed')) {
-                $this->finalizeHotelSupplierBooking($booking);
-                $booking->refresh();
+            // AUTO-FINALIZE: If paid or having supplier ref, ensure finalized and confirmed (never for cancelled)
+            if ($booking->status !== 'cancelled' && empty($booking->cancelled_at)) {
+                if ($booking->status === 'paid' || (!empty($booking->supplier_confirmation_num) && $booking->status !== 'confirmed')) {
+                    $this->finalizeHotelSupplierBooking($booking);
+                    $booking->refresh();
+                }
+
+                // AUTO-CANCEL: If pending and older than 10 minutes, update status in DB
+                if ($booking->status === 'pending' && $booking->created_at->diffInMinutes(now()) >= 10) {
+                    $booking->update(['status' => 'cancelled']);
+                    Log::info("HotelBooking #{$id} auto-cancelled due to 10-min expiry.");
+                }
             }
 
-            // AUTO-CANCEL: If pending and older than 10 minutes, update status in DB
-            if ($booking->status === 'pending' && $booking->created_at->diffInMinutes(now()) >= 10) {
-                $booking->update(['status' => 'cancelled']);
-                Log::info("HotelBooking #{$id} auto-cancelled due to 10-min expiry.");
+            $refundTransaction = null;
+            if ($booking->status === 'cancelled') {
+                $refundTransaction = \App\Models\WalletTransaction::where('wallet_id', function($q) use ($booking) {
+                    $q->select('id')->from('wallets')->where('user_id', $booking->user_id)->limit(1);
+                })
+                ->where('reference_type', \App\Models\HotelBooking::class)
+                ->where('reference_id', $booking->id)
+                ->where('type', 'deposit')
+                ->latest()
+                ->first();
             }
 
-            return view('frontend.customer.bookings.hotels_show', compact('booking'));
+            return view('frontend.customer.bookings.hotels_show', compact('booking', 'refundTransaction'));
         }
 
         $booking = TripBooking::with(['trip.images', 'trip.toCountry', 'trip.toCity', 'passengers', 'payments', 'bankTransfers', 'histories' => function($q) {
@@ -392,7 +415,7 @@ class BookingController extends Controller
         }
 
         $policyText = $booking->cancellation_policy ?? '';
-        $charge = 0;
+        $totalPrice = (float)$booking->total_price;
 
         if (empty($policyText)) {
             try {
@@ -409,14 +432,32 @@ class BookingController extends Controller
             }
         }
 
+        $isNonRefundable = false;
+        if (!empty($policyText)) {
+            $isNonRefundable = (stripos($policyText, 'non-refundable') !== false 
+                             || stripos($policyText, 'non refundable') !== false 
+                             || stripos($policyText, 'غير قابل') !== false);
+        }
+
+        if ($isNonRefundable || ($booking->check_in && $booking->check_in->isPast())) {
+            $charge = $totalPrice;
+            $refundAmount = 0.0;
+            $refundable = false;
+        } else {
+            $charge = 0.0;
+            $refundAmount = $totalPrice;
+            $refundable = true;
+        }
+
         return response()->json([
             'status' => 'success',
-            'policy' => $policyText,
-            'cancellationPolicy' => $policyText,
+            'policy' => $policyText ?: __('سياسة الإلغاء القياسية للفندق: الإلغاء مجاني ومتاح قبل تاريخ تسجيل الوصول.'),
+            'cancellationPolicy' => $policyText ?: __('سياسة الإلغاء القياسية للفندق: الإلغاء مجاني ومتاح قبل تاريخ تسجيل الوصول.'),
             'charge' => $charge,
+            'refund_amount' => $refundAmount,
             'currency' => $booking->currency ?? 'SAR',
-            'total_price' => (float)$booking->total_price,
-            'refundable' => true
+            'total_price' => $totalPrice,
+            'refundable' => $refundable
         ]);
     }
 
@@ -436,8 +477,27 @@ class BookingController extends Controller
 
         $wasPaid = in_array($booking->status, ['paid', 'confirmed', 'completed']);
         $totalPrice = (float)$booking->total_price;
-        $charge = 0.0;
-        $refundAmount = $totalPrice;
+
+        $policyText = $booking->cancellation_policy ?? '';
+        $isNonRefundable = false;
+        if (!empty($policyText)) {
+            $isNonRefundable = (stripos($policyText, 'non-refundable') !== false 
+                             || stripos($policyText, 'non refundable') !== false 
+                             || stripos($policyText, 'غير قابل') !== false);
+        }
+
+        if ($isNonRefundable || ($booking->check_in && $booking->check_in->isPast())) {
+            $charge = $totalPrice;
+            $refundAmount = 0.0;
+        } else {
+            $charge = 0.0;
+            $refundAmount = $totalPrice;
+        }
+
+        if (!$wasPaid) {
+            $charge = 0.0;
+            $refundAmount = 0.0;
+        }
 
         $result = $hotelService->cancel([
             'supplierConfirmationNum' => $booking->supplier_confirmation_num,
@@ -455,6 +515,7 @@ class BookingController extends Controller
         }
         $cancelledStr = strtoupper((string)($result['cancelled'] ?? ''));
         $errorMsg = (string)($result['status']['error'] ?? $result['message'] ?? $result['errors'][0]['errorMessage'] ?? '');
+        $cancelRefNum = $result['cancelReferenceNum'] ?? ($result['cancel_reference_num'] ?? null);
 
         // Consider successful if supplier confirmed, or already cancelled, or sandbox test booking
         $isSuccess = in_array($statusStr, ['success', 'confirmed', 'cancelled', 'ok']) 
@@ -464,7 +525,14 @@ class BookingController extends Controller
             || (is_array($result) && !isset($result['status']['errors']) && empty($result['errors']));
 
         if ($isSuccess) {
-            $booking->update(['status' => 'cancelled']);
+            $booking->update([
+                'status' => 'cancelled',
+                'cancellation_fee' => $charge,
+                'refund_amount' => $refundAmount,
+                'cancelled_at' => now(),
+                'cancel_reference_num' => $cancelRefNum,
+                'cancellation_reason' => $request->input('reason', 'Customer cancellation request')
+            ]);
 
             // Refund to customer wallet if paid and refund amount > 0
             if ($wasPaid && $refundAmount > 0) {
@@ -474,7 +542,7 @@ class BookingController extends Controller
                         $wallet->id,
                         $refundAmount,
                         __('استرداد قيمة حجز فندق ملغى: :ref (:hotel)', [
-                            'ref' => $booking->reference_num,
+                            'ref' => $booking->supplier_confirmation_num ?? $booking->reference_num,
                             'hotel' => $booking->hotel_name
                         ]),
                         \App\Models\HotelBooking::class,
@@ -547,8 +615,16 @@ class BookingController extends Controller
         try {
             $paxDetails = [];
             foreach ($booking->passengers as $pax) {
+                $rawType = strtolower((string)($pax->passenger_type ?? ''));
+                $typeCode = 'ADT';
+                if (str_starts_with($rawType, 'ch')) {
+                    $typeCode = 'CHD';
+                } elseif (str_starts_with($rawType, 'inf')) {
+                    $typeCode = 'INF';
+                }
+
                 $paxDetails[] = [
-                    'type' => strtoupper($pax->passenger_type ?: 'ADT'),
+                    'type' => $typeCode,
                     'title' => $pax->title ?: 'Mr',
                     'firstName' => $pax->first_name ?: 'Passenger',
                     'lastName' => $pax->last_name ?: 'Name',
@@ -569,21 +645,36 @@ class BookingController extends Controller
                     'ptrUniqueID' => $ptrId
                 ]);
                 
-                $quotedFares = $statusResult['PtrResponse']['PtrResult']['PtrDetails'][0]['PaxDetails'][0]['QuotedFares'] ?? null;
+                $ptrDetails = $statusResult['PtrResponse']['PtrResult']['PtrDetails'] ?? null;
+                if (isset($ptrDetails[0])) {
+                    $ptrDetails = $ptrDetails[0];
+                }
+                $paxDetailsNode = $ptrDetails['PaxDetails'] ?? null;
+                if (isset($paxDetailsNode[0])) {
+                    $paxDetailsNode = $paxDetailsNode[0];
+                }
+                $quotedFares = $paxDetailsNode['QuotedFares'] ?? null;
+
                 if ($quotedFares) {
                     $totalFare = (float)($quotedFares['TotalFare']['Amount'] ?? $booking->total_amount);
                     $penalty = (float)($quotedFares['TotalRefundCharges']['Amount'] ?? $quotedFares['CancellationCharge']['Amount'] ?? 0);
-                    $refundAmount = (float)($quotedFares['TotalRefundAmount']['Amount'] ?? ($totalFare - $penalty));
+                    $refundAmount = isset($quotedFares['TotalRefundAmount']['Amount'])
+                        ? (float)$quotedFares['TotalRefundAmount']['Amount']
+                        : max(0, $totalFare - $penalty);
+
+                    $isFullyNonRefundable = ($refundAmount <= 0 && $penalty >= $totalFare);
 
                     return response()->json([
                         'status' => 'success',
                         'is_pending' => false,
-                        'refundable' => true,
+                        'refundable' => !$isFullyNonRefundable,
                         'ptr_id' => $ptrId,
                         'penalty' => $penalty,
                         'refund_amount' => max(0, $refundAmount),
                         'currency' => $quotedFares['TotalFare']['CurrencyCode'] ?? ($booking->currency ?? 'SAR'),
-                        'message' => __('التذكرة قابلة للاسترداد وفق سياسة شركة الطيران بعد خصم الغرامة الموضحة.')
+                        'message' => !$isFullyNonRefundable
+                            ? __('التذكرة قابلة للاسترداد وفق سياسة شركة الطيران بعد خصم الغرامة الموضحة.')
+                            : __('التذكرة تتبع فئة غير قابلة للاسترداد وفق شروط شركة الطيران. الإلغاء سيؤدي لفقدان قيمة التذكرة.')
                     ]);
                 }
             }
@@ -696,8 +787,16 @@ class BookingController extends Controller
         try {
             $paxDetails = [];
             foreach ($booking->passengers as $pax) {
+                $rawType = strtolower((string)($pax->passenger_type ?? ''));
+                $typeCode = 'ADT';
+                if (str_starts_with($rawType, 'ch')) {
+                    $typeCode = 'CHD';
+                } elseif (str_starts_with($rawType, 'inf')) {
+                    $typeCode = 'INF';
+                }
+
                 $paxDetails[] = [
-                    'type' => strtoupper($pax->passenger_type ?: 'ADT'),
+                    'type' => $typeCode,
                     'title' => $pax->title ?: 'Mr',
                     'firstName' => $pax->first_name ?: 'Passenger',
                     'lastName' => $pax->last_name ?: 'Name',
@@ -718,11 +817,22 @@ class BookingController extends Controller
                         'UniqueID' => $booking->booking_reference,
                         'ptrUniqueID' => $ptrId
                     ]);
-                    $quotedFares = $statusResult['PtrResponse']['PtrResult']['PtrDetails'][0]['PaxDetails'][0]['QuotedFares'] ?? null;
+                    $ptrDetails = $statusResult['PtrResponse']['PtrResult']['PtrDetails'] ?? null;
+                    if (isset($ptrDetails[0])) {
+                        $ptrDetails = $ptrDetails[0];
+                    }
+                    $paxDetailsNode = $ptrDetails['PaxDetails'] ?? null;
+                    if (isset($paxDetailsNode[0])) {
+                        $paxDetailsNode = $paxDetailsNode[0];
+                    }
+                    $quotedFares = $paxDetailsNode['QuotedFares'] ?? null;
+
                     if ($quotedFares) {
                         $totalFare = (float)($quotedFares['TotalFare']['Amount'] ?? $booking->total_amount);
                         $penalty = (float)($quotedFares['TotalRefundCharges']['Amount'] ?? $quotedFares['CancellationCharge']['Amount'] ?? 0);
-                        $refundAmount = max(0, (float)($quotedFares['TotalRefundAmount']['Amount'] ?? ($totalFare - $penalty)));
+                        $refundAmount = isset($quotedFares['TotalRefundAmount']['Amount'])
+                            ? (float)$quotedFares['TotalRefundAmount']['Amount']
+                            : max(0, $totalFare - $penalty);
                     }
                 } catch (\Exception $e) {
                     Log::warning("Error parsing quote fares in cancelFlight: " . $e->getMessage());
@@ -743,7 +853,11 @@ class BookingController extends Controller
         // Update local booking status
         $booking->update([
             'status' => 'cancelled',
-            'ticket_status' => 'refunded'
+            'ticket_status' => 'refunded',
+            'cancellation_fee' => $penalty ?? 0,
+            'refund_amount' => $refundAmount ?? 0,
+            'cancelled_at' => now(),
+            'cancellation_reason' => __('إلغاء التذكرة بناءً على طلب العميل وفق سياسة شركة الطيران')
         ]);
 
         // Credit wallet if refund amount > 0
@@ -797,6 +911,18 @@ class BookingController extends Controller
     {
         $booking = \App\Models\HotelBooking::where('user_id', Auth::id())->findOrFail($id);
         $isAjax = request()->ajax() || request()->wantsJson();
+
+        // 0. If already cancelled
+        if ($booking->status === 'cancelled' || !empty($booking->cancelled_at)) {
+            if ($isAjax) {
+                return response()->json([
+                    'success' => true,
+                    'status'  => 'cancelled',
+                    'message' => __('هذا الحجز ملغى بالفعل.')
+                ]);
+            }
+            return back()->with('info', __('هذا الحجز ملغى بالفعل.'));
+        }
 
         // 1. If already confirmed
         if ($booking->status === 'confirmed' || !empty($booking->supplier_confirmation_num)) {

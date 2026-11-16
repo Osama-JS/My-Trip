@@ -12,13 +12,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
     
     {{-- CSS --}}
-    <link rel="stylesheet" href="{{ asset('css/frontend/app.css') }}?v={{ time() }}">
     <link href="{{ asset('icons/font-awesome/css/all.min.css') }}" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    @if(app()->getLocale() === 'ar')
-    <link rel="stylesheet" href="{{ asset('css/frontend/rtl.css') }}">
-    @endif
 
     @stack('styles')
 
@@ -881,6 +877,227 @@
             background-color: rgba(37, 99, 235, 0.08) !important;
             color: var(--primary-blue) !important;
         }
+
+        /* ═══════════════════════════════════════════════════════════
+           Modern Alert & Flash Message Styling (Light & Dark Mode)
+        ═══════════════════════════════════════════════════════════ */
+        .cdash-alert,
+        .alert {
+            position: relative;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 16px 20px;
+            border-radius: 14px;
+            margin-bottom: 24px;
+            border: 1px solid transparent;
+            font-size: 0.94rem;
+            line-height: 1.6;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+            transition: all 0.3s ease;
+            animation: cdashSlideDown 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes cdashSlideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes cdashFadeOut {
+            from {
+                opacity: 1;
+                transform: translateY(0);
+                max-height: 200px;
+                margin-bottom: 24px;
+                padding-top: 16px;
+                padding-bottom: 16px;
+            }
+            to {
+                opacity: 0;
+                transform: translateY(-8px);
+                max-height: 0;
+                margin-bottom: 0;
+                padding-top: 0;
+                padding-bottom: 0;
+                overflow: hidden;
+            }
+        }
+
+        /* Success */
+        .cdash-alert-success,
+        .alert-success {
+            background: #f0fdf4;
+            border-color: #bbf7d0;
+            color: #166534;
+        }
+        body.dark-mode .cdash-alert-success,
+        body.dark-mode .alert-success {
+            background: rgba(16, 185, 129, 0.12);
+            border-color: rgba(16, 185, 129, 0.28);
+            color: #6ee7b7;
+        }
+        .cdash-alert-success .cdash-alert-icon {
+            background: #dcfce7;
+            color: #15803d;
+        }
+        body.dark-mode .cdash-alert-success .cdash-alert-icon {
+            background: rgba(16, 185, 129, 0.22);
+            color: #34d399;
+        }
+
+        /* Error / Danger */
+        .cdash-alert-danger,
+        .cdash-alert-error,
+        .alert-danger {
+            background: #fef2f2;
+            border-color: #fecaca;
+            color: #991b1b;
+        }
+        body.dark-mode .cdash-alert-danger,
+        body.dark-mode .cdash-alert-error,
+        body.dark-mode .alert-danger {
+            background: rgba(239, 68, 68, 0.12);
+            border-color: rgba(239, 68, 68, 0.28);
+            color: #fca5a5;
+        }
+        .cdash-alert-danger .cdash-alert-icon,
+        .cdash-alert-error .cdash-alert-icon {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+        body.dark-mode .cdash-alert-danger .cdash-alert-icon,
+        body.dark-mode .cdash-alert-error .cdash-alert-icon {
+            background: rgba(239, 68, 68, 0.22);
+            color: #f87171;
+        }
+
+        /* Warning */
+        .cdash-alert-warning,
+        .alert-warning {
+            background: #fffbeb;
+            border-color: #fde68a;
+            color: #92400e;
+        }
+        body.dark-mode .cdash-alert-warning,
+        body.dark-mode .alert-warning {
+            background: rgba(245, 158, 11, 0.12);
+            border-color: rgba(245, 158, 11, 0.28);
+            color: #fcd34d;
+        }
+        .cdash-alert-warning .cdash-alert-icon {
+            background: #fef3c7;
+            color: #b45309;
+        }
+        body.dark-mode .cdash-alert-warning .cdash-alert-icon {
+            background: rgba(245, 158, 11, 0.22);
+            color: #fbbf24;
+        }
+
+        /* Info */
+        .cdash-alert-info,
+        .alert-info {
+            background: #f0f9ff;
+            border-color: #bae6fd;
+            color: #075985;
+        }
+        body.dark-mode .cdash-alert-info,
+        body.dark-mode .alert-info {
+            background: rgba(14, 165, 233, 0.12);
+            border-color: rgba(14, 165, 233, 0.28);
+            color: #7dd3fc;
+        }
+        .cdash-alert-info .cdash-alert-icon {
+            background: #e0f2fe;
+            color: #0284c7;
+        }
+        body.dark-mode .cdash-alert-info .cdash-alert-icon {
+            background: rgba(14, 165, 233, 0.22);
+            color: #38bdf8;
+        }
+
+        /* Common Elements inside Alerts */
+        .cdash-alert-icon {
+            flex-shrink: 0;
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+        }
+
+        .cdash-alert-body {
+            flex: 1;
+            min-width: 0;
+            padding-top: 1px;
+        }
+
+        .cdash-alert-title {
+            font-weight: 800;
+            font-size: 0.98rem;
+            margin-bottom: 2px;
+            letter-spacing: -0.2px;
+        }
+
+        .cdash-alert-message {
+            font-weight: 500;
+            font-size: 0.91rem;
+            color: inherit;
+        }
+
+        .cdash-alert-message ul {
+            margin: 6px 0 0 0;
+            padding-inline-start: 18px;
+        }
+
+        .cdash-alert-message li {
+            margin-bottom: 3px;
+        }
+
+        .cdash-alert-close,
+        .alert .btn-close {
+            background: transparent;
+            border: none;
+            padding: 6px 8px;
+            color: currentColor;
+            opacity: 0.65;
+            cursor: pointer;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            margin-inline-start: auto;
+            flex-shrink: 0;
+            font-size: 0.95rem;
+            line-height: 1;
+        }
+
+        .cdash-alert-close:hover,
+        .alert .btn-close:hover {
+            opacity: 1;
+            background: rgba(0, 0, 0, 0.06);
+            transform: scale(1.08);
+        }
+
+        body.dark-mode .cdash-alert-close:hover,
+        body.dark-mode .alert .btn-close:hover {
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        /* Utilities Polyfill for subviews using Bootstrap alert markup */
+        .alert .d-flex { display: flex !important; }
+        .alert .align-items-center { align-items: center !important; }
+        .alert .gap-2 { gap: 0.5rem !important; }
+        .alert .gap-3 { gap: 1rem !important; }
+        .rounded-4 { border-radius: 14px !important; }
     </style>
 </head>
 <body>
@@ -1161,17 +1378,73 @@
             <main class="cdash-content fade-in-up">
                 
                 {{-- Flash Messages --}}
-                @foreach (['success', 'error', 'info'] as $msg)
-                    @if(session($msg))
-                        <div class="alert alert-{{ $msg === 'error' ? 'danger' : $msg }} alert-dismissible fade show border-0 shadow-sm rounded-4 mb-4" role="alert">
-                            <div class="d-flex align-items-center gap-2">
-                                <i class="fas fa-{{ $msg === 'success' ? 'check-circle' : ($msg === 'error' ? 'exclamation-circle' : 'info-circle') }}"></i>
-                                <div>{{ session($msg) }}</div>
+                @php
+                    $cdashFlashes = [
+                        'success' => [
+                            'type' => 'success',
+                            'icon' => 'fa-check-circle',
+                            'title' => app()->getLocale() === 'ar' ? 'تمت العملية بنجاح' : 'Success',
+                        ],
+                        'error' => [
+                            'type' => 'danger',
+                            'icon' => 'fa-exclamation-circle',
+                            'title' => app()->getLocale() === 'ar' ? 'حدث خطأ' : 'Error',
+                        ],
+                        'warning' => [
+                            'type' => 'warning',
+                            'icon' => 'fa-exclamation-triangle',
+                            'title' => app()->getLocale() === 'ar' ? 'تنبيه' : 'Warning',
+                        ],
+                        'info' => [
+                            'type' => 'info',
+                            'icon' => 'fa-info-circle',
+                            'title' => app()->getLocale() === 'ar' ? 'معلومة' : 'Information',
+                        ],
+                        'status' => [
+                            'type' => 'info',
+                            'icon' => 'fa-info-circle',
+                            'title' => app()->getLocale() === 'ar' ? 'إشعار' : 'Notice',
+                        ],
+                    ];
+                @endphp
+
+                @foreach ($cdashFlashes as $fKey => $fMeta)
+                    @if(session($fKey))
+                        <div class="cdash-alert cdash-alert-{{ $fMeta['type'] }}" role="alert" data-auto-dismiss="7000">
+                            <div class="cdash-alert-icon">
+                                <i class="fas {{ $fMeta['icon'] }}"></i>
                             </div>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ __('Close') }}"></button>
+                            <div class="cdash-alert-body">
+                                <div class="cdash-alert-title">{{ $fMeta['title'] }}</div>
+                                <div class="cdash-alert-message">{{ session($fKey) }}</div>
+                            </div>
+                            <button type="button" class="cdash-alert-close" onclick="dismissCdashAlert(this)" aria-label="{{ __('Close') }}">
+                                <i class="fas fa-times"></i>
+                            </button>
                         </div>
                     @endif
                 @endforeach
+
+                @if(isset($errors) && $errors->any())
+                    <div class="cdash-alert cdash-alert-danger" role="alert" data-auto-dismiss="10000">
+                        <div class="cdash-alert-icon">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                        <div class="cdash-alert-body">
+                            <div class="cdash-alert-title">{{ app()->getLocale() === 'ar' ? 'يرجى تصحيح الأخطاء التالية:' : 'Please correct the following errors:' }}</div>
+                            <div class="cdash-alert-message">
+                                <ul>
+                                    @foreach ($errors->all() as $err)
+                                        <li>{{ $err }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </div>
+                        <button type="button" class="cdash-alert-close" onclick="dismissCdashAlert(this)" aria-label="{{ __('Close') }}">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                @endif
 
                 @if(auth()->check() && auth()->user()->is_guest)
                     <div class="guest-banner-wrapper mb-4" style="
@@ -1808,6 +2081,33 @@
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function dismissCdashAlert(btn) {
+            const alert = btn.closest('.cdash-alert') || btn.closest('.alert');
+            if (!alert) return;
+            alert.style.animation = 'cdashFadeOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards';
+            setTimeout(function() {
+                if (alert && alert.parentNode) {
+                    alert.remove();
+                }
+            }, 300);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto dismiss flash alerts with data-auto-dismiss
+            document.querySelectorAll('.cdash-alert[data-auto-dismiss]').forEach(function(el) {
+                const ms = parseInt(el.getAttribute('data-auto-dismiss'), 10) || 7000;
+                setTimeout(function() {
+                    if (el && el.parentNode) {
+                        el.style.animation = 'cdashFadeOut 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards';
+                        setTimeout(function() {
+                            if (el && el.parentNode) el.remove();
+                        }, 400);
+                    }
+                }, ms);
+            });
+        });
+    </script>
     @stack('scripts')
 </body>
 </html>

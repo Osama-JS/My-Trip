@@ -952,6 +952,77 @@ body.dark-mode .callout-danger {
 .fa-spin-slow {
     animation: spin-slow 3s linear infinite;
 }
+
+/* ─── High Contrast Cancellation Report Card ─── */
+.cancellation-report-card {
+    transition: all 0.3s ease;
+}
+.cancellation-metric-card {
+    transition: all 0.25s ease;
+}
+.cancellation-metric-wallet {
+    background: #ffffff !important;
+    border: 2.5px solid #10b981 !important;
+}
+.cancellation-metric-wallet .metric-amount {
+    color: #064e3b !important;
+}
+.cancellation-metric-wallet .metric-title {
+    color: #047857 !important;
+}
+.cancellation-metric-wallet .metric-currency {
+    color: #047857 !important;
+}
+.cancellation-metric-wallet .metric-sub {
+    color: #047857 !important;
+}
+.wallet-confirm-box {
+    background: #f0fdf4 !important;
+    border: 2px solid #86efac !important;
+}
+
+/* Dark mode overrides for Cancellation Report */
+body.dark-mode .cancellation-report-card {
+    background: #1e293b !important;
+    border-color: #7f1d1d !important;
+}
+body.dark-mode .cancellation-report-card div[style*="background: #f8fafc"] {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+body.dark-mode .cancellation-report-card div[style*="color: #0f172a"] {
+    color: #f1f5f9 !important;
+}
+body.dark-mode .cancellation-report-card div[style*="background: #fff7ed"] {
+    background: #2a1b12 !important;
+    border-color: #7c2d12 !important;
+}
+body.dark-mode .cancellation-metric-wallet {
+    background: #064e3b !important;
+    border-color: #34d399 !important;
+}
+body.dark-mode .cancellation-metric-wallet .metric-title {
+    color: #a7f3d0 !important;
+}
+body.dark-mode .cancellation-metric-wallet .metric-amount {
+    color: #ffffff !important;
+}
+body.dark-mode .cancellation-metric-wallet .metric-currency {
+    color: #6ee7b7 !important;
+}
+body.dark-mode .cancellation-metric-wallet .metric-sub {
+    color: #a7f3d0 !important;
+}
+body.dark-mode .wallet-confirm-box {
+    background: #064e3b !important;
+    border-color: #059669 !important;
+}
+body.dark-mode .wallet-confirm-box div[style*="color: #064e3b"] {
+    color: #ffffff !important;
+}
+body.dark-mode .wallet-confirm-box div[style*="color: #166534"] {
+    color: #d1fae5 !important;
+}
 </style>
 @endpush
 
@@ -966,24 +1037,38 @@ body.dark-mode .callout-danger {
 
     {{-- ─── Fetch Data States ─── --}}
     @php
-        // Supplier confirmation visual confirm logic
+        $isCancelled = ($booking->status === 'cancelled' || !empty($booking->cancelled_at));
         $displayStatus = $booking->status;
-        if (!empty($booking->supplier_confirmation_num) || $booking->status === 'confirmed') {
-            $displayStatus = 'confirmed';
-        }
 
-        // 10 minute expiry logic
-        $isExpired = false;
-        if ($booking->status === 'pending' && $booking->created_at->diffInMinutes(now()) >= 10) {
-            $isExpired = true;
-            if ($displayStatus !== 'confirmed') {
-                $displayStatus = 'cancelled';
+        if ($isCancelled) {
+            $displayStatus = 'cancelled';
+            $isExpired = false;
+        } else {
+            if (!empty($booking->supplier_confirmation_num) || $booking->status === 'confirmed') {
+                $displayStatus = 'confirmed';
+            }
+
+            // 10 minute expiry logic
+            $isExpired = false;
+            if ($booking->status === 'pending' && $booking->created_at->diffInMinutes(now()) >= 10) {
+                $isExpired = true;
+                if ($displayStatus !== 'confirmed') {
+                    $displayStatus = 'cancelled';
+                }
             }
         }
     @endphp
 
     {{-- Alerts --}}
-    @if($displayStatus === 'confirmed')
+    @if($displayStatus === 'cancelled')
+        <div class="callout-alert callout-danger" style="border-radius: 14px; margin-bottom: 24px;">
+            <i class="fas fa-ban"></i>
+            <div>
+                <strong>{{ __('تم إلغاء هذا الحجز الفندقي') }}</strong>
+                <span>{{ __('تمت معالجة الإلغاء وتحديث السجلات المالية للمحفظة الإلكترونية.') }}</span>
+            </div>
+        </div>
+    @elseif($displayStatus === 'confirmed')
         <div class="callout-alert callout-success">
             <i class="fas fa-check-circle"></i>
             <div>
@@ -1021,20 +1106,18 @@ body.dark-mode .callout-danger {
                 <i class="fas fa-sync-alt me-1"></i> {{ __('Refresh Status') }}
             </button>
         </div>
-    @elseif($booking->status === 'cancelled')
-        <div class="callout-alert callout-danger">
-            <i class="fas fa-times-circle"></i>
-            <div>
-                <strong>{{ __('Booking Cancelled') }}</strong>
-                <span>{{ __('This reservation has been cancelled.') }}</span>
-            </div>
-        </div>
     @endif
 
     {{-- ─── Stay Voucher Ticket Card ─── --}}
     <div class="boarding-pass">
-        <div class="pass-header">
-            <span class="pass-title">{{ __('HOTEL STAY VOUCHER') }}</span>
+        <div class="pass-header" style="{{ $isCancelled ? 'background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);' : '' }}">
+            <span class="pass-title">
+                @if($isCancelled)
+                    <span style="color: #fca5a5;"><i class="fas fa-ban me-1"></i> {{ __('حجز فندقي ملغي / CANCELLED RESERVATION') }}</span>
+                @else
+                    {{ __('HOTEL STAY VOUCHER') }}
+                @endif
+            </span>
             <span class="pass-pnr">{{ __('Reference') }}: #{{ $booking->reference_num ?? $booking->id }}</span>
         </div>
         <div class="pass-body">
@@ -1076,6 +1159,116 @@ body.dark-mode .callout-danger {
 
         {{-- LEFT COLUMN --}}
         <div>
+            
+            {{-- Cancellation and Financial Refund Report Card --}}
+            @if($booking->status === 'cancelled')
+                @php
+                    $refAmount = (float)($booking->refund_amount ?? ($refundTransaction ? $refundTransaction->amount : 0.0));
+                    $cancelFee = (float)($booking->cancellation_fee ?? max(0, (float)$booking->total_price - $refAmount));
+                    $cancelDate = $booking->cancelled_at ?? ($refundTransaction ? $refundTransaction->created_at : $booking->updated_at);
+                @endphp
+                <div class="detail-card cancellation-report-card" style="border: 2px solid #fecaca; background: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(239, 68, 68, 0.08); margin-bottom: 24px;">
+                    <div style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); padding: 18px 24px; border-bottom: 1.5px solid #fecaca; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                            <div style="width: 46px; height: 46px; border-radius: 14px; background: #ef4444; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);">
+                                <i class="fas fa-ban"></i>
+                            </div>
+                            <div>
+                                <h5 style="margin: 0; font-weight: 800; color: #991b1b; font-size: 1.15rem;">{{ __('تفاصيل إلغاء حجز الفندق والاسترداد المالي') }}</h5>
+                                <span style="font-size: 0.8rem; color: #b91c1c; font-weight: 600;">
+                                    <i class="far fa-clock me-1"></i> {{ __('تاريخ الإلغاء:') }} {{ $cancelDate ? $cancelDate->format('d M Y, h:i A') : 'N/A' }}
+                                    @if($booking->cancel_reference_num)
+                                        <span class="ms-2">| {{ __('رقم مرجع الإلغاء:') }} <strong>{{ $booking->cancel_reference_num }}</strong></span>
+                                    @endif
+                                </span>
+                            </div>
+                        </div>
+                        <span class="badge" style="background: #dc2626; color: white; font-weight: 800; font-size: 0.82rem; padding: 7px 16px; border-radius: 30px; letter-spacing: 0.5px;">
+                            <i class="fas fa-times-circle me-1"></i> {{ __('ملغي ومسترد') }}
+                        </span>
+                    </div>
+
+                    <div style="padding: 24px;">
+                        {{-- 3-Stat Financial Grid --}}
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-bottom: 20px;">
+                            <!-- 1. Total Paid -->
+                            <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 16px;">
+                                <div style="font-size: 0.78rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+                                    <i class="fas fa-receipt text-primary"></i> {{ __('المبلغ الأصلي المدفوع') }}
+                                </div>
+                                <div style="font-size: 1.45rem; font-weight: 900; color: #0f172a;">
+                                    {{ number_format($booking->total_price, 2) }} <span style="font-size: 0.85rem; font-weight: 700; color: #64748b;">{{ $booking->currency ?? 'SAR' }}</span>
+                                </div>
+                                <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 4px;">{{ __('قيمة الغرفة والخدمات الفندقية') }}</div>
+                            </div>
+
+                            <!-- 2. Cancellation Penalty -->
+                            <div style="background: #fff7ed; border: 1.5px solid #fed7aa; border-radius: 14px; padding: 16px;">
+                                <div style="font-size: 0.78rem; font-weight: 700; color: #c2410c; text-transform: uppercase; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+                                    <i class="fas fa-hand-holding-usd text-warning"></i> {{ __('غرامة ورسوم الإلغاء') }}
+                                </div>
+                                <div style="font-size: 1.45rem; font-weight: 900; color: #ea580c;">
+                                    -{{ number_format($cancelFee, 2) }} <span style="font-size: 0.85rem; font-weight: 700; color: #c2410c;">{{ $booking->currency ?? 'SAR' }}</span>
+                                </div>
+                                <div style="font-size: 0.75rem; color: #9a3412; margin-top: 4px;">{{ __('وفق سياسة الإلغاء وشروط الفندق') }}</div>
+                            </div>
+
+                            <!-- 3. Refunded to Wallet (High Contrast & Crystal Clear) -->
+                            <div class="cancellation-metric-card cancellation-metric-wallet" style="background: #ffffff; border: 2.5px solid #10b981; border-radius: 16px; padding: 18px; box-shadow: 0 4px 18px rgba(16, 185, 129, 0.15);">
+                                <div class="metric-title" style="font-size: 0.8rem; font-weight: 850; color: #047857; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+                                    <span style="display: flex; align-items: center; gap: 6px;">
+                                        <i class="fas fa-wallet text-success" style="font-size: 1rem;"></i> {{ __('المبلغ المسترد للمحفظة') }}
+                                    </span>
+                                    <span class="badge" style="background: #dcfce7; color: #14532d; font-size: 0.72rem; font-weight: 850; padding: 4px 9px; border-radius: 6px; border: 1px solid #86efac;">
+                                        <i class="fas fa-check-circle me-1"></i> {{ __('تم الإيداع') }}
+                                    </span>
+                                </div>
+                                <div class="metric-amount" style="font-size: 1.65rem; font-weight: 950; color: #064e3b; letter-spacing: -0.5px; line-height: 1.2;">
+                                    +{{ number_format($refAmount, 2) }} <span class="metric-currency" style="font-size: 0.95rem; font-weight: 850; color: #047857;">{{ $booking->currency ?? 'SAR' }}</span>
+                                </div>
+                                <div class="metric-sub" style="font-size: 0.8rem; font-weight: 750; color: #047857; margin-top: 6px; display: flex; align-items: center; gap: 6px;">
+                                    <i class="fas fa-arrow-circle-down text-success"></i> {{ __('أودع بنجاح في رصيد محفظتك بالمنصة') }}
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Wallet Status Confirmation Box --}}
+                        @if($refAmount > 0)
+                            <div class="wallet-confirm-box" style="background: #f0fdf4; border: 2px solid #86efac; border-radius: 16px; padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; box-shadow: 0 4px 16px rgba(16, 185, 129, 0.08);">
+                                <div style="display: flex; align-items: center; gap: 16px;">
+                                    <div style="width: 50px; height: 50px; border-radius: 14px; background: #059669; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.45rem; flex-shrink: 0; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);">
+                                        <i class="fas fa-check-double"></i>
+                                    </div>
+                                    <div>
+                                        <div style="font-weight: 900; color: #064e3b; font-size: 1.05rem; margin-bottom: 4px;">
+                                            {{ __('تم إيداع المبلغ المسترد في محفظتك الإلكترونية بنجاح') }}
+                                        </div>
+                                        <div style="font-size: 0.88rem; color: #166534; font-weight: 600; line-height: 1.5;">
+                                            {{ __('تمت إضافة مبلغ') }} <span style="font-size: 1.05rem; font-weight: 950; color: #064e3b; background: #dcfce7; padding: 2px 10px; border-radius: 6px; border: 1.5px solid #86efac;">{{ number_format($refAmount, 2) }} {{ $booking->currency ?? 'SAR' }}</span> {{ __('إلى رصيد محفظتك الرقمية ويمكنك استخدامه فوراً في أي حجز فندقي أو طيران جديد.') }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <a href="{{ route('customer.wallet.index') }}" class="btn btn-sm btn-success" style="padding: 10px 24px; border-radius: 12px; font-weight: 850; font-size: 0.9rem; white-space: nowrap; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);">
+                                    <i class="fas fa-wallet me-1"></i> {{ __('عرض المحفظة والرصيد') }}
+                                </a>
+                            </div>
+                        @else
+                            <div style="background: #fff7ed; border: 1.5px solid #fed7aa; border-radius: 14px; padding: 14px 18px; display: flex; align-items: center; gap: 12px;">
+                                <i class="fas fa-info-circle text-warning fs-4"></i>
+                                <div style="font-size: 0.86rem; color: #9a3412;">
+                                    <strong>{{ __('سياسة الاسترداد الفندقي:') }}</strong> {{ __('خضع هذا الحجز لغرامة إلغاء بنسبة 100% وفق شروط وسياسة الفندق ومزود الخدمة، لذا لم يتم إرجاع مبالغ مالية للمحفظة.') }}
+                                </div>
+                            </div>
+                        @endif
+
+                        @if(!empty($booking->cancellation_reason))
+                            <div style="margin-top: 14px; font-size: 0.82rem; color: #64748b; background: #f8fafc; padding: 10px 16px; border-radius: 10px; border: 1px solid #e2e8f0;">
+                                <strong style="color: #334155;"><i class="fas fa-info-circle text-primary me-1"></i> {{ __('ملاحظة الإلغاء:') }}</strong> {{ $booking->cancellation_reason }}
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            @endif
             
             {{-- Dates + Duration --}}
             <div class="hbd-row-2">
@@ -1244,6 +1437,11 @@ body.dark-mode .callout-danger {
                             <div class="ref-label"><i class="fas fa-clock"></i> {{ __('Session Expired') }}</div>
                             <div class="ref-val" style="font-size: 0.85rem;">{{ __('Please search again') }}</div>
                         </div>
+                    @elseif($isCancelled || $displayStatus === 'cancelled')
+                        <div class="ref-item ref-item-red" style="background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.25);">
+                            <div class="ref-label" style="color: #ef4444;"><i class="fas fa-ban"></i> {{ __('حالة الحجز') }}</div>
+                            <div class="ref-val" style="font-size: 0.85rem; color: #dc2626; font-weight: 800;">{{ __('ملغي ومسترد') }}</div>
+                        </div>
                     @elseif($booking->supplier_confirmation_num)
                         <div class="ref-item ref-item-green">
                             <div class="ref-label"><i class="fas fa-check-circle"></i> {{ __('Supplier Reference') }}</div>
@@ -1302,7 +1500,7 @@ body.dark-mode .callout-danger {
                             </a>
                         @endif
 
-                        @if($isExpired || $booking->status === 'cancelled')
+                        @if($isExpired && $booking->status !== 'cancelled')
                             <a href="{{ route('customer.bookings.hotels.quick-rebook', $booking->id) }}" class="action-btn action-btn-primary" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
                                 <i class="fas fa-sync-alt"></i> {{ __('إعادة الحجز السريع') }}
                             </a>

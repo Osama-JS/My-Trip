@@ -30,11 +30,16 @@ class Booking extends Model
         'insurance_policy_id',
         'insurance_amount',
         'ticketing_time_limit',
+        'cancellation_fee',
+        'refund_amount',
+        'cancelled_at',
+        'cancellation_reason',
     ];
 
     protected $casts = [
         'pnr_created_at'        => 'datetime',
         'ticketing_time_limit'  => 'datetime',
+        'cancelled_at'          => 'datetime',
         'ticket_numbers'        => 'array',
     ];
 

@@ -483,6 +483,163 @@
     color: var(--text-muted);
     margin: 0;
 }
+
+/* ─── Premium Flight Card Enhancements ─── */
+.card-header-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+.airline-badge-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    font-weight: 850;
+    color: var(--text-main);
+}
+.flight-no-badge {
+    background: rgba(37, 99, 235, 0.08);
+    color: var(--primary-blue);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 850;
+}
+.pnr-badge-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.meta-tag {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    background: var(--bg-main);
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+.meta-tag-pnr {
+    color: var(--primary-blue);
+    font-weight: 850;
+    border-color: rgba(37, 99, 235, 0.25);
+    background: rgba(37, 99, 235, 0.04);
+}
+
+/* Flight Route Strip */
+.flight-route-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 12px 18px;
+    margin-bottom: 14px;
+}
+.route-point {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.route-city-name {
+    font-size: 0.9rem;
+    font-weight: 850;
+    color: var(--text-main);
+}
+.route-iata-code {
+    font-size: 1.3rem;
+    font-weight: 950;
+    color: var(--primary-blue);
+    line-height: 1;
+    letter-spacing: 0.5px;
+}
+.route-iata-code.dest-iata {
+    color: #10b981;
+}
+.route-arrow-connector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    max-width: 140px;
+    margin: 0 12px;
+}
+.route-path-line {
+    height: 2px;
+    background: linear-gradient(to right, var(--primary-blue), #10b981);
+    flex: 1;
+    border-radius: 2px;
+}
+.route-plane-icon {
+    color: var(--primary-blue);
+    font-size: 0.95rem;
+}
+[dir="rtl"] .route-plane-icon i {
+    transform: rotate(180deg);
+}
+
+/* Contact Strip */
+.booking-contact-strip {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border-color);
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.contact-strip-label {
+    font-size: 0.78rem;
+    font-weight: 850;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.contact-strip-items {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.contact-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    font-weight: 750;
+    color: var(--text-main);
+    background: var(--bg-card);
+    padding: 4px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+.contact-link {
+    text-decoration: none;
+    transition: all 0.2s;
+}
+.contact-link:hover {
+    border-color: var(--primary-blue);
+    color: var(--primary-blue);
+}
+
+.airline-code-tag {
+    position: absolute;
+    bottom: -6px;
+    background: var(--primary-blue);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 900;
+    padding: 1px 6px;
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
 </style>
 @endpush
 
@@ -544,30 +701,143 @@
 
     {{-- Bookings Loop --}}
     @forelse($bookings as $booking)
+        @php
+            $fb = $booking->flightBooking;
+            $originCode = $fb->origin ?? 'N/A';
+            $destCode = $fb->destination ?? 'N/A';
+
+            // Check if itinerary_data has segments
+            $itinData = $fb->itinerary_data ?? [];
+            if (($originCode === 'N/A' || $destCode === 'N/A') && !empty($itinData['segments'][0]['legs'])) {
+                $firstLeg = $itinData['segments'][0]['legs'][0] ?? [];
+                $lastLeg = end($itinData['segments'][0]['legs']) ?: [];
+                $originCode = $firstLeg['DepartureAirportLocationCode'] ?? $originCode;
+                $destCode = $lastLeg['ArrivalAirportLocationCode'] ?? $destCode;
+            }
+
+            $isAr = app()->isLocale('ar');
+            $originAirport = ($originCode !== 'N/A') ? \App\Models\Airport::where('airport_code', $originCode)->first() : null;
+            $destAirport = ($destCode !== 'N/A') ? \App\Models\Airport::where('airport_code', $destCode)->first() : null;
+
+            $originCity = ($isAr && !empty($originAirport->city_name_ar)) ? $originAirport->city_name_ar : ($originAirport->city_name ?? $originCode);
+            $destCity = ($isAr && !empty($destAirport->city_name_ar)) ? $destAirport->city_name_ar : ($destAirport->city_name ?? $destCode);
+
+            $depDate = $fb && $fb->departure_date ? \Carbon\Carbon::parse($fb->departure_date) : null;
+            $retDate = $fb && $fb->return_date ? \Carbon\Carbon::parse($fb->return_date) : null;
+            $isRoundTrip = !empty($retDate);
+
+            // Contact Info
+            $contactEmail = $booking->contact_email ?: ($fb->contact_email ?? ($booking->user->email ?? null));
+            $contactPhone = $booking->contact_phone ?: ($fb->contact_phone ?? ($booking->user->phone ?? null));
+            $leadPassenger = $booking->passengers->first();
+            $contactName = $leadPassenger ? ($leadPassenger->first_name . ' ' . $leadPassenger->last_name) : ($booking->user->full_name ?? __('العميل'));
+
+            $isConfirmedStatus = in_array($booking->status, ['confirmed', 'paid', 'ticketed', 'completed']);
+            $isPendingStatus = ($booking->status === 'pending');
+            $isCancelled = ($booking->status === 'cancelled');
+        @endphp
+
         <div class="booking-card">
             {{-- Main Column --}}
             <div class="booking-card-main">
-                <div class="booking-img-placeholder"><i class="fas fa-plane"></i></div>
+                <div class="booking-img-placeholder" style="position: relative;">
+                    <i class="fas fa-plane-departure"></i>
+                    @if($booking->airline_code)
+                        <span class="airline-code-tag notranslate" translate="no">{{ strtoupper($booking->airline_code) }}</span>
+                    @endif
+                </div>
 
                 <div class="booking-details">
-                    <div class="ticket-route">
-                        <span class="route-city">{{ $booking->airline_name ?: __('Flight') }}</span>
-                        <span class="route-arrow">
-                            <span class="route-line"></span>
-                            <i class="fas fa-plane"></i>
-                        </span>
-                        <span class="route-city">{{ $booking->pnr_code ?: 'PNR' }}</span>
+                    {{-- Header Badges --}}
+                    <div class="card-header-meta">
+                        <div class="airline-badge-wrap">
+                            <i class="fas fa-plane text-primary"></i>
+                            <span class="airline-name-text">{{ $booking->airline_name ?: __('طيران') }}</span>
+                            @if($fb && $fb->flight_number)
+                                <span class="flight-no-badge notranslate" translate="no">{{ $fb->flight_number }}</span>
+                            @endif
+                        </div>
+                        <div class="pnr-badge-wrap">
+                            <span class="meta-tag"><i class="fas fa-ticket-alt"></i> #{{ $booking->booking_reference }}</span>
+                            @if($booking->pnr_code)
+                                <span class="meta-tag meta-tag-pnr notranslate" translate="no"><i class="fas fa-barcode"></i> PNR: {{ $booking->pnr_code }}</span>
+                            @endif
+                        </div>
                     </div>
 
-                    <div class="booking-trip-name">{{ __('Flight Booking') }}</div>
-                    
+                    {{-- True Flight Route --}}
+                    <div class="flight-route-strip">
+                        <div class="route-point">
+                            <span class="route-city-name">{{ $originCity }}</span>
+                            <span class="route-iata-code notranslate" translate="no">{{ strtoupper(substr($originCode, 0, 3)) }}</span>
+                        </div>
+                        <div class="route-arrow-connector">
+                            <span class="route-path-line"></span>
+                            <div class="route-plane-icon">
+                                <i class="fas fa-plane"></i>
+                            </div>
+                            <span class="route-path-line"></span>
+                        </div>
+                        <div class="route-point text-end">
+                            <span class="route-city-name">{{ $destCity }}</span>
+                            <span class="route-iata-code dest-iata notranslate" translate="no">{{ strtoupper(substr($destCode, 0, 3)) }}</span>
+                        </div>
+                    </div>
+
+                    {{-- Flight Metadata Row --}}
                     <div class="booking-meta-row">
-                        <span><i class="fas fa-ticket-alt"></i> {{ __('Ref') }}: {{ $booking->booking_reference }}</span>
-                        @if($booking->pnr_code)
-                            <span><i class="fas fa-barcode"></i> {{ __('PNR') }}: {{ $booking->pnr_code }}</span>
+                        @if($depDate)
+                            <span>
+                                <i class="far fa-calendar-alt text-primary"></i>
+                                <span>{{ __('تاريخ الإقلاع:') }} <strong>{{ $depDate->translatedFormat('d M Y') }}</strong></span>
+                            </span>
                         @endif
-                        <span><i class="fas fa-users"></i> {{ $booking->passengers()->count() }} {{ __('Passenger(s)') }}</span>
-                        <span><i class="fas fa-calendar-alt"></i> {{ $booking->created_at->format('d/m/Y') }}</span>
+                        @if($isRoundTrip)
+                            <span>
+                                <i class="fas fa-sync-alt text-warning"></i>
+                                <span>{{ __('تاريخ العودة:') }} <strong>{{ $retDate->translatedFormat('d M Y') }}</strong></span>
+                            </span>
+                        @else
+                            <span>
+                                <i class="fas fa-long-arrow-alt-{{ $isAr ? 'left' : 'right' }} text-muted"></i>
+                                <span>{{ __('ذهاب فقط') }}</span>
+                            </span>
+                        @endif
+                        <span>
+                            <i class="fas fa-users text-primary"></i>
+                            <span>{{ $booking->passengers->count() }} {{ __('مسافر') }}</span>
+                        </span>
+                        @if($fb && $fb->flight_class)
+                            <span>
+                                <i class="fas fa-chair text-muted"></i>
+                                <span>{{ $fb->flight_class }}</span>
+                            </span>
+                        @endif
+                    </div>
+
+                    {{-- Contact Info Strip (بيانات التواصل للحجز) --}}
+                    <div class="booking-contact-strip">
+                        <div class="contact-strip-label">
+                            <i class="fas fa-address-card text-primary"></i> {{ __('بيانات التواصل للحجز:') }}
+                        </div>
+                        <div class="contact-strip-items">
+                            <span class="contact-item" title="{{ __('المسافر الرئيسي / العميل') }}">
+                                <i class="fas fa-user-circle text-primary"></i>
+                                <span>{{ $contactName }}</span>
+                            </span>
+                            @if($contactPhone)
+                                <a href="tel:{{ $contactPhone }}" class="contact-item contact-link" title="{{ __('رقم الهاتف') }}">
+                                    <i class="fas fa-phone-alt text-success"></i>
+                                    <span dir="ltr">{{ $contactPhone }}</span>
+                                </a>
+                            @endif
+                            @if($contactEmail)
+                                <a href="mailto:{{ $contactEmail }}" class="contact-item contact-link" title="{{ __('البريد الإلكتروني') }}">
+                                    <i class="fas fa-envelope text-info"></i>
+                                    <span>{{ $contactEmail }}</span>
+                                </a>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>
@@ -578,22 +848,35 @@
             {{-- Stub Column --}}
             <div class="booking-card-stub">
                 <div class="price-section">
-                    <span class="booking-price">{{ number_format($booking->total_amount, 0) }} {{ $booking->currency ?: __('SAR') }}</span>
-                    <span class="price-label">{{ __('Total Price') }}</span>
+                    <span class="price-label">{{ __('إجمالي السعر') }}</span>
+                    <span class="booking-price">{{ number_format($booking->total_amount, 2) }} <small style="font-size: 0.72rem; font-weight: 800;">{{ $booking->currency ?: __('SAR') }}</small></span>
                 </div>
 
-                @php
-                    $isConfirmedStatus = in_array($booking->status, ['confirmed', 'paid', 'ticketed', 'completed']);
-                    $isPendingStatus = ($booking->status === 'pending');
-                @endphp
-                <span class="status-badge-wrapper {{ $isConfirmedStatus ? 'status-confirmed' : ($isPendingStatus ? 'status-pending' : 'status-cancelled') }}">
-                    <span class="pulse-dot"></span>
-                    {{ $isConfirmedStatus ? __('Confirmed') : ($isPendingStatus ? __('Pending') : __('Cancelled')) }}
-                </span>
+                @if($isCancelled)
+                    <span class="status-badge-wrapper status-cancelled">
+                        <span class="pulse-dot"></span>
+                        {{ __('ملغي ومسترد') }}
+                    </span>
+                    @if($booking->refund_amount > 0)
+                        <div style="font-size: 0.75rem; font-weight: 850; color: #166534; background: #dcfce7; padding: 4px 10px; border-radius: 6px; border: 1px solid #bbf7d0;">
+                            +{{ number_format($booking->refund_amount, 2) }} {{ $booking->currency }} {{ __('بالمحفظة') }}
+                        </div>
+                    @endif
+                @elseif($isPendingStatus)
+                    <span class="status-badge-wrapper status-pending">
+                        <span class="pulse-dot"></span>
+                        {{ __('بانتظار الدفع') }}
+                    </span>
+                @else
+                    <span class="status-badge-wrapper status-confirmed">
+                        <span class="pulse-dot"></span>
+                        {{ __('مؤكد ومصدر') }}
+                    </span>
+                @endif
 
                 <div class="stub-actions">
-                    <a href="{{ route('customer.bookings.show', ['id' => $booking->id, 'type' => 'flight']) }}" class="btn-sm btn-outline">
-                        <i class="fas fa-eye"></i> {{ __('Details') }}
+                    <a href="{{ route('customer.bookings.show', ['id' => $booking->id, 'type' => 'flight']) }}" class="btn-sm btn-accent" style="padding: 10px 16px;">
+                        <i class="fas fa-eye"></i> {{ __('عرض التذكرة والتفاصيل') }}
                     </a>
                 </div>
             </div>

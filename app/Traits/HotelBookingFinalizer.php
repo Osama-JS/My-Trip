@@ -24,6 +24,12 @@ trait HotelBookingFinalizer
     protected function finalizeHotelSupplierBooking($booking)
     {
         try {
+            // Cancelled bookings must NEVER be finalized or marked as confirmed
+            if ($booking->status === 'cancelled' || !empty($booking->cancelled_at)) {
+                Log::info("Booking {$booking->id} is cancelled. Skipping supplier finalization.");
+                return false;
+            }
+
             // 1. Already fully confirmed — nothing to do
             if ($booking->status === 'confirmed' && !empty($booking->supplier_confirmation_num)) {
                 Log::info("Booking {$booking->id} is already confirmed with supplier ref.");

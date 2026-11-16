@@ -29,6 +29,13 @@ class HotelBooking extends Model
         'reference_num',
         'supplier_confirmation_num',
         'cancellation_policy',
+        'cancellation_fee',
+        'refund_amount',
+        'cancelled_at',
+        'cancel_reference_num',
+        'cancellation_reason',
+        'contact_email',
+        'contact_phone',
         'provider_price',
         'platform_profit',
         'session_id',
@@ -49,6 +56,9 @@ class HotelBooking extends Model
         'check_out' => 'date',
         'pax_details' => 'array',
         'total_price' => 'decimal:2',
+        'cancellation_fee' => 'decimal:2',
+        'refund_amount' => 'decimal:2',
+        'cancelled_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

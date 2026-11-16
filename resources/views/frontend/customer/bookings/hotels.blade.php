@@ -425,6 +425,166 @@
     100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); }
 }
 
+/* ─── Card Header Meta ─── */
+.card-header-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+.hotel-badge-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(139, 92, 246, 0.08);
+    border: 1px solid rgba(139, 92, 246, 0.18);
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 750;
+    color: #7c3aed;
+}
+body.dark-mode .hotel-badge-wrap {
+    background: rgba(139, 92, 246, 0.15);
+    color: #a78bfa;
+}
+.hotel-loc-text {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+.pnr-badge-wrap {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.meta-tag {
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 750;
+    color: var(--text-muted);
+}
+.meta-tag-supplier {
+    background: rgba(16, 185, 129, 0.08);
+    border-color: rgba(16, 185, 129, 0.25);
+    color: #059669;
+}
+body.dark-mode .meta-tag-supplier {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+}
+
+/* ─── Stay Route Strip ─── */
+.stay-route-strip {
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    gap: 12px;
+}
+.stay-point {
+    display: flex;
+    flex-direction: column;
+}
+.stay-date {
+    font-size: 0.95rem;
+    font-weight: 850;
+    color: var(--text-main);
+}
+.stay-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.stay-connector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+    max-width: 140px;
+}
+.stay-line {
+    width: 100%;
+    height: 2px;
+    background: var(--border-color);
+    position: relative;
+}
+.stay-duration-badge {
+    background: rgba(37, 99, 235, 0.08);
+    border: 1px solid rgba(37, 99, 235, 0.15);
+    color: var(--primary-blue);
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 2px 10px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+body.dark-mode .stay-duration-badge {
+    background: rgba(37, 99, 235, 0.18);
+    color: #60a5fa;
+}
+
+/* ─── Contact Info Strip ─── */
+.booking-contact-strip {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border-color);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 18px;
+}
+.contact-strip-label {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.contact-strip-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    align-items: center;
+}
+.contact-item {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-main);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-main);
+    padding: 4px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+.contact-link {
+    text-decoration: none;
+    transition: all 0.2s;
+}
+.contact-link:hover {
+    border-color: var(--primary-blue);
+    color: var(--primary-blue);
+}
+
 /* Empty State */
 .empty-state {
     text-align: center;
@@ -512,29 +672,115 @@
 
     {{-- Bookings Loop --}}
     @forelse($bookings as $booking)
+        @php
+            $paxList = $booking->pax_details ?? [];
+            $firstPax = null;
+            if (!empty($paxList) && is_array($paxList)) {
+                if (isset($paxList[0]['pax'][0])) {
+                    $p = $paxList[0]['pax'][0];
+                    $firstPax = trim(($p['Title'] ?? '') . ' ' . ($p['FirstName'] ?? '') . ' ' . ($p['LastName'] ?? ''));
+                } elseif (isset($paxList[0]['FirstName'])) {
+                    $firstPax = trim(($paxList[0]['Title'] ?? '') . ' ' . ($paxList[0]['FirstName'] ?? '') . ' ' . ($paxList[0]['LastName'] ?? ''));
+                }
+            }
+            $contactName = $firstPax ?: ($booking->user->full_name ?? ($booking->user->name ?? __('النزيل الرئيسي')));
+            $contactPhone = $booking->contact_phone ?: ($booking->user->phone ?? null);
+            $contactEmail = $booking->contact_email ?: ($booking->user->email ?? null);
+
+            $nights = ($booking->check_in && $booking->check_out) ? $booking->check_in->diffInDays($booking->check_out) : 1;
+            $nights = max(1, $nights);
+
+            $isCancelled = ($booking->status === 'cancelled');
+            $isPending = ($booking->status === 'pending');
+            $isConfirmed = in_array($booking->status, ['confirmed', 'paid', 'completed']);
+        @endphp
+
         <div class="booking-card">
             {{-- Main Column --}}
             <div class="booking-card-main">
-                <div class="booking-img-placeholder"><i class="fas fa-hotel"></i></div>
+                <div class="booking-img-placeholder" style="position: relative;">
+                    <i class="fas fa-hotel"></i>
+                </div>
 
                 <div class="booking-details">
-                    @if($booking->city_name || $booking->country_name)
-                        <div class="ticket-location">
-                            <i class="fas fa-map-marker-alt"></i> {{ $booking->city_name }}, {{ $booking->country_name }}
+                    {{-- Header Badges --}}
+                    <div class="card-header-meta">
+                        <div class="hotel-badge-wrap">
+                            <i class="fas fa-map-marker-alt text-primary"></i>
+                            <span class="hotel-loc-text">{{ $booking->city_name ?: __('المدينة') }}@if($booking->country_name)، {{ $booking->country_name }}@endif</span>
                         </div>
-                    @endif
+                        <div class="pnr-badge-wrap">
+                            <span class="meta-tag"><i class="fas fa-hashtag"></i> #{{ $booking->reference_num ?: $booking->id }}</span>
+                            @if($booking->supplier_confirmation_num)
+                                <span class="meta-tag meta-tag-supplier notranslate" translate="no"><i class="fas fa-barcode"></i> {{ $booking->supplier_confirmation_num }}</span>
+                            @endif
+                        </div>
+                    </div>
 
-                    <div class="booking-trip-name">{{ $booking->hotel_name }}</div>
-                    
+                    {{-- Hotel Name --}}
+                    <h3 class="booking-trip-name">{{ $booking->hotel_name }}</h3>
+
+                    {{-- Stay Dates Route Strip --}}
+                    <div class="stay-route-strip">
+                        <div class="stay-point">
+                            <span class="stay-label"><i class="far fa-calendar-check text-primary"></i> {{ __('تسجيل الوصول') }}</span>
+                            <span class="stay-date">{{ $booking->check_in ? $booking->check_in->translatedFormat('d M Y') : 'N/A' }}</span>
+                        </div>
+                        <div class="stay-connector">
+                            <span class="stay-duration-badge">
+                                <i class="fas fa-moon"></i> {{ $nights }} {{ $nights > 1 ? __('ليالٍ') : __('ليلة') }}
+                            </span>
+                            <span class="stay-line"></span>
+                        </div>
+                        <div class="stay-point text-end">
+                            <span class="stay-label"><i class="far fa-calendar-times text-danger"></i> {{ __('تسجيل المغادرة') }}</span>
+                            <span class="stay-date">{{ $booking->check_out ? $booking->check_out->translatedFormat('d M Y') : 'N/A' }}</span>
+                        </div>
+                    </div>
+
+                    {{-- Room & Stay Metadata Row --}}
                     <div class="booking-meta-row">
-                        <span><i class="fas fa-calendar-check"></i> {{ __('Check-in') }}: {{ $booking->check_in->format('d/m/Y') }}</span>
-                        <span><i class="fas fa-calendar-times"></i> {{ __('Check-out') }}: {{ $booking->check_out->format('d/m/Y') }}</span>
                         @if($booking->room_name)
-                            <span><i class="fas fa-bed"></i> {{ $booking->room_name }}</span>
+                            <span>
+                                <i class="fas fa-bed text-primary"></i>
+                                <span>{{ $booking->room_name }}</span>
+                            </span>
                         @endif
-                        @if($booking->rooms)
-                            <span><i class="fas fa-door-open"></i> {{ $booking->rooms }} {{ __('Room(s)') }}</span>
+                        @if($booking->board_type)
+                            <span>
+                                <i class="fas fa-utensils text-warning"></i>
+                                <span>{{ $booking->board_type }}</span>
+                            </span>
                         @endif
+                        <span>
+                            <i class="fas fa-users text-primary"></i>
+                            <span>{{ $booking->rooms ?: 1 }} {{ __('غرفة') }} • {{ $booking->adults ?: 1 }} {{ __('بالغين') }}@if($booking->childs) • {{ $booking->childs }} {{ __('أطفال') }}@endif</span>
+                        </span>
+                    </div>
+
+                    {{-- Contact Info Strip (بيانات التواصل للحجز) --}}
+                    <div class="booking-contact-strip">
+                        <div class="contact-strip-label">
+                            <i class="fas fa-address-card text-primary"></i> {{ __('بيانات التواصل للحجز:') }}
+                        </div>
+                        <div class="contact-strip-items">
+                            <span class="contact-item" title="{{ __('اسم النزيل / العميل') }}">
+                                <i class="fas fa-user-circle text-primary"></i>
+                                <span>{{ $contactName }}</span>
+                            </span>
+                            @if($contactPhone)
+                                <a href="tel:{{ $contactPhone }}" class="contact-item contact-link" title="{{ __('رقم الهاتف') }}">
+                                    <i class="fas fa-phone-alt text-success"></i>
+                                    <span dir="ltr">{{ $contactPhone }}</span>
+                                </a>
+                            @endif
+                            @if($contactEmail)
+                                <a href="mailto:{{ $contactEmail }}" class="contact-item contact-link" title="{{ __('البريد الإلكتروني') }}">
+                                    <i class="fas fa-envelope text-info"></i>
+                                    <span>{{ $contactEmail }}</span>
+                                </a>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>
@@ -545,22 +791,39 @@
             {{-- Stub Column --}}
             <div class="booking-card-stub">
                 <div class="price-section">
-                    <span class="booking-price">{{ number_format($booking->total_price, 0) }} {{ $booking->currency ?: __('SAR') }}</span>
-                    <span class="price-label">{{ __('Total Price') }}</span>
+                    <span class="price-label">{{ __('إجمالي السعر') }}</span>
+                    <span class="booking-price">{{ number_format($booking->total_price, 2) }} <small style="font-size: 0.72rem; font-weight: 800;">{{ $booking->currency ?: __('SAR') }}</small></span>
                 </div>
 
-                <span class="status-badge-wrapper status-{{ $booking->status }}">
-                    <span class="pulse-dot"></span>
-                    {{ $booking->status === 'pending' ? __('Pending') : ($booking->status === 'confirmed' ? __('Confirmed') : __('Cancelled')) }}
-                </span>
+                @if($isCancelled)
+                    <span class="status-badge-wrapper status-cancelled">
+                        <span class="pulse-dot"></span>
+                        {{ __('ملغي ومسترد') }}
+                    </span>
+                    @if($booking->refund_amount > 0)
+                        <div style="font-size: 0.75rem; font-weight: 850; color: #166534; background: #dcfce7; padding: 4px 10px; border-radius: 6px; border: 1px solid #bbf7d0;">
+                            +{{ number_format($booking->refund_amount, 2) }} {{ $booking->currency }} {{ __('بالمحفظة') }}
+                        </div>
+                    @endif
+                @elseif($isPending)
+                    <span class="status-badge-wrapper status-pending">
+                        <span class="pulse-dot"></span>
+                        {{ __('بانتظار الدفع') }}
+                    </span>
+                @else
+                    <span class="status-badge-wrapper status-confirmed">
+                        <span class="pulse-dot"></span>
+                        {{ __('مؤكد') }}
+                    </span>
+                @endif
 
                 <div class="stub-actions">
                     <a href="{{ route('customer.bookings.show', ['id' => $booking->id, 'type' => 'hotel']) }}" class="btn-sm btn-outline">
-                        <i class="fas fa-eye"></i> {{ __('Details') }}
+                        <i class="fas fa-eye"></i> {{ __('تفاصيل الحجز') }}
                     </a>
-                    @if($booking->status === 'confirmed')
+                    @if($isConfirmed)
                         <a href="{{ route('customer.bookings.hotels.voucher', ['id' => $booking->id]) }}" class="btn-sm btn-outline" style="border-color: #10b981; color: #10b981; background: rgba(16, 185, 129, 0.02);">
-                            <i class="fas fa-file-pdf"></i> {{ __('Voucher') }}
+                            <i class="fas fa-file-pdf"></i> {{ __('قسيمة الحجز') }}
                         </a>
                     @endif
                 </div>

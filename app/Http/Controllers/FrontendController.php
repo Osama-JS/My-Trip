@@ -879,11 +879,102 @@ class FrontendController extends Controller
                 }
             }
 
+            // Check if any rule actually has textual content
+            $hasValidText = false;
+            foreach ($rulesList as $rItem) {
+                if (!empty(trim((string)($rItem['rules'] ?? '')))) {
+                    $hasValidText = true;
+                    break;
+                }
+            }
+
+            $newFareSourceCode = null;
+
+            // If no detailed textual rules were returned (common on unvalidated search fares like Gulf Air GF),
+            // auto-revalidate the fare with validateFare to obtain the official GDS pricing and full tariff rule categories!
+            if (!$hasValidText) {
+                try {
+                    $revalidate = $this->traveloproService->validateFare([
+                        'session_id' => $sessionId,
+                        'fare_source_code' => $fareSourceCode,
+                        'fare_source_code_inbound' => $inboundCode
+                    ]);
+
+                    $revalResult = $revalidate['AirRevalidateResponse']['AirRevalidateResult'] ?? [];
+                    $valItin = $revalResult['FareItineraries']['FareItinerary'] 
+                        ?? ($revalResult['FareItineraries'][0] ?? null);
+                    $newFareSource = $valItin['AirItineraryFareInfo']['FareSourceCode'] ?? null;
+
+                    if (!empty($newFareSource) && $newFareSource !== $fareSourceCode) {
+                        $newFareSourceCode = $newFareSource;
+                        $revalResultRules = $this->traveloproService->getFareRules([
+                            'session_id' => $sessionId,
+                            'fare_source_code' => $newFareSource,
+                            'fare_source_code_inbound' => $inboundCode,
+                        ]);
+
+                        if (!isset($revalResultRules['status']) || $revalResultRules['status'] !== 'error') {
+                            $resNode2 = $revalResultRules['FareRules1_1Response']['FareRules1_1Result'] 
+                                     ?? ($revalResultRules['FareRulesResponse']['FareRulesResult'] 
+                                     ?? ($revalResultRules['AirFareRulesResponse']['AirFareRulesResult'] 
+                                     ?? $revalResultRules));
+
+                            $newRulesList = [];
+                            $rawRules2 = $resNode2['FareRules'] ?? ($resNode2['FareRule'] ?? ($resNode2['RuleDetails'] ?? []));
+                            if (isset($rawRules2['FareRule'])) {
+                                $rawRules2 = isset($rawRules2['FareRule'][0]) ? $rawRules2['FareRule'] : [$rawRules2['FareRule']];
+                            }
+                            if (is_array($rawRules2)) {
+                                foreach ($rawRules2 as $rItem) {
+                                    $r = $rItem['FareRule'] ?? $rItem;
+                                    if (!empty($r) && is_array($r)) {
+                                        $newRulesList[] = [
+                                            'airline' => $r['Airline'] ?? '',
+                                            'city_pair' => $r['CityPair'] ?? '',
+                                            'category' => $r['Category'] ?? 'GENERAL',
+                                            'rules' => $r['Rules'] ?? ($r['RuleDetails'] ?? ($r['Text'] ?? '')),
+                                        ];
+                                    }
+                                }
+                            }
+
+                            if (!empty($newRulesList)) {
+                                $rulesList = $newRulesList;
+                                $result = $revalResultRules;
+
+                                if (empty($baggageList)) {
+                                    $rawBaggage2 = $resNode2['BaggageInfos'] ?? [];
+                                    if (isset($rawBaggage2['BaggageInfo'])) {
+                                        $rawBaggage2 = isset($rawBaggage2['BaggageInfo'][0]) ? $rawBaggage2['BaggageInfo'] : [$rawBaggage2['BaggageInfo']];
+                                    }
+                                    if (is_array($rawBaggage2)) {
+                                        foreach ($rawBaggage2 as $bItem) {
+                                            $b = $bItem['BaggageInfo'] ?? $bItem;
+                                            if (!empty($b) && is_array($b)) {
+                                                $baggageList[] = [
+                                                    'flight_no' => $b['FlightNo'] ?? '',
+                                                    'departure' => $b['Departure'] ?? '',
+                                                    'arrival' => $b['Arrival'] ?? '',
+                                                    'baggage' => $b['Baggage'] ?? '',
+                                                ];
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (\Exception $ex) {
+                    Log::warning('Fare rules auto-revalidation exception: ' . $ex->getMessage());
+                }
+            }
+
             return response()->json([
                 'success' => true,
                 'data' => $result,
                 'baggage_infos' => $baggageList,
                 'fare_rules' => $rulesList,
+                'new_fare_source_code' => $newFareSourceCode,
             ]);
         } catch (\Exception $e) {
             Log::error('Frontend Fare Rules Error: ' . $e->getMessage());
