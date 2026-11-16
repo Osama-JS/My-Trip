@@ -663,18 +663,31 @@ class BookingController extends Controller
                         : max(0, $totalFare - $penalty);
 
                     $isFullyNonRefundable = ($refundAmount <= 0 && $penalty >= $totalFare);
+                    $isPartialTaxRefund = (!$isFullyNonRefundable && $penalty > 0);
+
+                    $badgeText = $isFullyNonRefundable 
+                        ? __('تذكرة غير قابلة للاسترداد (NON-REFUNDABLE)')
+                        : ($isPartialTaxRefund 
+                            ? __('استرداد جزئي / استرداد ضرائب (PARTIAL TAX REFUND)')
+                            : __('تذكرة قابلة للاسترداد (REFUNDABLE)'));
+
+                    $message = !$isFullyNonRefundable
+                        ? ($isPartialTaxRefund
+                            ? __('التذكرة تتبع فئة غير قابلة لاسترداد السعر الأساسي، ولكن وفق لوائح الطيران يُسترد للعميل مبلغ ضرائب ورسوم المطارات غير المستخدمة بعد خصم الغرامة المقررة.')
+                            : __('التذكرة قابلة للاسترداد وفق سياسة شركة الطيران بعد خصم الغرامة الموضحة.'))
+                        : __('التذكرة تتبع فئة غير قابلة للاسترداد وفق شروط شركة الطيران. الإلغاء سيؤدي لفقدان قيمة التذكرة.');
 
                     return response()->json([
                         'status' => 'success',
                         'is_pending' => false,
                         'refundable' => !$isFullyNonRefundable,
+                        'is_partial' => $isPartialTaxRefund,
+                        'badge_text' => $badgeText,
                         'ptr_id' => $ptrId,
                         'penalty' => $penalty,
                         'refund_amount' => max(0, $refundAmount),
                         'currency' => $quotedFares['TotalFare']['CurrencyCode'] ?? ($booking->currency ?? 'SAR'),
-                        'message' => !$isFullyNonRefundable
-                            ? __('التذكرة قابلة للاسترداد وفق سياسة شركة الطيران بعد خصم الغرامة الموضحة.')
-                            : __('التذكرة تتبع فئة غير قابلة للاسترداد وفق شروط شركة الطيران. الإلغاء سيؤدي لفقدان قيمة التذكرة.')
+                        'message' => $message
                     ]);
                 }
             }

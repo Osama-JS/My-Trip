@@ -2544,16 +2544,22 @@ function openFlightCancelModal() {
                 supportBtn.style.display = 'inline-flex';
 
             } else {
-                container.className = 'cancel-modal-container theme-success';
-                if (headerBadge) headerBadge.innerHTML = '<i class="fas fa-undo-alt text-success"></i>';
+                const isPartial = !!data.is_partial;
+                container.className = isPartial ? 'cancel-modal-container theme-info' : 'cancel-modal-container theme-success';
+                if (headerBadge) headerBadge.innerHTML = isPartial ? '<i class="fas fa-coins text-primary"></i>' : '<i class="fas fa-undo-alt text-success"></i>';
+
+                const badgeTitle = data.badge_text || (isPartial ? '{{ __("استرداد جزئي / ضرائب ورسوم (PARTIAL TAX REFUND)") }}' : '{{ __("تذكرة قابلة للاسترداد (REFUNDABLE)") }}');
+                const badgeClass = isPartial ? 'info-status-badge' : 'success-status-badge';
+                const alertClass = isPartial ? 'alert-info' : 'alert-success';
+
                 html += `
                     <div class="mb-3">
-                        <div class="success-status-badge">
+                        <div class="${badgeClass}">
                             <span class="pulse-status-dot"></span>
-                            <span>{{ __('تذكرة قابلة للاسترداد (REFUNDABLE)') }}</span>
+                            <span>${badgeTitle}</span>
                         </div>
                     </div>
-                    <div class="alert alert-success mb-3" style="font-size: 0.92rem; line-height: 1.6;">
+                    <div class="alert ${alertClass} mb-3" style="font-size: 0.92rem; line-height: 1.6;">
                         <i class="fas fa-info-circle me-1"></i>
                         <strong>{{ __('شروط الاسترداد المقررة من شركة الطيران:') }}</strong>
                         <div class="mt-1">${data.message}</div>
