@@ -2798,6 +2798,10 @@ $(document).ready(function() {
             success: function(res) {
                 $('#fareRulesModalLoader').hide();
                 if (res && res.success) {
+                    if (res.new_fare_source_code) {
+                        btn.data('fare-source', res.new_fare_source_code);
+                        btn.attr('data-fare-source', res.new_fare_source_code);
+                    }
                     renderFareRulesContent(res, cardData);
                 } else {
                     const msg = (res && res.message) ? res.message : '{{ __("Unable to retrieve fare rules from the airline provider for this flight.") }}';

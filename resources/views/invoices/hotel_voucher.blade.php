@@ -372,7 +372,36 @@
     <div class="content">
 
         @php
-            $qrData = "REF: " . ($booking->supplier_confirmation_num ?? $booking->reference_num) . "\nHOTEL: {$booking->hotel_name}\nGUEST: " . ($booking->user->name ?? 'Guest') . "\nCHECK-IN: " . $booking->check_in->format('d M Y');
+            $passengers = $booking->passengers ?? collect();
+            $paxDetails = is_string($booking->pax_details ?? null) ? json_decode($booking->pax_details, true) : ($booking->pax_details ?? []);
+            
+            $leadPax = $passengers->isNotEmpty() ? $passengers->first() : null;
+            $leadName = null;
+            if ($leadPax) {
+                $leadName = trim(($leadPax->title ? $leadPax->title . ' ' : '') . ($leadPax->name ?: ($leadPax->first_name . ' ' . $leadPax->last_name)));
+            }
+            if (empty($leadName) && !empty($paxDetails) && is_array($paxDetails)) {
+                if (isset($paxDetails[0]['pax'][0])) {
+                    $p = $paxDetails[0]['pax'][0];
+                    $leadName = trim(($p['Title'] ?? '') . ' ' . ($p['FirstName'] ?? '') . ' ' . ($p['LastName'] ?? ''));
+                } elseif (isset($paxDetails[0]['FirstName'])) {
+                    $leadName = trim(($paxDetails[0]['Title'] ?? '') . ' ' . ($paxDetails[0]['FirstName'] ?? '') . ' ' . ($paxDetails[0]['LastName'] ?? ''));
+                } elseif (isset($paxDetails[0]['adult']['firstName'][0])) {
+                    $t = $paxDetails[0]['adult']['title'][0] ?? 'Mr';
+                    $fn = $paxDetails[0]['adult']['firstName'][0] ?? '';
+                    $ln = $paxDetails[0]['adult']['lastName'][0] ?? '';
+                    $leadName = trim("$t $fn $ln");
+                }
+            }
+            if (empty($leadName)) {
+                $leadName = $booking->user->full_name ?? ($booking->user->name ?? __('Primary Guest'));
+            }
+
+            $contactPhone = $booking->contact_phone ?: ($leadPax->phone ?? ($booking->user->phone ?? null));
+            $contactEmail = $booking->contact_email ?: ($booking->user->email ?? null);
+            $leadNationality = $leadPax->nationality ?? null;
+
+            $qrData = "REF: " . ($booking->supplier_confirmation_num ?? $booking->reference_num) . "\nHOTEL: {$booking->hotel_name}\nLEAD: {$leadName}\nTEL: " . ($contactPhone ?: 'N/A') . "\nCHECK-IN: " . $booking->check_in->format('d M Y');
             $qrDataEncoded = urlencode($qrData);
             $insAmount = (float)($booking->insurance_amount ?? 0);
             $policy = $booking->insurancePolicy;
@@ -495,22 +524,74 @@
             </div>
         </div>
 
+        <!-- ─── PASSENGER / TRAVELLER CONTACT INFORMATION ─── -->
+        <div class="section-title">{{ __('Passenger / Traveller Contact Information') }}</div>
+        <div style="background: #ffffff; border: 1.5px solid #041741; border-radius: 6px; margin-bottom: 18px; overflow: hidden; page-break-inside: avoid;">
+            <div style="background: #f9f8f3; padding: 10px 14px; border-bottom: 1px dashed #d5d0c4;">
+                <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td width="38%" valign="middle">
+                            <span class="info-label">{{ __('Lead Passenger / Primary Guest') }}</span><br>
+                            <span class="info-value" style="color: #041741; font-size: 11.5px; font-weight: 800;">
+                                <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f464.png" width="11" height="11" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 4px;">
+                                {{ $leadName }}
+                            </span>
+                        </td>
+                        <td width="31%" valign="middle">
+                            <span class="info-label">{{ __('Contact Phone') }}</span><br>
+                            <span class="info-value" dir="ltr" style="color: #041741; font-size: 11px; font-weight: 800; font-family: 'Courier New', monospace, 'tajawal';">
+                                <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f4de.png" width="11" height="11" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 4px;">
+                                {{ $contactPhone ?: '—' }}
+                            </span>
+                        </td>
+                        <td width="31%" valign="middle">
+                            <span class="info-label">{{ __('Contact Email') }}</span><br>
+                            <span class="info-value" style="color: #041741; font-size: 11px; font-weight: 800;">
+                                <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/2709.png" width="11" height="11" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 4px;">
+                                {{ $contactEmail ?: '—' }}
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div style="background: #ffffff; padding: 7px 14px; font-size: 9.5px; color: #4b5563;">
+                <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td width="55%" valign="middle">
+                            <span style="color: #9ca3af; text-transform: uppercase; font-size: 8px; letter-spacing: 0.5px;">{{ __('Guests Summary') }}:</span>
+                            <strong style="color: #041741;">{{ $booking->adults }} {{ __('Adult(s)') }}@if($booking->childs > 0), {{ $booking->childs }} {{ __('Child(ren)') }}@endif</strong>
+                            <span style="color: #cbd5e1; margin: 0 6px;">|</span>
+                            <span style="color: #9ca3af; text-transform: uppercase; font-size: 8px; letter-spacing: 0.5px;">{{ __('Rooms') }}:</span>
+                            <strong style="color: #041741;">{{ $booking->rooms }}</strong>
+                        </td>
+                        <td width="45%" valign="middle" style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }};">
+                            @if(!empty($leadNationality))
+                                <span style="color: #9ca3af; text-transform: uppercase; font-size: 8px; letter-spacing: 0.5px;">{{ __('Nationality') }}:</span>
+                                <strong style="color: #041741;">{{ $leadNationality }}</strong>
+                            @else
+                                <span style="color: #16a34a; font-weight: 700;">✓ {{ __('Verified Reservation Details') }}</span>
+                            @endif
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
         <!-- ─── GUEST DETAILS ─── -->
         <div class="section-title">{{ __('Guest Details') }}</div>
         <table class="p-table">
             <thead>
                 <tr>
                     <th width="8%" style="text-align: center;">#</th>
-                    <th width="14%" style="text-align: center;">{{ __('Room') }}</th>
-                    <th width="50%">{{ __('Guest Name') }}</th>
-                    <th width="28%">{{ __('Pax Type') }}</th>
+                    <th width="12%" style="text-align: center;">{{ __('Room') }}</th>
+                    <th width="48%">{{ __('Guest Name') }}</th>
+                    <th width="18%">{{ __('Pax Type') }}</th>
+                    <th width="14%" style="text-align: center;">{{ __('Role') }}</th>
                 </tr>
             </thead>
             <tbody>
                 @php 
                     $guestIndex = 0; 
-                    $passengers = $booking->passengers ?? collect();
-                    $paxDetails = is_string($booking->pax_details ?? null) ? json_decode($booking->pax_details, true) : ($booking->pax_details ?? []);
                 @endphp
                 @if($passengers->isNotEmpty())
                     @foreach($passengers as $pax)
@@ -531,6 +612,13 @@
                             <td style="text-align: center; font-weight: 700; color: #041741;">1</td>
                             <td style="font-weight: 700; color: #1a1f36;">{{ $displayName }}</td>
                             <td><span class="pax-badge">{{ __(ucfirst(strtolower($pax->passenger_type))) }}</span></td>
+                            <td style="text-align: center;">
+                                @if($guestIndex === 1)
+                                    <span style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 3px; font-size: 8px; font-weight: 800;">{{ __('Lead Guest') }}</span>
+                                @else
+                                    <span style="color: #94a3b8; font-size: 8px;">{{ __('Guest') }}</span>
+                                @endif
+                            </td>
                         </tr>
                     @endforeach
                 @elseif(!empty($paxDetails) && is_array($paxDetails))
@@ -554,6 +642,13 @@
                                     <td style="text-align: center; font-weight: 700; color: #041741;">{{ $room['room_no'] ?? $loop->parent->iteration }}</td>
                                     <td style="font-weight: 700; color: #1a1f36;">{{ $title ? $title . ' ' : '' }}{{ $pax['FirstName'] ?? '' }} {{ $pax['LastName'] ?? '' }}</td>
                                     <td><span class="pax-badge">{{ $isChild ? __('Child') : __('Adult') }}</span></td>
+                                    <td style="text-align: center;">
+                                        @if($guestIndex === 1)
+                                            <span style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 3px; font-size: 8px; font-weight: 800;">{{ __('Lead Guest') }}</span>
+                                        @else
+                                            <span style="color: #94a3b8; font-size: 8px;">{{ __('Guest') }}</span>
+                                        @endif
+                                    </td>
                                 </tr>
                             @endforeach
                         @elseif(isset($room['adult']) || isset($room['child']))
@@ -576,6 +671,13 @@
                                         <td style="text-align: center; font-weight: 700; color: #041741;">{{ $room['room_no'] ?? $loop->parent->iteration }}</td>
                                         <td style="font-weight: 700; color: #1a1f36;">{{ $adultTitles[$ai] ?? 'Mr' }} {{ $afn }} {{ $adultLastNames[$ai] ?? '' }}</td>
                                         <td><span class="pax-badge">{{ __('Adult') }}</span></td>
+                                        <td style="text-align: center;">
+                                            @if($guestIndex === 1)
+                                                <span style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 3px; font-size: 8px; font-weight: 800;">{{ __('Lead Guest') }}</span>
+                                            @else
+                                                <span style="color: #94a3b8; font-size: 8px;">{{ __('Guest') }}</span>
+                                            @endif
+                                        </td>
                                     </tr>
                                 @endforeach
                             @endif
@@ -606,6 +708,13 @@
                                         <td style="text-align: center; font-weight: 700; color: #041741;">{{ $room['room_no'] ?? $loop->parent->iteration }}</td>
                                         <td style="font-weight: 700; color: #1a1f36;">{{ $cTitle }} {{ $cfn }} {{ $childLastNames[$ci] ?? '' }}</td>
                                         <td><span class="pax-badge">{{ __('Child') }}</span></td>
+                                        <td style="text-align: center;">
+                                            @if($guestIndex === 1)
+                                                <span style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 3px; font-size: 8px; font-weight: 800;">{{ __('Lead Guest') }}</span>
+                                            @else
+                                                <span style="color: #94a3b8; font-size: 8px;">{{ __('Guest') }}</span>
+                                            @endif
+                                        </td>
                                     </tr>
                                 @endforeach
                             @endif
@@ -615,8 +724,11 @@
                     <tr>
                         <td style="text-align: center; color:#9ca3af; font-weight:700;">01</td>
                         <td style="text-align: center; font-weight: 700; color: #041741;">1</td>
-                        <td style="font-weight: 700; color: #1a1f36;">{{ $booking->user->name ?? __('Primary Guest') }}</td>
+                        <td style="font-weight: 700; color: #1a1f36;">{{ $leadName }}</td>
                         <td><span class="pax-badge">{{ __('Adult') }}</span></td>
+                        <td style="text-align: center;">
+                            <span style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 3px; font-size: 8px; font-weight: 800;">{{ __('Lead Guest') }}</span>
+                        </td>
                     </tr>
                 @endif
             </tbody>

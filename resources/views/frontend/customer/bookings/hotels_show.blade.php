@@ -1109,6 +1109,32 @@ body.dark-mode .wallet-confirm-box div[style*="color: #166534"] {
     @endif
 
     {{-- ─── Stay Voucher Ticket Card ─── --}}
+    @php
+        $leadPax = ($booking->passengers && $booking->passengers->isNotEmpty()) ? $booking->passengers->first() : null;
+        $leadName = null;
+        if ($leadPax) {
+            $leadName = trim(($leadPax->title ? $leadPax->title . ' ' : '') . ($leadPax->name ?: ($leadPax->first_name . ' ' . $leadPax->last_name)));
+        }
+        $paxDetails = is_string($booking->pax_details ?? null) ? json_decode($booking->pax_details, true) : ($booking->pax_details ?? []);
+        if (empty($leadName) && !empty($paxDetails) && is_array($paxDetails)) {
+            if (isset($paxDetails[0]['pax'][0])) {
+                $p = $paxDetails[0]['pax'][0];
+                $leadName = trim(($p['Title'] ?? '') . ' ' . ($p['FirstName'] ?? '') . ' ' . ($p['LastName'] ?? ''));
+            } elseif (isset($paxDetails[0]['FirstName'])) {
+                $leadName = trim(($paxDetails[0]['Title'] ?? '') . ' ' . ($paxDetails[0]['FirstName'] ?? '') . ' ' . ($paxDetails[0]['LastName'] ?? ''));
+            } elseif (isset($paxDetails[0]['adult']['firstName'][0])) {
+                $t = $paxDetails[0]['adult']['title'][0] ?? 'Mr';
+                $fn = $paxDetails[0]['adult']['firstName'][0] ?? '';
+                $ln = $paxDetails[0]['adult']['lastName'][0] ?? '';
+                $leadName = trim("$t $fn $ln");
+            }
+        }
+        if (empty($leadName)) {
+            $leadName = $booking->user->full_name ?? ($booking->user->name ?? (auth()->check() ? auth()->user()->full_name : __('Primary Guest')));
+        }
+        $contactPhone = $booking->contact_phone ?: ($leadPax->phone ?? ($booking->user->phone ?? null));
+        $contactEmail = $booking->contact_email ?: ($booking->user->email ?? null);
+    @endphp
     <div class="boarding-pass">
         <div class="pass-header" style="{{ $isCancelled ? 'background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);' : '' }}">
             <span class="pass-title">
@@ -1132,8 +1158,12 @@ body.dark-mode .wallet-confirm-box div[style*="color: #166534"] {
             <div class="boarding-pass-stub-line">
                 <div class="pass-details-grid">
                     <div>
-                        <span class="pass-label">{{ __('GUEST NAME') }}</span>
-                        <span class="pass-val">{{ auth()->user()->full_name }}</span>
+                        <span class="pass-label">{{ __('LEAD GUEST') }}</span>
+                        <span class="pass-val">{{ $leadName }}</span>
+                    </div>
+                    <div>
+                        <span class="pass-label">{{ __('CONTACT PHONE') }}</span>
+                        <span class="pass-val" dir="ltr"><i class="fas fa-phone-alt me-1 text-primary" style="font-size: 0.75rem;"></i>{{ $contactPhone ?: '—' }}</span>
                     </div>
                     <div>
                         <span class="pass-label">{{ __('CHECK-IN') }}</span>
@@ -1145,9 +1175,15 @@ body.dark-mode .wallet-confirm-box div[style*="color: #166534"] {
                         <span class="pass-val">{{ $booking->check_out->format('d M Y') }}</span>
                         <small style="color: #ef4444; font-weight: 700; display: block; font-size: 0.72rem;">{{ __('Until 12:00') }}</small>
                     </div>
-                    <div>
-                        <span class="pass-label">{{ __('ROOMS & NIGHTS') }}</span>
-                        <span class="pass-val">{{ $booking->rooms }} {{ __('Room(s)') }} / {{ $booking->check_in->diffInDays($booking->check_out) }} {{ __('Nights') }}</span>
+                </div>
+                <div style="margin-top: 14px; padding-top: 10px; border-top: 1px dashed var(--border-color); display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; font-size: 0.82rem;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span class="text-muted"><i class="fas fa-envelope text-primary me-1"></i>{{ __('Contact Email') }}:</span>
+                        <strong class="text-main">{{ $contactEmail ?: '—' }}</strong>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span class="text-muted"><i class="fas fa-bed text-primary me-1"></i>{{ __('Rooms & Nights') }}:</span>
+                        <strong class="text-main">{{ $booking->rooms }} {{ __('Room(s)') }} / {{ $booking->check_in->diffInDays($booking->check_out) }} {{ __('Nights') }}</strong>
                     </div>
                 </div>
             </div>
@@ -1316,6 +1352,27 @@ body.dark-mode .wallet-confirm-box div[style*="color: #166534"] {
                     <h5><i class="fas fa-user-friends"></i> {{ __('Guest Details') }}</h5>
                 </div>
                 <div class="detail-card-body">
+                    {{-- Contact Information Box --}}
+                    <div style="background: rgba(4, 23, 65, 0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;">
+                        <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-main); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                            <i class="fas fa-address-book text-primary"></i>
+                            <span>{{ __('Passenger / Traveller Contact Information') }}</span>
+                        </div>
+                        <div class="row g-2" style="font-size: 0.82rem;">
+                            <div class="col-md-4">
+                                <span class="text-muted d-block" style="font-size: 0.72rem;">{{ __('Lead Passenger / Primary Guest') }}</span>
+                                <strong class="text-main">{{ $leadName }}</strong>
+                            </div>
+                            <div class="col-md-4">
+                                <span class="text-muted d-block" style="font-size: 0.72rem;">{{ __('Contact Phone') }}</span>
+                                <strong dir="ltr" class="text-main"><i class="fas fa-phone-alt me-1 text-muted"></i>{{ $contactPhone ?: '—' }}</strong>
+                            </div>
+                            <div class="col-md-4">
+                                <span class="text-muted d-block" style="font-size: 0.72rem;">{{ __('Contact Email') }}</span>
+                                <strong class="text-main"><i class="fas fa-envelope me-1 text-muted"></i>{{ $contactEmail ?: '—' }}</strong>
+                            </div>
+                        </div>
+                    </div>
                     @if($booking->pax_details && is_array($booking->pax_details))
                         @foreach($booking->pax_details as $room)
                             <div class="room-group">
