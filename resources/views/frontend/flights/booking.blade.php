@@ -50,77 +50,6 @@
         </div>
     </div>
 
-    <script>
-    (function initFlightBookingPageTimer() {
-        function startTimer() {
-            const timerBox = document.getElementById('flightPageTimeLimit');
-            const timerDisplay = document.getElementById('flightPageTimerDisplay');
-            if (!timerBox || !timerDisplay) return;
-
-            const storageKey = 'flight_active_timer_start';
-            const totalDuration = 15 * 60; // 15 minutes (900s)
-            let sessionStart = sessionStorage.getItem(storageKey);
-
-            if (!sessionStart) {
-                sessionStart = Date.now();
-                sessionStorage.setItem(storageKey, sessionStart);
-            }
-
-            let elapsed = Math.floor((Date.now() - parseInt(sessionStart, 10)) / 1000);
-            let remainingSeconds = Math.max(0, totalDuration - elapsed);
-
-            function tick() {
-                if (remainingSeconds <= 0) {
-                    if (window.__flightBookingInterval) clearInterval(window.__flightBookingInterval);
-                    timerDisplay.textContent = '00:00';
-                    timerDisplay.style.background = 'rgba(239, 68, 68, 0.4)';
-                    timerDisplay.style.color = '#fff';
-
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({
-                            icon: 'warning',
-                            title: '{{ app()->getLocale() == "ar" ? "انتهت مهلة الحجز" : "Booking Session Expired" }}',
-                            text: '{{ app()->getLocale() == "ar" ? "انتهت مهلة الـ 15 دقيقة المحددة لحجز هذه المقاعد. يرجى إعادة البحث لاختيار أحدث الأسعار والمقاعد المتاحة." : "The 15-minute hold period for these flight seats has expired. Please search again." }}',
-                            confirmButtonText: '{{ app()->getLocale() == "ar" ? "إعادة البحث" : "Search Again" }}',
-                            allowOutsideClick: false,
-                            allowEscapeKey: false,
-                        }).then(() => {
-                            sessionStorage.removeItem(storageKey);
-                            window.location.href = "{{ route('flights') }}";
-                        });
-                    } else {
-                        alert('{{ app()->getLocale() == "ar" ? "انتهت مهلة الحجز. يرجى إعادة البحث." : "Booking session expired. Please search again." }}');
-                        sessionStorage.removeItem(storageKey);
-                        window.location.href = "{{ route('flights') }}";
-                    }
-                    return;
-                }
-
-                const minutes = Math.floor(remainingSeconds / 60);
-                const seconds = remainingSeconds % 60;
-                timerDisplay.textContent = (minutes < 10 ? '0' + minutes : minutes) + ':' + (seconds < 10 ? '0' + seconds : seconds);
-
-                if (remainingSeconds < 60) {
-                    timerDisplay.style.background = 'rgba(239, 68, 68, 0.4)';
-                    timerDisplay.style.color = '#fff';
-                }
-
-                remainingSeconds--;
-            }
-
-            tick();
-            if (window.__flightBookingInterval) clearInterval(window.__flightBookingInterval);
-            window.__flightBookingInterval = setInterval(tick, 1000);
-        }
-
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', startTimer);
-        } else {
-            startTimer();
-        }
-    })();
-    </script>
-
     {{-- ═══ LUXURY GUEST AUTHENTICATION BANNER ═══ --}}
     @guest
         @php $currLocale = app()->getLocale(); @endphp
@@ -2671,15 +2600,34 @@ $(document).ready(function() {
         const timerDisplay = document.getElementById('flightPageTimerDisplay');
         if (!timerDisplay) return;
 
-        let sessionDuration = 15 * 60; // 15 minutes (900 seconds)
+        const sessionDuration = 15 * 60; // 15 minutes (900 seconds)
         const storageKey = 'flight_active_timer_start';
+        const sessionKey = 'flight_timer_session_id';
+        const currentSessionId = "{{ $details['session_id'] ?? '' }}";
         
+        let storedSessionId = sessionStorage.getItem(sessionKey);
         let startTime = sessionStorage.getItem(storageKey);
-        if (!startTime || (Date.now() - parseInt(startTime, 10) > 15 * 60 * 1000)) {
+
+        // Reset timer if:
+        // 1. No startTime exists in storage.
+        // 2. A new search session_id is detected (different flight selected).
+        // 3. Stored timer is already older than 15 minutes on fresh page load.
+        const isStaleOrExpired = !startTime 
+            || (currentSessionId && storedSessionId && storedSessionId !== currentSessionId)
+            || (Date.now() - parseInt(startTime, 10) > sessionDuration * 1000);
+
+        if (isStaleOrExpired) {
             startTime = Date.now();
             sessionStorage.setItem(storageKey, startTime);
+            if (currentSessionId) {
+                sessionStorage.setItem(sessionKey, currentSessionId);
+            }
         } else {
             startTime = parseInt(startTime, 10);
+            if (isNaN(startTime)) {
+                startTime = Date.now();
+                sessionStorage.setItem(storageKey, startTime);
+            }
         }
 
         function updateTimer() {
@@ -2697,8 +2645,9 @@ $(document).ready(function() {
             }
 
             if (remaining <= 0) {
-                clearInterval(timerInterval);
+                if (window.__flightPageTimerInterval) clearInterval(window.__flightPageTimerInterval);
                 sessionStorage.removeItem(storageKey);
+                sessionStorage.removeItem(sessionKey);
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
                         icon: 'warning',
@@ -2718,7 +2667,8 @@ $(document).ready(function() {
         }
 
         updateTimer();
-        const timerInterval = setInterval(updateTimer, 1000);
+        if (window.__flightPageTimerInterval) clearInterval(window.__flightPageTimerInterval);
+        window.__flightPageTimerInterval = setInterval(updateTimer, 1000);
     })();
 
     // ═══ FARE RULES MODAL LOGIC ═══

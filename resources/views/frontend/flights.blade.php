@@ -238,6 +238,10 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Clear any stale flight booking timer from previous booking attempts
+        sessionStorage.removeItem('flight_active_timer_start');
+        sessionStorage.removeItem('flight_timer_session_id');
+
         const journeyTypeInputs = document.querySelectorAll('input[name="journeyType"]');
         const returnDateGroup = document.querySelector('.return-date-group');
         const paxPopover = document.getElementById('paxPopover');

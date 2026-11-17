@@ -437,6 +437,17 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Clear any residual flight session timer from previous bookings
+    sessionStorage.removeItem('flight_active_timer_start');
+    sessionStorage.removeItem('flight_timer_session_id');
+
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('a[href*="flights/booking"]')) {
+            sessionStorage.removeItem('flight_active_timer_start');
+            sessionStorage.removeItem('flight_timer_session_id');
+        }
+    });
+
     const flightItems = document.querySelectorAll('.flight-item');
     const priceRange = document.getElementById('priceRange');
     const priceValue = document.getElementById('priceValue');
