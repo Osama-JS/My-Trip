@@ -122,6 +122,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // User Bookings (Unified)
     Route::get('/user/bookings', [App\Http\Controllers\Api\UserBookingController::class, 'index']); // Flights
     Route::get('/user/bookings/{id}', [App\Http\Controllers\Api\UserBookingController::class, 'show']);
+    Route::get('/user/bookings/flights/{id}/cancel-quote', [App\Http\Controllers\Api\UserBookingController::class, 'cancelFlightQuote']);
+    Route::get('/user/bookings/{id}/cancel-quote', [App\Http\Controllers\Api\UserBookingController::class, 'cancelFlightQuote']);
+    Route::post('/user/bookings/flights/{id}/cancel', [App\Http\Controllers\Api\UserBookingController::class, 'cancelFlight']);
+    Route::post('/user/bookings/{id}/cancel', [App\Http\Controllers\Api\UserBookingController::class, 'cancelFlight']);
 
     Route::get('/user/hotel-bookings', [App\Http\Controllers\Api\UserBookingController::class, 'hotelBookings']);
     Route::get('/user/hotel-bookings/{id}', [App\Http\Controllers\Api\UserBookingController::class, 'hotelBookingDetails']);

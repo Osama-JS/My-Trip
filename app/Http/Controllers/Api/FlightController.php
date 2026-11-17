@@ -387,7 +387,14 @@ class FlightController extends Controller
                     new OA\Property(property: "fare_source_code", type: "string")
                 ]
             )
-        )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "Success",
+                content: new OA\JsonContent(properties: [new OA\Property(property: "error", type: "boolean", example: false)])
+            )
+        ]
     )]
     public function getExtraServices(Request $request)
     {
@@ -1351,18 +1358,18 @@ class FlightController extends Controller
 
     #[OA\Post(
         path: "/api/flights/fare-rules",
-        summary: "شروط السعر (Get fare rules)",
+        summary: "شروط وقواعد السعر والأمتعة (Get fare rules & baggage)",
         operationId: "getFareRules",
-        description: "عرض شروط وأحكام السعر المختار (مثل غرامات التغيير والإلغاء). (Get fare rules and conditions).",
+        description: "عرض شروط وأحكام السعر المختار (مثل غرامات الإلغاء، التعديل، الأمتعة المسموحة). يتم استخراج مصفوفة مبوبة بالقواعد والأمتعة بالإضافة إلى إعادة التحقق التلقائي (Auto-Revalidation) إذا كانت القواعد النصية تتطلب تفعيل من الـ GDS.",
         tags: ["Flights"],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
                 required: ["session_id", "fare_source_code"],
                 properties: [
-                    new OA\Property(property: "session_id", type: "string", example: "7906efba-09db..."),
-                    new OA\Property(property: "fare_source_code", type: "string", example: "MTY2ODE2Njg2Ml8yNjA5Mzk"),
-                    new OA\Property(property: "fare_source_code_inbound", type: "string", example: "")
+                    new OA\Property(property: "session_id", type: "string", description: "Session ID from flight search", example: "7906efba-09db..."),
+                    new OA\Property(property: "fare_source_code", type: "string", description: "Fare source code for the selected flight", example: "MTY2ODE2Njg2Ml8yNjA5Mzk..."),
+                    new OA\Property(property: "fare_source_code_inbound", type: "string", description: "Optional inbound fare source code for round-trips", example: "")
                 ]
             )
         ),
@@ -1370,7 +1377,50 @@ class FlightController extends Controller
             new OA\Response(
                 response: 200,
                 description: "تم استرجاع شروط السعر بنجاح",
-                content: new OA\JsonContent(properties: [new OA\Property(property: "error", type: "boolean", example: false)])
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "error", type: "boolean", example: false),
+                        new OA\Property(property: "message", type: "string", example: "Fare rules retrieved successfully."),
+                        new OA\Property(
+                            property: "data",
+                            type: "object",
+                            properties: [
+                                new OA\Property(
+                                    property: "fare_rules",
+                                    type: "array",
+                                    description: "مصفوفة شروط السعر مصنفة حسب الفئة والشركة",
+                                    items: new OA\Items(
+                                        properties: [
+                                            new OA\Property(property: "airline", type: "string", example: "GF"),
+                                            new OA\Property(property: "city_pair", type: "string", example: "RUH-BAH"),
+                                            new OA\Property(property: "category", type: "string", example: "CANCELLATIONS"),
+                                            new OA\Property(property: "rules", type: "string", example: "CANCELLATIONS PERMITTED BEFORE DEPARTURE WITH FEE...")
+                                        ]
+                                    )
+                                ),
+                                new OA\Property(
+                                    property: "baggage_infos",
+                                    type: "array",
+                                    description: "مصفوفة الأوزان المسموحة لكل مقطع",
+                                    items: new OA\Items(
+                                        properties: [
+                                            new OA\Property(property: "flight_no", type: "string", example: "GF 168"),
+                                            new OA\Property(property: "departure", type: "string", example: "RUH"),
+                                            new OA\Property(property: "arrival", type: "string", example: "BAH"),
+                                            new OA\Property(property: "baggage", type: "string", example: "30 KG")
+                                        ]
+                                    )
+                                ),
+                                new OA\Property(property: "new_fare_source_code", type: "string", nullable: true, description: "Updated fare source code if revalidated", example: null),
+                                new OA\Property(property: "raw_data", type: "object", description: "الرد الخام من المزود")
+                            ]
+                        )
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 422,
+                description: "Validation failed"
             )
         ]
     )]
@@ -1382,16 +1432,172 @@ class FlightController extends Controller
             'fare_source_code_inbound' => 'nullable|string',
         ]);
 
-        if ($validator->fails())
+        if ($validator->fails()) {
             return $this->apiResponse(true, __('Validation failed.'), $validator->errors(), null, 422);
-
-        $result = $this->traveloproService->getFareRules($request->all());
-
-        if (isset($result['status']) && $result['status'] === 'error') {
-            return $this->apiResponse(true, $result['message'], $result['details'] ?? null, null, 500);
         }
 
-        return $this->apiResponse(false, __('Fare rules retrieved successfully.'), $result, null, 200);
+        $sessionId = $request->input('session_id');
+        $fareSourceCode = $request->input('fare_source_code');
+        $inboundCode = $request->input('fare_source_code_inbound');
+
+        try {
+            $result = $this->traveloproService->getFareRules([
+                'session_id' => $sessionId,
+                'fare_source_code' => $fareSourceCode,
+                'fare_source_code_inbound' => $inboundCode,
+            ]);
+
+            if (isset($result['status']) && $result['status'] === 'error') {
+                return $this->apiResponse(true, $result['message'] ?? __('Failed to retrieve fare rules.'), $result['details'] ?? null, null, 200);
+            }
+
+            // Extract the result node from possible Travelopro API response versions
+            $resNode = $result['FareRules1_1Response']['FareRules1_1Result'] 
+                    ?? ($result['FareRulesResponse']['FareRulesResult'] 
+                    ?? ($result['AirFareRulesResponse']['AirFareRulesResult'] 
+                    ?? $result));
+
+            // Extract BaggageInfos
+            $baggageList = [];
+            $rawBaggage = $resNode['BaggageInfos'] ?? [];
+            if (isset($rawBaggage['BaggageInfo'])) {
+                $rawBaggage = isset($rawBaggage['BaggageInfo'][0]) ? $rawBaggage['BaggageInfo'] : [$rawBaggage['BaggageInfo']];
+            }
+            if (is_array($rawBaggage)) {
+                foreach ($rawBaggage as $bItem) {
+                    $b = $bItem['BaggageInfo'] ?? $bItem;
+                    if (!empty($b) && is_array($b)) {
+                        $baggageList[] = [
+                            'flight_no' => $b['FlightNo'] ?? '',
+                            'departure' => $b['Departure'] ?? '',
+                            'arrival' => $b['Arrival'] ?? '',
+                            'baggage' => $b['Baggage'] ?? '',
+                        ];
+                    }
+                }
+            }
+
+            // Extract FareRules
+            $rulesList = [];
+            $rawRules = $resNode['FareRules'] ?? ($resNode['FareRule'] ?? ($resNode['RuleDetails'] ?? []));
+            if (isset($rawRules['FareRule'])) {
+                $rawRules = isset($rawRules['FareRule'][0]) ? $rawRules['FareRule'] : [$rawRules['FareRule']];
+            }
+            if (is_array($rawRules)) {
+                foreach ($rawRules as $rItem) {
+                    $r = $rItem['FareRule'] ?? $rItem;
+                    if (!empty($r) && is_array($r)) {
+                        $rulesList[] = [
+                            'airline' => $r['Airline'] ?? '',
+                            'city_pair' => $r['CityPair'] ?? '',
+                            'category' => $r['Category'] ?? 'GENERAL',
+                            'rules' => $r['Rules'] ?? ($r['RuleDetails'] ?? ($r['Text'] ?? '')),
+                        ];
+                    }
+                }
+            }
+
+            // Check if any rule actually has textual content
+            $hasValidText = false;
+            foreach ($rulesList as $rItem) {
+                if (!empty(trim((string)($rItem['rules'] ?? '')))) {
+                    $hasValidText = true;
+                    break;
+                }
+            }
+
+            $newFareSourceCode = null;
+
+            // If no detailed textual rules were returned (common on unvalidated search fares like Gulf Air GF),
+            // auto-revalidate the fare with validateFare to obtain the official GDS pricing and full tariff rule categories!
+            if (!$hasValidText) {
+                try {
+                    $revalidate = $this->traveloproService->validateFare([
+                        'session_id' => $sessionId,
+                        'fare_source_code' => $fareSourceCode,
+                        'fare_source_code_inbound' => $inboundCode
+                    ]);
+
+                    $revalResult = $revalidate['AirRevalidateResponse']['AirRevalidateResult'] ?? [];
+                    $valItin = $revalResult['FareItineraries']['FareItinerary'] 
+                        ?? ($revalResult['FareItineraries'][0] ?? null);
+                    $newFareSource = $valItin['AirItineraryFareInfo']['FareSourceCode'] ?? null;
+
+                    if (!empty($newFareSource) && $newFareSource !== $fareSourceCode) {
+                        $newFareSourceCode = $newFareSource;
+                        $revalResultRules = $this->traveloproService->getFareRules([
+                            'session_id' => $sessionId,
+                            'fare_source_code' => $newFareSource,
+                            'fare_source_code_inbound' => $inboundCode,
+                        ]);
+
+                        if (!isset($revalResultRules['status']) || $revalResultRules['status'] !== 'error') {
+                            $resNode2 = $revalResultRules['FareRules1_1Response']['FareRules1_1Result'] 
+                                     ?? ($revalResultRules['FareRulesResponse']['FareRulesResult'] 
+                                     ?? ($revalResultRules['AirFareRulesResponse']['AirFareRulesResult'] 
+                                     ?? $revalResultRules));
+
+                            $newRulesList = [];
+                            $rawRules2 = $resNode2['FareRules'] ?? ($resNode2['FareRule'] ?? ($resNode2['RuleDetails'] ?? []));
+                            if (isset($rawRules2['FareRule'])) {
+                                $rawRules2 = isset($rawRules2['FareRule'][0]) ? $rawRules2['FareRule'] : [$rawRules2['FareRule']];
+                            }
+                            if (is_array($rawRules2)) {
+                                foreach ($rawRules2 as $rItem) {
+                                    $r = $rItem['FareRule'] ?? $rItem;
+                                    if (!empty($r) && is_array($r)) {
+                                        $newRulesList[] = [
+                                            'airline' => $r['Airline'] ?? '',
+                                            'city_pair' => $r['CityPair'] ?? '',
+                                            'category' => $r['Category'] ?? 'GENERAL',
+                                            'rules' => $r['Rules'] ?? ($r['RuleDetails'] ?? ($r['Text'] ?? '')),
+                                        ];
+                                    }
+                                }
+                            }
+
+                            if (!empty($newRulesList)) {
+                                $rulesList = $newRulesList;
+                                $result = $revalResultRules;
+
+                                if (empty($baggageList)) {
+                                    $rawBaggage2 = $resNode2['BaggageInfos'] ?? [];
+                                    if (isset($rawBaggage2['BaggageInfo'])) {
+                                        $rawBaggage2 = isset($rawBaggage2['BaggageInfo'][0]) ? $rawBaggage2['BaggageInfo'] : [$rawBaggage2['BaggageInfo']];
+                                    }
+                                    if (is_array($rawBaggage2)) {
+                                        foreach ($rawBaggage2 as $bItem) {
+                                            $b = $bItem['BaggageInfo'] ?? $bItem;
+                                            if (!empty($b) && is_array($b)) {
+                                                $baggageList[] = [
+                                                    'flight_no' => $b['FlightNo'] ?? '',
+                                                    'departure' => $b['Departure'] ?? '',
+                                                    'arrival' => $b['Arrival'] ?? '',
+                                                    'baggage' => $b['Baggage'] ?? '',
+                                                ];
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (\Exception $ex) {
+                    Log::warning('Api Flight Fare rules auto-revalidation exception: ' . $ex->getMessage());
+                }
+            }
+
+            return $this->apiResponse(false, __('Fare rules retrieved successfully.'), [
+                'fare_rules' => $rulesList,
+                'baggage_infos' => $baggageList,
+                'new_fare_source_code' => $newFareSourceCode,
+                'raw_data' => $result,
+            ], null, 200);
+
+        } catch (\Exception $e) {
+            Log::error('Api Flight Fare Rules Error: ' . $e->getMessage());
+            return $this->apiResponse(true, $e->getMessage(), null, null, 500);
+        }
     }
 
     #[OA\Post(

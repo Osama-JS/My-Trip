@@ -83,6 +83,11 @@
                                                 "site_name": {
                                                     "type": "string",
                                                     "example": "My Trip"
+                                                },
+                                                "otp_method": {
+                                                    "description": "The method used for OTP verification (whatsapp or email)",
+                                                    "type": "string",
+                                                    "example": "whatsapp"
                                                 }
                                             },
                                             "type": "object"
@@ -395,6 +400,156 @@
                         }
                     }
                 }
+            }
+        },
+        "/api/phone/request-otp": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Request OTP via WhatsApp",
+                "description": "Requests a WhatsApp OTP for a phone number. Creates a guest account if the user does not exist.",
+                "operationId": "requestPhoneOtp",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "phone"
+                                ],
+                                "properties": {
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "966500000000"
+                                    },
+                                    "country_code": {
+                                        "type": "string",
+                                        "example": "+966"
+                                    },
+                                    "email": {
+                                        "description": "Required instead of phone if otp_method is email",
+                                        "type": "string",
+                                        "example": "user@example.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OTP sent successfully"
+                    }
+                }
+            }
+        },
+        "/api/phone/verify-otp": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Verify WhatsApp OTP",
+                "operationId": "verifyPhoneOtp",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "phone",
+                                    "otp_code"
+                                ],
+                                "properties": {
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "966500000000"
+                                    },
+                                    "country_code": {
+                                        "type": "string",
+                                        "example": "+966"
+                                    },
+                                    "email": {
+                                        "description": "Required instead of phone if otp_method is email",
+                                        "type": "string",
+                                        "example": "user@example.com"
+                                    },
+                                    "otp_code": {
+                                        "type": "string",
+                                        "example": "1234"
+                                    },
+                                    "fcm_token": {
+                                        "type": "string"
+                                    },
+                                    "device_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "android",
+                                            "ios"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Logged in successfully"
+                    }
+                }
+            }
+        },
+        "/api/profile/complete": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Complete Guest Profile",
+                "description": "Completes the profile for a guest user who registered via phone OTP.",
+                "operationId": "completeProfile",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "first_name",
+                                    "last_name",
+                                    "email"
+                                ],
+                                "properties": {
+                                    "first_name": {
+                                        "type": "string",
+                                        "example": "John"
+                                    },
+                                    "last_name": {
+                                        "type": "string",
+                                        "example": "Doe"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "user@example.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Profile completed successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/resend-otp": {
@@ -1855,6 +2010,56 @@
                 }
             }
         },
+        "/api/flights/extra-services": {
+            "post": {
+                "tags": [
+                    "Flights"
+                ],
+                "summary": "الخدمات الإضافية (Extra Services: Baggage, Meals, Seats)",
+                "description": "Fetch extra services (DynamicBaggage, DynamicMeal, DynamicSeat) for a specific flight session.",
+                "operationId": "getExtraServices",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "session_id",
+                                    "fare_source_code"
+                                ],
+                                "properties": {
+                                    "session_id": {
+                                        "type": "string"
+                                    },
+                                    "fare_source_code": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/flights/book": {
             "post": {
                 "tags": [
@@ -2381,65 +2586,13 @@
                 }
             }
         },
-        "/api/flights/extra-services": {
-            "post": {
-                "tags": [
-                    "Flights"
-                ],
-                "summary": "الخدمات الإضافية (Get extra services)",
-                "description": "استعراض الخدمات الإضافية المتاحة (كالأمتعة والوجبات) للحجز. (Retrieve available extra services like baggage and meals).",
-                "operationId": "getExtraServices",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "session_id",
-                                    "fare_source_code"
-                                ],
-                                "properties": {
-                                    "session_id": {
-                                        "type": "string",
-                                        "example": "7906efba-09db..."
-                                    },
-                                    "fare_source_code": {
-                                        "type": "string",
-                                        "example": "MTY2ODE2Njg2Ml8yNjA5Mzk"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "تم استرجاع الخدمات الإضافية بنجاح",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "boolean",
-                                            "example": false
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "/api/flights/fare-rules": {
             "post": {
                 "tags": [
                     "Flights"
                 ],
-                "summary": "شروط السعر (Get fare rules)",
-                "description": "عرض شروط وأحكام السعر المختار (مثل غرامات التغيير والإلغاء). (Get fare rules and conditions).",
+                "summary": "شروط وقواعد السعر والأمتعة (Get fare rules & baggage)",
+                "description": "عرض شروط وأحكام السعر المختار (مثل غرامات الإلغاء، التعديل، الأمتعة المسموحة). يتم استخراج مصفوفة مبوبة بالقواعد والأمتعة بالإضافة إلى إعادة التحقق التلقائي (Auto-Revalidation) إذا كانت القواعد النصية تتطلب تفعيل من الـ GDS.",
                 "operationId": "getFareRules",
                 "requestBody": {
                     "required": true,
@@ -2452,14 +2605,17 @@
                                 ],
                                 "properties": {
                                     "session_id": {
+                                        "description": "Session ID from flight search",
                                         "type": "string",
                                         "example": "7906efba-09db..."
                                     },
                                     "fare_source_code": {
+                                        "description": "Fare source code for the selected flight",
                                         "type": "string",
-                                        "example": "MTY2ODE2Njg2Ml8yNjA5Mzk"
+                                        "example": "MTY2ODE2Njg2Ml8yNjA5Mzk..."
                                     },
                                     "fare_source_code_inbound": {
+                                        "description": "Optional inbound fare source code for round-trips",
                                         "type": "string",
                                         "example": ""
                                     }
@@ -2479,12 +2635,84 @@
                                         "error": {
                                             "type": "boolean",
                                             "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Fare rules retrieved successfully."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "fare_rules": {
+                                                    "description": "مصفوفة شروط السعر مصنفة حسب الفئة والشركة",
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "airline": {
+                                                                "type": "string",
+                                                                "example": "GF"
+                                                            },
+                                                            "city_pair": {
+                                                                "type": "string",
+                                                                "example": "RUH-BAH"
+                                                            },
+                                                            "category": {
+                                                                "type": "string",
+                                                                "example": "CANCELLATIONS"
+                                                            },
+                                                            "rules": {
+                                                                "type": "string",
+                                                                "example": "CANCELLATIONS PERMITTED BEFORE DEPARTURE WITH FEE..."
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "baggage_infos": {
+                                                    "description": "مصفوفة الأوزان المسموحة لكل مقطع",
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "flight_no": {
+                                                                "type": "string",
+                                                                "example": "GF 168"
+                                                            },
+                                                            "departure": {
+                                                                "type": "string",
+                                                                "example": "RUH"
+                                                            },
+                                                            "arrival": {
+                                                                "type": "string",
+                                                                "example": "BAH"
+                                                            },
+                                                            "baggage": {
+                                                                "type": "string",
+                                                                "example": "30 KG"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "new_fare_source_code": {
+                                                    "description": "Updated fare source code if revalidated",
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "raw_data": {
+                                                    "description": "الرد الخام من المزود",
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
                                 }
                             }
                         }
+                    },
+                    "422": {
+                        "description": "Validation failed"
                     }
                 }
             }
@@ -4910,6 +5138,350 @@
                 ]
             }
         },
+        "/api/user/bookings/{id}/invoice": {
+            "get": {
+                "tags": [
+                    "User Bookings"
+                ],
+                "summary": "تحميل فاتورة حجز الطيران",
+                "description": "يقوم بتوليد وإرجاع رابط لفاتورة الحجز.",
+                "operationId": "downloadFlightInvoice",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Returns URL"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/user/bookings/{id}/insurance-certificate": {
+            "get": {
+                "tags": [
+                    "User Bookings"
+                ],
+                "summary": "تحميل وثيقة/شهادة التأمين لحجز الطيران",
+                "description": "يقوم بتوليد وإرجاع رابط لشهادة التأمين الرسمية.",
+                "operationId": "downloadFlightInsuranceCertificate",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Returns URL"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/user/hotel-bookings/{id}/insurance-certificate": {
+            "get": {
+                "tags": [
+                    "User Bookings"
+                ],
+                "summary": "تحميل وثيقة/شهادة التأمين لحجز الفندق",
+                "description": "يقوم بتوليد وإرجاع رابط لشهادة التأمين الرسمية للفندق.",
+                "operationId": "downloadHotelInsuranceCertificate",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Returns URL"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/user/trip-bookings/{id}/insurance-certificate": {
+            "get": {
+                "tags": [
+                    "User Bookings"
+                ],
+                "summary": "تحميل وثيقة/شهادة التأمين لحجز البكج السياحي",
+                "description": "يقوم بتوليد وإرجاع رابط لشهادة التأمين الرسمية للبرنامج السياحي.",
+                "operationId": "downloadTripInsuranceCertificate",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Returns URL"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/user/bookings/flights/{id}/cancel-quote": {
+            "get": {
+                "tags": [
+                    "User Bookings"
+                ],
+                "summary": "استعلام تكلفة وغرامة إلغاء حجز الطيران (Flight Cancellation Quote)",
+                "description": "الاستعلام عن شروط وغرامات إلغاء حجز الطيران والمبلغ الصافي المسترد قبل تأكيد الإلغاء. في حال كان الحجز معلقاً أو غير مصدر التذاكر يكون الإلغاء فورياً ومجانياً بالكامل. وفي حال كانت التذاكر مصدرة، يتم الاستعلام من شركة الطيران (GDS) عن الغرامة ومبلغ الاسترداد.",
+                "operationId": "cancelFlightQuote",
+                "parameters": [
+                    {
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "en"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Booking ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 123
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "تفاصيل غرامة واسترداد الحجز بنجاح",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Cancellation quote retrieved successfully."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "booking_id": {
+                                                    "type": "integer",
+                                                    "example": 123
+                                                },
+                                                "is_pending": {
+                                                    "description": "هل الحجز معلق ولم تصدر تذاكره بعد؟",
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "refundable": {
+                                                    "description": "هل التذكرة قابلة للاسترداد؟",
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "is_partial": {
+                                                    "description": "هل الاسترداد جزئي (استرداد ضرائب ومطارات فقط)؟",
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "badge_text": {
+                                                    "type": "string",
+                                                    "example": "تذكرة قابلة للاسترداد (REFUNDABLE)"
+                                                },
+                                                "penalty": {
+                                                    "description": "غرامة الإلغاء المقررة من شركة الطيران",
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 150
+                                                },
+                                                "refund_amount": {
+                                                    "description": "المبلغ الصافي المسترد الذي سيعاد لمحفظة العميل",
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 850
+                                                },
+                                                "currency": {
+                                                    "type": "string",
+                                                    "example": "SAR"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "التذكرة قابلة للاسترداد وفق سياسة شركة الطيران بعد خصم الغرامة الموضحة."
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "الحجز ملغى بالفعل"
+                    },
+                    "404": {
+                        "description": "الحجز غير موجود أو لا يتبع للمستخدم"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/user/bookings/flights/{id}/cancel": {
+            "post": {
+                "tags": [
+                    "User Bookings"
+                ],
+                "summary": "تأكيد إلغاء حجز الطيران واسترداد المبلغ للمحفظة (Confirm Flight Cancellation)",
+                "description": "تأكيد وإتمام إلغاء حجز الطيران نهائياً؛ يتم إلغاء التذاكر عبر مزود الطيران، وتحديث حالة الحجز إلى ملغى ومسترد، وإيداع المبلغ المسترد فوراً في محفظة العميل في المنصة، مع إرسال إشعار فوري للعميل.",
+                "operationId": "confirmCancelFlight",
+                "parameters": [
+                    {
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "en"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Booking ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 123
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "reason": {
+                                        "description": "سبب الإلغاء (اختياري)",
+                                        "type": "string",
+                                        "example": "تغيير في خطة السفر"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "تم إلغاء الحجز وإيداع المسترد بنجاح",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "تم إلغاء حجز الطيران بنجاح وتم إيداع المبلغ المسترد (850.00 SAR) في محفظتك في المنصة."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "booking_id": {
+                                                    "type": "integer",
+                                                    "example": 123
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "cancelled"
+                                                },
+                                                "ticket_status": {
+                                                    "type": "string",
+                                                    "example": "refunded"
+                                                },
+                                                "refund_amount": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 850
+                                                },
+                                                "cancellation_fee": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 150
+                                                },
+                                                "currency": {
+                                                    "type": "string",
+                                                    "example": "SAR"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "الحجز ملغى بالفعل"
+                    },
+                    "404": {
+                        "description": "الحجز غير موجود أو لا يتبع للمستخدم"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/countries": {
             "get": {
                 "tags": [
@@ -6130,6 +6702,57 @@
                 ]
             }
         },
+        "/api/v1/bookings/{id}": {
+            "get": {
+                "tags": [
+                    "Trips"
+                ],
+                "summary": "Get booking details",
+                "description": "Retrieve complete details for a specific booking. Requires authentication.",
+                "operationId": "getBookingDetails",
+                "parameters": [
+                    {
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "description": "The language of the response (ar, en)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "en",
+                            "enum": [
+                                "en",
+                                "ar"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Booking ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Booking details"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Booking not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/trips/{id}/favorite": {
             "post": {
                 "tags": [
@@ -6338,202 +6961,6 @@
                                 }
                             }
                         }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/bookings/{id}": {
-            "get": {
-                "tags": [
-                    "Trips"
-                ],
-                "summary": "Get booking details",
-                "description": "Retrieve comprehensive details of a specific booking for the authenticated user.",
-                "operationId": "getBookingDetails",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "Booking ID",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Booking details retrieved successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Booking details retrieved successfully"
-                                        },
-                                        "data": {
-                                            "properties": {
-                                                "id": {
-                                                    "type": "integer",
-                                                    "example": 101
-                                                },
-                                                "tickets_count": {
-                                                    "type": "integer",
-                                                    "example": 3
-                                                },
-                                                "total_price": {
-                                                    "type": "number",
-                                                    "example": 600
-                                                },
-                                                "status": {
-                                                    "type": "string",
-                                                    "example": "pending"
-                                                },
-                                                "booking_date": {
-                                                    "type": "string",
-                                                    "format": "date",
-                                                    "example": "2024-05-20"
-                                                },
-                                                "notes": {
-                                                    "type": "string",
-                                                    "example": "Some special requests"
-                                                },
-                                                "trip": {
-                                                    "properties": {
-                                                        "id": {
-                                                            "type": "integer",
-                                                            "example": 1
-                                                        },
-                                                        "title": {
-                                                            "type": "string",
-                                                            "example": "Amazing Paris"
-                                                        },
-                                                        "base_price": {
-                                                            "type": "number",
-                                                            "example": 500
-                                                        },
-                                                        "base_capacity": {
-                                                            "type": "integer",
-                                                            "example": 2
-                                                        },
-                                                        "extra_passenger_price": {
-                                                            "type": "number",
-                                                            "example": 100
-                                                        },
-                                                        "image": {
-                                                            "type": "string",
-                                                            "example": "http://example.com/trips/1.jpg"
-                                                        },
-                                                        "location": {
-                                                            "type": "string",
-                                                            "example": "France, Paris"
-                                                        }
-                                                    },
-                                                    "type": "object"
-                                                },
-                                                "passengers": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "properties": {
-                                                            "id": {
-                                                                "type": "integer",
-                                                                "example": 1
-                                                            },
-                                                            "name": {
-                                                                "type": "string",
-                                                                "example": "John Doe"
-                                                            },
-                                                            "phone": {
-                                                                "type": "string",
-                                                                "example": "+123456789"
-                                                            },
-                                                            "passport_number": {
-                                                                "type": "string",
-                                                                "example": "A1234567"
-                                                            },
-                                                            "nationality": {
-                                                                "type": "string",
-                                                                "example": "USA"
-                                                            },
-                                                            "passport_image": {
-                                                                "type": "string",
-                                                                "example": "http://domain.com/storage/passports/img.jpg"
-                                                            }
-                                                        },
-                                                        "type": "object"
-                                                    }
-                                                },
-                                                "booking_state": {
-                                                    "type": "string",
-                                                    "example": "preparing"
-                                                },
-                                                "booking_state_label": {
-                                                    "type": "string",
-                                                    "example": "Preparing Tickets"
-                                                },
-                                                "ticket_url": {
-                                                    "type": "string",
-                                                    "example": "https://example.com/ticket.pdf",
-                                                    "nullable": true
-                                                },
-                                                "payment_details": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "properties": {
-                                                            "method": {
-                                                                "type": "string",
-                                                                "example": "mada"
-                                                            },
-                                                            "amount": {
-                                                                "type": "number",
-                                                                "example": 600
-                                                            },
-                                                            "status": {
-                                                                "type": "string",
-                                                                "example": "paid"
-                                                            },
-                                                            "transaction_id": {
-                                                                "type": "string",
-                                                                "example": "TX123"
-                                                            },
-                                                            "date": {
-                                                                "type": "string",
-                                                                "example": "2024-05-20 14:00:00"
-                                                            },
-                                                            "receipt_url": {
-                                                                "description": "Only available for bank transfers",
-                                                                "type": "string",
-                                                                "example": "https://example.com/storage/receipts/img.jpg",
-                                                                "nullable": true
-                                                            }
-                                                        },
-                                                        "type": "object"
-                                                    }
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Booking not found"
-                    },
-                    "401": {
-                        "description": "Unauthenticated"
                     }
                 },
                 "security": [
