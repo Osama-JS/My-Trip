@@ -152,9 +152,16 @@
         @endif
         
         @php
-            $adultCount = (int)(is_array($details['adults'] ?? 1) ? reset($details['adults']) : ($details['adults'] ?? 1));
-            $childCount = (int)(is_array($details['childs'] ?? 0) ? reset($details['childs']) : ($details['childs'] ?? 0));
-            $infantCount = (int)(is_array($details['infants'] ?? 0) ? reset($details['infants']) : ($details['infants'] ?? 0));
+            $rawAdults = $details['adults'] ?? ($details['adult'] ?? 1);
+            $adultCount = is_array($rawAdults) ? (count($rawAdults) > 1 ? count($rawAdults) : (int)reset($rawAdults)) : (int)$rawAdults;
+            if ($adultCount < 1) $adultCount = 1;
+
+            $rawChilds = $details['childs'] ?? ($details['children'] ?? ($details['child'] ?? 0));
+            $childCount = is_array($rawChilds) ? (count($rawChilds) > 1 ? count($rawChilds) : (int)reset($rawChilds)) : (int)$rawChilds;
+
+            $rawInfants = $details['infants'] ?? ($details['infant'] ?? 0);
+            $infantCount = is_array($rawInfants) ? (count($rawInfants) > 1 ? count($rawInfants) : (int)reset($rawInfants)) : (int)$rawInfants;
+
             $totalPax = $adultCount + $childCount + $infantCount;
             
             $isRoundTrip = !empty($details['returnDate']) || (($details['journeyType'] ?? '') === 'Return') || (!empty($details['segments']) && is_array($details['segments']) && collect($details['segments'])->contains('is_return', true));
@@ -212,7 +219,7 @@
                                 @foreach($outboundSegments as $seg)
                                     <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; color: #334155; padding: 4px 0;">
                                         <span><strong><span class="notranslate" translate="no">{{ $seg['from'] }}</span> <i class="fas fa-long-arrow-alt-{{ app()->isLocale('ar') ? 'left' : 'right' }} mx-1"></i> <span class="notranslate" translate="no">{{ $seg['to'] }}</span></strong> @if(!empty($seg['flight_no']))<small class="text-muted notranslate" translate="no">({{ $seg['flight_no'] }})</small>@endif</span>
-                                        <span class="fw-bold">{{ $seg['dep'] }} - {{ $seg['arr'] }}</span>
+                                        <span class="fw-bold">{{ $seg['dep'] ?? '' }} - {{ $seg['arr'] ?? '' }}</span>
                                     </div>
                                 @endforeach
                             @else
@@ -238,7 +245,7 @@
                                     @foreach($returnSegments as $seg)
                                         <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; color: #0f172a; padding: 4px 0;">
                                             <span><strong><span class="notranslate" translate="no">{{ $seg['from'] }}</span> <i class="fas fa-long-arrow-alt-{{ app()->isLocale('ar') ? 'left' : 'right' }} mx-1"></i> <span class="notranslate" translate="no">{{ $seg['to'] }}</span></strong> @if(!empty($seg['flight_no']))<small class="text-muted notranslate" translate="no">({{ $seg['flight_no'] }})</small>@endif</span>
-                                            <span class="fw-bold">{{ $seg['dep'] }} - {{ $seg['arr'] }}</span>
+                                            <span class="fw-bold">{{ $seg['dep'] ?? '' }} - {{ $seg['arr'] ?? '' }}</span>
                                         </div>
                                     @endforeach
                                 @else
@@ -602,39 +609,191 @@
 </div>
 
 <!-- Visual Seat Map Modal -->
-<div class="fe-modal-overlay d-none" id="seatMapModal" style="z-index: 1060;">
-    <div class="fe-modal-dialog" style="max-width: 900px; height: 90vh;">
-        <div class="fe-modal-content" style="height: 100%; display: flex; flex-direction: column;">
-            <div class="fe-modal-header">
-                <h5 style="margin: 0; font-weight: 800; color: #0f172a;"><i class="fas fa-plane text-primary me-2"></i> {{ __('Select Your Seats') }}</h5>
-                <button type="button" class="fe-btn-close" onclick="closeVisualSeatMap()"><i class="fas fa-times"></i></button>
+<div class="fe-modal-overlay d-none" id="seatMapModal" style="z-index: 10050;">
+    <div class="fe-modal-dialog" style="max-width: 1080px; width: 95%; height: 90vh;">
+        <div class="fe-modal-content" style="height: 100%; display: flex; flex-direction: column; border-radius: 20px; overflow: hidden; box-shadow: 0 25px 60px rgba(15,23,42,0.4); border: 1px solid #cbd5e1;">
+            <div class="fe-modal-header" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; padding: 16px 24px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 15px;">
+                    <div style="display: flex; align-items: center; gap: 14px;">
+                        <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(56, 189, 248, 0.15); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3);">
+                            <i class="fas fa-plane"></i>
+                        </div>
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <h5 style="margin: 0; font-weight: 800; font-size: 1.15rem; color: #ffffff;">{{ __('Interactive Aircraft Seat Map') }}</h5>
+                                @php
+                                    $fromAirport = $details['from'] ?? ($details['segments'][0]['from'] ?? '');
+                                    $toAirport = $details['to'] ?? (isset($details['segments']) && is_array($details['segments']) ? ($details['segments'][count($details['segments']) - 1]['to'] ?? '') : '');
+                                @endphp
+                                @if(!empty($fromAirport) && !empty($toAirport))
+                                <span class="badge" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); font-size: 0.78rem; padding: 4px 10px; border-radius: 6px;">
+                                    {{ $fromAirport }} <i class="fas fa-long-arrow-alt-right mx-1"></i> {{ $toAirport }}
+                                </span>
+                                @endif
+                            </div>
+                            <span style="font-size: 0.78rem; color: #94a3b8;">{{ __('Select your preferred seat on the aircraft fuselage (Window, Aisle, Middle, or Extra Legroom)') }}</span>
+                        </div>
+                    </div>
+                    <button type="button" class="fe-btn-close" onclick="closeVisualSeatMap()" style="color: white; opacity: 0.8; background: rgba(255,255,255,0.1); width: 34px; height: 34px; border-radius: 8px; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer;"><i class="fas fa-times"></i></button>
+                </div>
             </div>
             
             <div class="fe-modal-body bg-white" style="flex: 1; overflow-y: auto; padding: 0;">
                 <div class="seat-map-layout">
-                    <!-- Left: Passengers List -->
+                    <!-- Left: Passengers List & Comprehensive Legend -->
                     <div class="seat-pax-sidebar">
-                        <h6 class="mb-3 font-weight-bold">{{ __('Passengers') }}</h6>
-                        <div id="seatPaxList"></div>
-                        <div class="seat-legend mt-4">
-                            <div class="legend-item"><div class="seat-box available"></div> {{ __('Available') }}</div>
-                            <div class="legend-item"><div class="seat-box selected"></div> {{ __('Selected') }}</div>
-                            <div class="legend-item"><div class="seat-box unavailable"></div> {{ __('Unavailable') }}</div>
+                        <div class="pax-sidebar-header">
+                            <span class="pax-badge-title"><i class="fas fa-users text-primary me-1"></i> {{ __('Passengers') }}</span>
+                            <span class="pax-instruction-hint">{{ __('Click a passenger, then choose a seat') }}</span>
                         </div>
-                        <div class="mt-auto pt-4 border-top text-center">
-                            <h5 class="text-primary mb-3">{{ __('Total') }}: <span id="seatMapTotal">0</span> SAR</h5>
-                            <button type="button" class="fe-btn fe-btn-primary w-100" onclick="confirmSeatSelection()">{{ __('Confirm Seats') }}</button>
+                        <div id="seatPaxList" class="pax-cards-container"></div>
+                        
+                        <!-- Rich Legend -->
+                        <div class="seat-legend-box mt-3">
+                            <div class="legend-header font-weight-bold mb-2">{{ __('Seat Legend & Features') }}</div>
+                            <div class="legend-grid">
+                                <div class="legend-item">
+                                    <div class="seat-box available mock"><span class="mock-txt">Free</span></div>
+                                    <div class="legend-desc">
+                                        <strong>{{ __('Available') }}</strong>
+                                        <small>{{ __('Free / Included') }}</small>
+                                    </div>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="seat-box available mock"><div class="seat-price-pill mock">+25</div></div>
+                                    <div class="legend-desc">
+                                        <strong>{{ __('Paid Seat') }}</strong>
+                                        <small>{{ __('Standard Fee') }}</small>
+                                    </div>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="seat-box selected mock"><i class="fas fa-check" style="font-size: 0.65rem;"></i></div>
+                                    <div class="legend-desc">
+                                        <strong>{{ __('Your Selection') }}</strong>
+                                        <small>{{ __('Active Passenger') }}</small>
+                                    </div>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="seat-box companion-selected mock"><span style="font-size: 0.6rem; font-weight:800;">P2</span></div>
+                                    <div class="legend-desc">
+                                        <strong>{{ __('Companion') }}</strong>
+                                        <small>{{ __('Traveling Group') }}</small>
+                                    </div>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="seat-box occupied mock"><i class="fas fa-times" style="font-size: 0.65rem; color:#94a3b8;"></i></div>
+                                    <div class="legend-desc">
+                                        <strong class="text-danger">{{ __('Occupied') }}</strong>
+                                        <small>{{ __('Cannot Select') }}</small>
+                                    </div>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-icon-badge window"><i class="fas fa-window-frame"></i></div>
+                                    <div class="legend-desc">
+                                        <strong>{{ __('Window Seat') }}</strong>
+                                        <small>{{ __('Scenic View (A, F)') }}</small>
+                                    </div>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-icon-badge aisle"><i class="fas fa-walking"></i></div>
+                                    <div class="legend-desc">
+                                        <strong>{{ __('Aisle Seat') }}</strong>
+                                        <small>{{ __('Easy Walkway (C, D)') }}</small>
+                                    </div>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-icon-badge exit"><i class="fas fa-door-open"></i></div>
+                                    <div class="legend-desc">
+                                        <strong>{{ __('Exit Row') }}</strong>
+                                        <small>{{ __('Extra Legroom') }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sidebar Footer Summary & Action -->
+                        <div class="seat-sidebar-footer mt-auto pt-3 border-top">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="text-muted font-weight-bold" style="font-size: 0.9rem;">{{ __('Total Extra Seats') }}:</span>
+                                <span class="h5 m-0 font-weight-bold text-primary"><span id="seatMapTotal">0.00</span> SAR</span>
+                            </div>
+                            <button type="button" class="fe-btn fe-btn-primary w-100 shadow-sm" onclick="confirmSeatSelection()" style="padding: 12px; font-weight: 800; border-radius: 10px; display:flex; align-items:center; justify-content:center; gap:8px;">
+                                <i class="fas fa-check-circle"></i> {{ __('Confirm Seats') }}
+                            </button>
                         </div>
                     </div>
                     
-                    <!-- Right: Aircraft Layout -->
+                    <!-- Right: Technical Blueprint / Architectural Cabin Layout -->
                     <div class="aircraft-container">
-                        <div class="aircraft-fuselage">
-                            <div class="aircraft-cockpit"></div>
-                            <div class="aircraft-body" id="aircraftSeatsContainer">
-                                <!-- Dynamic Seats Will Go Here -->
+                        <div class="blueprint-canvas">
+                            <!-- Technical Drawing Title & Orientation Bar -->
+                            <div class="blueprint-meta-bar">
+                                <div class="meta-item">
+                                    <i class="fas fa-drafting-compass text-primary me-1"></i>
+                                    <strong>{{ __('Aircraft Technical Seating Plan') }}</strong> • <span class="text-muted">{{ __('Cabin Layout Plan') }}</span>
+                                </div>
+                                <div class="meta-item orientation-tag">
+                                    <i class="fas fa-long-arrow-alt-up text-primary"></i> {{ __('Fore (Front)') }}
+                                </div>
                             </div>
-                            <div class="aircraft-tail"></div>
+
+                            <div class="aircraft-schematic-wrap">
+                                <!-- Technical Wing Outlines (Left & Right Schematic) -->
+                                <div class="schematic-wing left-wing">
+                                    <div class="wing-blueprint-line"></div>
+                                    <span class="wing-annotation"><i class="fas fa-caret-left"></i> {{ __('Overwing Area') }}</span>
+                                </div>
+                                <div class="schematic-wing right-wing">
+                                    <div class="wing-blueprint-line"></div>
+                                    <span class="wing-annotation">{{ __('Overwing Area') }} <i class="fas fa-caret-right"></i></span>
+                                </div>
+
+                                <!-- Fuselage Technical Frame -->
+                                <div class="schematic-fuselage">
+                                    <!-- Cockpit Technical Outline -->
+                                    <div class="schematic-cockpit">
+                                        <div class="cockpit-nose-curve"></div>
+                                        <div class="cockpit-windshield-outline">
+                                            <div class="glass-frame"></div>
+                                            <div class="glass-frame"></div>
+                                            <div class="glass-frame"></div>
+                                            <div class="glass-frame"></div>
+                                        </div>
+                                        <div class="cockpit-bulkhead-line">
+                                            <span class="bulkhead-label"><i class="fas fa-plane-up"></i> {{ __('Cockpit') }}</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Forward Service Zone (Galley / Lavatory / Entry Doors) -->
+                                    <div class="schematic-service-zone front-zone">
+                                        <div class="door-marker left"><i class="fas fa-door-open"></i> 1L</div>
+                                        <div class="facility-icon" title="{{ __('Lavatory') }}"><i class="fas fa-restroom"></i> <span>WC</span></div>
+                                        <div class="zone-divider-label">{{ __('Front Cabin') }}</div>
+                                        <div class="facility-icon" title="{{ __('Galley') }}"><i class="fas fa-coffee"></i> <span>{{ __('Galley') }}</span></div>
+                                        <div class="door-marker right">1R <i class="fas fa-door-open"></i></div>
+                                    </div>
+
+                                    <!-- Dynamic Seats Body -->
+                                    <div class="aircraft-body" id="aircraftSeatsContainer">
+                                        <!-- Dynamic Rows with Windows, Seats & Aisle -->
+                                    </div>
+
+                                    <!-- Aft Service Zone -->
+                                    <div class="schematic-service-zone aft-zone">
+                                        <div class="door-marker left"><i class="fas fa-door-open"></i> 2L</div>
+                                        <div class="facility-icon" title="{{ __('Lavatory') }}"><i class="fas fa-restroom"></i> <span>WC</span></div>
+                                        <div class="zone-divider-label">{{ __('Rear Cabin') }}</div>
+                                        <div class="facility-icon" title="{{ __('Lavatory') }}"><i class="fas fa-restroom"></i> <span>WC</span></div>
+                                        <div class="door-marker right">2R <i class="fas fa-door-open"></i></div>
+                                    </div>
+
+                                    <!-- Tail Schematic Outline -->
+                                    <div class="schematic-tail">
+                                        <div class="tail-datum-line"></div>
+                                        <span class="tail-annotation">{{ __('Aft (Rear)') }} <i class="fas fa-long-arrow-alt-down text-primary"></i></span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1512,24 +1671,41 @@ $(document).ready(function() {
                 $('#esLoader').hide();
                 $('#esContent').show();
 
-                if (!res.data || res.data.length === 0) {
-                    $('#esContent').hide();
+                const serviceData = (res && res.data && Array.isArray(res.data)) ? res.data : [];
+                window.rawServicesResponse = serviceData; // Store globally for visual seat map
+
+                if (serviceData.length === 0) {
                     $('#esEmptyState').show();
-                    $('.fe-es-tabs').hide();
-                    return;
+                } else {
+                    $('#esEmptyState').hide();
                 }
                 
-                window.rawServicesResponse = res.data; // Store globally for visual seat map
-                renderExtraServices(res.data);
+                renderExtraServices(serviceData);
             },
             error: function() {
-                $('#extraServicesCard').hide();
+                $('#esLoader').hide();
+                $('#esEmptyState').show();
+                renderExtraServices([]);
             }
         });
     }
 
     function renderExtraServices(services) {
-        const flightTypes = new Set(services.map(s => s.flight_type));
+        // Filter out dummy/none items returned by provider (e.g. NoBaggage 0kg, NoMeal)
+        const isDummyService = (svc) => {
+            const code = String(svc.code || '').trim().toUpperCase();
+            const desc = String(svc.description || '').trim().toLowerCase();
+            const price = parseFloat(svc.price) || 0;
+            if (['NOMEAL', 'NOBAGGAGE', 'NOSEAT', 'NONE', 'NIL', 'NO_MEAL', 'NO_BAGGAGE', 'NO_SEAT'].includes(code)) return true;
+            if (code.startsWith('NO') && price <= 0 && code.length <= 10) return true;
+            if (['0 kg', '0kg', '0 kgs', '0 k', '0lbs', '0', 'no meal', 'no baggage', 'none', 'no extra meal', 'no extra baggage'].includes(desc)) return true;
+            if (!desc && price <= 0 && (!code || code === 'NOMEAL' || code === 'NOBAGGAGE')) return true;
+            return false;
+        };
+
+        const cleanServices = (services || []).filter(s => !isDummyService(s));
+
+        const flightTypes = new Set(cleanServices.map(s => s.flight_type));
         if (flightTypes.size === 0) flightTypes.add('outbound');
 
         const grouped = {};
@@ -1539,7 +1715,7 @@ $(document).ready(function() {
             grouped['seat_' + ft] = { label: 'seat', flight: ft, items: [] };
         });
 
-        services.forEach(svc => {
+        cleanServices.forEach(svc => {
             const key = svc.type + '_' + svc.flight_type;
             if (grouped[key]) {
                 grouped[key].items.push(svc);
@@ -1550,13 +1726,19 @@ $(document).ready(function() {
         const typeLabels = { baggage: '{{ __("Baggage") }}', meal: '{{ __("Meals") }}', seat: '{{ __("Seats") }}', unknown: '{{ __("Services") }}' };
         const flightLabels = { outbound: '{{ __("Outbound") }}', inbound: '{{ __("Return") }}' };
 
+        const extraContainers = $('[id^="passenger-extras-"]');
+        const countToRender = extraContainers.length > 0 ? extraContainers.length : totalPax;
+
         // For each passenger, generate their own extra services card
-        for (let paxIdx = 0; paxIdx < totalPax; paxIdx++) {
+        for (let paxIdx = 0; paxIdx < countToRender; paxIdx++) {
             let paxHtml = `<div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; margin-top: 20px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.02);">
-                <div style="padding: 15px 20px; background: var(--gray-50); border-bottom: 1px solid #e2e8f0;">
-                    <h6 style="color: var(--primary); font-weight: 800; margin: 0;">
-                        <i class="fas fa-plus-circle me-2"></i>{{ __("Customize Trip") }}
+                <div style="padding: 12px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between;">
+                    <h6 style="color: var(--primary); font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-plus-circle"></i>{{ __("Customize Trip") }}
                     </h6>
+                    <span class="badge" style="background: rgba(15,76,129,0.1); color: var(--primary); font-size: 0.8rem; font-weight: 700; padding: 5px 12px; border-radius: 6px; border: 1px solid rgba(15,76,129,0.2);">
+                        <i class="fas fa-user me-1"></i>{{ __("Passenger") }} ${paxIdx + 1}
+                    </span>
                 </div>
                 
                 <div class="fe-es-tabs" style="border-bottom: 1px solid #e2e8f0; display: flex;">
@@ -1572,29 +1754,148 @@ $(document).ready(function() {
                 const isActive = category === 'baggage' ? 'active' : '';
                 paxHtml += `<div id="pax-${paxIdx}-${category}" class="fe-es-tab-content ${isActive}">`;
 
-                if (category === 'seat' && isVisualSeatMapEnabled) {
-                    // Only show the button if there are actually seats in the response
+                const emptyNotice = {
+                    baggage: `
+                        <div style="background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 10px; padding: 18px 20px; text-align: center; color: #475569;">
+                            <div style="width: 40px; height: 40px; border-radius: 50%; background: #e0f2fe; color: #0284c7; display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem; margin-bottom: 8px;">
+                                <i class="fas fa-suitcase-rolling"></i>
+                            </div>
+                            <div style="font-weight: 700; font-size: 0.9rem; color: #0f172a; margin-bottom: 3px;">
+                                {{ __('Standard Baggage Included') }}
+                            </div>
+                            <div style="font-size: 0.78rem; color: #64748b; line-height: 1.4;">
+                                {{ __('Standard baggage allowance is included with this ticket per airline policy. Additional dynamic baggage is not required or not offered for this fare.') }}
+                            </div>
+                        </div>
+                    `,
+                    seat: `
+                        <div style="background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 10px; padding: 18px 20px; text-align: center; color: #475569;">
+                            <div style="width: 40px; height: 40px; border-radius: 50%; background: #ede9fe; color: #7c3aed; display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem; margin-bottom: 8px;">
+                                <i class="fas fa-chair"></i>
+                            </div>
+                            <div style="font-weight: 700; font-size: 0.9rem; color: #0f172a; margin-bottom: 3px;">
+                                {{ __('Seat Assignment at Check-in') }}
+                            </div>
+                            <div style="font-size: 0.78rem; color: #64748b; line-height: 1.4;">
+                                {{ __('Seat pre-selection is not open via GDS for this flight. Seats will be automatically assigned free of charge during airline online check-in or at airport counter.') }}
+                            </div>
+                        </div>
+                    `,
+                    meal: `
+                        <div style="background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 10px; padding: 18px 20px; text-align: center; color: #475569;">
+                            <div style="width: 40px; height: 40px; border-radius: 50%; background: #fef3c7; color: #d97706; display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem; margin-bottom: 8px;">
+                                <i class="fas fa-utensils"></i>
+                            </div>
+                            <div style="font-weight: 700; font-size: 0.9rem; color: #0f172a; margin-bottom: 3px;">
+                                {{ __('Complimentary In-Flight Service') }}
+                            </div>
+                            <div style="font-size: 0.78rem; color: #64748b; line-height: 1.4;">
+                                {{ __('Standard in-flight meal service is served on board as scheduled by operating airline.') }}
+                            </div>
+                        </div>
+                    `
+                };
+
+                if (category === 'seat') {
                     let hasSeats = Object.values(grouped).some(g => g.label === 'seat' && g.items && g.items.length > 0);
                     
                     if (hasSeats) {
+                        // 1. Interactive Aircraft Map Banner
                         paxHtml += `
-                            <div class="visual-seat-map-container" style="background:white; border:2px dashed var(--primary); border-radius:12px; padding:30px; text-align:center;">
-                                <i class="fas fa-plane-departure fa-3x text-primary mb-3"></i>
-                                <h4>{{ __('Interactive Seat Selection') }}</h4>
-                                <p class="text-muted">{{ __('Select your preferred seats visually on the aircraft map for all passengers.') }}</p>
-                                <button type="button" class="fe-btn fe-btn-primary mt-3" onclick="openVisualSeatMap()">
-                                    <i class="fas fa-chair"></i> {{ __('Open Seat Map') }}
+                            <div style="background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%); border: 1.5px solid #bfdbfe; border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <div style="width: 40px; height: 40px; border-radius: 10px; background: #0f4c81; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">
+                                        <i class="fas fa-plane"></i>
+                                    </div>
+                                    <div>
+                                        <div style="font-weight: 800; font-size: 0.92rem; color: #0f172a;">
+                                            {{ __('Interactive Aircraft Seat Map') }}
+                                        </div>
+                                        <div style="font-size: 0.78rem; color: #64748b;">
+                                            {{ __('Prefer to choose visually on the plane? Open the aircraft map to pick your exact seat.') }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="button" class="fe-btn fe-btn-primary btn-sm" onclick="openVisualSeatMap(${paxIdx})" style="padding: 8px 18px; border-radius: 8px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 2px 8px rgba(15,76,129,0.25);">
+                                    <i class="fas fa-chair"></i> {{ __('Open Aircraft Map') }}
                                 </button>
                                 <input type="hidden" id="visual_seat_selections_${paxIdx}" name="visual_seat_selections" value="" class="global-seat-selections-input">
                             </div>
                         `;
+
+                        // 2. Regular/Standard Seat Selection Grid
+                        flightTypes.forEach(ft => {
+                            const key = 'seat_' + ft;
+                            const group = grouped[key];
+                            const label = (ft === 'inbound' ? '{{ __("Return") }}' : '{{ __("Outbound") }}') + ' {{ __("Seats Selection") }}';
+                            const fieldName = ft === 'inbound' ? `passengers[${paxIdx}][extra_services_inbound][]` : `passengers[${paxIdx}][extra_services_outbound][]`;
+                            
+                            paxHtml += `
+                            <div class="mb-4">
+                                <div style="font-weight: 700; color: #475569; font-size: 0.88rem; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
+                                    <span><i class="fas fa-chair me-1"></i> ${label}</span>
+                                    <span class="text-muted small">({{ __('Or select directly from below') }})</span>
+                                </div>`;
+
+                            if (!group || group.items.length === 0) {
+                                paxHtml += emptyNotice.seat;
+                            } else {
+                                paxHtml += `
+                                <div class="es-options-grid" style="display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); max-height: 420px; overflow-y: auto; padding: 4px;">
+                                    <label class="es-card-option" style="cursor:pointer;">
+                                        <input type="radio" name="extra_${key}_pax${paxIdx}" value="" data-price="0" checked onchange="handleSeatCardSelection(${paxIdx}, this)" style="display:none;">
+                                        <div class="es-card-content" style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; text-align: center; background: white; transition: all 0.2s; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                                            <i class="fas fa-times-circle" style="color:#94a3b8; font-size:1.2rem; margin-bottom:6px;"></i>
+                                            <span style="font-weight:600; color:#334155; font-size:0.85rem;">{{ __("No Seat Preference") }}</span>
+                                            <span style="font-size:0.75rem; color:#64748b; margin-top:2px;">{{ __("Assigned at Check-in") }}</span>
+                                        </div>
+                                    </label>`;
+                                    
+                                group.items.forEach(svc => {
+                                    if (svc.available === false || svc.status === 'occupied') return;
+                                    const numPrice = parseFloat(svc.price) || 0;
+                                    const priceHtml = numPrice <= 0
+                                        ? `<span class="badge" style="background:#ecfdf5; color:#059669; font-weight:800; font-size:0.8rem; padding:4px 8px; border-radius:6px; border:1px solid #a7f3d0;"><i class="fas fa-check-circle me-1"></i> {{ __('Free / Included') }}</span>`
+                                        : `<span style="color:#0f766e; font-weight:800; font-size:0.9rem;">+${numPrice.toFixed(2)} ${svc.currency}</span>`;
+
+                                    let typeBadge = '';
+                                    if (svc.type_text) {
+                                        let icon = 'fa-chair';
+                                        let tLower = svc.type_text.toLowerCase();
+                                        if (tLower.includes('window')) icon = 'fa-window-frame text-primary';
+                                        else if (tLower.includes('aisle')) icon = 'fa-walking text-info';
+                                        else if (tLower.includes('exit')) icon = 'fa-door-open text-warning';
+                                        typeBadge = `<span class="badge bg-light text-dark border font-weight-normal" style="font-size:0.72rem; margin-bottom:5px; padding: 3px 6px;"><i class="fas ${icon} me-1"></i> ${svc.type_text}</span>`;
+                                    }
+
+                                    paxHtml += `
+                                        <label class="es-card-option" style="cursor:pointer;" id="seat-card-opt-${paxIdx}-${svc.code}">
+                                            <input type="radio"
+                                                   name="extra_${key}_pax${paxIdx}"
+                                                   value="${svc.code}"
+                                                   data-field="${fieldName}"
+                                                   data-price="${numPrice}"
+                                                   data-desc="${escapeHtml(svc.description)}"
+                                                   data-pax="${paxIdx}"
+                                                   data-type="seat"
+                                                   data-currency="${svc.currency || 'SAR'}"
+                                                   data-flight-type="${ft}"
+                                                   onchange="handleSeatCardSelection(${paxIdx}, this)" style="display:none;">
+                                            <div class="es-card-content" style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; text-align: center; background: white; transition: all 0.2s; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                                                <i class="fas fa-chair" style="color:var(--primary); font-size:1.2rem; margin-bottom:6px;"></i>
+                                                <span style="font-weight:700; color:#0f172a; font-size:0.9rem; line-height:1.2; margin-bottom:3px;">${escapeHtml(svc.description)}</span>
+                                                ${typeBadge}
+                                                ${priceHtml}
+                                            </div>
+                                        </label>`;
+                                });
+                                
+                                paxHtml += `</div>`;
+                            }
+                            paxHtml += `</div>`;
+                        });
                     } else {
-                        paxHtml += `
-                            <div style="background: white; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 15px; text-align: center; color: #64748b; font-size: 0.9rem;">
-                                <i class="fas fa-info-circle mb-2" style="font-size:1.2rem; color:#94a3b8;"></i><br>
-                                {{ __("No options available for") }} ${typeLabels[category]}
-                            </div>
-                        `;
+                        paxHtml += emptyNotice.seat;
                     }
                 } else {
                     flightTypes.forEach(ft => {
@@ -1611,7 +1912,7 @@ $(document).ready(function() {
                             </div>`;
                             
                         if (!group || group.items.length === 0) {
-                            paxHtml += `
+                            paxHtml += emptyNotice[category] || `
                             <div style="background: white; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 15px; text-align: center; color: #64748b; font-size: 0.9rem;">
                                 <i class="fas fa-info-circle mb-2" style="font-size:1.2rem; color:#94a3b8;"></i><br>
                                 {{ __("No options available for") }} ${typeLabels[category]}
@@ -1628,18 +1929,28 @@ $(document).ready(function() {
                                 </label>`;
                                 
                             group.items.forEach(svc => {
+                                const numPrice = parseFloat(svc.price) || 0;
+                                const priceHtml = numPrice <= 0
+                                    ? `<span class="badge" style="background:#ecfdf5; color:#059669; font-weight:800; font-size:0.8rem; padding:4px 8px; border-radius:6px; border:1px solid #a7f3d0;"><i class="fas fa-check-circle me-1"></i> {{ __('Free / Included') }}</span>`
+                                    : `<span style="color:#0f766e; font-weight:800; font-size:0.9rem;">+${numPrice.toFixed(2)} ${svc.currency}</span>`;
+
                                 paxHtml += `
                                     <label class="es-card-option" style="cursor:pointer;">
                                         <input type="radio"
                                                name="extra_${key}_pax${paxIdx}"
                                                value="${svc.code}"
                                                data-field="${fieldName}"
-                                               data-price="${svc.price}"
+                                               data-price="${numPrice}"
+                                               data-pax="${paxIdx}"
+                                               data-type="${category}"
+                                               data-desc="${escapeHtml(svc.description)}"
+                                               data-currency="${svc.currency || 'SAR'}"
+                                               data-flight-type="${ft}"
                                                onchange="updateExtraTotal()" style="display:none;">
                                         <div class="es-card-content" style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; text-align: center; background: white; transition: all 0.2s; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;">
                                             <i class="fas ${icon}" style="color:var(--primary); font-size:1.2rem; margin-bottom:8px;"></i>
-                                            <span style="font-weight:600; color:#334155; font-size:0.85rem; line-height:1.2; margin-bottom:4px;">${svc.description}</span>
-                                            <span style="color:#10b981; font-weight:800; font-size:0.9rem;">+${svc.price} ${svc.currency}</span>
+                                            <span style="font-weight:600; color:#334155; font-size:0.85rem; line-height:1.2; margin-bottom:6px;">${escapeHtml(svc.description)}</span>
+                                            ${priceHtml}
                                         </div>
                                     </label>`;
                             });
@@ -1698,31 +2009,81 @@ $(document).ready(function() {
         // Clear all previous hidden fields for extra services to prevent duplicates
         $('input[name*="extra_services_"]').remove();
         $('.visual-seat-input').remove();
-        $('input[name^="extra_"]:checked').each(function() {
-            const price = parseFloat($(this).data('price')) || 0;
-            total += price;
+        $('.extra-detail-input').remove();
 
-            // Sync to actual form field
+        let paxDetails = {};
+
+        $('input[name^="extra_"]:checked').each(function() {
+            const code = $(this).val();
+            const price = parseFloat($(this).data('price')) || 0;
             const fieldName = $(this).data('field');
-            if (fieldName && $(this).val()) {
-                $('<input>').attr({ type: 'hidden', name: fieldName, value: $(this).val() }).appendTo('#flightBookingForm');
+            const paxIdx = $(this).data('pax');
+            const type = $(this).data('type') || '';
+            const desc = $(this).data('desc') || '';
+            const curr = $(this).data('currency') || 'SAR';
+            const ft = $(this).data('flight-type') || 'outbound';
+
+            if (code && code !== '') {
+                total += price;
+
+                // Sync to actual form field
+                if (fieldName) {
+                    $('<input>').attr({ type: 'hidden', name: fieldName, value: code }).appendTo('#flightBookingForm');
+                }
+
+                // Collect structured detail
+                if (typeof paxIdx !== 'undefined') {
+                    if (!paxDetails[paxIdx]) paxDetails[paxIdx] = [];
+                    paxDetails[paxIdx].push({
+                        type: type || 'service',
+                        code: code,
+                        description: desc || code,
+                        price: price,
+                        currency: curr,
+                        flight_type: ft
+                    });
+                }
             }
         });
 
-        // Add Visual Seat Map selections if available
+        // Add Visual Seat Map selections if available and not already captured via standard radio
         let seatSelections = $('.global-seat-selections-input').first().val();
         if (seatSelections) {
             try {
                 let parsedSeats = JSON.parse(seatSelections);
                 Object.entries(parsedSeats).forEach(([paxId, seat]) => {
-                    total += parseFloat(seat.price) || 0;
-                    
-                    // Add as hidden field to pass to backend (assuming outbound for now, backend could split it)
-                    let fieldName = `passengers[${paxId}][extra_services_outbound][]`;
-                    $('<input>').attr({ type: 'hidden', name: fieldName, value: seat.code, class: 'visual-seat-input' }).appendTo('#flightBookingForm');
+                    let alreadyChecked = $(`input[name*="seat_"][name*="pax${paxId}"][value="${seat.code}"]:checked`).length > 0;
+                    if (!alreadyChecked && seat && seat.code) {
+                        const seatPrice = parseFloat(seat.price) || 0;
+                        total += seatPrice;
+                        let fieldName = `passengers[${paxId}][extra_services_outbound][]`;
+                        $('<input>').attr({ type: 'hidden', name: fieldName, value: seat.code, class: 'visual-seat-input' }).appendTo('#flightBookingForm');
+
+                        if (!paxDetails[paxId]) paxDetails[paxId] = [];
+                        paxDetails[paxId].push({
+                            type: 'seat',
+                            code: seat.code,
+                            description: seat.description || ('Seat ' + seat.code),
+                            price: seatPrice,
+                            currency: 'SAR',
+                            flight_type: 'outbound'
+                        });
+                    }
                 });
             } catch(e) {}
         }
+
+        // Serialize structured details to ensure backend, voucher & customer views have full data
+        Object.entries(paxDetails).forEach(([paxIdx, details]) => {
+            details.forEach((item, itemIdx) => {
+                $('<input>').attr({ type: 'hidden', class: 'extra-detail-input', name: `passengers[${paxIdx}][extra_services_details][${itemIdx}][type]`, value: item.type }).appendTo('#flightBookingForm');
+                $('<input>').attr({ type: 'hidden', class: 'extra-detail-input', name: `passengers[${paxIdx}][extra_services_details][${itemIdx}][code]`, value: item.code }).appendTo('#flightBookingForm');
+                $('<input>').attr({ type: 'hidden', class: 'extra-detail-input', name: `passengers[${paxIdx}][extra_services_details][${itemIdx}][description]`, value: item.description }).appendTo('#flightBookingForm');
+                $('<input>').attr({ type: 'hidden', class: 'extra-detail-input', name: `passengers[${paxIdx}][extra_services_details][${itemIdx}][price]`, value: item.price }).appendTo('#flightBookingForm');
+                $('<input>').attr({ type: 'hidden', class: 'extra-detail-input', name: `passengers[${paxIdx}][extra_services_details][${itemIdx}][currency]`, value: item.currency }).appendTo('#flightBookingForm');
+                $('<input>').attr({ type: 'hidden', class: 'extra-detail-input', name: `passengers[${paxIdx}][extra_services_details][${itemIdx}][flight_type]`, value: item.flight_type }).appendTo('#flightBookingForm');
+            });
+        });
 
         extraServicesTotal = total;
         if (total > 0) {
@@ -1855,43 +2216,83 @@ $(document).ready(function() {
     let selectedSeatsByPax = {}; // { paxIndex: { code, description, price } }
     let selectedSeatsGlobal = new Set(); // To mark seats taken by our own group
 
-    window.openVisualSeatMap = function() {
+    window.openVisualSeatMap = function(targetPaxIdx) {
+        if (typeof targetPaxIdx !== 'undefined' && targetPaxIdx !== null) {
+            currentSeatPaxIndex = parseInt(targetPaxIdx, 10);
+        }
         // Extract raw seat services
-        rawSeatServices = window.rawServicesResponse.filter(s => s.type === 'seat');
+        rawSeatServices = (window.rawServicesResponse || []).filter(s => s.type === 'seat');
         if (rawSeatServices.length === 0) {
-            Swal.fire({
-                icon: 'info',
-                title: '{{ __("No Seats Available") }}',
-                text: '{{ __("The airline has not provided interactive seat map data for this flight. You may be assigned a seat at check-in.") }}',
-                confirmButtonText: '{{ __("OK") }}',
-                confirmButtonColor: '#0f4c81'
-            });
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'info',
+                    title: '{{ __("No Seats Available") }}',
+                    text: '{{ __("The airline has not provided interactive seat map data for this flight. You may be assigned a seat at check-in.") }}',
+                    confirmButtonText: '{{ __("OK") }}',
+                    confirmButtonColor: '#0f4c81'
+                });
+            } else {
+                alert('{{ __("The airline has not provided interactive seat map data for this flight. You may be assigned a seat at check-in.") }}');
+            }
             return;
         }
 
         buildSeatPaxList();
         buildAircraftLayout();
-        $('#seatMapModal').removeClass('d-none');
+        const modal = document.getElementById('seatMapModal');
+        if (modal) {
+            modal.classList.remove('d-none');
+            setTimeout(() => modal.classList.add('show'), 10);
+            $('body').addClass('modal-open');
+        }
     };
 
     window.closeVisualSeatMap = function() {
-        $('#seatMapModal').addClass('d-none');
+        const modal = document.getElementById('seatMapModal');
+        if (modal) {
+            modal.classList.remove('show');
+            setTimeout(() => modal.classList.add('d-none'), 250);
+            $('body').removeClass('modal-open');
+        }
     };
 
     function buildSeatPaxList() {
         let html = '';
-        for (let i = 0; i < totalPax; i++) {
+        const extraContainers = $('[id^="passenger-extras-"]');
+        const count = extraContainers.length > 0 ? extraContainers.length : totalPax;
+        for (let i = 0; i < count; i++) {
             let activeCls = i === currentSeatPaxIndex ? 'active' : '';
-            let selectedTxt = selectedSeatsByPax[i] ? selectedSeatsByPax[i].description : '{{ __("Not Selected") }}';
-            let priceTxt = selectedSeatsByPax[i] ? `+${selectedSeatsByPax[i].price} SAR` : '';
+            let seat = selectedSeatsByPax[i];
             
-            html += `<div class="seat-pax-item ${activeCls}" onclick="selectPaxForSeat(${i})">
-                <div class="pax-name"><i class="fas fa-user"></i> {{ __("Passenger") }} ${i+1}</div>
-                <div class="pax-seat-status text-muted small" id="pax-seat-status-${i}">
-                    <span>${selectedTxt}</span>
-                    <strong class="text-success ms-1">${priceTxt}</strong>
+            let statusHtml = '';
+            if (seat && seat.code) {
+                let p = parseFloat(seat.price) || 0;
+                let priceTxt = p > 0 ? `+${p.toFixed(2)} SAR` : '{{ __("Free") }}';
+                statusHtml = `
+                    <div class="pax-seat-badge-selected">
+                        <span class="badge-seat-code"><i class="fas fa-chair me-1"></i> ${escapeHtml(seat.seat_label || seat.description)}</span>
+                        <span class="badge-seat-price">${priceTxt}</span>
+                    </div>
+                `;
+            } else {
+                statusHtml = `
+                    <div class="pax-seat-badge-empty">
+                        <i class="fas fa-plus-circle me-1"></i> {{ __("Click to select seat") }}
+                    </div>
+                `;
+            }
+
+            html += `
+                <div class="seat-pax-card ${activeCls}" onclick="selectPaxForSeat(${i})">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <div class="pax-card-name">
+                            <i class="fas fa-user-circle me-1 text-primary"></i> {{ __("Passenger") }} ${i+1}
+                        </div>
+                        <span class="pax-active-pill">{{ __("Active") }}</span>
+                    </div>
+                    ${statusHtml}
                 </div>
-            </div>`;
+            `;
         }
         $('#seatPaxList').html(html);
         updateSeatMapTotal();
@@ -1899,78 +2300,282 @@ $(document).ready(function() {
 
     window.selectPaxForSeat = function(idx) {
         currentSeatPaxIndex = idx;
-        $('.seat-pax-item').removeClass('active');
-        $($('.seat-pax-item')[idx]).addClass('active');
+        $('.seat-pax-card').removeClass('active');
+        $($('.seat-pax-card')[idx]).addClass('active');
+        buildAircraftLayout();
     };
 
     function buildAircraftLayout() {
-        // Simple visualization: group seats into rows based on the number of services
-        // A real map would parse X,Y coordinates or seat numbers (e.g. 12A, 12B, 12C)
-        let html = '<div class="aircraft-grid">';
-        
-        // Group by an arbitrary row length just for visual if seat map is a list
-        let rowLength = 6; // 3-3 config
-        
-        let rowHtml = '<div class="aircraft-row">';
-        let aislePos = Math.floor(rowLength / 2);
-        
+        if (!rawSeatServices || rawSeatServices.length === 0) {
+            $('#aircraftSeatsContainer').html(`
+                <div class="text-center py-5 text-muted">
+                    <i class="fas fa-chair fa-3x mb-3 text-secondary"></i>
+                    <p>{{ __("No seat map data available from airline") }}</p>
+                </div>
+            `);
+            return;
+        }
+
+        // Group seats by row
+        let rowsMap = {};
+        let hasRealRows = false;
+
         rawSeatServices.forEach((svc, index) => {
-            let posInRow = index % rowLength;
-            if (posInRow === 0 && index > 0) {
-                rowHtml += '</div><div class="aircraft-row">'; // New row
+            let rowNum = svc.row ? parseInt(svc.row, 10) : null;
+            if (rowNum && !isNaN(rowNum) && rowNum > 0) {
+                hasRealRows = true;
+                if (!rowsMap[rowNum]) rowsMap[rowNum] = [];
+                rowsMap[rowNum].push(svc);
             }
-            if (posInRow === aislePos) {
-                rowHtml += '<div class="aisle"></div>'; // Aisle
+        });
+
+        if (!hasRealRows || Object.keys(rowsMap).length === 0) {
+            const chunkSize = 6;
+            for (let i = 0; i < rawSeatServices.length; i += chunkSize) {
+                let rNum = Math.floor(i / chunkSize) + 1;
+                rowsMap[rNum] = rawSeatServices.slice(i, i + chunkSize);
             }
+        }
+
+        let sortedRowKeys = Object.keys(rowsMap).map(Number).sort((a, b) => a - b);
+        let totalRows = sortedRowKeys.length;
+
+        let html = '';
+
+        // Column Headers Bar (A B C | AISLE | D E F)
+        html += `
+            <div class="aircraft-col-headers">
+                <div class="col-head-trio left-trio">
+                    <div class="col-head-item window">
+                        <span class="col-letter">A</span>
+                        <span class="col-tag"><i class="fas fa-window-frame"></i> {{ __('Window') }}</span>
+                    </div>
+                    <div class="col-head-item middle">
+                        <span class="col-letter">B</span>
+                        <span class="col-tag">{{ __('Middle') }}</span>
+                    </div>
+                    <div class="col-head-item aisle">
+                        <span class="col-letter">C</span>
+                        <span class="col-tag"><i class="fas fa-walking"></i> {{ __('Aisle') }}</span>
+                    </div>
+                </div>
+                <div class="col-head-aisle">
+                    <span class="aisle-title"><i class="fas fa-arrows-alt-v"></i> {{ __('Aisle') }}</span>
+                </div>
+                <div class="col-head-trio right-trio">
+                    <div class="col-head-item aisle">
+                        <span class="col-letter">D</span>
+                        <span class="col-tag"><i class="fas fa-walking"></i> {{ __('Aisle') }}</span>
+                    </div>
+                    <div class="col-head-item middle">
+                        <span class="col-letter">E</span>
+                        <span class="col-tag">{{ __('Middle') }}</span>
+                    </div>
+                    <div class="col-head-item window">
+                        <span class="col-letter">F</span>
+                        <span class="col-tag"><i class="fas fa-window-frame"></i> {{ __('Window') }}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        sortedRowKeys.forEach((rowNum, rIdx) => {
+            let rowSeats = rowsMap[rowNum] || [];
             
-            // Check if this seat code is already selected by another passenger in our group
-            let isSelectedByMe = selectedSeatsByPax[currentSeatPaxIndex] && selectedSeatsByPax[currentSeatPaxIndex].code === svc.code;
-            let isTakenByOther = false;
-            Object.keys(selectedSeatsByPax).forEach(paxId => {
-                if (paxId != currentSeatPaxIndex && selectedSeatsByPax[paxId] && selectedSeatsByPax[paxId].code === svc.code) {
-                    isTakenByOther = true;
+            let slotMap = { A: null, B: null, C: null, D: null, E: null, F: null };
+            let unassignedSeats = [];
+
+            rowSeats.forEach(s => {
+                let letter = (s.seat || '').trim().toUpperCase();
+                if (!letter && s.seat_label) {
+                    letter = s.seat_label.replace(/[0-9]/g, '').trim().toUpperCase();
+                }
+                if (['A', 'B', 'C', 'D', 'E', 'F'].includes(letter) && !slotMap[letter]) {
+                    slotMap[letter] = s;
+                } else {
+                    unassignedSeats.push(s);
                 }
             });
 
-            let seatClass = 'available';
-            if (isSelectedByMe) seatClass = 'selected';
-            else if (isTakenByOther) seatClass = 'unavailable';
+            ['A', 'B', 'C', 'D', 'E', 'F'].forEach(letter => {
+                if (!slotMap[letter] && unassignedSeats.length > 0) {
+                    slotMap[letter] = unassignedSeats.shift();
+                }
+            });
 
-            let seatLabel = svc.description.split(' ').pop(); // Try to get seat number like '12A'
-            if (seatLabel.length > 4) seatLabel = '';
+            // Detect Exit Rows (e.g. overwing exit rows around middle of aircraft, or marked in type_text)
+            let isExitRow = rowSeats.some(s => (s.type_text || '').toLowerCase().includes('exit')) 
+                         || (totalRows > 15 && (rIdx === Math.floor(totalRows * 0.42) || rIdx === Math.floor(totalRows * 0.46)));
 
-            rowHtml += `<div class="seat-box ${seatClass}" 
-                             onclick="toggleSeatSelection('${svc.code}', '${svc.description}', ${svc.price})"
-                             title="${svc.description} - ${svc.price} ${svc.currency}">
-                            ${seatLabel}
-                        </div>`;
+            if (isExitRow) {
+                html += `
+                    <div class="aircraft-exit-row-banner">
+                        <div class="exit-door-pill left"><i class="fas fa-door-open"></i> EXIT</div>
+                        <div class="exit-label">
+                            <i class="fas fa-exclamation-circle text-warning me-1"></i> {{ __('Emergency Exit Row') }} • {{ __('Extra Legroom') }}
+                        </div>
+                        <div class="exit-door-pill right">EXIT <i class="fas fa-door-open"></i></div>
+                    </div>
+                `;
+            }
+
+            html += `<div class="aircraft-cabin-row ${isExitRow ? 'is-exit-row' : ''}">`;
+
+            // Left Fuselage Airplane Oval Window
+            html += `<div class="cabin-window left-window" title="{{ __('Window') }} (A)"><div class="oval-inner"></div></div>`;
+
+            // Left Trio (A, B, C)
+            html += `<div class="cabin-trio left-trio">`;
+            ['A', 'B', 'C'].forEach(l => {
+                html += renderSingleSeat(slotMap[l], rowNum, l);
+            });
+            html += `</div>`;
+
+            // Central Aisle with Walking Floor Carpet Track and Row Number
+            html += `
+                <div class="cabin-aisle-track">
+                    <span class="row-num-indicator" title="{{ __('Row') }} ${rowNum}">${rowNum}</span>
+                </div>
+            `;
+
+            // Right Trio (D, E, F)
+            html += `<div class="cabin-trio right-trio">`;
+            ['D', 'E', 'F'].forEach(l => {
+                html += renderSingleSeat(slotMap[l], rowNum, l);
+            });
+            html += `</div>`;
+
+            // Right Fuselage Airplane Oval Window
+            html += `<div class="cabin-window right-window" title="{{ __('Window') }} (F)"><div class="oval-inner"></div></div>`;
+
+            html += `</div>`; // Close row
         });
-        
-        rowHtml += '</div>';
-        html += rowHtml + '</div>';
-        
+
         $('#aircraftSeatsContainer').html(html);
     }
 
+    function renderSingleSeat(svc, rowNum, defaultLetter) {
+        if (!svc) {
+            return `<div class="seat-box-empty"></div>`;
+        }
+
+        let isOccupied = (svc.available === false || svc.status === 'occupied');
+        let seatLabel = svc.seat_label || (rowNum + defaultLetter);
+        let numPrice = parseFloat(svc.price) || 0;
+        let priceFormatted = numPrice > 0 ? `${numPrice} ${svc.currency || 'SAR'}` : '{{ __("Free") }}';
+        
+        let typeText = svc.type_text || '';
+        let typeBadge = '';
+        let typeIcon = '';
+        if (['A', 'F'].includes(defaultLetter) || typeText.toLowerCase().includes('window')) {
+            typeBadge = 'is-window';
+            typeIcon = '<i class="fas fa-window-frame seat-feature-icon" title="{{ __("Window Seat") }}"></i>';
+        } else if (['C', 'D'].includes(defaultLetter) || typeText.toLowerCase().includes('aisle')) {
+            typeBadge = 'is-aisle';
+            typeIcon = '<i class="fas fa-walking seat-feature-icon" title="{{ __("Aisle Seat") }}"></i>';
+        } else {
+            typeBadge = 'is-middle';
+        }
+
+        let isSelectedByMe = selectedSeatsByPax[currentSeatPaxIndex] && selectedSeatsByPax[currentSeatPaxIndex].code === svc.code;
+        
+        let companionPaxIdx = null;
+        Object.keys(selectedSeatsByPax).forEach(paxId => {
+            if (paxId != currentSeatPaxIndex && selectedSeatsByPax[paxId] && selectedSeatsByPax[paxId].code === svc.code) {
+                companionPaxIdx = parseInt(paxId, 10);
+            }
+        });
+
+        let seatClass = 'available';
+        let clickAttr = `onclick="handleAircraftSeatClick(this)"`;
+        let statusTitle = `${seatLabel} (${typeText || defaultLetter}) - ${priceFormatted} - {{ __("Available") }}`;
+        let innerStatus = '';
+
+        if (isOccupied) {
+            seatClass = 'occupied';
+            clickAttr = `onclick="handleOccupiedSeatClick('${escapeHtml(seatLabel)}')"` ;
+            statusTitle = `${seatLabel} (${typeText || defaultLetter}) - {{ __("Occupied / Unavailable") }}`;
+            innerStatus = '<i class="fas fa-times occupied-x"></i>';
+        } else if (isSelectedByMe) {
+            seatClass = 'selected';
+            statusTitle = `${seatLabel} - {{ __("Selected for current passenger") }}`;
+            innerStatus = '<i class="fas fa-check selected-check"></i>';
+        } else if (companionPaxIdx !== null) {
+            seatClass = 'companion-selected';
+            statusTitle = `${seatLabel} - {{ __("Selected for Passenger") }} ${companionPaxIdx + 1}`;
+            innerStatus = `<span class="companion-pax-tag">P${companionPaxIdx + 1}</span>`;
+        }
+
+        return `
+            <div class="seat-box ${seatClass} ${typeBadge}"
+                 data-code="${escapeHtml(svc.code)}"
+                 data-desc="${escapeHtml(svc.description)}"
+                 data-price="${numPrice}"
+                 data-label="${escapeHtml(seatLabel)}"
+                 data-type="${escapeHtml(typeText || defaultLetter)}"
+                 ${clickAttr}
+                 title="${escapeHtml(statusTitle)}">
+                <div class="seat-headrest"></div>
+                <div class="seat-inner-cushion">
+                    <span class="seat-lbl">${seatLabel}</span>
+                    ${innerStatus}
+                </div>
+                ${typeIcon}
+                <div class="seat-cost-tag">${numPrice > 0 ? numPrice : '{{ __("Free") }}'}</div>
+            </div>
+        `;
+    }
+
+    window.handleOccupiedSeatClick = function(seatLabel) {
+        if (typeof toastr !== 'undefined') {
+            toastr.error(`{{ __('This seat is already occupied and cannot be selected.') }} (${seatLabel})`);
+        } else if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'error',
+                title: '{{ __("Occupied Seat") }}',
+                text: `{{ __("This seat is already occupied and cannot be selected.") }} (${seatLabel})`,
+                confirmButtonColor: '#0f4c81'
+            });
+        } else {
+            alert(`{{ __('This seat is already occupied and cannot be selected.') }} (${seatLabel})`);
+        }
+    };
+
+    window.handleAircraftSeatClick = function(el) {
+        const code = $(el).data('code');
+        const desc = $(el).data('desc');
+        const price = parseFloat($(el).data('price')) || 0;
+        toggleSeatSelection(code, desc, price);
+    };
+
     window.toggleSeatSelection = function(code, desc, price) {
-        // Is it already taken by someone else?
+        // Is it already taken by a companion?
         let takenByOther = false;
+        let otherPaxName = '';
         Object.keys(selectedSeatsByPax).forEach(paxId => {
             if (paxId != currentSeatPaxIndex && selectedSeatsByPax[paxId] && selectedSeatsByPax[paxId].code === code) {
                 takenByOther = true;
+                otherPaxName = `{{ __("Passenger") }} ${parseInt(paxId, 10) + 1}`;
             }
         });
-        if (takenByOther) return;
+        if (takenByOther) {
+            if (typeof toastr !== 'undefined') {
+                toastr.warning(`{{ __('Seat already selected by another passenger in your group.') }} (${otherPaxName})`);
+            }
+            return;
+        }
 
         // Toggle selection for current pax
         if (selectedSeatsByPax[currentSeatPaxIndex] && selectedSeatsByPax[currentSeatPaxIndex].code === code) {
             delete selectedSeatsByPax[currentSeatPaxIndex]; // Deselect
         } else {
-            selectedSeatsByPax[currentSeatPaxIndex] = { code, description: desc, price }; // Select
+            selectedSeatsByPax[currentSeatPaxIndex] = { code, description: desc, price: parseFloat(price) || 0 }; // Select
             
             // Auto advance to next passenger if available
-            if (currentSeatPaxIndex < totalPax - 1) {
-                selectPaxForSeat(currentSeatPaxIndex + 1);
+            const extraContainers = $('[id^="passenger-extras-"]');
+            const maxPax = extraContainers.length > 0 ? extraContainers.length : totalPax;
+            if (currentSeatPaxIndex < maxPax - 1) {
+                currentSeatPaxIndex++;
             }
         }
         
@@ -1988,12 +2593,42 @@ $(document).ready(function() {
 
     window.confirmSeatSelection = function() {
         $('.global-seat-selections-input').val(JSON.stringify(selectedSeatsByPax));
+        
+        // Synchronize selected seats with standard radio cards
+        Object.entries(selectedSeatsByPax).forEach(([paxId, seat]) => {
+            const radio = $(`input[name*="seat_"][name*="pax${paxId}"][value="${seat.code}"]`);
+            if (radio.length) {
+                radio.prop('checked', true);
+            }
+        });
+
         updateExtraTotal();
         closeVisualSeatMap();
         
         if (typeof toastr !== 'undefined') {
             toastr.success('{{ __("Seats confirmed successfully") }}');
         }
+    };
+
+    window.handleSeatCardSelection = function(paxIdx, elOrCode, maybeDesc, maybePrice) {
+        let code, desc, price;
+        if (elOrCode && typeof elOrCode === 'object' && ('value' in elOrCode || elOrCode.nodeType)) {
+            code = $(elOrCode).val();
+            desc = $(elOrCode).data('desc') || '';
+            price = parseFloat($(elOrCode).data('price')) || 0;
+        } else {
+            code = elOrCode;
+            desc = maybeDesc || '';
+            price = parseFloat(maybePrice) || 0;
+        }
+
+        if (!code) {
+            delete selectedSeatsByPax[paxIdx];
+        } else {
+            selectedSeatsByPax[paxIdx] = { code, description: desc, price: parseFloat(price) || 0 };
+        }
+        $('.global-seat-selections-input').val(JSON.stringify(selectedSeatsByPax));
+        updateExtraTotal();
     };
 
     // ═══ PASSPORT OCR LOGIC WITH MODAL & CROPPER ═══
@@ -3010,112 +3645,624 @@ $(document).ready(function() {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Visual Seat Map CSS */
+/* Visual Seat Map Professional Aircraft CSS */
 .seat-map-layout {
     display: flex;
     height: 100%;
-    min-height: 500px;
+    min-height: 580px;
 }
 .seat-pax-sidebar {
-    width: 250px;
-    background: white;
-    border-right: 1px solid var(--gray-200);
-    padding: 20px;
+    width: 300px;
+    background: #ffffff;
+    border-right: 1px solid #e2e8f0;
+    padding: 18px;
     display: flex;
     flex-direction: column;
-}
-.seat-pax-item {
-    padding: 12px;
-    border: 1px solid var(--gray-200);
-    border-radius: 8px;
-    margin-bottom: 10px;
-    cursor: pointer;
-    transition: all 0.2s;
-    background: #f8f9fa;
-}
-.seat-pax-item.active {
-    border-color: var(--primary);
-    background: rgba(15,76,129,0.05);
-    box-shadow: 0 0 0 2px rgba(15,76,129,0.1);
-}
-.pax-name { font-weight: 700; color: var(--dark); font-size: 0.9rem; }
-.seat-legend .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 8px;
-    font-size: 0.85rem;
-    color: var(--gray-600);
-}
-.aircraft-container {
-    flex: 1;
-    background: #e2e8f0;
-    padding: 30px;
-    display: flex;
-    justify-content: center;
     overflow-y: auto;
+    flex-shrink: 0;
 }
-.aircraft-fuselage {
-    background: white;
-    border-radius: 60px 60px 20px 20px;
-    padding: 40px 20px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    position: relative;
-    border: 2px solid #cbd5e1;
+.pax-sidebar-header {
+    margin-bottom: 12px;
 }
-.aircraft-cockpit {
-    height: 40px;
-    border-bottom: 2px dashed #cbd5e1;
-    margin-bottom: 30px;
+.pax-badge-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #0f172a;
+    display: block;
 }
-.aircraft-grid {
+.pax-instruction-hint {
+    font-size: 0.74rem;
+    color: #64748b;
+    display: block;
+    margin-top: 2px;
+}
+.pax-cards-container {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-}
-.aircraft-row {
-    display: flex;
-    justify-content: center;
     gap: 8px;
 }
-.aisle {
-    width: 30px; /* Space for aisle */
+.seat-pax-card {
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #f8fafc;
 }
-.seat-box {
-    width: 36px;
-    height: 36px;
+.seat-pax-card:hover {
+    border-color: #cbd5e1;
+    background: #f1f5f9;
+}
+.seat-pax-card.active {
+    border-color: #0284c7;
+    background: #f0f9ff;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.15);
+}
+.pax-card-name {
+    font-weight: 700;
+    color: #0f172a;
+    font-size: 0.85rem;
+}
+.pax-active-pill {
+    display: none;
+    font-size: 0.65rem;
+    font-weight: 800;
+    background: #0284c7;
+    color: white;
+    padding: 2px 7px;
+    border-radius: 12px;
+}
+.seat-pax-card.active .pax-active-pill {
+    display: inline-block;
+}
+.pax-seat-badge-selected {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #e0f2fe;
+    color: #0369a1;
+    padding: 5px 8px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    margin-top: 4px;
+}
+.badge-seat-code {
+    display: inline-flex;
+    align-items: center;
+}
+.badge-seat-price {
+    font-size: 0.75rem;
+}
+.pax-seat-badge-empty {
+    color: #94a3b8;
+    font-size: 0.74rem;
+    padding: 4px 0;
+}
+
+/* Legend Box */
+.seat-legend-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px;
+}
+.legend-header {
+    font-size: 0.82rem;
+    color: #334155;
+}
+.legend-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.legend-item .mock {
+    width: 30px;
+    height: 32px;
+    min-width: 30px;
+    font-size: 0.6rem;
+    cursor: default;
+    box-shadow: none !important;
+    transform: none !important;
+}
+.mock-txt {
+    font-size: 0.58rem;
+    font-weight: 800;
+}
+.legend-desc strong {
+    display: block;
+    font-size: 0.74rem;
+    color: #1e293b;
+    line-height: 1.1;
+}
+.legend-desc small {
+    display: block;
+    font-size: 0.65rem;
+    color: #64748b;
+    line-height: 1.1;
+}
+.legend-icon-badge {
+    width: 30px;
+    height: 32px;
+    min-width: 30px;
     border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.75rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.2s;
-    user-select: none;
-    border: 1px solid;
+    font-size: 0.85rem;
 }
-.seat-box.available {
+.legend-icon-badge.window {
+    background: #e0f2fe;
+    color: #0284c7;
+    border: 1px solid #bae6fd;
+}
+.legend-icon-badge.aisle {
+    background: #f0fdf4;
+    color: #16a34a;
+    border: 1px solid #bbf7d0;
+}
+.legend-icon-badge.exit {
+    background: #fef3c7;
+    color: #d97706;
+    border: 1px solid #fde68a;
+}
+
+/* Architectural Technical Blueprint / Cabin Layout Styles */
+.aircraft-container {
+    flex: 1;
+    background-color: #f8fafc;
+    background-image: 
+        linear-gradient(to right, rgba(203, 213, 225, 0.5) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(203, 213, 225, 0.5) 1px, transparent 1px);
+    background-size: 20px 20px;
+    padding: 25px 20px;
+    display: flex;
+    justify-content: center;
+    overflow-y: auto;
+    position: relative;
+}
+.blueprint-canvas {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0 auto;
+    min-width: 560px;
+    position: relative;
+}
+
+/* Blueprint Header Title Block */
+.blueprint-meta-bar {
+    width: 100%;
+    max-width: 520px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 0.78rem;
+    color: #334155;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.orientation-tag {
+    font-weight: 800;
+    color: #0284c7;
+    text-transform: uppercase;
+    font-size: 0.72rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Aircraft Schematic Wrap */
+.aircraft-schematic-wrap {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+/* Technical Wing Outlines (Schematic Drafting Style) */
+.schematic-wing {
+    position: absolute;
+    top: 36%;
+    width: 120px;
+    height: 260px;
+    pointer-events: none;
+    border: 1.5px dashed #94a3b8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(241, 245, 249, 0.45);
+    z-index: 1;
+}
+.schematic-wing.left-wing {
+    right: calc(100% - 2px);
+    border-right: none;
+    border-radius: 16px 0 0 16px;
+    transform: skewY(12deg);
+}
+.schematic-wing.right-wing {
+    left: calc(100% - 2px);
+    border-left: none;
+    border-radius: 0 16px 16px 0;
+    transform: skewY(-12deg);
+}
+.wing-annotation {
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: #64748b;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    opacity: 0.85;
+}
+
+/* Fuselage Technical Frame */
+.schematic-fuselage {
+    width: 520px;
+    background: #ffffff;
+    border-radius: 140px 140px 35px 35px;
+    border: 2px solid #334155;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+    position: relative;
+    padding-bottom: 25px;
+    z-index: 2;
+}
+
+/* Cockpit Schematic */
+.schematic-cockpit {
+    padding-top: 22px;
+    text-align: center;
+    position: relative;
+}
+.cockpit-nose-curve {
+    width: 50px;
+    height: 10px;
+    border-radius: 20px 20px 0 0;
     background: #f1f5f9;
-    border-color: #cbd5e1;
-    color: #475569;
+    border-top: 2px solid #475569;
+    margin: 0 auto 10px auto;
+}
+.cockpit-windshield-outline {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    margin-bottom: 12px;
+}
+.cockpit-windshield-outline .glass-frame {
+    height: 24px;
+    border: 1.5px solid #0284c7;
+    background: #e0f2fe;
+}
+.cockpit-windshield-outline .glass-frame:nth-child(1) { width: 18px; border-radius: 6px 2px 2px 4px; transform: skewY(12deg); }
+.cockpit-windshield-outline .glass-frame:nth-child(2) { width: 30px; border-radius: 2px; transform: skewY(4deg); }
+.cockpit-windshield-outline .glass-frame:nth-child(3) { width: 30px; border-radius: 2px; transform: skewY(-4deg); }
+.cockpit-windshield-outline .glass-frame:nth-child(4) { width: 18px; border-radius: 2px 6px 4px 2px; transform: skewY(-12deg); }
+.cockpit-bulkhead-line {
+    border-bottom: 1.5px dashed #cbd5e1;
+    margin: 0 30px 12px 30px;
+    padding-bottom: 5px;
+}
+.bulkhead-label {
+    font-size: 0.68rem;
+    font-weight: 800;
+    color: #64748b;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+/* Amenities & Service Zones */
+.schematic-service-zone {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 20px;
+    background: #f8fafc;
+    border-top: 1.5px solid #e2e8f0;
+    border-bottom: 1.5px solid #e2e8f0;
+    margin: 0 15px 12px 15px;
+    border-radius: 6px;
+}
+.door-marker {
+    background: #059669;
+    color: white;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-weight: 800;
+    font-size: 0.65rem;
+    letter-spacing: 0.5px;
+}
+.facility-icon {
+    font-size: 0.72rem;
+    color: #64748b;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.zone-divider-label {
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #334155;
+    background: #e2e8f0;
+    padding: 2px 10px;
+    border-radius: 12px;
+}
+
+/* Column Headers */
+.aircraft-col-headers {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: #f1f5f9;
+    border-radius: 6px;
+    margin: 0 15px 10px 15px;
+    border: 1px solid #e2e8f0;
+}
+.col-head-trio {
+    display: flex;
+    gap: 6px;
+}
+.col-head-item {
+    width: 44px;
+    text-align: center;
+}
+.col-letter {
+    display: block;
+    font-weight: 900;
+    font-size: 0.85rem;
+    color: #0f172a;
+    line-height: 1;
+}
+.col-tag {
+    display: block;
+    font-size: 0.62rem;
+    color: #64748b;
+    font-weight: 700;
+    line-height: 1.1;
+    margin-top: 2px;
+}
+.col-head-aisle {
+    width: 44px;
+    text-align: center;
+}
+.aisle-title {
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: #0284c7;
+    text-transform: uppercase;
+}
+
+/* Cabin Rows */
+.aircraft-cabin-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 4px 10px;
+    position: relative;
+}
+.aircraft-cabin-row.is-exit-row {
+    background: rgba(16, 185, 129, 0.06);
+    border-radius: 6px;
+}
+.cabin-trio {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+/* Airplane Windows on Fuselage Wall (Blueprint Notch) */
+.cabin-window {
+    width: 8px;
+    height: 24px;
+    border-radius: 4px;
+    background: #0284c7;
+    border: 1.5px solid #0369a1;
+    flex-shrink: 0;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
+}
+
+/* Central Aisle Track */
+.cabin-aisle-track {
+    width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+.row-num-indicator {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #f8fafc;
+    border: 1.5px solid #cbd5e1;
+    color: #334155;
+    font-weight: 800;
+    font-size: 0.72rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+/* Seat Boxes (Clean Architectural Drafting Style) */
+.seat-box {
+    width: 44px;
+    height: 50px;
+    border-radius: 8px 8px 6px 6px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3px 2px 2px 2px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+    border: 1.5px solid #94a3b8;
+    background: #ffffff;
+}
+.seat-box-empty {
+    width: 44px;
+    height: 50px;
+}
+.seat-headrest {
+    width: 72%;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(0,0,0,0.08);
+}
+.seat-inner-cushion {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    width: 100%;
+}
+.seat-lbl {
+    font-weight: 900;
+    font-size: 0.78rem;
+    line-height: 1;
+}
+.seat-cost-tag {
+    font-size: 0.6rem;
+    font-weight: 800;
+    padding: 1px 4px;
+    border-radius: 3px;
+    line-height: 1;
+    background: rgba(0,0,0,0.05);
+}
+.seat-feature-icon {
+    position: absolute;
+    top: 2px;
+    font-size: 0.58rem;
+    opacity: 0.7;
+}
+.seat-box.is-window .seat-feature-icon {
+    left: 3px;
+    color: #0284c7;
+}
+.seat-box.is-aisle .seat-feature-icon {
+    right: 3px;
+    color: #16a34a;
+}
+
+/* Seat States */
+.seat-box.available {
+    background: #ffffff;
+    border-color: #0284c7;
+    color: #0f172a;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 .seat-box.available:hover {
-    background: #e2e8f0;
-    transform: scale(1.1);
+    background: #f0f9ff;
+    border-color: #0369a1;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(2, 132, 199, 0.25);
+    z-index: 10;
 }
 .seat-box.selected {
-    background: var(--primary);
-    border-color: var(--primary);
-    color: white;
-    box-shadow: 0 2px 5px rgba(15,76,129,0.3);
+    background: #0284c7 !important;
+    border-color: #0369a1 !important;
+    color: white !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4) !important;
+    z-index: 5;
 }
-.seat-box.unavailable {
-    background: #cbd5e1;
-    border-color: #94a3b8;
-    color: #f1f5f9;
-    cursor: not-allowed;
-    text-decoration: line-through;
+.seat-box.selected .seat-headrest {
+    background: rgba(255,255,255,0.3);
+}
+.seat-box.selected .seat-cost-tag {
+    background: rgba(255,255,255,0.25);
+    color: white;
+}
+.selected-check {
+    font-size: 0.65rem;
+    color: #e0f2fe;
+}
+.seat-box.companion-selected {
+    background: #6366f1 !important;
+    border-color: #4f46e5 !important;
+    color: white !important;
+}
+.companion-pax-tag {
+    font-size: 0.6rem;
+    font-weight: 900;
+    background: rgba(255,255,255,0.25);
+    padding: 0 3px;
+    border-radius: 2px;
+}
+.seat-box.occupied {
+    background: repeating-linear-gradient(45deg, #f8fafc, #f8fafc 4px, #e2e8f0 4px, #e2e8f0 8px) !important;
+    border-color: #cbd5e1 !important;
+    color: #94a3b8 !important;
+    cursor: not-allowed !important;
+    opacity: 0.85;
+}
+.seat-box.occupied:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    border-color: #ef4444 !important;
+}
+.occupied-x {
+    font-size: 0.72rem;
+    color: #ef4444;
+}
+
+/* Exit Row Banner */
+.aircraft-exit-row-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #ecfdf5;
+    border: 1.5px dashed #10b981;
+    border-radius: 6px;
+    padding: 5px 12px;
+    margin: 8px 15px 4px 15px;
+    color: #047857;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+.exit-door-pill {
+    background: #059669;
+    color: white;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-weight: 800;
+    font-size: 0.65rem;
+}
+
+/* Tail Schematic Section */
+.schematic-tail {
+    margin-top: 15px;
+    text-align: center;
+    position: relative;
+}
+.tail-datum-line {
+    width: 48px;
+    height: 10px;
+    border-radius: 0 0 20px 20px;
+    border-bottom: 2px solid #64748b;
+    margin: 0 auto 6px auto;
+}
+.tail-annotation {
+    font-size: 0.68rem;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 </style>
 @endpush

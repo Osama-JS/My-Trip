@@ -13,6 +13,7 @@ use App\Services\HyperPayService;
 use App\Services\TabbyPaymentService;
 use App\Services\TamaraPaymentService;
 use App\Traits\HotelBookingFinalizer;
+use App\Traits\FlightBookingFinalizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Traits\PaymentLogTrait;
@@ -20,7 +21,7 @@ use App\Services\NotificationService;
 
 class PaymentWebController extends Controller
 {
-   use PaymentLogTrait, HotelBookingFinalizer;
+   use PaymentLogTrait, HotelBookingFinalizer, FlightBookingFinalizer;
 
     protected $hyperPayService;
     protected $tabbyService;
@@ -763,24 +764,7 @@ class PaymentWebController extends Controller
         }
 
         // ── Generate Invoice / E-Ticket PDF & Send Confirmation Email ─────
-        try {
-            $invoiceService = app(\App\Services\InvoiceService::class);
-            $voucherPath = $invoiceService->generateInvoice($booking);
-            Log::info("Invoice/ETicket generated for Flight Booking #{$booking->id} at: {$voucherPath}");
-
-            $recipientEmail = $booking->user->email ?? ($booking->contact_email ?? null);
-            if (!$recipientEmail && $booking->passengers()->exists()) {
-                $recipientEmail = $booking->passengers()->first()->email ?? null;
-            }
-
-            if ($recipientEmail) {
-                \Illuminate\Support\Facades\Mail::to($recipientEmail)
-                    ->send(new \App\Mail\FlightBookingConfirmedMail($booking, $voucherPath));
-                Log::info("FlightBookingConfirmedMail sent successfully to {$recipientEmail} for Booking #{$booking->id}");
-            }
-        } catch (\Exception $e) {
-            Log::warning("Flight booking confirmation email / invoice generation failed for Booking #{$booking->id}: " . $e->getMessage());
-        }
+        $this->sendFlightConfirmationEmail($booking);
     }
 
     /**

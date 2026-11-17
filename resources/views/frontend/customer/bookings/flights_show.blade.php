@@ -1622,7 +1622,7 @@ body.dark-mode .wallet-confirm-box {
                 <div class="pass-details-grid" style="{{ $isRoundTrip ? 'grid-template-columns: repeat(5, 1fr);' : '' }}">
                     <div>
                         <span class="pass-label">{{ __('PASSENGER') }}</span>
-                        <span class="pass-val">{{ auth()->user()->full_name }}</span>
+                        <span class="pass-val">{{ auth()->user()->full_name ?? ($booking->user->full_name ?? ($booking->user->name ?? 'Guest')) }}</span>
                     </div>
                     <div>
                         <span class="pass-label">{{ __('BOOKING DATE') }}</span>
@@ -2039,8 +2039,9 @@ body.dark-mode .wallet-confirm-box {
                             </div>
 
                             @php
-                                $extraServices = $booking->flightBooking->extra_services ?? [];
-                                $paxExtras = $extraServices[$loop->index]['extra_services_details'] ?? [];
+                                $bookingExtras = \App\Helpers\FlightExtraServiceHelper::getBookingAllExtras($booking);
+                                $allPassengersExtras = $bookingExtras['passengers'] ?? [];
+                                $paxExtras = $allPassengersExtras[$loop->index] ?? [];
                             @endphp
 
                             @if(!empty($paxExtras))
@@ -2050,17 +2051,13 @@ body.dark-mode .wallet-confirm-box {
                                     </h6>
                                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                                         @foreach($paxExtras as $extra)
-                                            <div class="extra-service-badge" style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; gap: 6px;">
-                                                @php
-                                                    $icon = 'fa-box';
-                                                    if (stripos($extra['type'] ?? '', 'baggage') !== false) $icon = 'fa-suitcase-rolling';
-                                                    if (stripos($extra['type'] ?? '', 'meal') !== false) $icon = 'fa-utensils';
-                                                    if (stripos($extra['type'] ?? '', 'seat') !== false) $icon = 'fa-chair';
-                                                @endphp
-                                                <i class="fas {{ $icon }}" style="color: var(--primary-blue);"></i>
-                                                <span style="color: #475569;">{{ $extra['desc'] ?? $extra['code'] ?? 'Extra Service' }}</span>
-                                                @if(isset($extra['price']) && $extra['price'] > 0)
-                                                    <span style="color: #10b981; margin-left: auto;">+{{ $extra['price'] }} {{ $extra['currency'] ?? 'SAR' }}</span>
+                                            <div class="extra-service-badge" style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 6px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                                                <i class="fas {{ $extra['icon'] ?? 'fa-plus' }}" style="color: var(--primary-blue);"></i>
+                                                <span style="color: #334155;">{{ $extra['title'] ?? $extra['description'] ?? $extra['code'] }}</span>
+                                                @if(isset($extra['price']) && (float)$extra['price'] > 0)
+                                                    <span style="color: #10b981; font-weight: 700; margin-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}: auto;">+{{ number_format($extra['price'], 2) }} {{ $extra['currency'] ?? 'SAR' }}</span>
+                                                @else
+                                                    <span class="badge bg-success-subtle text-success border border-success-subtle ms-auto" style="font-size: 0.72rem;">{{ __('Included / Selected') }}</span>
                                                 @endif
                                             </div>
                                         @endforeach

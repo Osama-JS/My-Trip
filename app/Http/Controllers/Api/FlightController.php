@@ -10,9 +10,12 @@ use OpenApi\Attributes as OA;
 use App\Models\Booking;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use App\Traits\FlightBookingFinalizer;
 
 class FlightController extends Controller
 {
+    use FlightBookingFinalizer;
+
     protected $traveloproService;
     protected $invoiceService;
 
@@ -414,72 +417,160 @@ class FlightController extends Controller
         $formattedServices = [];
         $extraServicesData = $result['ExtraServicesData'] ?? $result['ExtraServicesResponse']['ExtraServicesResult']['ExtraServicesData'] ?? $result['ExtraServicesResponse']['ExtraServicesData'] ?? $result['ExtraServicesResponse'] ?? [];
 
-        // Parse Baggage
+        // Helper to recursively flatten nested service items
+        $flattenServices = function($items) use (&$flattenServices) {
+            $res = [];
+            if (!is_array($items)) return $res;
+            if (isset($items['ServiceId'])) {
+                $res[] = $items;
+                return $res;
+            }
+            foreach ($items as $item) {
+                if (is_array($item)) {
+                    if (isset($item['ServiceId'])) {
+                        $res[] = $item;
+                    } else {
+                        $res = array_merge($res, $flattenServices($item));
+                    }
+                }
+            }
+            return $res;
+        };
+
+        // Helper to recursively unwrap nested DeckSeats
+        $extractDecks = function($node) use (&$extractDecks) {
+            $decks = [];
+            if (!is_array($node)) return $decks;
+            if (isset($node['DeckSeats']) && is_array($node['DeckSeats'])) {
+                return $node['DeckSeats'];
+            }
+            if (isset($node['RowSeats']) && is_array($node['RowSeats'])) {
+                return [$node];
+            }
+            foreach ($node as $child) {
+                if (is_array($child)) {
+                    if (isset($child['DeckSeats']) && is_array($child['DeckSeats'])) {
+                        $decks = array_merge($decks, $child['DeckSeats']);
+                    } else {
+                        $decks = array_merge($decks, $extractDecks($child));
+                    }
+                }
+            }
+            return $decks;
+        };
+
+        // Helper to filter out dummy/none services returned by GDS (e.g. NoBaggage 0kg, NoMeal)
+        $isDummyOrNoOpService = function($svc) {
+            $code = strtoupper(trim((string)($svc['ServiceId'] ?? '')));
+            $desc = strtolower(trim((string)($svc['Description'] ?? ($svc['FareDescription'] ?? ''))));
+            $amount = (float)($svc['ServiceCost']['Amount'] ?? ($svc['Fare']['Amount'] ?? ($svc['TotalCost']['Amount'] ?? 0)));
+
+            if (in_array($code, ['NOMEAL', 'NOBAGGAGE', 'NOSEAT', 'NONE', 'NIL', 'NO_MEAL', 'NO_BAGGAGE', 'NO_SEAT'])) {
+                return true;
+            }
+            if (str_starts_with($code, 'NO') && $amount <= 0 && strlen($code) <= 10) {
+                return true;
+            }
+            if (in_array($desc, ['0 kg', '0kg', '0 kgs', '0 k', '0lbs', '0', 'no meal', 'no baggage', 'none', 'no extra meal', 'no extra baggage'])) {
+                return true;
+            }
+            if (empty($desc) && $amount <= 0 && (empty($code) || $code === 'NOMEAL' || $code === 'NOBAGGAGE')) {
+                return true;
+            }
+            return false;
+        };
+
+        // 1. Parse Dynamic Baggage
         $baggages = $extraServicesData['DynamicBaggage'] ?? [];
+        if (isset($baggages['Behavior'])) $baggages = [$baggages];
         foreach ($baggages as $baggageGroup) {
             $flightType = str_contains($baggageGroup['Behavior'] ?? '', 'INBOUND') ? 'inbound' : 'outbound';
-            $services = $baggageGroup['Services'] ?? [];
-            if (isset($services[0]) && is_array($services[0]) && !isset($services[0]['ServiceId'])) {
-                $services = $services[0];
-            }
+            $services = $flattenServices($baggageGroup['Services'] ?? []);
             foreach ($services as $svc) {
+                if ($isDummyOrNoOpService($svc)) {
+                    continue;
+                }
+                $desc = $svc['Description'] ?? ($svc['FareDescription'] ?? __('Extra Baggage'));
+                if (empty($desc) && !empty($svc['ServiceId'])) {
+                    $desc = $svc['ServiceId'];
+                }
                 $formattedServices[] = [
                     'type' => 'baggage',
                     'flight_type' => $flightType,
                     'code' => $svc['ServiceId'] ?? '',
-                    'price' => $svc['ServiceCost']['Amount'] ?? 0,
-                    'currency' => $svc['ServiceCost']['CurrencyCode'] ?? 'SAR',
-                    'description' => $svc['Description'] ?? '',
+                    'price' => (float)($svc['ServiceCost']['Amount'] ?? ($svc['Fare']['Amount'] ?? ($svc['TotalCost']['Amount'] ?? 0))),
+                    'currency' => $svc['ServiceCost']['CurrencyCode'] ?? ($svc['Fare']['CurrencyCode'] ?? 'SAR'),
+                    'description' => $desc,
                 ];
             }
         }
 
-        // Parse Meals
+        // 2. Parse Dynamic Meals
         $meals = $extraServicesData['DynamicMeal'] ?? [];
+        if (isset($meals['Behavior'])) $meals = [$meals];
         foreach ($meals as $mealGroup) {
             $flightType = str_contains($mealGroup['Behavior'] ?? '', 'INBOUND') ? 'inbound' : 'outbound';
-            $services = $mealGroup['Services'] ?? [];
-            if (isset($services[0]) && is_array($services[0]) && !isset($services[0]['ServiceId'])) {
-                $services = $services[0];
-            }
+            $services = $flattenServices($mealGroup['Services'] ?? []);
             foreach ($services as $svc) {
+                if ($isDummyOrNoOpService($svc)) {
+                    continue;
+                }
+                $desc = $svc['Description'] ?? ($svc['FareDescription'] ?? __('Meal'));
+                if (empty($desc) && !empty($svc['ServiceId'])) {
+                    $desc = $svc['ServiceId'];
+                }
                 $formattedServices[] = [
                     'type' => 'meal',
                     'flight_type' => $flightType,
                     'code' => $svc['ServiceId'] ?? '',
-                    'price' => $svc['ServiceCost']['Amount'] ?? 0,
-                    'currency' => $svc['ServiceCost']['CurrencyCode'] ?? 'SAR',
-                    'description' => $svc['Description'] ?? '',
+                    'price' => (float)($svc['ServiceCost']['Amount'] ?? ($svc['Fare']['Amount'] ?? ($svc['TotalCost']['Amount'] ?? 0))),
+                    'currency' => $svc['ServiceCost']['CurrencyCode'] ?? ($svc['Fare']['CurrencyCode'] ?? 'SAR'),
+                    'description' => $desc,
                 ];
             }
         }
 
-        // Parse Seats
+        // 3. Parse Dynamic Seats
         $seats = $extraServicesData['DynamicSeat'] ?? [];
-        foreach ($seats as $seatGroup) {
-            // Wait, seats structure has DeckSeats -> RowSeats -> Seats
-            $decks = $seatGroup['DeckSeats'] ?? [];
-            foreach ($decks as $deck) {
-                $rows = $deck['RowSeats'] ?? [];
-                foreach ($rows as $row) {
-                    $rowSeats = $row['Seats'] ?? [];
-                    foreach ($rowSeats as $seat) {
-                        // Only add available seats (Code 1 = Open usually, let's include if it has price)
-                        $avail = $seat['AvailablityType']['Code'] ?? '';
-                        if ($avail == '1') { // 1 = Open
-                            $formattedServices[] = [
-                                'type' => 'seat',
-                                'flight_type' => 'outbound', // Simplification, need to check segment
-                                'code' => $seat['ServiceId'] ?? '',
-                                'price' => $seat['Fare']['Amount'] ?? 0,
-                                'currency' => $seat['Fare']['CurrencyCode'] ?? 'SAR',
-                                'description' => 'Seat ' . ($seat['SeatCode'] ?? ''),
-                                'row' => $seat['RowNo'] ?? '',
-                                'seat' => $seat['SeatNo'] ?? '',
-                                'type_text' => $seat['SeatType']['Text'] ?? '',
-                            ];
-                        }
+        $decks = $extractDecks($seats);
+        foreach ($decks as $deck) {
+            $rows = $deck['RowSeats'] ?? [];
+            if (isset($rows['Seats'])) $rows = [$rows];
+            foreach ($rows as $row) {
+                $rowSeats = $row['Seats'] ?? [];
+                if (isset($rowSeats['SeatCode']) || isset($rowSeats['ServiceId'])) $rowSeats = [$rowSeats];
+                foreach ($rowSeats as $seat) {
+                    $seatCode = $seat['SeatCode'] ?? '';
+                    if ($seatCode === 'NoSeat' || empty($seat['RowNo'])) {
+                        continue;
                     }
+                    $availCode = $seat['AvailablityType']['Code'] ?? ($seat['AvailablityType'] ?? '1');
+                    $availText = $seat['AvailablityType']['Text'] ?? '';
+                    $isOpen = ($availCode == '1' || $availCode === 1 || $availCode === true || strtolower($availText) === 'open' || $availCode === 'open');
+
+                    $seatLabel = $seatCode ?: (($seat['RowNo'] ?? '') . ($seat['SeatNo'] ?? ''));
+                    $typeText = $seat['SeatType']['Text'] ?? '';
+                    if (empty($typeText) || $typeText === 'Invalid') {
+                        $seatLetter = strtoupper($seat['SeatNo'] ?? substr($seatLabel, -1));
+                        if (in_array($seatLetter, ['A', 'F'])) $typeText = 'Window';
+                        elseif (in_array($seatLetter, ['C', 'D'])) $typeText = 'Aisle';
+                        elseif (in_array($seatLetter, ['B', 'E'])) $typeText = 'Middle';
+                    }
+
+                    $formattedServices[] = [
+                        'type' => 'seat',
+                        'flight_type' => 'outbound',
+                        'code' => $seat['ServiceId'] ?? ($seatCode ?: ''),
+                        'price' => (float)($seat['Fare']['Amount'] ?? ($seat['ServiceCost']['Amount'] ?? 0)),
+                        'currency' => $seat['Fare']['CurrencyCode'] ?? ($seat['ServiceCost']['CurrencyCode'] ?? 'SAR'),
+                        'description' => 'Seat ' . $seatLabel . ' (' . ($typeText ?: 'Seat') . ')' . ($isOpen ? '' : ' - ' . __('Occupied')),
+                        'row' => (string)($seat['RowNo'] ?? ''),
+                        'seat' => (string)($seat['SeatNo'] ?? ''),
+                        'seat_label' => $seatLabel,
+                        'type_text' => $typeText,
+                        'available' => $isOpen,
+                        'status' => $isOpen ? 'available' : 'occupied',
+                    ];
                 }
             }
         }
@@ -1002,12 +1093,13 @@ class FlightController extends Controller
                 ]);
                 Log::info('Booking Status Updated to Confirmed', ['booking_id' => $booking->id]);
 
-                // Generate Invoice
-                $pdfContent = $this->invoiceService->generateInvoice($booking);
-                if ($pdfContent) {
-                    $invoiceContent = base64_encode($pdfContent);
+                // Generate Invoice & Send Confirmation Email
+                $voucherPath = $this->invoiceService->generateInvoice($booking);
+                if ($voucherPath && \Illuminate\Support\Facades\Storage::disk('public')->exists($voucherPath)) {
+                    $invoiceContent = base64_encode(\Illuminate\Support\Facades\Storage::disk('public')->get($voucherPath));
                     Log::info('Invoice Generated Successfully', ['booking_id' => $booking->id]);
                 }
+                $this->sendFlightConfirmationEmail($booking, $voucherPath);
             }
         } catch (\Exception $e) {
             Log::error('Failed to update booking status or generate invoice', [

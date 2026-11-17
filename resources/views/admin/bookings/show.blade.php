@@ -137,8 +137,9 @@
                                 </div>
 
                                 @php
-                                    $extraServices = $flightBooking->extra_services ?? [];
-                                    $paxExtras = $extraServices[$index]['extra_services_details'] ?? [];
+                                    $bookingExtras = \App\Helpers\FlightExtraServiceHelper::getBookingAllExtras($booking);
+                                    $allPassengersExtras = $bookingExtras['passengers'] ?? [];
+                                    $paxExtras = $allPassengersExtras[$index] ?? [];
                                 @endphp
 
                                 @if(!empty($paxExtras))
@@ -147,16 +148,12 @@
                                     <div class="d-flex flex-wrap gap-2">
                                         @foreach($paxExtras as $extra)
                                             <div class="badge badge-outline-primary d-flex align-items-center gap-2 p-2" style="font-size: 0.85rem;">
-                                                @php
-                                                    $icon = 'fa-box';
-                                                    if (stripos($extra['type'] ?? '', 'baggage') !== false) $icon = 'fa-suitcase-rolling';
-                                                    if (stripos($extra['type'] ?? '', 'meal') !== false) $icon = 'fa-utensils';
-                                                    if (stripos($extra['type'] ?? '', 'seat') !== false) $icon = 'fa-chair';
-                                                @endphp
-                                                <i class="fas {{ $icon }}"></i>
-                                                <span>{{ $extra['desc'] ?? $extra['code'] ?? 'Service' }}</span>
-                                                @if(isset($extra['price']) && $extra['price'] > 0)
-                                                    <strong class="text-success ms-2">+{{ $extra['price'] }} {{ $extra['currency'] ?? 'SAR' }}</strong>
+                                                <i class="fas {{ $extra['icon'] ?? 'fa-plus' }}"></i>
+                                                <span>{{ $extra['title'] ?? $extra['description'] ?? $extra['code'] }}</span>
+                                                @if(isset($extra['price']) && (float)$extra['price'] > 0)
+                                                    <strong class="text-success ms-2">+{{ number_format($extra['price'], 2) }} {{ $extra['currency'] ?? 'SAR' }}</strong>
+                                                @else
+                                                    <span class="badge bg-success-subtle text-success ms-1" style="font-size: 0.72rem;">{{ __('Included / Selected') }}</span>
                                                 @endif
                                             </div>
                                         @endforeach

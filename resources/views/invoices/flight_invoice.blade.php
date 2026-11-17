@@ -1042,14 +1042,16 @@
                 </tr>
             </thead>
             <tbody>
+                @php
+                    $bookingExtras = \App\Helpers\FlightExtraServiceHelper::getBookingAllExtras($booking);
+                    $allPassengersExtras = $bookingExtras['passengers'] ?? [];
+                    $totalExtraPrice = (float)($bookingExtras['total_price'] ?? 0);
+                @endphp
                 @foreach($booking->passengers as $paxIndex => $pax)
                 @php
                     $paxName = trim(strtoupper($pax->first_name ?? '') . ' ' . strtoupper($pax->last_name ?? ''));
                     $ticket = isset($eTickets) && isset($eTickets[$paxName]) ? $eTickets[$paxName] : null;
-
-                    $extraServices = $booking->flightBooking->extra_services ?? [];
-                    if (is_string($extraServices)) $extraServices = json_decode($extraServices, true);
-                    $paxExtras = $extraServices[$paxIndex]['extra_services_details'] ?? [];
+                    $paxExtras = $allPassengersExtras[$paxIndex] ?? [];
                 @endphp
                 <tr>
                     <td style="color:#9ca3af; font-weight:700;">{{ str_pad($loop->iteration, 2, '0', STR_PAD_LEFT) }}</td>
@@ -1065,15 +1067,16 @@
                 </tr>
                 @if(!empty($paxExtras))
                 <tr>
-                    <td style="border-top: none;"></td>
-                    <td colspan="3" style="border-top: none; padding-top: 2px; padding-bottom: 8px;">
-                        <div style="font-size: 10px; color: #4b5563;">
-                            <strong style="color: #041741;">{{ __('Extra Services') }}:</strong>
+                    <td style="border-top: none; background: #fafbfc;"></td>
+                    <td colspan="3" style="border-top: none; background: #fafbfc; padding-top: 3px; padding-bottom: 7px;">
+                        <div style="font-size: 9.5px; color: #374151;">
+                            <strong style="color: #041741; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 6px;">{{ __('Extra Services') }}:</strong>
                             @foreach($paxExtras as $extra)
-                                <span style="background: #f3f4f6; padding: 2px 6px; border-radius: 4px; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 4px; display: inline-block; margin-bottom: 4px; border: 1px solid #e5e7eb;">
-                                    {{ $extra['description'] ?? $extra['desc'] ?? $extra['code'] ?? 'Extra Service' }}
+                                <span style="background: #ffffff; border: 1px solid #d1d5db; border-radius: 4px; padding: 2px 7px; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 5px; display: inline-block; margin-bottom: 3px; font-size: 9px; color: #1e293b;">
+                                    <span style="margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 3px;">{{ $extra['emoji'] ?? '✨' }}</span>
+                                    <strong style="color: #0f172a;">{{ $extra['title'] ?? $extra['description'] ?? $extra['code'] }}</strong>
                                     @if(isset($extra['price']) && (float)$extra['price'] > 0)
-                                        <span style="color: #10b981; font-weight: 700;">(+{{ $extra['price'] }} {{ $extra['currency'] ?? 'SAR' }})</span>
+                                        <span style="color: #059669; font-weight: 800;">(+{{ number_format($extra['price'], 2) }} {{ $extra['currency'] ?? 'SAR' }})</span>
                                     @endif
                                 </span>
                             @endforeach
@@ -1086,23 +1089,45 @@
         </table>
         @endif
 
+        @if(!empty($bookingExtras['has_extras']))
+        <!-- ─── CONFIRMED EXTRA SERVICES SECTION ─── -->
+        <div class="section-title" style="margin-top: 8px;">
+            <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f9f3.png" width="12" height="12" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 4px;">
+            {{ __('Confirmed Extra Services') }}
+        </div>
+        <table class="p-table" style="margin-bottom: 8px;">
+            <thead>
+                <tr>
+                    <th width="30%">{{ __('Passenger') }}</th>
+                    <th width="20%">{{ __('Service Type') }}</th>
+                    <th width="35%">{{ __('Details') }}</th>
+                    <th width="15%" style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }};">{{ __('Status') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($booking->passengers as $pIndex => $pax)
+                    @php $pExtras = $allPassengersExtras[$pIndex] ?? []; @endphp
+                    @foreach($pExtras as $pe)
+                    <tr>
+                        <td style="font-weight: 700; color: #1a1f36;">{{ $pax->title }} {{ $pax->first_name }} {{ $pax->last_name }}</td>
+                        <td>{{ $pe['emoji'] ?? '' }} {{ $pe['category'] ?? ucfirst($pe['type']) }}</td>
+                        <td style="font-weight: 600; color: #041741;">{{ $pe['title'] ?? $pe['description'] ?? $pe['code'] }}</td>
+                        <td style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }}; color: #059669; font-weight: 800;">
+                            ✓ {{ __('Confirmed') }}
+                        </td>
+                    </tr>
+                    @endforeach
+                @endforeach
+            </tbody>
+        </table>
+        @endif
+
         <!-- ─── FARE BREAKDOWN ─── -->
         <div class="section-title" style="margin-top: 8px;">
             <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f4b8.png" width="12" height="12" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 4px;">
             {{ __('Fare Breakdown') }}
         </div>
         @php
-            $totalExtraPrice = 0;
-            $extraServicesData = $booking->flightBooking->extra_services ?? [];
-            if (is_string($extraServicesData)) $extraServicesData = json_decode($extraServicesData, true);
-            foreach ($booking->passengers as $paxIndex => $pax) {
-                $paxExtras = $extraServicesData[$paxIndex]['extra_services_details'] ?? [];
-                foreach ($paxExtras as $extra) {
-                    if (isset($extra['price'])) {
-                        $totalExtraPrice += (float)$extra['price'];
-                    }
-                }
-            }
             $insAmount = (float)($booking->insurance_amount ?? 0);
             $baseFare = max(0, $booking->total_amount - $totalExtraPrice - $insAmount);
         @endphp
