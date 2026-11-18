@@ -544,27 +544,45 @@ class PaymentWebController extends Controller
                 return;
             }
 
+            // Auto-update user phone if missing in profile but present in booking contact
+            if ($booking->user && empty($booking->user->phone) && !empty($booking->contact_phone)) {
+                try {
+                    $booking->user->update(['phone' => $booking->contact_phone]);
+                } catch (\Exception $e) {}
+            }
+
             // Extract travelers
             $passengers = [];
             if (method_exists($booking, 'passengers') && $booking->passengers()->exists()) {
                 foreach ($booking->passengers as $p) {
+                    $rawDob = $p->getRawOriginal('dob') ?: $p->dob;
+                    if ($rawDob instanceof \Carbon\Carbon || $rawDob instanceof \DateTimeInterface) {
+                        $dobFormatted = $rawDob->format('Y-m-d');
+                    } elseif (is_string($rawDob) && !empty($rawDob)) {
+                        $dobFormatted = substr($rawDob, 0, 10);
+                    } else {
+                        $dobFormatted = null;
+                    }
+
                     $passengers[] = [
                         'first_name' => $p->first_name ?? $p->passenger_name ?? 'Traveler',
                         'last_name'  => $p->last_name ?? '',
                         'passport_no'=> $p->passport_no ?? $p->passport_number ?? 'REG',
                         'nationality'=> $p->nationality ?? 'SA',
-                        'dob'        => $p->dob ?? null,
-                        'type'       => $p->type ?? 'adult',
+                        'dob'        => $dobFormatted,
+                        'phone'      => $p->phone ?? ($booking->contact_phone ?? ($booking->user?->phone ?? null)),
+                        'type'       => $p->passenger_type ?? ($p->type ?? 'adult'),
                     ];
                 }
             } else {
                 $user = $booking->user;
                 $passengers[] = [
-                    'first_name' => $user->name ?? 'Traveler',
+                    'first_name' => $user?->name ?? 'Traveler',
                     'last_name'  => '',
-                    'passport_no'=> $user->passport_number ?? 'REG',
-                    'nationality'=> $user->nationality ?? 'SA',
+                    'passport_no'=> $user?->passport_number ?? 'REG',
+                    'nationality'=> $user?->nationality ?? 'SA',
                     'dob'        => null,
+                    'phone'      => $booking->contact_phone ?? ($user?->phone ?? null),
                     'type'       => 'adult',
                 ];
             }

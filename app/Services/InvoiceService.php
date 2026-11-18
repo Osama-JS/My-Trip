@@ -257,7 +257,7 @@ class InvoiceService
     public function generateInsurancePolicyPdf(\App\Models\InsurancePolicy $policy)
     {
         try {
-            $policy->load(['user', 'flightBooking', 'tripBooking', 'hotelBooking']);
+            $policy->load(['user', 'flightBooking.passengers', 'tripBooking.passengers', 'hotelBooking']);
 
             $defaultConfig = (new \Mpdf\Config\ConfigVariables())->getDefaults();
             $fontDirs = $defaultConfig['fontDir'];

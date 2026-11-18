@@ -122,7 +122,7 @@
                                         <span class="badge bg-light text-dark font-monospace">{{ strtoupper($t['passport_no'] ?? ($t['passport'] ?? ($t['passport_number'] ?? '-'))) }}</span>
                                     </td>
                                     <td>{{ strtoupper($t['nationality'] ?? 'SA') }}</td>
-                                    <td>{{ $t['dob'] ?? ($t['birth_date'] ?? '-') }}</td>
+                                    <td>{{ !empty($t['dob']) ? substr((string)$t['dob'], 0, 10) : ($t['birth_date'] ?? '-') }}</td>
                                     <td><span class="badge bg-secondary">{{ ucfirst($t['type'] ?? 'Adult') }}</span></td>
                                 </tr>
                             @empty

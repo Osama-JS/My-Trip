@@ -391,6 +391,55 @@
                 $linkedBookingRef = $policy->hotelBooking->booking_reference ?? ('HB-' . $policy->hotel_booking_id);
                 $linkedBookingType = __('Hotel Booking');
             }
+
+            // Determine Policyholder details with comprehensive fallbacks
+            $holderName = null;
+            if (!empty($policy->user?->name)) {
+                $holderName = $policy->user->name;
+            } elseif (!empty($policy->insured_passengers[0])) {
+                $firstPax = $policy->insured_passengers[0];
+                $holderName = trim(($firstPax['first_name'] ?? '') . ' ' . ($firstPax['last_name'] ?? ''));
+            } elseif ($policy->flightBooking && $policy->flightBooking->passengers && $policy->flightBooking->passengers->isNotEmpty()) {
+                $firstPax = $policy->flightBooking->passengers->first();
+                $holderName = trim(($firstPax->first_name ?? '') . ' ' . ($firstPax->last_name ?? ''));
+            }
+            if (empty($holderName)) {
+                $holderName = __('PRIMARY TRAVELER');
+            }
+
+            $holderPhone = null;
+            if (!empty($policy->user?->phone)) {
+                $holderPhone = $policy->user->phone;
+            } elseif (!empty($policy->flightBooking?->contact_phone)) {
+                $holderPhone = $policy->flightBooking->contact_phone;
+            } elseif (!empty($policy->hotelBooking?->contact_phone)) {
+                $holderPhone = $policy->hotelBooking->contact_phone;
+            } elseif (!empty($policy->tripBooking?->contact_phone ?? $policy->tripBooking?->phone)) {
+                $holderPhone = $policy->tripBooking->contact_phone ?? $policy->tripBooking->phone;
+            }
+
+            if (empty($holderPhone) && !empty($policy->insured_passengers)) {
+                foreach ($policy->insured_passengers as $tp) {
+                    if (!empty($tp['phone'])) {
+                        $holderPhone = $tp['phone'];
+                        break;
+                    }
+                }
+            }
+
+            if (empty($holderPhone) && $policy->flightBooking && $policy->flightBooking->passengers) {
+                foreach ($policy->flightBooking->passengers as $bp) {
+                    if (!empty($bp->phone)) {
+                        $holderPhone = $bp->phone;
+                        break;
+                    }
+                }
+            }
+
+            $holderEmail = $policy->user?->email 
+                ?? ($policy->flightBooking?->contact_email 
+                ?? ($policy->hotelBooking?->contact_email 
+                ?? ($policy->tripBooking?->contact_email ?? null)));
         @endphp
 
         <!-- ─── POLICY BLOCK (PNR-Style) ─── -->
@@ -506,18 +555,18 @@
                             <tr>
                                 <td width="50%" valign="top" style="padding-bottom: 8px;">
                                     <span class="info-label">{{ __('Full Name') }}</span><br>
-                                    <span class="info-value">{{ strtoupper($policy->user->name ?? __('PRIMARY TRAVELER')) }}</span>
+                                    <span class="info-value">{{ strtoupper($holderName) }}</span>
                                 </td>
                                 <td width="50%" valign="top" style="padding-bottom: 8px;">
                                     <span class="info-label">{{ __('Phone') }}</span><br>
-                                    <span class="info-value" dir="ltr">{{ $policy->user->phone ?? '—' }}</span>
+                                    <span class="info-value" dir="ltr">{{ $holderPhone ?: '—' }}</span>
                                 </td>
                             </tr>
-                            @if(isset($policy->user) && $policy->user->email)
+                            @if(!empty($holderEmail))
                             <tr>
                                 <td colspan="2" valign="top">
                                     <span class="info-label">{{ __('Email') }}</span><br>
-                                    <span class="info-value">{{ $policy->user->email }}</span>
+                                    <span class="info-value">{{ $holderEmail }}</span>
                                 </td>
                             </tr>
                             @endif
@@ -588,6 +637,19 @@
                 @endphp
                 @if(count($travelers) > 0)
                     @foreach($travelers as $idx => $t)
+                        @php
+                            $rawDob = $t['dob'] ?? ($t['birth_date'] ?? null);
+                            $formattedDob = '-';
+                            if (!empty($rawDob)) {
+                                if (is_string($rawDob) && strlen($rawDob) >= 10) {
+                                    $formattedDob = substr($rawDob, 0, 10);
+                                } elseif ($rawDob instanceof \DateTimeInterface) {
+                                    $formattedDob = $rawDob->format('Y-m-d');
+                                } else {
+                                    $formattedDob = (string)$rawDob;
+                                }
+                            }
+                        @endphp
                         <tr>
                             <td style="color:#9ca3af; font-weight:700;">{{ str_pad($idx + 1, 2, '0', STR_PAD_LEFT) }}</td>
                             <td style="font-weight: 700; color: #1a1f36;">{{ strtoupper($t['first_name'] ?? ($t['name'] ?? 'TRAVELER')) }} {{ strtoupper($t['last_name'] ?? '') }}</td>
@@ -595,14 +657,14 @@
                                 <span class="passport-badge">{{ strtoupper($t['passport_no'] ?? ($t['passport'] ?? ($t['passport_number'] ?? '-'))) }}</span>
                             </td>
                             <td>{{ strtoupper($t['nationality'] ?? 'SA') }}</td>
-                            <td dir="ltr">{{ $t['dob'] ?? ($t['birth_date'] ?? '-') }}</td>
+                            <td dir="ltr">{{ $formattedDob }}</td>
                             <td>{{ ucfirst($t['type'] ?? 'Adult') }}</td>
                         </tr>
                     @endforeach
                 @else
                     <tr>
                         <td style="color:#9ca3af; font-weight:700;">01</td>
-                        <td style="font-weight: 700; color: #1a1f36;">{{ strtoupper($policy->user->name ?? 'PRIMARY TRAVELER') }}</td>
+                        <td style="font-weight: 700; color: #1a1f36;">{{ strtoupper($holderName) }}</td>
                         <td>
                             <span class="passport-badge">{{ $policy->user->passport_number ?? 'REGISTERED' }}</span>
                         </td>
