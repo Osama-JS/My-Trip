@@ -5,7 +5,11 @@
     <title>{{ __('Hotel Voucher') }} - {{ $booking->supplier_confirmation_num ?? $booking->reference_num }}</title>
     <style>
         @page {
-            margin: 0px;
+            margin-top: 35mm;
+            margin-bottom: 25mm;
+            margin-left: 10mm;
+            margin-right: 10mm;
+            header: page-header;
             footer: page-footer;
         }
 
@@ -16,7 +20,7 @@
             color: #2d3748;
             line-height: 1.6;
             font-size: 11px;
-            background: #edf0f4;
+            background: #ffffff;
             margin: 0;
             padding: 0;
         }
@@ -24,10 +28,9 @@
         /* ── Main Paper ── */
         .paper {
             background: #ffffff;
-            margin: 25px 30px;
             padding: 0;
             border-radius: 2px;
-            width: auto;
+            width: 100%;
         }
 
         /* ── Top Banner ── */
@@ -338,35 +341,37 @@
 
 <div class="paper">
 
-    <!-- ═══ TOP BANNER ═══ -->
-    <div class="top-banner">
-        <table class="top-banner-inner" cellpadding="0" cellspacing="0">
-            <tr>
-                <td width="28%" valign="middle" style="text-align: {{ app()->getLocale() == 'ar' ? 'right' : 'left' }};">
-                    <div class="brand-name">{{ __('Fly Vio') }}</div>
-                    <div class="brand-tag">{{ __('Premium Travel Services') }}</div>
-                </td>
-                <td width="44%" valign="middle" style="text-align: center;">
-                    @php
-                        $siteLogoPath = \App\Models\Setting::get('site_logo', 'images/logo-full.png');
-                        if (filter_var($siteLogoPath, FILTER_VALIDATE_URL)) {
-                            $logoImgSrc = $siteLogoPath;
-                        } else {
-                            $logoImgSrc = public_path($siteLogoPath);
-                        }
-                    @endphp
-                    @if(filter_var($siteLogoPath, FILTER_VALIDATE_URL) || file_exists(public_path($siteLogoPath)))
-                        <img src="{{ $logoImgSrc }}" alt="Logo" style="max-height: 48px; max-width: 130px;">
-                    @endif
-                </td>
-                <td width="28%" valign="middle" style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }};">
-                    <div class="doc-type">{{ __('Hotel Voucher') }}</div>
-                    <div class="doc-date">{{ __('Issued on') }}: {{ now()->translatedFormat('d M Y, H:i') }}</div>
-                </td>
-            </tr>
-        </table>
-    </div>
-    <div class="gold-strip"></div>
+    <!-- ═══ PAGE HEADER ═══ -->
+    <htmlpageheader name="page-header">
+        <div class="top-banner">
+            <table class="top-banner-inner" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td width="28%" valign="middle" style="text-align: {{ app()->getLocale() == 'ar' ? 'right' : 'left' }};">
+                        <div class="brand-name">{{ __('Fly Vio') }}</div>
+                        <div class="brand-tag">{{ __('Premium Travel Services') }}</div>
+                    </td>
+                    <td width="44%" valign="middle" style="text-align: center;">
+                        @php
+                            $siteLogoPath = \App\Models\Setting::get('site_logo', 'images/logo-full.png');
+                            if (filter_var($siteLogoPath, FILTER_VALIDATE_URL)) {
+                                $logoImgSrc = $siteLogoPath;
+                            } else {
+                                $logoImgSrc = public_path($siteLogoPath);
+                            }
+                        @endphp
+                        @if(filter_var($siteLogoPath, FILTER_VALIDATE_URL) || file_exists(public_path($siteLogoPath)))
+                            <img src="{{ $logoImgSrc }}" alt="Logo" style="max-height: 48px; max-width: 130px;">
+                        @endif
+                    </td>
+                    <td width="28%" valign="middle" style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }};">
+                        <div class="doc-type">{{ __('Hotel Voucher') }}</div>
+                        <div class="doc-date">{{ __('Issued on') }}: {{ now()->translatedFormat('d M Y, H:i') }}</div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="gold-strip"></div>
+    </htmlpageheader>
 
     <!-- ═══ CONTENT ═══ -->
     <div class="content">
