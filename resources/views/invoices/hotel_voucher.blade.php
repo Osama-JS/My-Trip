@@ -185,14 +185,13 @@
 
         /* ── Stay Card ── */
         .stay-card {
+            background-color: #041741;
             background: #041741;
             border-radius: 8px;
-            padding: 18px 16px 14px 16px;
             margin-bottom: 20px;
             color: #ffffff;
             page-break-inside: avoid;
             width: 100%;
-            box-sizing: border-box;
         }
         .date-big {
             font-size: 22px;
@@ -464,14 +463,14 @@
                         <td width="34%" align="center" valign="top">
                             <span class="info-label">{{ __('Room Type') }}</span><br>
                             <span class="info-value" style="color: #041741;">
-                                <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f6cf.png" width="12" height="12" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 3px;">
+                                <svg width="12" height="12" viewBox="0 0 24 24" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 3px;"><path fill="#041741" d="M19 7h-8v8H3V5H1v15h2v-3h18v3h2v-9a4 4 0 0 0-4-4zm-8 6h6a2 2 0 0 1 2 2v1H11v-3zM7 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
                                 {{ $booking->room_name }}
                             </span>
                         </td>
                         <td width="33%" style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }};" valign="top">
                             <span class="info-label">{{ __('Board') }}</span><br>
                             <span class="info-value">
-                                <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f37d.png" width="12" height="12" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 3px;">
+                                <svg width="12" height="12" viewBox="0 0 24 24" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 3px;"><path fill="#041741" d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg>
                                 {{ $booking->board_type ?? __('Room Only') }}
                             </span>
                         </td>
@@ -481,53 +480,57 @@
         </div>
 
         <!-- ─── STAY DATES CARD ─── -->
-        <div class="stay-card">
-            <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                    <td width="32%" align="center" valign="middle">
-                        <div class="date-big">{{ $booking->check_in->translatedFormat('d M') }}</div>
-                        <div class="date-label">{{ __('Check-in') }}</div>
-                        <div class="date-detail" dir="ltr">{{ $booking->check_in->translatedFormat('l, Y') }}</div>
-                        <div class="checkin-time" style="color: #34d399;">{{ __('From 14:00') }}</div>
-                    </td>
-                    <td width="36%" align="center" valign="middle">
-                        <div style="margin-bottom: 6px; white-space: nowrap;">
-                            <span style="display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: #f2cb57; vertical-align: middle;"></span>
-                            <span style="display: inline-block; width: 25px; border-top: 1.5px dashed rgba(242, 203, 87, 0.5); vertical-align: middle; margin: 0 3px;"></span>
-                            <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f319.png" width="12" height="12" style="vertical-align: middle;">
-                            <span style="display: inline-block; width: 25px; border-top: 1.5px dashed rgba(242, 203, 87, 0.5); vertical-align: middle; margin: 0 3px;"></span>
-                            <span style="display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: #f2cb57; vertical-align: middle;"></span>
-                        </div>
-                        <div class="nights-badge">{{ $booking->check_in->diffInDays($booking->check_out) }} {{ __('Nights') }}</div>
-                    </td>
-                    <td width="32%" align="center" valign="middle">
-                        <div class="date-big">{{ $booking->check_out->translatedFormat('d M') }}</div>
-                        <div class="date-label">{{ __('Check-out') }}</div>
-                        <div class="date-detail" dir="ltr">{{ $booking->check_out->translatedFormat('l, Y') }}</div>
-                        <div class="checkin-time" style="color: #f87171;">{{ __('Until 12:00') }}</div>
-                    </td>
-                </tr>
-            </table>
-            <div class="stay-info-strip">
-                <table width="100%" cellpadding="0" cellspacing="0">
-                    <tr>
-                        <td width="50%" valign="top">
-                            <span class="stay-info-strip-label">{{ __('Payment Status') }}</span><br>
-                            <span style="color: #f2cb57; font-weight: 900; font-size: 11px;">{{ __('PREPAID - Fully Paid') }}</span>
-                        </td>
-                        <td width="50%" style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }};" valign="top">
-                            <span class="stay-info-strip-label">{{ __('Total Amount') }}</span><br>
-                            <span style="color: #f2cb57; font-weight: 900; font-size: 16px;">{{ number_format($booking->total_price, 2) }} {{ $booking->currency }}</span>
-                            @if($insAmount > 0 || $policy)
-                                <div style="font-size: 7.5px; color: #a7f3d0; margin-top: 2px;">
-                                    🛡️ {{ __('Includes Travel Insurance: :amt :cur', ['amt' => number_format($insAmount, 2), 'cur' => $booking->currency]) }}
+        <table width="100%" cellpadding="0" cellspacing="0" class="stay-card" style="background-color: #041741; background: #041741; border-radius: 8px; margin-bottom: 20px; page-break-inside: avoid;">
+            <tr>
+                <td style="padding: 18px 16px 14px 16px; color: #ffffff; background-color: #041741; border-radius: 8px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td width="32%" align="center" valign="middle">
+                                <div class="date-big">{{ $booking->check_in->translatedFormat('d M') }}</div>
+                                <div class="date-label">{{ __('Check-in') }}</div>
+                                <div class="date-detail" dir="ltr">{{ $booking->check_in->translatedFormat('l, Y') }}</div>
+                                <div class="checkin-time" style="color: #34d399;">{{ __('From 14:00') }}</div>
+                            </td>
+                            <td width="36%" align="center" valign="middle">
+                                <div style="margin-bottom: 6px; white-space: nowrap;">
+                                    <span style="display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: #f2cb57; vertical-align: middle;"></span>
+                                    <span style="display: inline-block; width: 25px; border-top: 1.5px dashed rgba(242, 203, 87, 0.5); vertical-align: middle; margin: 0 3px;"></span>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" style="vertical-align: middle;"><path fill="#f2cb57" d="M12.3 2a10 10 0 0 0-.19 20 10 10 0 0 0 8.7-5.1 1 1 0 0 0-1-1.4 7.7 7.7 0 0 1-5.6-2.2 7.7 7.7 0 0 1-2.2-5.6 7.7 7.7 0 0 1 2.2-5.6 1 1 0 0 0-.4-1.6 10 10 0 0 0-1.51-.1z"/></svg>
+                                    <span style="display: inline-block; width: 25px; border-top: 1.5px dashed rgba(242, 203, 87, 0.5); vertical-align: middle; margin: 0 3px;"></span>
+                                    <span style="display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: #f2cb57; vertical-align: middle;"></span>
                                 </div>
-                            @endif
-                        </td>
-                    </tr>
-                </table>
-            </div>
-        </div>
+                                <div class="nights-badge">{{ $booking->check_in->diffInDays($booking->check_out) }} {{ __('Nights') }}</div>
+                            </td>
+                            <td width="32%" align="center" valign="middle">
+                                <div class="date-big">{{ $booking->check_out->translatedFormat('d M') }}</div>
+                                <div class="date-label">{{ __('Check-out') }}</div>
+                                <div class="date-detail" dir="ltr">{{ $booking->check_out->translatedFormat('l, Y') }}</div>
+                                <div class="checkin-time" style="color: #f87171;">{{ __('Until 12:00') }}</div>
+                            </td>
+                        </tr>
+                    </table>
+                    <div class="stay-info-strip">
+                        <table width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td width="50%" valign="top">
+                                    <span class="stay-info-strip-label">{{ __('Payment Status') }}</span><br>
+                                    <span style="color: #f2cb57; font-weight: 900; font-size: 11px;">{{ __('PREPAID - Fully Paid') }}</span>
+                                </td>
+                                <td width="50%" style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }};" valign="top">
+                                    <span class="stay-info-strip-label">{{ __('Total Amount') }}</span><br>
+                                    <span style="color: #f2cb57; font-weight: 900; font-size: 16px;">{{ number_format($booking->total_price, 2) }} {{ $booking->currency }}</span>
+                                    @if($insAmount > 0 || $policy)
+                                        <div style="font-size: 7.5px; color: #a7f3d0; margin-top: 2px;">
+                                            🛡️ {{ __('Includes Travel Insurance: :amt :cur', ['amt' => number_format($insAmount, 2), 'cur' => $booking->currency]) }}
+                                        </div>
+                                    @endif
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </td>
+            </tr>
+        </table>
 
         <!-- ─── PASSENGER / TRAVELLER CONTACT INFORMATION ─── -->
         <div class="section-title">{{ __('Passenger / Traveller Contact Information') }}</div>
@@ -538,21 +541,21 @@
                         <td width="38%" valign="middle">
                             <span class="info-label">{{ __('Lead Passenger / Primary Guest') }}</span><br>
                             <span class="info-value" style="color: #041741; font-size: 11.5px; font-weight: 800;">
-                                <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f464.png" width="11" height="11" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 4px;">
+                                <svg width="11" height="11" viewBox="0 0 24 24" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 4px;"><path fill="#041741" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
                                 {{ $leadName }}
                             </span>
                         </td>
                         <td width="31%" valign="middle">
                             <span class="info-label">{{ __('Contact Phone') }}</span><br>
                             <span class="info-value" dir="ltr" style="color: #041741; font-size: 11px; font-weight: 800; font-family: 'Courier New', monospace, 'tajawal';">
-                                <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f4de.png" width="11" height="11" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 4px;">
+                                <svg width="11" height="11" viewBox="0 0 24 24" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 4px;"><path fill="#041741" d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
                                 {{ $contactPhone ?: '—' }}
                             </span>
                         </td>
                         <td width="31%" valign="middle">
                             <span class="info-label">{{ __('Contact Email') }}</span><br>
                             <span class="info-value" style="color: #041741; font-size: 11px; font-weight: 800;">
-                                <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/2709.png" width="11" height="11" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 4px;">
+                                <svg width="11" height="11" viewBox="0 0 24 24" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 4px;"><path fill="#041741" d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
                                 {{ $contactEmail ?: '—' }}
                             </span>
                         </td>
@@ -815,7 +818,7 @@
         <!-- ─── IMPORTANT NOTES ─── -->
         <div class="notes-section">
             <div class="notes-title">
-                <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/26a0.png" width="10" height="10" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 3px;">
+                <svg width="10" height="10" viewBox="0 0 24 24" style="vertical-align: text-bottom; margin-{{ app()->getLocale() == 'ar' ? 'left' : 'right' }}: 3px;"><path fill="#f59e0b" d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
                 {{ __('Important Notes:') }}
             </div>
             1. {{ __('Please present this voucher along with original ID upon arrival.') }}<br>
