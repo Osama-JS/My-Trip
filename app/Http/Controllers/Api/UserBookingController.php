@@ -961,9 +961,10 @@ class UserBookingController extends Controller
 
             if ($wasPaid) {
                 $refundAmount = $totalAmount;
+                $newWalletBalance = null;
                 try {
                     $wallet = $walletService->getOrCreateWallet($booking->user_id);
-                    $walletService->credit(
+                    $tx = $walletService->credit(
                         $wallet->id,
                         $refundAmount,
                         __('استرداد قيمة حجز طيران ملغى: :ref (:airline)', [
@@ -973,9 +974,25 @@ class UserBookingController extends Controller
                         \App\Models\Booking::class,
                         $booking->id
                     );
+                    $newWalletBalance = $tx->balance_after;
                     Log::info("Credited {$refundAmount} to wallet for user #{$booking->user_id} on un-ticketed Flight #{$booking->id} cancellation via API.");
                 } catch (\Exception $e) {
                     Log::error("Failed to credit wallet on un-ticketed flight cancel via API: " . $e->getMessage());
+                }
+
+                // Send Email to Customer
+                try {
+                    app(\App\Services\MailService::class)->sendBookingCancelledRefundedEmail(
+                        $request->user(),
+                        $booking,
+                        $refundAmount,
+                        0.0,
+                        $newWalletBalance,
+                        'flight',
+                        $cancelReason ?: __('إلغاء الحجز قبل إصدار التذاكر واسترداد المبلغ بالكامل')
+                    );
+                } catch (\Exception $e) {
+                    Log::warning('Failed to send un-ticketed cancellation refund email via API: ' . $e->getMessage());
                 }
             }
 
@@ -1087,9 +1104,10 @@ class UserBookingController extends Controller
 
         // Credit wallet if refund amount > 0
         if ($wasPaid && $refundAmount > 0) {
+            $newWalletBalance = null;
             try {
                 $wallet = $walletService->getOrCreateWallet($booking->user_id);
-                $walletService->credit(
+                $tx = $walletService->credit(
                     $wallet->id,
                     $refundAmount,
                     __('استرداد قيمة تذكرة طيران ملغاة: :ref (:airline)', [
@@ -1099,9 +1117,25 @@ class UserBookingController extends Controller
                     \App\Models\Booking::class,
                     $booking->id
                 );
+                $newWalletBalance = $tx->balance_after;
                 Log::info("Credited {$refundAmount} to wallet for user #{$booking->user_id} on Flight #{$booking->id} cancellation via API.");
             } catch (\Exception $e) {
                 Log::error("Failed to credit wallet on flight cancellation via API: " . $e->getMessage());
+            }
+
+            // Send Email to Customer
+            try {
+                app(\App\Services\MailService::class)->sendBookingCancelledRefundedEmail(
+                    $request->user(),
+                    $booking,
+                    $refundAmount,
+                    $penalty ?? 0.0,
+                    $newWalletBalance,
+                    'flight',
+                    $cancelReason
+                );
+            } catch (\Exception $e) {
+                Log::warning('Failed to send ticketed cancellation refund email via API: ' . $e->getMessage());
             }
         }
 

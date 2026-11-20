@@ -536,9 +536,10 @@ class BookingController extends Controller
 
             // Refund to customer wallet if paid and refund amount > 0
             if ($wasPaid && $refundAmount > 0) {
+                $newWalletBalance = null;
                 try {
                     $wallet = $walletService->getOrCreateWallet($booking->user_id);
-                    $walletService->credit(
+                    $tx = $walletService->credit(
                         $wallet->id,
                         $refundAmount,
                         __('استرداد قيمة حجز فندق ملغى: :ref (:hotel)', [
@@ -548,9 +549,25 @@ class BookingController extends Controller
                         \App\Models\HotelBooking::class,
                         $booking->id
                     );
+                    $newWalletBalance = $tx->balance_after;
                     Log::info("Credited {$refundAmount} to wallet for user #{$booking->user_id} on Hotel #{$booking->id} cancellation.");
                 } catch (\Exception $e) {
                     Log::error("Failed to credit wallet on hotel cancellation: " . $e->getMessage());
+                }
+
+                // Send Email to Customer
+                try {
+                    app(\App\Services\MailService::class)->sendBookingCancelledRefundedEmail(
+                        Auth::user(),
+                        $booking,
+                        $refundAmount,
+                        $charge ?? 0.0,
+                        $newWalletBalance,
+                        'hotel',
+                        $booking->cancellation_reason
+                    );
+                } catch (\Exception $e) {
+                    Log::warning("Failed to send hotel cancellation refund email: " . $e->getMessage());
                 }
             }
 
@@ -754,9 +771,10 @@ class BookingController extends Controller
 
             if ($wasPaid) {
                 $refundAmount = $totalAmount;
+                $newWalletBalance = null;
                 try {
                     $wallet = $walletService->getOrCreateWallet($booking->user_id);
-                    $walletService->credit(
+                    $tx = $walletService->credit(
                         $wallet->id,
                         $refundAmount,
                         __('استرداد قيمة حجز طيران ملغى: :ref (:airline)', [
@@ -766,9 +784,25 @@ class BookingController extends Controller
                         \App\Models\Booking::class,
                         $booking->id
                     );
+                    $newWalletBalance = $tx->balance_after;
                     Log::info("Credited {$refundAmount} to wallet for user #{$booking->user_id} on un-ticketed Flight #{$booking->id} cancellation.");
                 } catch (\Exception $e) {
                     Log::error("Failed to credit wallet on un-ticketed flight cancel: " . $e->getMessage());
+                }
+
+                // Send Email to Customer
+                try {
+                    app(\App\Services\MailService::class)->sendBookingCancelledRefundedEmail(
+                        Auth::user(),
+                        $booking,
+                        $refundAmount,
+                        0.0,
+                        $newWalletBalance,
+                        'flight',
+                        __('إلغاء الحجز قبل إصدار التذاكر واسترداد المبلغ بالكامل')
+                    );
+                } catch (\Exception $e) {
+                    Log::warning("Failed to send un-ticketed flight cancellation refund email: " . $e->getMessage());
                 }
             }
 
@@ -875,9 +909,10 @@ class BookingController extends Controller
 
         // Credit wallet if refund amount > 0
         if ($wasPaid && $refundAmount > 0) {
+            $newWalletBalance = null;
             try {
                 $wallet = $walletService->getOrCreateWallet($booking->user_id);
-                $walletService->credit(
+                $tx = $walletService->credit(
                     $wallet->id,
                     $refundAmount,
                     __('استرداد قيمة تذكرة طيران ملغاة: :ref (:airline)', [
@@ -887,9 +922,25 @@ class BookingController extends Controller
                     \App\Models\Booking::class,
                     $booking->id
                 );
+                $newWalletBalance = $tx->balance_after;
                 Log::info("Credited {$refundAmount} to wallet for user #{$booking->user_id} on Flight #{$booking->id} cancellation.");
             } catch (\Exception $e) {
                 Log::error("Failed to credit wallet on flight cancellation: " . $e->getMessage());
+            }
+
+            // Send Email to Customer
+            try {
+                app(\App\Services\MailService::class)->sendBookingCancelledRefundedEmail(
+                    Auth::user(),
+                    $booking,
+                    $refundAmount,
+                    $penalty ?? 0.0,
+                    $newWalletBalance,
+                    'flight',
+                    $booking->cancellation_reason
+                );
+            } catch (\Exception $e) {
+                Log::warning("Failed to send ticketed flight cancellation refund email: " . $e->getMessage());
             }
         }
 

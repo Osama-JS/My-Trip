@@ -714,7 +714,7 @@ class PaymentWebController extends Controller
                     $wallet = $walletService->getOrCreateWallet($booking->user_id);
                     $refundAmount = (float)($booking->total_amount ?? 0);
                     if ($refundAmount > 0) {
-                        $walletService->credit(
+                        $tx = $walletService->credit(
                             $wallet->id,
                             $refundAmount,
                             __('استرداد فوري لحجز طيران رقم #:ref لتعذر إصدار التذكرة اللحظي من شركة الطيران', ['ref' => $booking->booking_reference ?: $booking->id]),
@@ -734,6 +734,21 @@ class PaymentWebController extends Controller
                             ]),
                             ['booking_id' => $booking->id, 'type' => 'flight', 'action' => 'wallet']
                         );
+
+                        // Send Email to Customer
+                        try {
+                            app(\App\Services\MailService::class)->sendBookingCancelledRefundedEmail(
+                                $booking->user,
+                                $booking,
+                                $refundAmount,
+                                0.0,
+                                $tx->balance_after ?? null,
+                                'flight',
+                                __('تعذر إصدار التذكرة من قبل شركة الطيران واسترداد كامل المبلغ للمحفظة فوراً')
+                            );
+                        } catch (\Exception $e) {
+                            Log::warning("Failed to send auto-refund email for Booking #{$booking->id}: " . $e->getMessage());
+                        }
                     }
                 } catch (\Exception $e) {
                     Log::error("Wallet auto-refund failed for Booking #{$booking->id}: " . $e->getMessage());
